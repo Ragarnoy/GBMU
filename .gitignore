@@ -1,5 +1,5 @@
+# Rom related file
 roms.zip
-
 roms/Super Mario Land.gb
 roms/Legend of Zelda, The - Link's Awakening DX.gbc
 roms/Legend of Zelda, The - Oracle of Seasons.gbc
@@ -18,3 +18,6 @@ roms/Mystic_Quest.gb
 roms/Pokemon_Bleue.gb
 roms/Legend of Zelda, The - Oracle of Ages.gbc
 roms/Pokemon - Jaune.gbc
+
+# Rust
+target
