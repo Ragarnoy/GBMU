@@ -1,4 +1,5 @@
 mod cartridge_type;
+mod destination_code;
 mod license_code;
 mod size;
 
