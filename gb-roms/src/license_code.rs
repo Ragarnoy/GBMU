@@ -148,7 +148,7 @@ impl TryFrom<u8> for NewLicenseCode {
 }
 
 #[test]
-fn test_convertion_new_license_code() {
+fn test_convert_new_license_code() {
 	assert_eq!(NewLicenseCode::try_from(0x00), Ok(NewLicenseCode::None));
 	assert_eq!(
 		NewLicenseCode::try_from(0x01),

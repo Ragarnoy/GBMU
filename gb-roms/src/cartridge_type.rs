@@ -71,7 +71,7 @@ impl TryFrom<u8> for CartridgeType {
 }
 
 #[test]
-fn test_convertion_cartridge_type() {
+fn test_convert_cartridge_type() {
 	assert_eq!(CartridgeType::try_from(0x00), Ok(CartridgeType::RomOnly));
 	assert_eq!(CartridgeType::try_from(0x01), Ok(CartridgeType::Mbc1));
 	assert_eq!(CartridgeType::try_from(0x02), Ok(CartridgeType::Mbc1Ram));
