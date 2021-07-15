@@ -1,5 +1,6 @@
 mod cartridge_type;
 mod license_code;
+mod size;
 
 /// The cartridge Header is at 0x100-0x14f
 #[repr(C)]
