@@ -1,8 +1,5 @@
 use std::convert::{From, TryFrom};
 
-const REF_SIZE: usize = 32_000;
-const REF_BANK: usize = 2;
-
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 #[repr(usize)]
 pub enum RomSize {
@@ -18,30 +15,33 @@ pub enum RomSize {
 }
 
 impl RomSize {
+	const REF_SIZE: usize = 32_768;
+	const REF_BANK: usize = 2;
+
 	pub fn get_rom_size(&self) -> usize {
-		REF_SIZE << *self as usize
+		RomSize::REF_SIZE << *self as usize
 	}
 
 	pub fn get_bank_amounts(&self) -> usize {
-		REF_BANK << *self as usize
+		RomSize::REF_BANK << *self as usize
 	}
 }
 
 #[test]
 fn test_rom_size() {
-	assert_eq!(RomSize::KByte32.get_rom_size(), 32_000);
-	assert_eq!(RomSize::KByte64.get_rom_size(), 64_000);
-	assert_eq!(RomSize::KByte128.get_rom_size(), 128_000);
-	assert_eq!(RomSize::KByte256.get_rom_size(), 256_000);
-	assert_eq!(RomSize::KByte512.get_rom_size(), 512_000);
-	assert_eq!(RomSize::MByte1.get_rom_size(), 1_024_000);
-	assert_eq!(RomSize::MByte2.get_rom_size(), 2_048_000);
-	assert_eq!(RomSize::MByte4.get_rom_size(), 4_096_000);
-	assert_eq!(RomSize::MByte8.get_rom_size(), 8_192_000);
+	assert_eq!(RomSize::KByte32.get_rom_size(), 32_768);
+	assert_eq!(RomSize::KByte64.get_rom_size(), 65_536);
+	assert_eq!(RomSize::KByte128.get_rom_size(), 131_072);
+	assert_eq!(RomSize::KByte256.get_rom_size(), 262_144);
+	assert_eq!(RomSize::KByte512.get_rom_size(), 524_288);
+	assert_eq!(RomSize::MByte1.get_rom_size(), 1_048_576);
+	assert_eq!(RomSize::MByte2.get_rom_size(), 2_097_152);
+	assert_eq!(RomSize::MByte4.get_rom_size(), 4_194_304);
+	assert_eq!(RomSize::MByte8.get_rom_size(), 8_388_608);
 }
 
 #[test]
-fn test_bank_amous() {
+fn test_rom_bank_amounts() {
 	assert_eq!(RomSize::KByte32.get_bank_amounts(), 2);
 	assert_eq!(RomSize::KByte64.get_bank_amounts(), 4);
 	assert_eq!(RomSize::KByte128.get_bank_amounts(), 8);
@@ -83,4 +83,77 @@ fn test_convert_rom_size() {
 	assert_eq!(RomSize::try_from(0x06), Ok(RomSize::MByte2));
 	assert_eq!(RomSize::try_from(0x07), Ok(RomSize::MByte4));
 	assert_eq!(RomSize::try_from(0x08), Ok(RomSize::MByte8));
+}
+
+#[repr(usize)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub enum RamSize {
+	NoRamUnused = 0,
+	KByte8 = 1,
+	KByte32 = 3,
+	KByte64,
+	KByte128,
+}
+
+impl RamSize {
+	const REF_RAM: usize = 8_192;
+	const REF_BANK: usize = 1;
+
+	pub fn get_ram_size(&self) -> usize {
+		if self == &RamSize::NoRamUnused {
+			0
+		} else {
+			RamSize::REF_RAM << (*self as usize - 1)
+		}
+	}
+	pub fn get_bank_amounts(&self) -> usize {
+		if self == &RamSize::NoRamUnused {
+			0
+		} else {
+			RamSize::REF_BANK << (*self as usize - 1)
+		}
+	}
+}
+
+#[test]
+fn test_ram_size() {
+	assert_eq!(RamSize::NoRamUnused.get_ram_size(), 0);
+	assert_eq!(RamSize::KByte8.get_ram_size(), 8_192);
+	assert_eq!(RamSize::KByte32.get_ram_size(), 32_768);
+	assert_eq!(RamSize::KByte64.get_ram_size(), 65_536);
+	assert_eq!(RamSize::KByte128.get_ram_size(), 131_072);
+}
+
+#[test]
+fn test_ram_bank_amounts() {
+	assert_eq!(RamSize::NoRamUnused.get_bank_amounts(), 0);
+	assert_eq!(RamSize::KByte8.get_bank_amounts(), 1);
+	assert_eq!(RamSize::KByte32.get_bank_amounts(), 4);
+	assert_eq!(RamSize::KByte64.get_bank_amounts(), 8);
+	assert_eq!(RamSize::KByte128.get_bank_amounts(), 16);
+}
+
+impl TryFrom<u8> for RamSize {
+	type Error = String;
+
+	fn try_from(v: u8) -> Result<Self, Self::Error> {
+		match v {
+			0x00 | 0x01 => Ok(RamSize::NoRamUnused),
+			0x02 => Ok(RamSize::KByte8),
+			0x03 => Ok(RamSize::KByte32),
+			0x04 => Ok(RamSize::KByte128),
+			0x05 => Ok(RamSize::KByte64),
+			_ => Err(format!("unknown ram identifier {:02x}", v)),
+		}
+	}
+}
+
+#[test]
+fn test_convert_ram_szie() {
+	assert_eq!(RamSize::try_from(0x00), Ok(RamSize::NoRamUnused));
+	assert_eq!(RamSize::try_from(0x01), Ok(RamSize::NoRamUnused));
+	assert_eq!(RamSize::try_from(0x02), Ok(RamSize::KByte8));
+	assert_eq!(RamSize::try_from(0x03), Ok(RamSize::KByte32));
+	assert_eq!(RamSize::try_from(0x04), Ok(RamSize::KByte128));
+	assert_eq!(RamSize::try_from(0x05), Ok(RamSize::KByte64));
 }
