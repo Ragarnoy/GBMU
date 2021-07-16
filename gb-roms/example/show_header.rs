@@ -1,9 +1,5 @@
 use clap::Clap;
-use std::{
-	convert::TryFrom,
-	fs::File,
-	io::{BufRead, BufReader, Read},
-};
+use std::{convert::TryFrom, fs::File, io::Read};
 
 use gb_roms::{Header, RawHeader};
 
@@ -26,12 +22,8 @@ fn get_gb_header_from_file(name: &String) {
 		let mut header_chunk = [0_u8; 80];
 		file.read(&mut header_chunk)
 			.expect("error while reading header chunk");
-		println!("header chunk: {:?}", header_chunk);
-
 		let raw_header = RawHeader::from(&header_chunk);
-		println!("raw header  : {:?}", raw_header);
-
-		let header = Header::try_from(raw_header);
+		let header = Header::try_from(raw_header).expect("cannot convert raw header to header");
 		println!("header      : {:?}", header);
 	}
 }
