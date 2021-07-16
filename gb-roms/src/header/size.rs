@@ -89,7 +89,7 @@ fn test_convert_rom_size() {
 #[repr(usize)]
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum RamSize {
-	NoRamUnused = 0,
+	NoRamOrUnused = 0,
 	KByte8 = 1,
 	KByte32 = 3,
 	KByte64,
@@ -101,14 +101,14 @@ impl RamSize {
 	const REF_BANK: usize = 1;
 
 	pub fn get_ram_size(&self) -> usize {
-		if self == &RamSize::NoRamUnused {
+		if self == &RamSize::NoRamOrUnused {
 			0
 		} else {
 			RamSize::REF_RAM << (*self as usize - 1)
 		}
 	}
 	pub fn get_bank_amounts(&self) -> usize {
-		if self == &RamSize::NoRamUnused {
+		if self == &RamSize::NoRamOrUnused {
 			0
 		} else {
 			RamSize::REF_BANK << (*self as usize - 1)
@@ -118,7 +118,7 @@ impl RamSize {
 
 #[test]
 fn test_ram_size() {
-	assert_eq!(RamSize::NoRamUnused.get_ram_size(), 0);
+	assert_eq!(RamSize::NoRamOrUnused.get_ram_size(), 0);
 	assert_eq!(RamSize::KByte8.get_ram_size(), 8_192);
 	assert_eq!(RamSize::KByte32.get_ram_size(), 32_768);
 	assert_eq!(RamSize::KByte64.get_ram_size(), 65_536);
@@ -127,7 +127,7 @@ fn test_ram_size() {
 
 #[test]
 fn test_ram_bank_amounts() {
-	assert_eq!(RamSize::NoRamUnused.get_bank_amounts(), 0);
+	assert_eq!(RamSize::NoRamOrUnused.get_bank_amounts(), 0);
 	assert_eq!(RamSize::KByte8.get_bank_amounts(), 1);
 	assert_eq!(RamSize::KByte32.get_bank_amounts(), 4);
 	assert_eq!(RamSize::KByte64.get_bank_amounts(), 8);
@@ -139,7 +139,7 @@ impl TryFrom<u8> for RamSize {
 
 	fn try_from(v: u8) -> Result<Self, Self::Error> {
 		match v {
-			0x00 | 0x01 => Ok(RamSize::NoRamUnused),
+			0x00 | 0x01 => Ok(RamSize::NoRamOrUnused),
 			0x02 => Ok(RamSize::KByte8),
 			0x03 => Ok(RamSize::KByte32),
 			0x04 => Ok(RamSize::KByte128),
@@ -151,8 +151,8 @@ impl TryFrom<u8> for RamSize {
 
 #[test]
 fn test_convert_ram_szie() {
-	assert_eq!(RamSize::try_from(0x00), Ok(RamSize::NoRamUnused));
-	assert_eq!(RamSize::try_from(0x01), Ok(RamSize::NoRamUnused));
+	assert_eq!(RamSize::try_from(0x00), Ok(RamSize::NoRamOrUnused));
+	assert_eq!(RamSize::try_from(0x01), Ok(RamSize::NoRamOrUnused));
 	assert_eq!(RamSize::try_from(0x02), Ok(RamSize::KByte8));
 	assert_eq!(RamSize::try_from(0x03), Ok(RamSize::KByte32));
 	assert_eq!(RamSize::try_from(0x04), Ok(RamSize::KByte128));
