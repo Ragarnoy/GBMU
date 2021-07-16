@@ -1,5 +1,7 @@
 use std::convert::TryFrom;
 
+use super::error::Error;
+
 #[derive(Debug, PartialEq, Eq)]
 pub enum CartridgeType {
 	RomOnly,
@@ -33,7 +35,7 @@ pub enum CartridgeType {
 }
 
 impl TryFrom<u8> for CartridgeType {
-	type Error = String;
+	type Error = Error;
 
 	fn try_from(v: u8) -> Result<Self, Self::Error> {
 		match v {
@@ -65,7 +67,7 @@ impl TryFrom<u8> for CartridgeType {
 			0xFD => Ok(CartridgeType::BandaiTama5),
 			0xFE => Ok(CartridgeType::HuC3),
 			0xFF => Ok(CartridgeType::HuC1RamBattery),
-			_ => Err(format!("unknown cartridge type {:2x}", v)),
+			_ => Err(Error::InvalidCartridgeType(v)),
 		}
 	}
 }

@@ -1,5 +1,6 @@
 mod cartridge_type;
 mod destination_code;
+mod error;
 mod flag;
 mod license_code;
 mod size;
@@ -8,6 +9,7 @@ use std::convert::{TryFrom, TryInto};
 
 use cartridge_type::CartridgeType;
 use destination_code::DestinationCode;
+pub use error::Error;
 use flag::{CgbFlag, SgbFlag};
 use license_code::{NewLicenseCode, OldLicenseCode};
 use size::{RamSize, RomSize};
@@ -29,7 +31,7 @@ pub struct Header {
 }
 
 impl TryFrom<RawHeader> for Header {
-	type Error = String;
+	type Error = Error;
 
 	fn try_from(raw: RawHeader) -> Result<Self, Self::Error> {
 		use std::str::from_utf8;
@@ -38,7 +40,9 @@ impl TryFrom<RawHeader> for Header {
 			entry_point: raw.entry_point,
 			nitendo_logo: raw.nitendo_logo,
 			title: raw.title.try_into()?,
-			new_license_code: NewLicenseCode::try_from(from_utf8(&raw.new_license_code).unwrap())?,
+			new_license_code: NewLicenseCode::try_from(
+				String::from_utf8(raw.new_license_code.into())?.as_str(),
+			)?,
 			sgb_flag: raw.sgb_flag.try_into()?,
 			cartridge_type: raw.cartridge_type.try_into()?,
 			rom_size: raw.rom_size.try_into()?,
@@ -62,15 +66,15 @@ pub enum Title {
 }
 
 impl TryFrom<[u8; 16]> for Title {
-	type Error = String;
+	type Error = Error;
 
 	fn try_from(raw: [u8; 16]) -> Result<Self, Self::Error> {
 		if raw[15] == 0 {
-			Ok(Title::Simple(String::from_utf8(raw.into()).unwrap()))
+			Ok(Title::Simple(String::from_utf8(raw.into())?))
 		} else {
 			Ok(Title::Advanced {
-				title: String::from_utf8(raw[0..10].into()).unwrap(),
-				manufacturer: String::from_utf8(raw[10..14].into()).unwrap(),
+				title: String::from_utf8(raw[0..10].into())?,
+				manufacturer: String::from_utf8(raw[10..14].into())?,
 				cbg_flag: raw[15].try_into()?,
 			})
 		}

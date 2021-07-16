@@ -1,3 +1,4 @@
+use super::error::Error;
 use std::convert::TryFrom;
 
 #[derive(Debug, PartialEq, Eq)]
@@ -64,7 +65,7 @@ pub enum NewLicenseCode {
 // Convert New license code raw byte into enum
 // value from [new licensee code](https://gbdev.io/pandocs/The_Cartridge_Header.html#0144-0145---new-licensee-code)
 impl TryFrom<&str> for NewLicenseCode {
-	type Error = String;
+	type Error = Error;
 
 	fn try_from(v: &str) -> Result<Self, Self::Error> {
 		match v {
@@ -141,7 +142,7 @@ impl TryFrom<&str> for NewLicenseCode {
 			"61" => Ok(NewLicenseCode::Virgin),
 
 			"96" => Ok(NewLicenseCode::YonezawaSpal),
-			_ => Err(format!("unknow publisher with id {}", v)),
+			_ => Err(Error::InvalidNewLicenseCode(v.into())),
 		}
 	}
 }
@@ -410,7 +411,7 @@ pub enum OldLicenseCode {
 }
 
 impl TryFrom<u8> for OldLicenseCode {
-	type Error = String;
+	type Error = Error;
 
 	fn try_from(v: u8) -> Result<Self, Self::Error> {
 		match v {
@@ -538,7 +539,7 @@ impl TryFrom<u8> for OldLicenseCode {
 			0x1A => Ok(OldLicenseCode::Yanoman),
 			0x96 => Ok(OldLicenseCode::YonezawaSPal),
 
-			_ => Err(format!("unkown old license code {:02x}", v)),
+			_ => Err(Error::InvalidOldLicenseCode(v)),
 		}
 	}
 }

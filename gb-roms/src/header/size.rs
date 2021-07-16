@@ -1,3 +1,4 @@
+use super::error::Error;
 use std::convert::TryFrom;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -54,7 +55,7 @@ fn test_rom_bank_amounts() {
 }
 
 impl TryFrom<u8> for RomSize {
-	type Error = String;
+	type Error = Error;
 
 	fn try_from(v: u8) -> Result<Self, Self::Error> {
 		match v {
@@ -67,7 +68,7 @@ impl TryFrom<u8> for RomSize {
 			0x06 => Ok(RomSize::MByte2),
 			0x07 => Ok(RomSize::MByte4),
 			0x08 => Ok(RomSize::MByte8),
-			_ => Err(format!("unknown Rom size identifier {:02x}", v)),
+			_ => Err(Error::InvalidRomSize(v)),
 		}
 	}
 }
@@ -134,7 +135,7 @@ fn test_ram_bank_amounts() {
 }
 
 impl TryFrom<u8> for RamSize {
-	type Error = String;
+	type Error = Error;
 
 	fn try_from(v: u8) -> Result<Self, Self::Error> {
 		match v {
@@ -143,7 +144,7 @@ impl TryFrom<u8> for RamSize {
 			0x03 => Ok(RamSize::KByte32),
 			0x04 => Ok(RamSize::KByte128),
 			0x05 => Ok(RamSize::KByte64),
-			_ => Err(format!("unknown ram identifier {:02x}", v)),
+			_ => Err(Error::InvalidRamSize(v)),
 		}
 	}
 }
