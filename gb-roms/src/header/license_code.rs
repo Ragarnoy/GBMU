@@ -114,7 +114,7 @@ impl TryFrom<&str> for NewLicenseCode {
 
 			"31" => Ok(NewLicenseCode::Nintendo),
 			"01" => Ok(NewLicenseCode::NintendoRnD1),
-			"00" => Ok(NewLicenseCode::None),
+			"00" | "\0\0" => Ok(NewLicenseCode::None),
 
 			"67" => Ok(NewLicenseCode::Ocean),
 			"33" | "93" => Ok(NewLicenseCode::OceanAcclaim),
@@ -150,6 +150,7 @@ impl TryFrom<&str> for NewLicenseCode {
 #[test]
 fn test_convert_new_license_code() {
 	assert_eq!(NewLicenseCode::try_from("00"), Ok(NewLicenseCode::None));
+	assert_eq!(NewLicenseCode::try_from("\0\0"), Ok(NewLicenseCode::None));
 	assert_eq!(
 		NewLicenseCode::try_from("01"),
 		Ok(NewLicenseCode::NintendoRnD1)
