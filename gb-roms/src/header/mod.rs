@@ -61,11 +61,19 @@ pub enum Title {
 	},
 }
 
-impl TryFrom<RawTitle> for Title {
+impl TryFrom<[u8; 16]> for Title {
 	type Error = String;
 
-	fn try_from(raw: RawTitle) -> Result<Self, Self::Error> {
-		unimplemented!();
+	fn try_from(raw: [u8; 16]) -> Result<Self, Self::Error> {
+		if raw[15] == 0 {
+			Ok(Title::Simple(String::from_utf8(raw.into()).unwrap()))
+		} else {
+			Ok(Title::Advanced {
+				title: String::from_utf8(raw[0..10].into()).unwrap(),
+				manufacturer: String::from_utf8(raw[10..14].into()).unwrap(),
+				cbg_flag: raw[15].try_into()?,
+			})
+		}
 	}
 }
 
@@ -74,7 +82,7 @@ impl TryFrom<RawTitle> for Title {
 struct RawHeader {
 	pub entry_point: [u8; 4],
 	pub nitendo_logo: [u8; 48],
-	pub title: RawTitle,
+	pub title: [u8; 16],
 	pub new_license_code: [u8; 2],
 	pub sgb_flag: u8,
 	pub cartridge_type: u8,
@@ -85,25 +93,6 @@ struct RawHeader {
 	pub rom_version: u8,
 	pub header_checksum: u8,
 	pub global_checksum: [u8; 2],
-}
-
-#[repr(C)]
-union RawTitle {
-	title: [u8; 16],
-	cgb_title: RawCGBTitle,
-}
-
-#[derive(Clone, Copy)]
-#[repr(C)]
-struct RawCGBTitle {
-	title: [u8; 11],
-	manufacturer_code: [u8; 4],
-	cgb_flag: u8,
-}
-
-#[test]
-fn test_raw_cgb_title_size() {
-	assert_eq!(std::mem::size_of::<RawCGBTitle>(), 16)
 }
 
 #[test]
