@@ -5,7 +5,7 @@ mod flag;
 mod license_code;
 mod size;
 
-use std::convert::{TryFrom, TryInto};
+use std::convert::{From, TryFrom, TryInto};
 
 use cartridge_type::CartridgeType;
 use destination_code::DestinationCode;
@@ -14,6 +14,7 @@ use flag::{CgbFlag, SgbFlag};
 use license_code::{NewLicenseCode, OldLicenseCode};
 use size::{RamSize, RomSize};
 
+#[derive(Debug)]
 pub struct Header {
 	pub entry_point: [u8; 4],
 	pub nitendo_logo: [u8; 48],
@@ -34,8 +35,6 @@ impl TryFrom<RawHeader> for Header {
 	type Error = Error;
 
 	fn try_from(raw: RawHeader) -> Result<Self, Self::Error> {
-		use std::str::from_utf8;
-
 		Ok(Self {
 			entry_point: raw.entry_point,
 			nitendo_logo: raw.nitendo_logo,
@@ -56,6 +55,7 @@ impl TryFrom<RawHeader> for Header {
 	}
 }
 
+#[derive(Debug)]
 pub enum Title {
 	Simple(String),
 	Advanced {
@@ -82,8 +82,9 @@ impl TryFrom<[u8; 16]> for Title {
 }
 
 /// The cartridge Header is at 0x100-0x14f
+#[derive(Debug)]
 #[repr(C)]
-struct RawHeader {
+pub struct RawHeader {
 	pub entry_point: [u8; 4],
 	pub nitendo_logo: [u8; 48],
 	pub title: [u8; 16],
@@ -97,6 +98,26 @@ struct RawHeader {
 	pub rom_version: u8,
 	pub header_checksum: u8,
 	pub global_checksum: [u8; 2],
+}
+
+impl From<&[u8; 80]> for RawHeader {
+	fn from(chunk: &[u8; 80]) -> Self {
+		Self {
+			entry_point: <[u8; 4]>::try_from(&chunk[..4]).unwrap(),
+			nitendo_logo: <[u8; 48]>::try_from(&chunk[4..52]).unwrap(),
+			title: <[u8; 16]>::try_from(&chunk[52..68]).unwrap(),
+			new_license_code: <[u8; 2]>::try_from(&chunk[68..70]).unwrap(),
+			sgb_flag: chunk[70],
+			cartridge_type: chunk[71],
+			rom_size: chunk[72],
+			ram_size: chunk[73],
+			destination_code: chunk[74],
+			old_license_code: chunk[75],
+			rom_version: chunk[76],
+			header_checksum: chunk[77],
+			global_checksum: <[u8; 2]>::try_from(&chunk[78..80]).unwrap(),
+		}
+	}
 }
 
 #[test]
