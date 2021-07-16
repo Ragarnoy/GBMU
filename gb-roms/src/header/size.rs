@@ -1,4 +1,4 @@
-use std::convert::{From, TryFrom};
+use std::convert::TryFrom;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 #[repr(usize)]
