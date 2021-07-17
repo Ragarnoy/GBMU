@@ -42,3 +42,14 @@ impl TryFrom<u8> for Register {
 		}
 	}
 }
+
+#[test]
+fn test_convert_register() {
+	assert_eq!(Register::try_from(0), Ok(Register::B));
+	assert_eq!(Register::try_from(1), Ok(Register::C));
+	assert_eq!(Register::try_from(2), Ok(Register::D));
+	assert_eq!(Register::try_from(3), Ok(Register::E));
+	assert_eq!(Register::try_from(4), Ok(Register::H));
+	assert_eq!(Register::try_from(5), Ok(Register::L));
+	assert_eq!(Register::try_from(7), Ok(Register::A));
+}
