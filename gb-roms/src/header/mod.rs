@@ -31,6 +31,24 @@ pub struct Header {
 	pub global_checksum: u16,
 }
 
+impl Header {
+	pub fn from_file(file: std::fs::File) -> Result<Self, Error> {
+		use std::io::{Read, Seek, SeekFrom};
+
+		let mut f = file;
+		let mut chunk = [0_u8; 80];
+
+		f.seek(SeekFrom::Start(0x100))
+			.expect("cannot seek file to header");
+		f.read(&mut chunk).expect("cannot read header");
+		Header::from_chunk(chunk)
+	}
+
+	pub fn from_chunk(chunk: [u8; 80]) -> Result<Self, Error> {
+		RawHeader::from(&chunk).try_into()
+	}
+}
+
 impl TryFrom<RawHeader> for Header {
 	type Error = Error;
 

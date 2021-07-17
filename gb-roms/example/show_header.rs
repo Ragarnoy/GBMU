@@ -1,11 +1,7 @@
 use clap::Clap;
-use std::{
-	convert::TryFrom,
-	fs::File,
-	io::{Read, Seek, SeekFrom},
-};
+use std::fs::File;
 
-use gb_roms::{Header, RawHeader};
+use gb_roms::Header;
 
 #[derive(Clap, Debug)]
 #[clap(version = "1.0", author = "fbenneto")]
@@ -16,17 +12,10 @@ struct CliOpts {
 
 fn get_gb_header_from_file(name: &String) {
 	println!("current file: \"{}\"", name);
-	let mut file = File::open(name).expect("cannot open file");
-	file.seek(SeekFrom::Start(0x100))
-		.expect("failed to seek to header");
-	{
-		let mut header_chunk = [0_u8; 80];
-		file.read(&mut header_chunk)
-			.expect("error while reading header chunk");
-		let raw_header = RawHeader::from(&header_chunk);
-		let header = Header::try_from(raw_header).expect("cannot convert raw header to header");
-		println!("header      : {:?}", header);
-	}
+	let file = File::open(name).expect("cannot open file");
+
+	let header = Header::from_file(file).expect("failed to read header");
+	println!("header      : {:?}", header);
 }
 
 fn main() {
