@@ -1,5 +1,9 @@
 use clap::Clap;
-use std::{convert::TryFrom, fs::File, io::Read};
+use std::{
+	convert::TryFrom,
+	fs::File,
+	io::{Read, Seek, SeekFrom},
+};
 
 use gb_roms::{Header, RawHeader};
 
@@ -13,11 +17,8 @@ struct CliOpts {
 fn get_gb_header_from_file(name: &String) {
 	println!("current file: \"{}\"", name);
 	let mut file = File::open(name).expect("cannot open file");
-	{
-		let mut skipped = [0_u8; 0x100];
-		file.read(&mut skipped)
-			.expect("error while reading chunk before header");
-	}
+	file.seek(SeekFrom::Start(0x100))
+		.expect("failed to seek to header");
 	{
 		let mut header_chunk = [0_u8; 80];
 		file.read(&mut header_chunk)
