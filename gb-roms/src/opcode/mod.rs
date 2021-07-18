@@ -11,12 +11,14 @@ use std::{convert::From, fmt};
 #[derive(Debug, PartialEq, Eq)]
 pub enum Opcode {
 	Jump(u16),
+	Nop,
 }
 
 impl fmt::Display for Opcode {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		match self {
 			Opcode::Jump(addr) => write!(f, "jmp {:x}", addr),
+			Opcode::Nop => write!(f, "nop"),
 		}
 	}
 }
@@ -43,10 +45,24 @@ where
 
 	fn decode_x(&mut self, v: u8, o: OpcodeBits) -> Result<Opcode, Error> {
 		match o.x() {
-			// 0 => ,
+			0 => self.decode_0_z(v, o),
 			// 1 => ,
 			// 2 => ,
 			3 => self.decode_3_z(v, o),
+			_ => Err(Error::UnknownOpcode(v)),
+		}
+	}
+
+	fn decode_0_z(&mut self, v: u8, o: OpcodeBits) -> Result<Opcode, Error> {
+		match o.z() {
+			0 => self.decode_0_0_y(v, o),
+			_ => Err(Error::UnknownOpcode(v)),
+		}
+	}
+
+	fn decode_0_0_y(&mut self, v: u8, o: OpcodeBits) -> Result<Opcode, Error> {
+		match o.y() {
+			0 => Ok(Opcode::Nop),
 			_ => Err(Error::UnknownOpcode(v)),
 		}
 	}
