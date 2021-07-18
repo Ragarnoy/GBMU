@@ -1,4 +1,7 @@
 [workspace]
 members = [
   "gb-roms",
+  "gb-lcd",
+  "gb-moc",
 ]
+default-members = ["gb-moc"]
