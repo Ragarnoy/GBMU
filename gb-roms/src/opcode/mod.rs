@@ -26,16 +26,16 @@ fn test_display_opcode() {
 	assert_eq!(Opcode::Jump(0x150).to_string(), "jmp 150");
 }
 
-pub struct OpcodeGenerator<'a, It>
+pub struct OpcodeGenerator<It>
 where
-	It: Iterator<Item = &'a u8>,
+	It: Iterator<Item = u8>,
 {
 	stream: It,
 }
 
-impl<'a, It> OpcodeGenerator<'a, It>
+impl<It> OpcodeGenerator<It>
 where
-	It: Iterator<Item = &'a u8>,
+	It: Iterator<Item = u8>,
 {
 	pub fn new(stream: It) -> Self {
 		Self { stream }
@@ -61,7 +61,7 @@ where
 	fn decode_3_3_y(&mut self, v: u8, o: OpcodeBits) -> Result<Opcode, Error> {
 		match o.y() {
 			0 => {
-				let bytes: [u8; 2] = [*self.stream.next().unwrap(), *self.stream.next().unwrap()];
+				let bytes: [u8; 2] = [self.stream.next().unwrap(), self.stream.next().unwrap()];
 				Ok(Opcode::Jump(u16::from_le_bytes(bytes)))
 			}
 			_ => Err(Error::UnknownOpcode(v)),
@@ -77,31 +77,31 @@ pub struct OpcodeBits {
 	x: B2,
 }
 
-impl<'a, It> From<It> for OpcodeGenerator<'a, It>
+impl<It> From<It> for OpcodeGenerator<It>
 where
-	It: Iterator<Item = &'a u8>,
+	It: Iterator<Item = u8>,
 {
 	fn from(it: It) -> Self {
 		Self::new(it)
 	}
 }
 
-impl<'a, It> Iterator for OpcodeGenerator<'a, It>
+impl<It> Iterator for OpcodeGenerator<It>
 where
-	It: Iterator<Item = &'a u8>,
+	It: Iterator<Item = u8>,
 {
 	type Item = Result<Opcode, Error>;
 
 	fn next(&mut self) -> Option<Self::Item> {
 		let current = self.stream.next()?;
-		Some(self.decode_x(*current, OpcodeBits::from_bytes([*current])))
+		Some(self.decode_x(current, OpcodeBits::from_bytes([current])))
 	}
 }
 
 #[test]
 fn test_convert_opcode() {
 	assert_eq!(
-		OpcodeGenerator::from(vec![0xc3, 0x50, 0x01].iter()).next(),
+		OpcodeGenerator::from(vec![0xc3, 0x50, 0x01].into_iter()).next(),
 		Some(Ok(Opcode::Jump(0x150)))
 	)
 }
