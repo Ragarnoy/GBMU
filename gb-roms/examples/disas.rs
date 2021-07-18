@@ -1,5 +1,8 @@
 use clap::Clap;
-use std::{fs::File, io::Read};
+use std::{
+	fs::File,
+	io::{Read, Seek, SeekFrom},
+};
 
 use gb_roms::OpcodeGenerator;
 
@@ -8,12 +11,18 @@ use gb_roms::OpcodeGenerator;
 struct DisasOpt {
 	#[clap(required = true)]
 	files: Vec<String>,
+
+	#[clap(short, long, default_value = "0")]
+	start_at: u64,
 }
 
-fn disas_file(name: &String) {
+fn disas_file(name: &String, start: u64) {
 	println!("current file: \"{}\"", name);
-	let file = File::open(name).expect("cannot open file");
+	let mut file = File::open(name).expect("cannot open file");
 
+	if start != 0 {
+		file.seek(SeekFrom::Start(start)).expect("cannot seek");
+	}
 	test(file.bytes().map(|v| {
 		println!("readed: {:x?}", v);
 		v.unwrap()
@@ -29,5 +38,5 @@ fn test(it: impl Iterator<Item = u8>) {
 
 fn main() {
 	let opts: DisasOpt = DisasOpt::parse();
-	opts.files.iter().for_each(disas_file);
+	opts.files.iter().for_each(|f| disas_file(f, opts.start_at));
 }
