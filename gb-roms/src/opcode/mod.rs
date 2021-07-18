@@ -6,19 +6,24 @@ use modular_bitfield::{
 	bitfield,
 	specifiers::{B2, B3},
 };
-use std::convert::From;
+use std::{convert::From, fmt};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Opcode {
 	Jump(u16),
 }
 
-#[bitfield]
-#[derive(Debug, PartialEq, Eq)]
-pub struct OpcodeBits {
-	z: B3,
-	y: B3,
-	x: B2,
+impl fmt::Display for Opcode {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		match self {
+			Opcode::Jump(addr) => write!(f, "jmp {:x}", addr),
+		}
+	}
+}
+
+#[test]
+fn test_display_opcode() {
+	assert_eq!(Opcode::Jump(0x150).to_string(), "jmp 150");
 }
 
 pub struct OpcodeGenerator<'a, It>
@@ -62,6 +67,14 @@ where
 			_ => Err(Error::UnknownOpcode(v)),
 		}
 	}
+}
+
+#[bitfield]
+#[derive(Debug, PartialEq, Eq)]
+pub struct OpcodeBits {
+	z: B3,
+	y: B3,
+	x: B2,
 }
 
 impl<'a, It> From<It> for OpcodeGenerator<'a, It>
