@@ -6,6 +6,7 @@ use modular_bitfield::{
 	bitfield,
 	specifiers::{B2, B3},
 };
+use std::convert::From;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Opcode {
@@ -31,6 +32,10 @@ impl<'a, It> OpcodeGenerator<'a, It>
 where
 	It: Iterator<Item = &'a u8>,
 {
+	pub fn new(stream: It) -> Self {
+		Self { stream }
+	}
+
 	fn decode_x(&mut self, v: u8, o: OpcodeBits) -> Result<Opcode, Error> {
 		match o.x() {
 			// 0 => ,
@@ -50,9 +55,21 @@ where
 
 	fn decode_3_3_y(&mut self, v: u8, o: OpcodeBits) -> Result<Opcode, Error> {
 		match o.y() {
-			0 => unimplemented!(),
+			0 => {
+				let bytes: [u8; 2] = [*self.stream.next().unwrap(), *self.stream.next().unwrap()];
+				Ok(Opcode::Jump(u16::from_le_bytes(bytes)))
+			}
 			_ => Err(Error::UnknownOpcode(v)),
 		}
+	}
+}
+
+impl<'a, It> From<It> for OpcodeGenerator<'a, It>
+where
+	It: Iterator<Item = &'a u8>,
+{
+	fn from(it: It) -> Self {
+		Self::new(it)
 	}
 }
 
@@ -70,9 +87,8 @@ where
 
 #[test]
 fn test_convert_opcode() {
-	let op: Option<Result<Opcode, Error>> = OpcodeGenerator {
-		stream: vec![0x53].iter(),
-	}
-	.next();
-	assert_eq!(op, Some(Ok(Opcode::Jump(0x150))))
+	assert_eq!(
+		OpcodeGenerator::from(vec![0xc3, 0x50, 0x01].iter()).next(),
+		Some(Ok(Opcode::Jump(0x150)))
+	)
 }
