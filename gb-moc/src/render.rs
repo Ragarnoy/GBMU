@@ -153,10 +153,18 @@ impl Triangle {
 		let dim = (dim.0 as f32, dim.1 as f32);
 		let actual_ratio = dim.0 / dim.1;
 
+		let free_dim = (dim.0, dim.1 - MENU_BAR_SIZE);
+		let free_ratio = dim.1 / free_dim.1;
+
 		let target_dim = if SCREEN_RATIO > actual_ratio {
 			(dim.0, dim.0 / SCREEN_RATIO)
 		} else {
-			(dim.1 * SCREEN_RATIO, dim.1)
+			let tmp_dim = (dim.1 * SCREEN_RATIO, dim.1);
+			if tmp_dim.1 > free_dim.1 {
+				(tmp_dim.0 / free_ratio, tmp_dim.1 / free_ratio)
+			} else {
+				tmp_dim
+			}
 		};
 		let final_dim = (target_dim.0 as u32, target_dim.1 as u32);
 
