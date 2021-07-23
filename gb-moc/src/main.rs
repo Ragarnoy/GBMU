@@ -1,3 +1,4 @@
+use nfd2::Response;
 use sdl2::{
     event::Event,
     keyboard::Keycode,
@@ -5,13 +6,10 @@ use sdl2::{
     EventPump, Sdl, VideoSubsystem,
 };
 
-const BAR_SIZE: f32 = 30.0;
-const SCREEN_WIDTH: u32 = 160;
-const SCREEN_HEIGHT: u32 = 144;
-const _SCREEN_RATIO: f32 = SCREEN_WIDTH as f32 / SCREEN_HEIGHT as f32;
+pub const MENU_BAR_SIZE: f32 = 30.0;
 
 mod error;
-mod triangle;
+mod render;
 mod window;
 
 fn init_system() -> Result<(Sdl, VideoSubsystem, EventPump), error::Error> {
@@ -41,7 +39,10 @@ fn main() {
 
     let mut gb_window = window::GBWindow::new(
         "GBMU",
-        (SCREEN_WIDTH, SCREEN_HEIGHT + BAR_SIZE as u32),
+        (
+            render::SCREEN_WIDTH,
+            render::SCREEN_HEIGHT + MENU_BAR_SIZE as u32,
+        ),
         true,
         &video_subsystem,
     )
@@ -53,7 +54,7 @@ fn main() {
         .set_minimum_size(width, height)
         .expect("Failed to configure main window");
 
-    let triangle = triangle::Triangle::new();
+    let mut triangle = render::Triangle::new();
 
     let mut debug_window = None;
 
@@ -68,7 +69,7 @@ fn main() {
         // set ui logic here
         egui::containers::TopBottomPanel::top("Top menu").show(gb_window.egui_ctx(), |ui| {
             egui::menu::bar(ui, |ui| {
-                ui.set_height(BAR_SIZE);
+                ui.set_height(MENU_BAR_SIZE);
                 if ui.button("Load").clicked() {
                     match nfd2::open_file_dialog(None, None).expect("oh no") {
                         Response::Okay(file_path) => println!("File path = {:?}", file_path),
@@ -122,6 +123,7 @@ fn main() {
                     sdl2::event::WindowEvent::SizeChanged(width, height) => {
                         if gb_window.sdl_window().id() == window_id {
                             gb_window.resize((width as u32, height as u32), &video_subsystem);
+                            triangle.resize(gb_window.sdl_window().size());
                         } else if let Some(ref mut dbg_wind) = debug_window {
                             if dbg_wind.sdl_window().id() == window_id {
                                 dbg_wind.resize((width as u32, height as u32), &video_subsystem);
