@@ -10,5 +10,5 @@ edition = "2018"
 sdl2 = { version = "0.34", features = ["bundled", "static-link"] }
 egui = { version = "0.13" }
 gl = { version = "0.14" }
-nfd2 = {version = "0.3" }
+rfd = { version = "0.4" }
 egui_sdl2_gl = { version = "0.13" }

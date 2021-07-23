@@ -1,4 +1,4 @@
-use nfd2::Response;
+use rfd::FileDialog;
 use sdl2::{
     event::Event,
     keyboard::Keycode,
@@ -71,11 +71,13 @@ fn main() {
             egui::menu::bar(ui, |ui| {
                 ui.set_height(MENU_BAR_SIZE);
                 if ui.button("Load").clicked() {
-                    match nfd2::open_file_dialog(None, None).expect("oh no") {
-                        Response::Okay(file_path) => println!("File path = {:?}", file_path),
-                        Response::OkayMultiple(files) => println!("Files {:?}", files),
-                        Response::Cancel => println!("User canceled"),
-                    }
+                    let files = FileDialog::new()
+                        .add_filter("rom", &["gb", "rom"])
+                        .set_directory(
+                            std::env::current_dir().unwrap_or(std::path::PathBuf::from("/")),
+                        )
+                        .pick_file();
+                    println!("picked file: {:?}", files);
                 }
                 if ui.button("Debug").clicked() {
                     if debug_window.is_none() {
@@ -112,6 +114,7 @@ fn main() {
             match event {
                 Event::Quit { .. }
                 | Event::KeyDown {
+                    // here for debug, maybe remove later ?
                     keycode: Some(Keycode::Escape),
                     ..
                 } => break 'running,
