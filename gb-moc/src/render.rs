@@ -170,19 +170,9 @@ impl Triangle {
 
 		self.scale = (final_dim.0 as f32 / dim.0, final_dim.1 as f32 / dim.1);
 		self.offset = (0.0, self.scale.1 - 1.0);
-
-		println!("scale: {:?};\t offset: {:?}", self.scale, self.offset);
-		println!("target dim: {:?};\t dim: {:?}", target_dim, dim);
-		println!(
-			"dim:\tx: {};\t y: {}",
-			self.scale.0 * dim.0,
-			self.scale.1 * dim.1
-		);
-		println!(
-			"off:\tx: {};\t y: {}",
-			self.offset.0 * dim.0,
-			self.offset.1 * dim.1
-		)
+		if SCREEN_RATIO > actual_ratio {
+			self.offset.1 += 1.0 * (free_dim.1 - target_dim.1) / dim.1;
+		}
 	}
 
 	pub fn draw(&self) {
