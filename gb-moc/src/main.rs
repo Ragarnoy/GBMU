@@ -1,47 +1,66 @@
-use sdl2::event::Event;
-use sdl2::keyboard::Keycode;
-use sdl2::video::GLProfile;
+use sdl2::{
+    event::Event,
+    keyboard::Keycode,
+    video::{gl_attr::GLAttr, GLProfile},
+    EventPump, Sdl, VideoSubsystem,
+};
 
 const BAR_SIZE: f32 = 30.0;
 const SCREEN_WIDTH: u32 = 160;
 const SCREEN_HEIGHT: u32 = 144;
-const SCREEN_RATIO: f32 = SCREEN_WIDTH as f32 / SCREEN_HEIGHT as f32;
+const _SCREEN_RATIO: f32 = SCREEN_WIDTH as f32 / SCREEN_HEIGHT as f32;
 
+mod error;
 mod triangle;
 mod window;
 
-fn main() {
-    println!("ratio: {}", SCREEN_RATIO);
-    let sdl_context = sdl2::init().unwrap();
-    let video_subsystem = sdl_context.video().unwrap();
+fn init_system() -> Result<(Sdl, VideoSubsystem, EventPump), error::Error> {
+    let sdl_context = sdl2::init().map_err(|err| error::Error::MainSys(err))?;
+    let video_subsystem = sdl_context
+        .video()
+        .map_err(|err| error::Error::MainSys(err))?;
 
+    let event_pump = sdl_context
+        .event_pump()
+        .map_err(|err| error::Error::MainSys(err))?;
+    Ok((sdl_context, video_subsystem, event_pump))
+}
+
+fn init_gl<'a>(video_subsystem: &'a VideoSubsystem) -> GLAttr<'a> {
     let gl_attr = video_subsystem.gl_attr();
     gl_attr.set_context_profile(GLProfile::Core);
-
     // OpenGL 3.3 is the minimum that we will support.
     gl_attr.set_context_version(3, 3);
+    return gl_attr;
+}
+
+fn main() {
+    let (_sdl_context, video_subsystem, mut event_pump) =
+        init_system().expect("Error while initializing SDL2");
+    let _gl_attr = init_gl(&video_subsystem);
 
     let mut gb_window = window::GBWindow::new(
         "GBMU",
         (SCREEN_WIDTH, SCREEN_HEIGHT + BAR_SIZE as u32),
         true,
         &video_subsystem,
-    );
+    )
+    .expect("Error while building main window");
     let (width, height) = gb_window.sdl_window().size();
 
     gb_window
         .sdl_window_mut()
         .set_minimum_size(width, height)
-        .unwrap();
-
-    let mut event_pump = sdl_context.event_pump().unwrap();
+        .expect("Failed to configure main window");
 
     let triangle = triangle::Triangle::new();
 
     let mut debug_window = None;
 
     'running: loop {
-        gb_window.start_frame();
+        gb_window
+            .start_frame()
+            .expect("Fail at the start for the main window");
 
         // emulation render here
         triangle.draw();
@@ -53,24 +72,33 @@ fn main() {
                 if ui.button("Load").clicked() {}
                 if ui.button("Debug").clicked() {
                     if debug_window.is_none() {
-                        debug_window = Some(window::GBWindow::new(
-                            "GBMU Debug",
-                            (800, 600),
-                            false,
-                            &video_subsystem,
-                        ));
+                        debug_window = Some(
+                            window::GBWindow::new(
+                                "GBMU Debug",
+                                (800, 600),
+                                false,
+                                &video_subsystem,
+                            )
+                            .expect("Error while building debug window"),
+                        );
                     }
                 }
             })
         });
-        gb_window.end_frame();
+        gb_window
+            .end_frame()
+            .expect("Fail at the end for the main window");
 
         if let Some(ref mut dgb_wind) = debug_window {
-            dgb_wind.start_frame();
+            dgb_wind
+                .start_frame()
+                .expect("Fail at the start for the debug window");
             egui::containers::CentralPanel::default().show(dgb_wind.egui_ctx(), |ui| {
                 ui.label("hello Debug");
             });
-            dgb_wind.end_frame();
+            dgb_wind
+                .end_frame()
+                .expect("Fail at the end for the debug window");
         }
 
         for event in event_pump.poll_iter() {

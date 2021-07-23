@@ -1,3 +1,4 @@
+use crate::error::Error;
 use egui::{vec2, CtxRef, Pos2, Rect};
 use egui_sdl2_gl::{EguiInputState, Painter};
 use sdl2::{
@@ -18,20 +19,33 @@ pub struct GBWindow {
 }
 
 impl GBWindow {
-	pub fn new(title: &str, dim: (u32, u32), resizable: bool, video_sys: &VideoSubsystem) -> Self {
+	pub fn new(
+		title: &str,
+		dim: (u32, u32),
+		resizable: bool,
+		video_sys: &VideoSubsystem,
+	) -> Result<Self, Error> {
 		let mut builder = video_sys.window(title, dim.0, dim.1);
 		builder.opengl();
 		if resizable {
 			builder.resizable();
 		}
-		let sdl_window = builder.build().unwrap();
+		let sdl_window = builder
+			.build()
+			.map_err(|err| Error::GBWindowInit(err.to_string()))?;
 
-		let gl_ctx = sdl_window.gl_create_context().unwrap();
+		let gl_ctx = sdl_window
+			.gl_create_context()
+			.map_err(|err| Error::GBWindowInit(err))?;
 
 		let egui_painter = Painter::new(video_sys, dim.0, dim.1);
 		let egui_ctx = CtxRef::default();
 
-		let native_pixels_per_point = 96f32 / video_sys.display_dpi(0).unwrap().0;
+		let native_pixels_per_point = 96f32
+			/ video_sys
+				.display_dpi(0)
+				.map_err(|err| Error::GBWindowInit(err))?
+				.0;
 
 		let egui_input_state = EguiInputState::new(egui::RawInput {
 			screen_rect: Some(Rect::from_min_size(
@@ -43,7 +57,7 @@ impl GBWindow {
 		});
 
 		let start_time = Instant::now();
-		Self {
+		Ok(Self {
 			sdl_window,
 			gl_ctx,
 			egui_painter,
@@ -51,7 +65,7 @@ impl GBWindow {
 			egui_input_state,
 			pixels_per_point: native_pixels_per_point,
 			start_time,
-		}
+		})
 	}
 
 	#[allow(dead_code)]
@@ -67,8 +81,10 @@ impl GBWindow {
 		&self.egui_ctx
 	}
 
-	pub fn start_frame(&mut self) {
-		self.sdl_window.gl_make_current(&self.gl_ctx).unwrap();
+	pub fn start_frame(&mut self) -> Result<(), Error> {
+		self.sdl_window
+			.gl_make_current(&self.gl_ctx)
+			.map_err(|err| Error::GBWindowFrame(err))?;
 		self.egui_input_state.input.time = Some(self.start_time.elapsed().as_secs_f64());
 		self.egui_ctx
 			.begin_frame(self.egui_input_state.input.take());
@@ -77,11 +93,14 @@ impl GBWindow {
 			// Clear the screen to black
 			gl::ClearColor(0.0, 0.0, 0.0, 1.0);
 			gl::Clear(gl::COLOR_BUFFER_BIT);
-		}
+		};
+		Ok(())
 	}
 
-	pub fn end_frame(&mut self) {
-		self.sdl_window.gl_make_current(&self.gl_ctx).unwrap();
+	pub fn end_frame(&mut self) -> Result<(), Error> {
+		self.sdl_window
+			.gl_make_current(&self.gl_ctx)
+			.map_err(|err| Error::GBWindowFrame(err))?;
 		let (egui_output, paint_cmds) = self.egui_ctx.end_frame();
 
 		//Handle cut, copy text from egui
@@ -99,6 +118,7 @@ impl GBWindow {
 		);
 
 		self.sdl_window.gl_swap_window();
+		Ok(())
 	}
 
 	pub fn resize(&mut self, dim: (u32, u32), video_sys: &VideoSubsystem) {
