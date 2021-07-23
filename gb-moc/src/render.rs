@@ -12,25 +12,8 @@ pub const SCREEN_RATIO: f32 = SCREEN_WIDTH as f32 / SCREEN_HEIGHT as f32;
 pub const TEXTURE_SIZE: usize = (SCREEN_WIDTH * SCREEN_HEIGHT) as usize;
 pub use crate::MENU_BAR_SIZE;
 
-const VS_SRC: &'static str = "
-#version 330
-uniform vec2 scale;
-uniform vec2 offset;
-in vec2 position;
-out vec2 text_coord;
-void main() {
-	text_coord = (position + 1.0) * 0.5;
-	gl_Position = vec4(position * scale + offset, 0.0, 1.0);
-}";
-
-const FS_SRC: &'static str = "
-#version 330
-in vec2 text_coord;
-uniform sampler2D render_texture;
-out vec4 out_color;
-void main() {
-    out_color = texture(render_texture, text_coord);
-}";
+const VS_SRC: &'static str = include_str!("render.vert");
+const FS_SRC: &'static str = include_str!("render.frag");
 
 static VERTEX_DATA: [GLfloat; 12] = [
 	-1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0,
