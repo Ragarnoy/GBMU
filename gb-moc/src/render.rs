@@ -2,12 +2,14 @@ use egui_sdl2_gl::gl;
 use egui_sdl2_gl::gl::types::*;
 use std::ffi::CString;
 use std::mem;
+use std::os::raw::c_void;
 use std::ptr;
 use std::str;
 
 pub const SCREEN_WIDTH: u32 = 160;
 pub const SCREEN_HEIGHT: u32 = 144;
 pub const SCREEN_RATIO: f32 = SCREEN_WIDTH as f32 / SCREEN_HEIGHT as f32;
+pub const TEXTURE_SIZE: usize = (SCREEN_WIDTH * SCREEN_HEIGHT) as usize;
 pub use crate::MENU_BAR_SIZE;
 
 const VS_SRC: &'static str = "
@@ -17,19 +19,22 @@ uniform vec2 offset;
 in vec2 position;
 out vec2 text_coord;
 void main() {
-	text_coord = position;
+	text_coord = (position + 1.0) * 0.5;
 	gl_Position = vec4(position * scale + offset, 0.0, 1.0);
 }";
 
 const FS_SRC: &'static str = "
 #version 330
 in vec2 text_coord;
+uniform sampler2D render_texture;
 out vec4 out_color;
 void main() {
-    out_color = vec4(1.0, 1.0, 1.0, 1.0);
+    out_color = texture(render_texture, text_coord);
 }";
 
-static VERTEX_DATA: [GLfloat; 6] = [-1.0, -1.0, 1.0, -1.0, 1.0, 1.0];
+static VERTEX_DATA: [GLfloat; 12] = [
+	-1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0,
+];
 
 pub struct Triangle {
 	pub vs: GLuint,
@@ -37,6 +42,7 @@ pub struct Triangle {
 	pub program: GLuint,
 	pub vao: GLuint,
 	pub vbo: GLuint,
+	pub texture_buffer: GLuint,
 	pub scale: (f32, f32),
 	pub offset: (f32, f32),
 }
@@ -118,6 +124,35 @@ impl Triangle {
 			gl::GenVertexArrays(1, &mut vao);
 			gl::GenBuffers(1, &mut vbo);
 		}
+		let mut texture_data: [[u8; 3]; TEXTURE_SIZE] = [[255; 3]; TEXTURE_SIZE];
+		for j in 0..SCREEN_HEIGHT {
+			for i in 0..SCREEN_WIDTH {
+				if (i + j) % 2 == 0 {
+					texture_data[(i + j * SCREEN_WIDTH) as usize] =
+						if j == 0 || j == SCREEN_HEIGHT - 1 || i == 0 || i == SCREEN_WIDTH - 1 {
+							[150, 50, 50]
+						} else {
+							[100; 3]
+						};
+				}
+			}
+		}
+		let mut texture_buffer = 0;
+		unsafe {
+			gl::GenTextures(1, &mut texture_buffer);
+			gl::BindTexture(gl::TEXTURE_2D, texture_buffer);
+			gl::TexImage2D(
+				gl::TEXTURE_2D,
+				0,
+				gl::RGB as i32,
+				160,
+				144,
+				0,
+				gl::RGB,
+				gl::UNSIGNED_BYTE,
+				&texture_data as *const _ as *const c_void,
+			);
+		}
 		Triangle {
 			// Create GLSL shaders
 			vs,
@@ -125,35 +160,44 @@ impl Triangle {
 			program,
 			vao,
 			vbo,
+			texture_buffer,
 			scale: (1.0, 0.82758623),
 			offset: (0.0, 0.82758623 - 1.0),
 		}
 	}
 
 	pub fn resize(&mut self, dim: (u32, u32)) {
-		let available_dim = (dim.0 as f32, dim.1 as f32 - MENU_BAR_SIZE);
-		let available_ratio = available_dim.0 / available_dim.1;
-		let target_dim = if SCREEN_RATIO > available_ratio {
-			(available_dim.0, available_dim.0 / SCREEN_RATIO)
+		let dim = (dim.0 as f32, dim.1 as f32);
+		let actual_ratio = dim.0 / dim.1;
+
+		let target_dim = if SCREEN_RATIO > actual_ratio {
+			(dim.0, dim.0 / SCREEN_RATIO)
 		} else {
-			(available_dim.1 * SCREEN_RATIO, available_dim.1)
+			(dim.1 * SCREEN_RATIO, dim.1)
 		};
-		// println!("target dim: {:?};\t dim: {:?}", target_dim, dim);
-		let final_dim = if target_dim.1 + MENU_BAR_SIZE > available_dim.1 {
-			(target_dim.0, target_dim.1 * target_dim.1 / dim.1 as f32)
-		} else {
-			target_dim
-		};
-		self.scale = (final_dim.0 / available_dim.0, final_dim.1 / available_dim.1);
+		let final_dim = (target_dim.0 as u32, target_dim.1 as u32);
+
+		self.scale = (final_dim.0 as f32 / dim.0, final_dim.1 as f32 / dim.1);
 		self.offset = (0.0, self.scale.1 - 1.0);
-		// if SCREEN_RATIO > available_ratio {
-		// 	self.offset.1 += 0.5 * (available_dim.1 / dim.1 as f32);
-		// }
-		// println!("scale: {:?};\t offset: {:?}", self.scale, self.offset);
+
+		println!("scale: {:?};\t offset: {:?}", self.scale, self.offset);
+		println!("target dim: {:?};\t dim: {:?}", target_dim, dim);
+		println!(
+			"dim:\tx: {};\t y: {}",
+			self.scale.0 * dim.0,
+			self.scale.1 * dim.1
+		);
+		println!(
+			"off:\tx: {};\t y: {}",
+			self.offset.0 * dim.0,
+			self.offset.1 * dim.1
+		)
 	}
 
 	pub fn draw(&self) {
 		unsafe {
+			gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
+			gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
 			gl::BindVertexArray(self.vao);
 
 			// Create a Vertex Buffer Object and copy the vertex data to it
@@ -181,6 +225,14 @@ impl Triangle {
 			let c_out_color = CString::new("out_color").unwrap();
 			gl::BindFragDataLocation(self.program, 0, c_out_color.as_ptr());
 
+			let uniform_loc = gl::GetUniformLocation(
+				self.program,
+				CString::new("render_texture").unwrap().as_c_str().as_ptr(),
+			);
+			gl::Uniform1i(uniform_loc, 1);
+			gl::ActiveTexture(gl::TEXTURE0 + 1);
+			gl::BindTexture(gl::TEXTURE_2D, self.texture_buffer);
+
 			// Specify the layout of the vertex data
 			let c_position = CString::new("position").unwrap();
 			let pos_attr = gl::GetAttribLocation(self.program, c_position.as_ptr());
@@ -195,7 +247,7 @@ impl Triangle {
 			);
 
 			// Draw a triangle from the 3 vertices
-			gl::DrawArrays(gl::TRIANGLES, 0, 3);
+			gl::DrawArrays(gl::TRIANGLES, 0, 6);
 		}
 	}
 }
@@ -208,6 +260,7 @@ impl Drop for Triangle {
 			gl::DeleteShader(self.vs);
 			gl::DeleteBuffers(1, &self.vbo);
 			gl::DeleteVertexArrays(1, &self.vao);
+			gl::DeleteTextures(1, &self.texture_buffer);
 		}
 	}
 }
