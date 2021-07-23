@@ -1,17 +1,14 @@
-use egui_sdl2_gl as egui_backend;
-
-use egui_backend::sdl2::event::Event;
-use egui_backend::sdl2::video::GLProfile;
-use egui_backend::{egui, gl, sdl2};
-use std::time::Instant;
-
-use egui_backend::egui::{vec2, Pos2, Rect};
+use sdl2::event::Event;
+use sdl2::keyboard::Keycode;
+use sdl2::video::GLProfile;
 
 const BAR_SIZE: f32 = 30.0;
 const SCREEN_WIDTH: u32 = 160;
 const SCREEN_HEIGHT: u32 = 144;
 const SCREEN_RATIO: f32 = SCREEN_WIDTH as f32 / SCREEN_HEIGHT as f32;
+
 mod triangle;
+mod window;
 
 fn main() {
     println!("ratio: {}", SCREEN_RATIO);
@@ -24,117 +21,95 @@ fn main() {
     // OpenGL 3.3 is the minimum that we will support.
     gl_attr.set_context_version(3, 3);
 
-    let mut window = video_subsystem
-        .window("GBMU", SCREEN_WIDTH, SCREEN_HEIGHT + BAR_SIZE as u32)
-        // .resizable()
-        .opengl()
-        .build()
+    let mut gb_window = window::GBWindow::new(
+        "GBMU",
+        (SCREEN_WIDTH, SCREEN_HEIGHT + BAR_SIZE as u32),
+        true,
+        &video_subsystem,
+    );
+    let (width, height) = gb_window.sdl_window().size();
+
+    gb_window
+        .sdl_window_mut()
+        .set_minimum_size(width, height)
         .unwrap();
-
-    window
-        .set_minimum_size(SCREEN_WIDTH, SCREEN_HEIGHT + BAR_SIZE as u32)
-        .unwrap();
-
-    // Create a window context
-    let _ctx = window.gl_create_context().unwrap();
-    let (width, height) = window.size();
-
-    let mut painter = egui_backend::Painter::new(&video_subsystem, width, height);
-    let mut egui_ctx = egui::CtxRef::default();
-
-    debug_assert_eq!(gl_attr.context_profile(), GLProfile::Core);
-    debug_assert_eq!(gl_attr.context_version(), (3, 3));
 
     let mut event_pump = sdl_context.event_pump().unwrap();
-    let native_pixels_per_point = 96f32 / video_subsystem.display_dpi(0).unwrap().0;
 
-    let mut egui_input_state = egui_backend::EguiInputState::new(egui::RawInput {
-        screen_rect: Some(Rect::from_min_size(
-            Pos2::new(0f32, 0f32),
-            vec2(width as f32, height as f32) / native_pixels_per_point,
-        )),
-        pixels_per_point: Some(native_pixels_per_point),
-        ..Default::default()
-    });
-    let start_time = Instant::now();
-
-    //We will draw a crisp white triangle using OpenGL.
     let triangle = triangle::Triangle::new();
 
+    let mut debug_window = None;
+
     'running: loop {
-        egui_input_state.input.time = Some(start_time.elapsed().as_secs_f64());
-        egui_ctx.begin_frame(egui_input_state.input.take());
+        gb_window.start_frame();
 
-        //In egui 0.10.0 we seem to be losing the value to pixels_per_point,
-        //so setting it every frame now.
-        //TODO: Investigate if this is the right way.
-        egui_input_state.input.pixels_per_point = Some(native_pixels_per_point);
-
-        //An example of how OpenGL can be used to draw custom stuff with egui
-        //overlaying it:
-        //First clear the background to something nice.
-        unsafe {
-            // Clear the screen to black
-            gl::ClearColor(0.0, 0.0, 0.0, 1.0);
-            gl::Clear(gl::COLOR_BUFFER_BIT);
-        }
-        //Then draw our triangle.
+        // emulation render here
         triangle.draw();
 
-        egui::containers::TopBottomPanel::top("Top menu").show(&egui_ctx, |ui| {
+        // set ui logic here
+        egui::containers::TopBottomPanel::top("Top menu").show(gb_window.egui_ctx(), |ui| {
             egui::menu::bar(ui, |ui| {
                 ui.set_height(BAR_SIZE);
                 if ui.button("Load").clicked() {}
-                if ui.button("Debug").clicked() {}
+                if ui.button("Debug").clicked() {
+                    if debug_window.is_none() {
+                        debug_window = Some(window::GBWindow::new(
+                            "GBMU Debug",
+                            (800, 600),
+                            false,
+                            &video_subsystem,
+                        ));
+                    }
+                }
             })
         });
+        gb_window.end_frame();
 
-        let (egui_output, paint_cmds) = egui_ctx.end_frame();
-
-        //Handle cut, copy text from egui
-        if !egui_output.copied_text.is_empty() {
-            egui_backend::copy_to_clipboard(&mut egui_input_state, egui_output.copied_text);
+        if let Some(ref mut dgb_wind) = debug_window {
+            dgb_wind.start_frame();
+            egui::containers::CentralPanel::default().show(dgb_wind.egui_ctx(), |ui| {
+                ui.label("hello Debug");
+            });
+            dgb_wind.end_frame();
         }
 
-        let paint_jobs = egui_ctx.tessellate(paint_cmds);
-
-        //Note: passing a bg_color to paint_jobs will clear any previously drawn stuff.
-        //Use this only if egui is being used for all drawing and you aren't mixing your own Open GL
-        //drawing calls with it.
-        //Since we are custom drawing an OpenGL Triangle we don't need egui to clear the background.
-        painter.paint_jobs(
-            None,
-            paint_jobs,
-            &egui_ctx.texture(),
-            native_pixels_per_point,
-        );
-
-        window.gl_swap_window();
-
-        //Using regular SDL2 event pipeline
         for event in event_pump.poll_iter() {
             match event {
-                Event::Quit { .. } => break 'running,
-                Event::Window { win_event, .. } => match win_event {
+                Event::Quit { .. }
+                | Event::KeyDown {
+                    keycode: Some(Keycode::Escape),
+                    ..
+                } => break 'running,
+                Event::Window {
+                    win_event,
+                    window_id,
+                    ..
+                } => match win_event {
                     sdl2::event::WindowEvent::SizeChanged(width, height) => {
-                        painter = egui_backend::Painter::new(
-                            &video_subsystem,
-                            width as u32,
-                            height as u32,
-                        );
-                        egui_input_state = egui_backend::EguiInputState::new(egui::RawInput {
-                            screen_rect: Some(Rect::from_min_size(
-                                Pos2::new(0f32, 0f32),
-                                vec2(width as f32, height as f32) / native_pixels_per_point,
-                            )),
-                            pixels_per_point: Some(native_pixels_per_point),
-                            ..Default::default()
-                        });
+                        if gb_window.sdl_window().id() == window_id {
+                            gb_window.resize((width as u32, height as u32), &video_subsystem);
+                        } else if let Some(ref mut dbg_wind) = debug_window {
+                            if dbg_wind.sdl_window().id() == window_id {
+                                dbg_wind.resize((width as u32, height as u32), &video_subsystem);
+                            }
+                        }
+                    }
+                    sdl2::event::WindowEvent::Close => {
+                        if gb_window.sdl_window().id() == window_id {
+                            break 'running;
+                        } else if let Some(ref mut dbg_wind) = debug_window {
+                            if dbg_wind.sdl_window().id() == window_id {
+                                debug_window = None;
+                            }
+                        }
                     }
                     _ => {}
                 },
                 _ => {
-                    egui_backend::input_to_egui(event, &mut egui_input_state);
+                    if let Some(ref mut dbg_wind) = debug_window {
+                        dbg_wind.send_event(event.clone());
+                    }
+                    gb_window.send_event(event);
                 }
             }
         }

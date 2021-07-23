@@ -423,6 +423,7 @@ version = "0.1.0"
 dependencies = [
  "egui",
  "egui_sdl2_gl",
+ "gl",
  "sdl2",
 ]
 
