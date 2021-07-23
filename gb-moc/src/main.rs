@@ -69,7 +69,13 @@ fn main() {
         egui::containers::TopBottomPanel::top("Top menu").show(gb_window.egui_ctx(), |ui| {
             egui::menu::bar(ui, |ui| {
                 ui.set_height(BAR_SIZE);
-                if ui.button("Load").clicked() {}
+                if ui.button("Load").clicked() {
+                    match nfd2::open_file_dialog(None, None).expect("oh no") {
+                        Response::Okay(file_path) => println!("File path = {:?}", file_path),
+                        Response::OkayMultiple(files) => println!("Files {:?}", files),
+                        Response::Cancel => println!("User canceled"),
+                    }
+                }
                 if ui.button("Debug").clicked() {
                     if debug_window.is_none() {
                         debug_window = Some(

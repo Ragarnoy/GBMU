@@ -424,6 +424,7 @@ dependencies = [
  "egui",
  "egui_sdl2_gl",
  "gl",
+ "nfd2",
  "sdl2",
 ]
 
@@ -586,6 +587,15 @@ checksum = "a92518e98c078586bc6c934028adcca4c92a53d6a958196de835170a01d84e4b"
 dependencies = [
  "adler",
  "autocfg",
+]
+
+[[package]]
+name = "nfd2"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "306127f5ff8cb7c8cd3a8cf0fc162f4dc76ed589efa01ee84eb5593e7be97f75"
+dependencies = [
+ "cc",
 ]
 
 [[package]]
