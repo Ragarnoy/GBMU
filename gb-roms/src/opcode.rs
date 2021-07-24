@@ -30,8 +30,10 @@ pub enum Opcode {
 	Nop,
 	Stop,
 
-	/// load value from **left** and load it to **right**
-	Ld(Value, Value),
+	Add(Store, Value),
+
+	/// load value from **Store** and load it to **Store**
+	Ld(Store, Value),
 }
 
 impl fmt::Display for Opcode {
@@ -46,6 +48,9 @@ impl fmt::Display for Opcode {
 
 			Opcode::Nop => write!(f, "nop"),
 			Opcode::Stop => write!(f, "stop"),
+
+			Opcode::Add(s, v) => write!(f, "add {}, {}", s, v),
+
 			Opcode::Ld(from, to) => write!(f, "ld {}, {}", from, to),
 		}
 	}
@@ -67,8 +72,8 @@ fn test_display_opcode() {
 	assert_eq!(Opcode::Stop.to_string(), "stop");
 	assert_eq!(
 		Opcode::Ld(
-			Value::Indirect(0x123),
-			Value::Register(RegisterSpecial::SP.into())
+			Store::Indirect(0x123),
+			Store::Register(RegisterSpecial::SP.into())
 		)
 		.to_string(),
 		"ld (123), SP"
@@ -76,26 +81,46 @@ fn test_display_opcode() {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub enum Value {
+pub enum Store {
+	/// Register Id
 	Register(Register),
+	/// Addresse in memory (should be!)
 	Indirect(u16),
 }
 
-impl fmt::Display for Value {
+impl From<Register> for Store {
+	fn from(r: Register) -> Self {
+		Self::Register(r)
+	}
+}
+
+impl From<u16> for Store {
+	fn from(v: u16) -> Self {
+		Self::Indirect(v)
+	}
+}
+
+impl fmt::Display for Store {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		match self {
-			Value::Register(reg) => write!(f, "{}", reg),
-			Value::Indirect(addr) => write!(f, "({:x})", addr),
+			Store::Register(reg) => write!(f, "{}", reg),
+			Store::Indirect(addr) => write!(f, "({:x})", addr),
 		}
 	}
 }
 
 #[test]
-fn test_value_display() {
+fn test_store_display() {
 	use register::Register8Bits;
 
-	assert_eq!(Value::Register(Register8Bits::A.into()).to_string(), "A");
-	assert_eq!(Value::Indirect(0x3a).to_string(), "(3a)");
+	assert_eq!(Store::Register(Register8Bits::A.into()).to_string(), "A");
+	assert_eq!(Store::Indirect(0x3a).to_string(), "(3a)");
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum Value {
+	Register(Register),
+	Value(u16),
 }
 
 pub struct OpcodeGenerator<It>
@@ -113,6 +138,19 @@ where
 		Self { stream }
 	}
 
+	fn get_d(&mut self) -> Option<i8> {
+		self.stream.next().map(|r| r as i8)
+	}
+
+	fn get_n(&mut self) -> Option<u8> {
+		self.stream.next()
+	}
+
+	fn get_nn(&mut self) -> Option<u16> {
+		let bytes: [u8; 2] = [self.stream.next()?, self.stream.next()?];
+		Some(u16::from_le_bytes(bytes))
+	}
+
 	fn decode_x(&mut self, v: u8, o: OpcodeBits) -> Result<Opcode, Error> {
 		match o.x() {
 			0 => self.decode_0_z(v, o),
@@ -126,6 +164,7 @@ where
 	fn decode_0_z(&mut self, v: u8, o: OpcodeBits) -> Result<Opcode, Error> {
 		match o.z() {
 			0 => self.decode_0_0_y(v, o),
+			1 => self.decode_0_1_y(v, o),
 			_ => Err(Error::UnknownOpcode(v)),
 		}
 	}
@@ -137,18 +176,17 @@ where
 			0 => Ok(Opcode::Nop),
 			1 => {
 				use register::RegisterSpecial;
-				let bytes: [u8; 2] = [self.stream.next().unwrap(), self.stream.next().unwrap()];
-				let indirect = Value::Indirect(u16::from_le_bytes(bytes));
+				let indirect = Store::Indirect(self.get_nn().unwrap());
 
 				Ok(Opcode::Ld(
 					indirect,
-					Value::Register(RegisterSpecial::SP.into()),
+					Store::Register(RegisterSpecial::SP.into()),
 				))
 			}
 			2 => Ok(Opcode::Stop),
-			3 => Ok(Opcode::JumpR(self.stream.next().unwrap() as i8)),
+			3 => Ok(Opcode::JumpR(self.get_d().expect("jump relative"))),
 			4..=7 => {
-				let value = self.stream.next().unwrap() as i8;
+				let value = self.get_d().expect("jump relative condition value");
 
 				match ConditionalTable::try_from(y - 4).expect("jump relative condition") {
 					ConditionalTable::NZ => Ok(Opcode::JumpRNZero(value)),
@@ -157,6 +195,17 @@ where
 					ConditionalTable::C => Ok(Opcode::JumpRCarry(value)),
 				}
 			}
+			_ => Err(Error::UnknownOpcode(v)),
+		}
+	}
+
+	fn decode_0_1_y(&mut self, v: u8, o: OpcodeBits) -> Result<Opcode, Error> {
+		match o.q() {
+			0 => Ok(Opcode::Ld(
+				Register::from_rp1_table(o.p()).unwrap().into(),
+				self.get_nn().expect("ld right value").into(),
+			)),
+			// 1 => Ok(Opcode::)
 			_ => Err(Error::UnknownOpcode(v)),
 		}
 	}
@@ -170,10 +219,7 @@ where
 
 	fn decode_3_3_y(&mut self, v: u8, o: OpcodeBits) -> Result<Opcode, Error> {
 		match o.y() {
-			0 => {
-				let bytes: [u8; 2] = [self.stream.next().unwrap(), self.stream.next().unwrap()];
-				Ok(Opcode::Jump(u16::from_le_bytes(bytes)))
-			}
+			0 => Ok(Opcode::Jump(self.get_nn().expect("jump"))),
 			_ => Err(Error::UnknownOpcode(v)),
 		}
 	}
@@ -361,7 +407,7 @@ where
 #[cfg(test)]
 mod test_convert_opcode {
 	use super::register::RegisterSpecial;
-	use super::{Opcode, OpcodeGenerator, Value};
+	use super::{Opcode, OpcodeGenerator, Store};
 
 	#[test]
 	fn test_convert_opcode() {
@@ -380,8 +426,8 @@ mod test_convert_opcode {
 		assert_eq!(
 			OpcodeGenerator::from(vec![0x8, 0x34, 0x12].into_iter()).next(),
 			Some(Ok(Opcode::Ld(
-				Value::Indirect(0x1234),
-				Value::Register(RegisterSpecial::SP.into())
+				Store::Indirect(0x1234),
+				Store::Register(RegisterSpecial::SP.into())
 			)))
 		);
 	}
