@@ -1,16 +1,16 @@
 mod error;
-mod table;
+mod register;
 
 use error::Error;
 use modular_bitfield::{
 	bitfield,
 	specifiers::{B2, B3},
 };
+use register::Register;
 use std::{
 	convert::{From, TryFrom},
 	fmt,
 };
-use table::Register;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Opcode {
@@ -53,7 +53,7 @@ impl fmt::Display for Opcode {
 
 #[test]
 fn test_display_opcode() {
-	use table::RegisterSpecial;
+	use register::RegisterSpecial;
 
 	assert_eq!(Opcode::Jump(0x150).to_string(), "jmp 150");
 
@@ -92,7 +92,7 @@ impl fmt::Display for Value {
 
 #[test]
 fn test_value_display() {
-	use table::Register8Bits;
+	use register::Register8Bits;
 
 	assert_eq!(Value::Register(Register8Bits::A.into()).to_string(), "A");
 	assert_eq!(Value::Indirect(0x3a).to_string(), "(3a)");
@@ -136,7 +136,7 @@ where
 		match y {
 			0 => Ok(Opcode::Nop),
 			1 => {
-				use table::RegisterSpecial;
+				use register::RegisterSpecial;
 				let bytes: [u8; 2] = [self.stream.next().unwrap(), self.stream.next().unwrap()];
 				let indirect = Value::Indirect(u16::from_le_bytes(bytes));
 
@@ -240,7 +240,7 @@ where
 
 #[cfg(test)]
 mod test_convert_opcode {
-	use super::table::RegisterSpecial;
+	use super::register::RegisterSpecial;
 	use super::{Opcode, OpcodeGenerator, Value};
 
 	#[test]
