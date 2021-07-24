@@ -1,9 +1,4 @@
-use std::{
-	convert::{From, TryFrom},
-	fmt,
-};
-
-use super::error::Error;
+use std::{convert::From, fmt};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Register {
@@ -11,6 +6,72 @@ pub enum Register {
 	Bits16(Register16Bits),
 	Special(RegisterSpecial),
 	Flag(RegisterFlag),
+}
+
+impl Register {
+	pub fn from_r_table(v: u8) -> Option<Self> {
+		match v {
+			0b000 => Some(Register8Bits::B.into()),
+			0b001 => Some(Register8Bits::C.into()),
+			0b010 => Some(Register8Bits::D.into()),
+			0b011 => Some(Register8Bits::E.into()),
+			0b100 => Some(Register8Bits::H.into()),
+			0b101 => Some(Register8Bits::L.into()),
+			0b110 => Some(Register16Bits::HL.into()),
+			0b111 => Some(Register8Bits::A.into()),
+			_ => None,
+		}
+	}
+
+	pub fn from_rp1_table(v: u8) -> Option<Self> {
+		match v {
+			0 => Some(Register16Bits::BC.into()),
+			1 => Some(Register16Bits::DE.into()),
+			2 => Some(Register16Bits::HL.into()),
+			3 => Some(RegisterSpecial::SP.into()),
+			_ => None,
+		}
+	}
+
+	pub fn from_rp2_table(v: u8) -> Option<Self> {
+		match v {
+			0 => Some(Register16Bits::BC.into()),
+			1 => Some(Register16Bits::DE.into()),
+			2 => Some(Register16Bits::HL.into()),
+			3 => Some(Register16Bits::AF.into()),
+			_ => None,
+		}
+	}
+}
+
+#[test]
+fn test_register_from_table_r() {
+	assert_eq!(Register::from_r_table(0), Some(Register8Bits::B.into()));
+	assert_eq!(Register::from_r_table(1), Some(Register8Bits::C.into()));
+	assert_eq!(Register::from_r_table(2), Some(Register8Bits::D.into()));
+	assert_eq!(Register::from_r_table(3), Some(Register8Bits::E.into()));
+	assert_eq!(Register::from_r_table(4), Some(Register8Bits::H.into()));
+	assert_eq!(Register::from_r_table(5), Some(Register8Bits::L.into()));
+	assert_eq!(Register::from_r_table(7), Some(Register8Bits::A.into()));
+}
+
+#[test]
+fn test_register_from_table_rp1() {
+	assert_eq!(Register::from_rp1_table(0), Some(Register16Bits::BC.into()));
+	assert_eq!(Register::from_rp1_table(1), Some(Register16Bits::DE.into()));
+	assert_eq!(Register::from_rp1_table(2), Some(Register16Bits::HL.into()));
+	assert_eq!(
+		Register::from_rp1_table(3),
+		Some(RegisterSpecial::SP.into())
+	);
+}
+
+#[test]
+fn test_register_from_table_rp2() {
+	assert_eq!(Register::from_rp2_table(0), Some(Register16Bits::BC.into()));
+	assert_eq!(Register::from_rp2_table(1), Some(Register16Bits::DE.into()));
+	assert_eq!(Register::from_rp2_table(2), Some(Register16Bits::HL.into()));
+	assert_eq!(Register::from_rp2_table(3), Some(Register16Bits::AF.into()));
 }
 
 impl fmt::Display for Register {
@@ -59,34 +120,6 @@ pub enum Register8Bits {
 	F,
 	H,
 	L,
-}
-
-impl TryFrom<u8> for Register8Bits {
-	type Error = Error;
-
-	fn try_from(v: u8) -> Result<Self, Self::Error> {
-		match v {
-			0b000 => Ok(Register8Bits::B),
-			0b001 => Ok(Register8Bits::C),
-			0b010 => Ok(Register8Bits::D),
-			0b011 => Ok(Register8Bits::E),
-			0b100 => Ok(Register8Bits::H),
-			0b101 => Ok(Register8Bits::L),
-			0b111 => Ok(Register8Bits::A),
-			_ => Err(Error::InvalidRegisterValue(v)),
-		}
-	}
-}
-
-#[test]
-fn test_register8bits_convert() {
-	assert_eq!(Register8Bits::try_from(0), Ok(Register8Bits::B));
-	assert_eq!(Register8Bits::try_from(1), Ok(Register8Bits::C));
-	assert_eq!(Register8Bits::try_from(2), Ok(Register8Bits::D));
-	assert_eq!(Register8Bits::try_from(3), Ok(Register8Bits::E));
-	assert_eq!(Register8Bits::try_from(4), Ok(Register8Bits::H));
-	assert_eq!(Register8Bits::try_from(5), Ok(Register8Bits::L));
-	assert_eq!(Register8Bits::try_from(7), Ok(Register8Bits::A));
 }
 
 impl fmt::Display for Register8Bits {
