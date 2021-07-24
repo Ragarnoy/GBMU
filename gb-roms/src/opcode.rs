@@ -15,6 +15,14 @@ pub enum Opcode {
 	Jump(u16),
 	/// relative jump to PC + value
 	JumpR(i8),
+	/// relative jump to PC + value when flag Z is unset
+	JumpRNZero(i8),
+	/// relative jump to PC + value when flag Z is set
+	JumpRZero(i8),
+	/// relative jump to PC + value when flag C is unset
+	JumpRCarry(i8),
+	/// relative jump to PC + value when flag C is set
+	JumpRNCarry(i8),
 
 	Nop,
 	Stop,
@@ -28,6 +36,11 @@ impl fmt::Display for Opcode {
 		match self {
 			Opcode::Jump(addr) => write!(f, "jmp {:x}", addr),
 			Opcode::JumpR(value) => write!(f, "jr {:x}", value),
+			Opcode::JumpRNZero(value) => write!(f, "jrnz {:x}", value),
+			Opcode::JumpRZero(value) => write!(f, "jrz {:x}", value),
+			Opcode::JumpRNCarry(value) => write!(f, "jrnc {:x}", value),
+			Opcode::JumpRCarry(value) => write!(f, "jrc {:x}", value),
+
 			Opcode::Nop => write!(f, "nop"),
 			Opcode::Stop => write!(f, "stop"),
 			Opcode::Ld(from, to) => write!(f, "ld {}, {}", from, to),
@@ -38,7 +51,13 @@ impl fmt::Display for Opcode {
 #[test]
 fn test_display_opcode() {
 	assert_eq!(Opcode::Jump(0x150).to_string(), "jmp 150");
+
 	assert_eq!(Opcode::JumpR(0x42).to_string(), "jr 42");
+	assert_eq!(Opcode::JumpRNZero(0x42).to_string(), "jrnz 42");
+	assert_eq!(Opcode::JumpRZero(0x42).to_string(), "jrz 42");
+	assert_eq!(Opcode::JumpRNCarry(0x42).to_string(), "jrnc 42");
+	assert_eq!(Opcode::JumpRCarry(0x42).to_string(), "jrc 42");
+
 	assert_eq!(Opcode::Nop.to_string(), "nop");
 	assert_eq!(Opcode::Stop.to_string(), "stop");
 	assert_eq!(
@@ -101,7 +120,9 @@ where
 	}
 
 	fn decode_0_0_y(&mut self, v: u8, o: OpcodeBits) -> Result<Opcode, Error> {
-		match o.y() {
+		let y = o.y();
+
+		match y {
 			0 => Ok(Opcode::Nop),
 			1 => {
 				let bytes: [u8; 2] = [self.stream.next().unwrap(), self.stream.next().unwrap()];
@@ -111,6 +132,17 @@ where
 			}
 			2 => Ok(Opcode::Stop),
 			3 => Ok(Opcode::JumpR(self.stream.next().unwrap() as i8)),
+			4..=7 => {
+				let value = self.stream.next().unwrap() as i8;
+
+				match y - 4 {
+					0 => Ok(Opcode::JumpRNZero(value)),
+					1 => Ok(Opcode::JumpRZero(value)),
+					2 => Ok(Opcode::JumpRNCarry(value)),
+					3 => Ok(Opcode::JumpRCarry(value)),
+					_ => unreachable!("jump relative condition"),
+				}
+			}
 			_ => Err(Error::UnknownOpcode(v)),
 		}
 	}
@@ -162,29 +194,54 @@ where
 	}
 }
 
-#[test]
-fn test_convert_opcode() {
-	assert_eq!(
-		OpcodeGenerator::from(vec![0xc3, 0x50, 0x01].into_iter()).next(),
-		Some(Ok(Opcode::Jump(0x150)))
-	);
-	assert_eq!(
-		OpcodeGenerator::from(vec![0x18, (-24_i8).to_le_bytes()[0]].into_iter()).next(),
-		Some(Ok(Opcode::JumpR(-24)))
-	);
-	assert_eq!(
-		OpcodeGenerator::from(vec![0x0].into_iter()).next(),
-		Some(Ok(Opcode::Nop))
-	);
-	assert_eq!(
-		OpcodeGenerator::from(vec![0x10].into_iter()).next(),
-		Some(Ok(Opcode::Stop))
-	);
-	assert_eq!(
-		OpcodeGenerator::from(vec![0x8, 0x34, 0x12].into_iter()).next(),
-		Some(Ok(Opcode::Ld(
-			Value::Indirect(0x1234),
-			Value::Register(Register::SP)
-		)))
-	);
+#[cfg(test)]
+mod test_convert_opcode {
+	use super::{Opcode, OpcodeGenerator, Register, Value};
+
+	#[test]
+	fn test_convert_opcode() {
+		assert_eq!(
+			OpcodeGenerator::from(vec![0xc3, 0x50, 0x01].into_iter()).next(),
+			Some(Ok(Opcode::Jump(0x150)))
+		);
+		assert_eq!(
+			OpcodeGenerator::from(vec![0x0].into_iter()).next(),
+			Some(Ok(Opcode::Nop))
+		);
+		assert_eq!(
+			OpcodeGenerator::from(vec![0x10].into_iter()).next(),
+			Some(Ok(Opcode::Stop))
+		);
+		assert_eq!(
+			OpcodeGenerator::from(vec![0x8, 0x34, 0x12].into_iter()).next(),
+			Some(Ok(Opcode::Ld(
+				Value::Indirect(0x1234),
+				Value::Register(Register::SP)
+			)))
+		);
+	}
+
+	#[test]
+	fn test_relative_jump() {
+		assert_eq!(
+			OpcodeGenerator::from(vec![0x18, (-24_i8).to_le_bytes()[0]].into_iter()).next(),
+			Some(Ok(Opcode::JumpR(-24)))
+		);
+		assert_eq!(
+			OpcodeGenerator::from(vec![0x20, (-24_i8).to_le_bytes()[0]].into_iter()).next(),
+			Some(Ok(Opcode::JumpRNZero(-24)))
+		);
+		assert_eq!(
+			OpcodeGenerator::from(vec![0x28, (-24_i8).to_le_bytes()[0]].into_iter()).next(),
+			Some(Ok(Opcode::JumpRZero(-24)))
+		);
+		assert_eq!(
+			OpcodeGenerator::from(vec![0x30, (-24_i8).to_le_bytes()[0]].into_iter()).next(),
+			Some(Ok(Opcode::JumpRNCarry(-24)))
+		);
+		assert_eq!(
+			OpcodeGenerator::from(vec![0x38, (-24_i8).to_le_bytes()[0]].into_iter()).next(),
+			Some(Ok(Opcode::JumpRCarry(-24)))
+		);
+	}
 }
