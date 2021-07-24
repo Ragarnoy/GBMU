@@ -4,10 +4,10 @@ use super::error::Error;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Register {
-	// Accumulator 8-bits register
+	/// Accumulator 8-bits register
 	A,
 
-	// Auxiliary 8-bits register
+	/// Auxiliary 8-bits register
 	B,
 	C,
 	D,
@@ -16,13 +16,13 @@ pub enum Register {
 	H,
 	L,
 
-	// Auxiliary 16-bits register
+	/// Auxiliary 16-bits register
 	HL,
 
-	// Program Counter 16-bits register
+	/// Program Counter 16-bits register
 	PC,
 
-	// Stack Pointer 16-bits register
+	/// Stack Pointer 16-bits register
 	SP,
 }
 
