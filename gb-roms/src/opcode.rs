@@ -198,7 +198,7 @@ enum ConditionalTable {
 impl TryFrom<u8> for ConditionalTable {
 	type Error = ();
 
-	fn try_from(v: u8) -> Result<Self, ()> {
+	fn try_from(v: u8) -> Result<Self, Self::Error> {
 		match v {
 			0 => Ok(Self::NZ),
 			1 => Ok(Self::Z),
@@ -215,6 +215,114 @@ fn test_conditional_table_convert() {
 	assert_eq!(ConditionalTable::try_from(1), Ok(ConditionalTable::Z));
 	assert_eq!(ConditionalTable::try_from(2), Ok(ConditionalTable::NC));
 	assert_eq!(ConditionalTable::try_from(3), Ok(ConditionalTable::C));
+}
+
+/// Arithmetic / Logic Table
+#[derive(Debug, PartialEq, Eq)]
+enum ALTable {
+	/// Add n to X
+	Add,
+	/// Add n + Carry to X
+	Adc,
+	/// Sub n to X
+	Sub,
+	/// Sub n + Carry to X
+	Sbc,
+	/// And n with X
+	And,
+	/// Xor n with X
+	Xor,
+	/// Or n with X
+	Or,
+	/// Compare n with X
+	/// This is basically X - n where the results are thrown away
+	Cmp,
+}
+
+impl TryFrom<u8> for ALTable {
+	type Error = ();
+
+	fn try_from(v: u8) -> Result<Self, Self::Error> {
+		match v {
+			0 => Ok(Self::Add),
+			1 => Ok(Self::Adc),
+			2 => Ok(Self::Sub),
+			3 => Ok(Self::Sbc),
+			4 => Ok(Self::And),
+			5 => Ok(Self::Xor),
+			6 => Ok(Self::Or),
+			7 => Ok(Self::Cmp),
+			_ => Err(()),
+		}
+	}
+}
+
+#[test]
+fn test_al_table_convert() {
+	assert_eq!(ALTable::try_from(0), Ok(ALTable::Add));
+	assert_eq!(ALTable::try_from(1), Ok(ALTable::Adc));
+	assert_eq!(ALTable::try_from(2), Ok(ALTable::Sub));
+	assert_eq!(ALTable::try_from(3), Ok(ALTable::Sbc));
+	assert_eq!(ALTable::try_from(4), Ok(ALTable::And));
+	assert_eq!(ALTable::try_from(5), Ok(ALTable::Xor));
+	assert_eq!(ALTable::try_from(6), Ok(ALTable::Or));
+	assert_eq!(ALTable::try_from(7), Ok(ALTable::Cmp));
+}
+
+/// Rotation / Shift Table
+#[derive(Debug, PartialEq, Eq)]
+enum RotTable {
+	/// Rotate left
+	/// The old 7th bit put in carry
+	Rlc,
+	/// Rotate right
+	/// The old 0th bit put in carry
+	Rrc,
+	/// Rotate left through Carry flag
+	Rl,
+	/// Rotate right through carry flag
+	Rr,
+	/// Shift left into Carry
+	/// LSB of n set to 0
+	Sla,
+	/// Shift right into Carry
+	/// MSB doesn't change
+	Sra,
+	/// Swap upper & lower nibles of n
+	Swap,
+	/// Shift right into Carry
+	/// MSB set to 0
+	Srl,
+}
+
+impl TryFrom<u8> for RotTable {
+	type Error = ();
+
+	fn try_from(v: u8) -> Result<Self, Self::Error> {
+		match v {
+			0 => Ok(RotTable::Rlc),
+			1 => Ok(RotTable::Rrc),
+			2 => Ok(RotTable::Rl),
+			3 => Ok(RotTable::Rr),
+			4 => Ok(RotTable::Sla),
+			5 => Ok(RotTable::Sra),
+			6 => Ok(RotTable::Swap),
+			7 => Ok(RotTable::Srl),
+			_ => Err(()),
+		}
+	}
+}
+
+#[test]
+fn test_rot_table_convert() {
+	assert_eq!(RotTable::try_from(0), Ok(RotTable::Rlc));
+	assert_eq!(RotTable::try_from(1), Ok(RotTable::Rrc));
+	assert_eq!(RotTable::try_from(2), Ok(RotTable::Rl));
+	assert_eq!(RotTable::try_from(3), Ok(RotTable::Rr));
+	assert_eq!(RotTable::try_from(4), Ok(RotTable::Sla));
+	assert_eq!(RotTable::try_from(5), Ok(RotTable::Sra));
+	assert_eq!(RotTable::try_from(6), Ok(RotTable::Swap));
+	assert_eq!(RotTable::try_from(7), Ok(RotTable::Srl));
 }
 
 impl<It> From<It> for OpcodeGenerator<It>
