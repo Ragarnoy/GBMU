@@ -1,13 +1,13 @@
 mod error;
-mod register;
+mod table;
 
 use error::Error;
 use modular_bitfield::{
 	bitfield,
 	specifiers::{B2, B3},
 };
-use register::Register;
 use std::{convert::From, fmt};
+use table::Register;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Opcode {
@@ -50,6 +50,8 @@ impl fmt::Display for Opcode {
 
 #[test]
 fn test_display_opcode() {
+	use table::RegisterSpecial;
+
 	assert_eq!(Opcode::Jump(0x150).to_string(), "jmp 150");
 
 	assert_eq!(Opcode::JumpR(0x42).to_string(), "jr 42");
@@ -61,7 +63,11 @@ fn test_display_opcode() {
 	assert_eq!(Opcode::Nop.to_string(), "nop");
 	assert_eq!(Opcode::Stop.to_string(), "stop");
 	assert_eq!(
-		Opcode::Ld(Value::Indirect(0x123), Value::Register(Register::SP)).to_string(),
+		Opcode::Ld(
+			Value::Indirect(0x123),
+			Value::Register(RegisterSpecial::SP.into())
+		)
+		.to_string(),
 		"ld (123), SP"
 	);
 }
@@ -83,7 +89,9 @@ impl fmt::Display for Value {
 
 #[test]
 fn test_value_display() {
-	assert_eq!(Value::Register(Register::A).to_string(), "A");
+	use table::Register8Bits;
+
+	assert_eq!(Value::Register(Register8Bits::A.into()).to_string(), "A");
 	assert_eq!(Value::Indirect(0x3a).to_string(), "(3a)");
 }
 
@@ -125,10 +133,14 @@ where
 		match y {
 			0 => Ok(Opcode::Nop),
 			1 => {
+				use table::RegisterSpecial;
 				let bytes: [u8; 2] = [self.stream.next().unwrap(), self.stream.next().unwrap()];
 				let indirect = Value::Indirect(u16::from_le_bytes(bytes));
 
-				Ok(Opcode::Ld(indirect, Value::Register(Register::SP)))
+				Ok(Opcode::Ld(
+					indirect,
+					Value::Register(RegisterSpecial::SP.into()),
+				))
 			}
 			2 => Ok(Opcode::Stop),
 			3 => Ok(Opcode::JumpR(self.stream.next().unwrap() as i8)),
@@ -196,7 +208,8 @@ where
 
 #[cfg(test)]
 mod test_convert_opcode {
-	use super::{Opcode, OpcodeGenerator, Register, Value};
+	use super::table::RegisterSpecial;
+	use super::{Opcode, OpcodeGenerator, Value};
 
 	#[test]
 	fn test_convert_opcode() {
@@ -216,7 +229,7 @@ mod test_convert_opcode {
 			OpcodeGenerator::from(vec![0x8, 0x34, 0x12].into_iter()).next(),
 			Some(Ok(Opcode::Ld(
 				Value::Indirect(0x1234),
-				Value::Register(Register::SP)
+				Value::Register(RegisterSpecial::SP.into())
 			)))
 		);
 	}
