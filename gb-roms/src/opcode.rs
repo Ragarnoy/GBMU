@@ -1,17 +1,20 @@
 mod error;
-// mod register;
+mod register;
 
 use error::Error;
 use modular_bitfield::{
 	bitfield,
 	specifiers::{B2, B3},
 };
+use register::Register;
 use std::{convert::From, fmt};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Opcode {
 	Jump(u16),
 	Nop,
+	Stop,
+	Ld(Value, Value),
 }
 
 impl fmt::Display for Opcode {
@@ -19,6 +22,8 @@ impl fmt::Display for Opcode {
 		match self {
 			Opcode::Jump(addr) => write!(f, "jmp {:x}", addr),
 			Opcode::Nop => write!(f, "nop"),
+			Opcode::Stop => write!(f, "stop"),
+			Opcode::Ld(from, to) => write!(f, "ld {}, {}", from, to),
 		}
 	}
 }
@@ -26,6 +31,33 @@ impl fmt::Display for Opcode {
 #[test]
 fn test_display_opcode() {
 	assert_eq!(Opcode::Jump(0x150).to_string(), "jmp 150");
+	assert_eq!(Opcode::Nop.to_string(), "nop");
+	assert_eq!(Opcode::Stop.to_string(), "stop");
+	assert_eq!(
+		Opcode::Ld(Value::Indirect(0x123), Value::Register(Register::SP)).to_string(),
+		"ld (123), SP"
+	);
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum Value {
+	Register(Register),
+	Indirect(u16),
+}
+
+impl fmt::Display for Value {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		match self {
+			Value::Register(reg) => write!(f, "{}", reg),
+			Value::Indirect(addr) => write!(f, "({:x})", addr),
+		}
+	}
+}
+
+#[test]
+fn test_value_display() {
+	assert_eq!(Value::Register(Register::A).to_string(), "A");
+	assert_eq!(Value::Indirect(0x3a).to_string(), "(3a)");
 }
 
 pub struct OpcodeGenerator<It>
@@ -63,6 +95,7 @@ where
 	fn decode_0_0_y(&mut self, v: u8, o: OpcodeBits) -> Result<Opcode, Error> {
 		match o.y() {
 			0 => Ok(Opcode::Nop),
+			2 => Ok(Opcode::Stop),
 			_ => Err(Error::UnknownOpcode(v)),
 		}
 	}
