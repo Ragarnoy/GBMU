@@ -6,7 +6,10 @@ use modular_bitfield::{
 	bitfield,
 	specifiers::{B2, B3},
 };
-use std::{convert::From, fmt};
+use std::{
+	convert::{From, TryFrom},
+	fmt,
+};
 use table::Register;
 
 #[derive(Debug, PartialEq, Eq)]
@@ -147,12 +150,11 @@ where
 			4..=7 => {
 				let value = self.stream.next().unwrap() as i8;
 
-				match y - 4 {
-					0 => Ok(Opcode::JumpRNZero(value)),
-					1 => Ok(Opcode::JumpRZero(value)),
-					2 => Ok(Opcode::JumpRNCarry(value)),
-					3 => Ok(Opcode::JumpRCarry(value)),
-					_ => unreachable!("jump relative condition"),
+				match ConditionalTable::try_from(y - 4).expect("jump relative condition") {
+					ConditionalTable::NZ => Ok(Opcode::JumpRNZero(value)),
+					ConditionalTable::Z => Ok(Opcode::JumpRZero(value)),
+					ConditionalTable::NC => Ok(Opcode::JumpRNCarry(value)),
+					ConditionalTable::C => Ok(Opcode::JumpRCarry(value)),
 				}
 			}
 			_ => Err(Error::UnknownOpcode(v)),
@@ -183,6 +185,36 @@ pub struct OpcodeBits {
 	z: B3,
 	y: B3,
 	x: B2,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+enum ConditionalTable {
+	NZ,
+	Z,
+	NC,
+	C,
+}
+
+impl TryFrom<u8> for ConditionalTable {
+	type Error = ();
+
+	fn try_from(v: u8) -> Result<Self, ()> {
+		match v {
+			0 => Ok(Self::NZ),
+			1 => Ok(Self::Z),
+			2 => Ok(Self::NC),
+			3 => Ok(Self::C),
+			_ => Err(()),
+		}
+	}
+}
+
+#[test]
+fn test_conditional_table_convert() {
+	assert_eq!(ConditionalTable::try_from(0), Ok(ConditionalTable::NZ));
+	assert_eq!(ConditionalTable::try_from(1), Ok(ConditionalTable::Z));
+	assert_eq!(ConditionalTable::try_from(2), Ok(ConditionalTable::NC));
+	assert_eq!(ConditionalTable::try_from(3), Ok(ConditionalTable::C));
 }
 
 impl<It> From<It> for OpcodeGenerator<It>
