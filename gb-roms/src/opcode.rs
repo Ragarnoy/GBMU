@@ -187,6 +187,18 @@ pub struct OpcodeBits {
 	x: B2,
 }
 
+impl OpcodeBits {
+	/// p = y >> 1
+	fn p(&self) -> u8 {
+		self.y() >> 1
+	}
+
+	/// q = y % 2
+	fn q(&self) -> u8 {
+		self.y() & 1
+	}
+}
+
 #[derive(Debug, PartialEq, Eq)]
 enum ConditionalTable {
 	NZ,
