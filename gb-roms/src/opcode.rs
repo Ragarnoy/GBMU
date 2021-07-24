@@ -95,6 +95,12 @@ where
 	fn decode_0_0_y(&mut self, v: u8, o: OpcodeBits) -> Result<Opcode, Error> {
 		match o.y() {
 			0 => Ok(Opcode::Nop),
+			1 => {
+				let bytes: [u8; 2] = [self.stream.next().unwrap(), self.stream.next().unwrap()];
+				let indirect = Value::Indirect(u16::from_le_bytes(bytes));
+
+				Ok(Opcode::Ld(indirect, Value::Register(Register::SP)))
+			}
 			2 => Ok(Opcode::Stop),
 			_ => Err(Error::UnknownOpcode(v)),
 		}
@@ -152,5 +158,20 @@ fn test_convert_opcode() {
 	assert_eq!(
 		OpcodeGenerator::from(vec![0xc3, 0x50, 0x01].into_iter()).next(),
 		Some(Ok(Opcode::Jump(0x150)))
-	)
+	);
+	assert_eq!(
+		OpcodeGenerator::from(vec![0x0].into_iter()).next(),
+		Some(Ok(Opcode::Nop))
+	);
+	assert_eq!(
+		OpcodeGenerator::from(vec![0x10].into_iter()).next(),
+		Some(Ok(Opcode::Stop))
+	);
+	assert_eq!(
+		OpcodeGenerator::from(vec![0x8, 0x34, 0x12].into_iter()).next(),
+		Some(Ok(Opcode::Ld(
+			Value::Indirect(0x1234),
+			Value::Register(Register::SP)
+		)))
+	);
 }
