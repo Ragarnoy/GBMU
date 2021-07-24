@@ -1,4 +1,4 @@
-use std::convert::TryFrom;
+use std::{convert::TryFrom, fmt};
 
 use super::error::Error;
 
@@ -52,4 +52,37 @@ fn test_convert_register() {
 	assert_eq!(Register::try_from(4), Ok(Register::H));
 	assert_eq!(Register::try_from(5), Ok(Register::L));
 	assert_eq!(Register::try_from(7), Ok(Register::A));
+}
+
+impl fmt::Display for Register {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		match self {
+			Register::A => write!(f, "A"),
+			Register::B => write!(f, "B"),
+			Register::C => write!(f, "C"),
+			Register::D => write!(f, "D"),
+			Register::E => write!(f, "E"),
+			Register::F => write!(f, "F"),
+			Register::H => write!(f, "H"),
+			Register::L => write!(f, "L"),
+			Register::HL => write!(f, "HL"),
+			Register::PC => write!(f, "PC"),
+			Register::SP => write!(f, "SP"),
+		}
+	}
+}
+
+#[test]
+fn test_display_register() {
+	assert_eq!(Register::A.to_string(), "A");
+	assert_eq!(Register::B.to_string(), "B");
+	assert_eq!(Register::C.to_string(), "C");
+	assert_eq!(Register::D.to_string(), "D");
+	assert_eq!(Register::E.to_string(), "E");
+	assert_eq!(Register::F.to_string(), "F");
+	assert_eq!(Register::H.to_string(), "H");
+	assert_eq!(Register::L.to_string(), "L");
+	assert_eq!(Register::HL.to_string(), "HL");
+	assert_eq!(Register::PC.to_string(), "PC");
+	assert_eq!(Register::SP.to_string(), "SP");
 }
