@@ -11,9 +11,15 @@ use std::{convert::From, fmt};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Opcode {
+	/// jump to addr
 	Jump(u16),
+	/// relative jump to PC + value
+	JumpR(i8),
+
 	Nop,
 	Stop,
+
+	/// load value from **left** and load it to **right**
 	Ld(Value, Value),
 }
 
@@ -21,6 +27,7 @@ impl fmt::Display for Opcode {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		match self {
 			Opcode::Jump(addr) => write!(f, "jmp {:x}", addr),
+			Opcode::JumpR(value) => write!(f, "jr {:x}", value),
 			Opcode::Nop => write!(f, "nop"),
 			Opcode::Stop => write!(f, "stop"),
 			Opcode::Ld(from, to) => write!(f, "ld {}, {}", from, to),
@@ -31,6 +38,7 @@ impl fmt::Display for Opcode {
 #[test]
 fn test_display_opcode() {
 	assert_eq!(Opcode::Jump(0x150).to_string(), "jmp 150");
+	assert_eq!(Opcode::JumpR(0x42).to_string(), "jr 42");
 	assert_eq!(Opcode::Nop.to_string(), "nop");
 	assert_eq!(Opcode::Stop.to_string(), "stop");
 	assert_eq!(
@@ -102,6 +110,7 @@ where
 				Ok(Opcode::Ld(indirect, Value::Register(Register::SP)))
 			}
 			2 => Ok(Opcode::Stop),
+			3 => Ok(Opcode::JumpR(self.stream.next().unwrap() as i8)),
 			_ => Err(Error::UnknownOpcode(v)),
 		}
 	}
@@ -158,6 +167,10 @@ fn test_convert_opcode() {
 	assert_eq!(
 		OpcodeGenerator::from(vec![0xc3, 0x50, 0x01].into_iter()).next(),
 		Some(Ok(Opcode::Jump(0x150)))
+	);
+	assert_eq!(
+		OpcodeGenerator::from(vec![0x18, (-24_i8).to_le_bytes()[0]].into_iter()).next(),
+		Some(Ok(Opcode::JumpR(-24)))
 	);
 	assert_eq!(
 		OpcodeGenerator::from(vec![0x0].into_iter()).next(),
