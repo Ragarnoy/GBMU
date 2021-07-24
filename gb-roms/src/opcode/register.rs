@@ -73,7 +73,7 @@ impl fmt::Display for Register {
 }
 
 #[test]
-fn test_display_register() {
+fn test_register_display() {
 	assert_eq!(Register::A.to_string(), "A");
 	assert_eq!(Register::B.to_string(), "B");
 	assert_eq!(Register::C.to_string(), "C");
