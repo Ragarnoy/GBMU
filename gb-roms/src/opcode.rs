@@ -40,8 +40,6 @@ pub enum Opcode {
 	Nop,
 	Stop,
 
-	Add(Store, Value),
-
 	/// load value from **Value** and load it to **Store**
 	///
 	/// Timing:
@@ -84,6 +82,19 @@ pub enum Opcode {
 	/// inc SP twice
 	/// Timing: 12
 	Pop(Reg16),
+
+	/// Add value to *S*
+	/// Timing:
+	/// - r8 + r8 : 4
+	/// - r8 + *r16 : 8
+	/// - r8 + n : 8
+	Add(Store, Value),
+	/// Add value + carry to A
+	Adc(Value),
+	/// Sub value to A
+	Sub(Value),
+	/// Sub value + carry to A
+	Sbc(Value),
 }
 
 impl fmt::Display for Opcode {
@@ -99,8 +110,6 @@ impl fmt::Display for Opcode {
 			Opcode::Nop => write!(f, "nop"),
 			Opcode::Stop => write!(f, "stop"),
 
-			Opcode::Add(s, v) => write!(f, "add {}, {}", s, v),
-
 			Opcode::Ld(from, to) => write!(f, "ld {}, {}", from, to),
 			Opcode::LddFrom(v) => write!(f, "ldd (HL), {}", v),
 			Opcode::LdiFrom(v) => write!(f, "ldi (HL), {}", v),
@@ -112,6 +121,11 @@ impl fmt::Display for Opcode {
 
 			Opcode::Push(reg) => write!(f, "push {}", reg),
 			Opcode::Pop(reg) => write!(f, "pop {}", reg),
+
+			Opcode::Add(s, v) => write!(f, "add {}, {}", s, v),
+			Opcode::Adc(v) => write!(f, "adc A, {}", v),
+			Opcode::Sub(v) => write!(f, "sub A, {}", v),
+			Opcode::Sbc(v) => write!(f, "sbc A, {}", v),
 		}
 	}
 }
@@ -677,6 +691,55 @@ where
 			0xC1 => Ok(op!(Pop, Reg16::BC)),
 			0xD1 => Ok(op!(Pop, Reg16::DE)),
 			0xE1 => Ok(op!(Pop, Reg16::HL)),
+
+			// add A, n
+			0x87 => Ok(op!(Add, register8!(A).into(), register8!(A).into())),
+			0x80 => Ok(op!(Add, register8!(A).into(), register8!(B).into())),
+			0x81 => Ok(op!(Add, register8!(A).into(), register8!(C).into())),
+			0x82 => Ok(op!(Add, register8!(A).into(), register8!(D).into())),
+			0x83 => Ok(op!(Add, register8!(A).into(), register8!(E).into())),
+			0x84 => Ok(op!(Add, register8!(A).into(), register8!(H).into())),
+			0x85 => Ok(op!(Add, register8!(A).into(), register8!(L).into())),
+			0x86 => Ok(op!(
+				Add,
+				register8!(A).into(),
+				Value::IndirectReg16(Reg16::HL)
+			)),
+			0xC6 => Ok(op!(Add, register8!(A).into(), self.get_n().into())),
+
+			// adc A, n
+			0x8F => Ok(op!(Adc, register8!(A).into())),
+			0x88 => Ok(op!(Adc, register8!(B).into())),
+			0x89 => Ok(op!(Adc, register8!(C).into())),
+			0x8A => Ok(op!(Adc, register8!(D).into())),
+			0x8B => Ok(op!(Adc, register8!(E).into())),
+			0x8C => Ok(op!(Adc, register8!(H).into())),
+			0x8D => Ok(op!(Adc, register8!(L).into())),
+			0x8E => Ok(op!(Adc, Value::IndirectReg16(Reg16::HL))),
+			0xCE => Ok(op!(Adc, self.get_n().into())),
+
+			// sub A, n
+			0x97 => Ok(op!(Sub, register8!(A).into())),
+			0x90 => Ok(op!(Sub, register8!(B).into())),
+			0x91 => Ok(op!(Sub, register8!(C).into())),
+			0x92 => Ok(op!(Sub, register8!(D).into())),
+			0x93 => Ok(op!(Sub, register8!(E).into())),
+			0x94 => Ok(op!(Sub, register8!(H).into())),
+			0x95 => Ok(op!(Sub, register8!(L).into())),
+			0x96 => Ok(op!(Sub, Value::IndirectReg16(Reg16::HL))),
+			0xD6 => Ok(op!(Sub, self.get_n().into())),
+
+			// sbc A, n
+			0x9F => Ok(op!(Sbc, register8!(A).into())),
+			0x98 => Ok(op!(Sbc, register8!(B).into())),
+			0x99 => Ok(op!(Sbc, register8!(C).into())),
+			0x9A => Ok(op!(Sbc, register8!(D).into())),
+			0x9B => Ok(op!(Sbc, register8!(E).into())),
+			0x9C => Ok(op!(Sbc, register8!(H).into())),
+			0x9D => Ok(op!(Sbc, register8!(L).into())),
+			0x9E => Ok(op!(Sbc, Value::IndirectReg16(Reg16::HL))),
+			0xDE => Ok(op!(Sbc, self.get_n().into())),
+
 			_ => Err(Error::UnknownOpcode(current)),
 		})
 	}
