@@ -123,6 +123,12 @@ pub enum Value {
 	Value(u16),
 }
 
+impl From<Register> for Value {
+	fn from(r: Register) -> Self {
+		Self::Register(r)
+	}
+}
+
 impl From<u16> for Value {
 	fn from(v: u16) -> Self {
 		Self::Value(v)
@@ -187,7 +193,7 @@ where
 	fn decode_0_z(&mut self, v: u8, o: OpcodeBits) -> Result<Opcode, Error> {
 		match o.z() {
 			0 => self.decode_0_0_y(v, o),
-			1 => self.decode_0_1_y(v, o),
+			1 => self.decode_0_1_q(v, o),
 			_ => Err(Error::UnknownOpcode(v)),
 		}
 	}
@@ -222,13 +228,20 @@ where
 		}
 	}
 
-	fn decode_0_1_y(&mut self, v: u8, o: OpcodeBits) -> Result<Opcode, Error> {
+	fn decode_0_1_q(&mut self, v: u8, o: OpcodeBits) -> Result<Opcode, Error> {
+		use register::Register16Bits;
+
 		match o.q() {
 			0 => Ok(Opcode::Ld(
 				Register::from_rp1_table(o.p()).unwrap().into(),
 				self.get_nn().expect("ld right value").into(),
 			)),
-			// 1 => Ok(Opcode::)
+			1 => Ok(Opcode::Add(
+				Register::from(Register16Bits::HL).into(),
+				Register::from_rp1_table(o.p())
+					.expect("invalid opcode encoding")
+					.into(),
+			)),
 			_ => Err(Error::UnknownOpcode(v)),
 		}
 	}
@@ -429,7 +442,7 @@ where
 
 #[cfg(test)]
 mod test_convert_opcode {
-	use super::register::RegisterSpecial;
+	use super::register::{self, Register};
 	use super::{Opcode, OpcodeGenerator, Store, Value};
 
 	#[test]
@@ -446,6 +459,12 @@ mod test_convert_opcode {
 			OpcodeGenerator::from(vec![0x10].into_iter()).next(),
 			Some(Ok(Opcode::Stop))
 		);
+	}
+
+	#[test]
+	fn test_ld() {
+		use register::{Register16Bits, RegisterSpecial};
+
 		assert_eq!(
 			OpcodeGenerator::from(vec![0x8, 0x34, 0x12].into_iter()).next(),
 			Some(Ok(Opcode::Ld(
@@ -453,6 +472,26 @@ mod test_convert_opcode {
 				Value::Register(RegisterSpecial::SP.into())
 			)))
 		);
+		assert_eq!(
+			OpcodeGenerator::from(vec![0x11, 0x50, 0x01].into_iter()).next(),
+			Some(Ok(Opcode::Ld(
+				Register::from(Register16Bits::DE).into(),
+				Value::Value(0x150)
+			)))
+		);
+	}
+
+	#[test]
+	fn test_add() {
+		use register::{Register16Bits, RegisterSpecial};
+
+		assert_eq!(
+			OpcodeGenerator::from(vec![0x39].into_iter()).next(),
+			Some(Ok(Opcode::Add(
+				Register::from(Register16Bits::HL).into(),
+				Register::from(RegisterSpecial::SP).into()
+			)))
+		)
 	}
 
 	#[test]
