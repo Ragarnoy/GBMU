@@ -83,11 +83,11 @@ pub enum Opcode {
 	/// Timing: 12
 	Pop(Reg16),
 
+	// Timing for alu op:
+	// - r8 + r8 : 4
+	// - r8 + *r16 : 8
+	// - r8 + n : 8
 	/// Add value to *S*
-	/// Timing:
-	/// - r8 + r8 : 4
-	/// - r8 + *r16 : 8
-	/// - r8 + n : 8
 	Add(Store, Value),
 	/// Add value + carry to A
 	Adc(Value),
@@ -95,37 +95,49 @@ pub enum Opcode {
 	Sub(Value),
 	/// Sub value + carry to A
 	Sbc(Value),
+	/// Logic And with A : `A = A & n`
+	And(Value),
+	/// Logic Or with A : `A = A | n`
+	Or(Value),
+	/// Logic Xor with A: `A = A ^ n`
+	Xor(Value),
+	/// Logic compare with A: A == n ?
+	Cp(Value),
 }
 
 impl fmt::Display for Opcode {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		match self {
-			Opcode::Jump(addr) => write!(f, "jmp {:x}", addr),
-			Opcode::JumpR(value) => write!(f, "jr {:x}", value),
-			Opcode::JumpRNZero(value) => write!(f, "jrnz {:x}", value),
-			Opcode::JumpRZero(value) => write!(f, "jrz {:x}", value),
-			Opcode::JumpRNCarry(value) => write!(f, "jrnc {:x}", value),
-			Opcode::JumpRCarry(value) => write!(f, "jrc {:x}", value),
+			Self::Jump(addr) => write!(f, "jmp {:x}", addr),
+			Self::JumpR(value) => write!(f, "jr {:x}", value),
+			Self::JumpRNZero(value) => write!(f, "jrnz {:x}", value),
+			Self::JumpRZero(value) => write!(f, "jrz {:x}", value),
+			Self::JumpRNCarry(value) => write!(f, "jrnc {:x}", value),
+			Self::JumpRCarry(value) => write!(f, "jrc {:x}", value),
 
-			Opcode::Nop => write!(f, "nop"),
-			Opcode::Stop => write!(f, "stop"),
+			Self::Nop => write!(f, "nop"),
+			Self::Stop => write!(f, "stop"),
 
-			Opcode::Ld(from, to) => write!(f, "ld {}, {}", from, to),
-			Opcode::LddFrom(v) => write!(f, "ldd (HL), {}", v),
-			Opcode::LdiFrom(v) => write!(f, "ldi (HL), {}", v),
-			Opcode::LddInto(s) => write!(f, "ldd {}, (HL)", s),
-			Opcode::LdiInto(s) => write!(f, "ldi {}, (HL)", s),
-			Opcode::LdhFrom(v) => write!(f, "ldh A, (0xff00 + {})", v),
-			Opcode::LdhInto(s) => write!(f, "ldh (0xff00 + {}), A", s),
-			Opcode::Ldhl(addr) => write!(f, "ldhl SP, {}", addr),
+			Self::Ld(from, to) => write!(f, "ld {}, {}", from, to),
+			Self::LddFrom(v) => write!(f, "ldd (HL), {}", v),
+			Self::LdiFrom(v) => write!(f, "ldi (HL), {}", v),
+			Self::LddInto(s) => write!(f, "ldd {}, (HL)", s),
+			Self::LdiInto(s) => write!(f, "ldi {}, (HL)", s),
+			Self::LdhFrom(v) => write!(f, "ldh A, (0xff00 + {})", v),
+			Self::LdhInto(s) => write!(f, "ldh (0xff00 + {}), A", s),
+			Self::Ldhl(addr) => write!(f, "ldhl SP, {}", addr),
 
-			Opcode::Push(reg) => write!(f, "push {}", reg),
-			Opcode::Pop(reg) => write!(f, "pop {}", reg),
+			Self::Push(reg) => write!(f, "push {}", reg),
+			Self::Pop(reg) => write!(f, "pop {}", reg),
 
-			Opcode::Add(s, v) => write!(f, "add {}, {}", s, v),
-			Opcode::Adc(v) => write!(f, "adc A, {}", v),
-			Opcode::Sub(v) => write!(f, "sub A, {}", v),
-			Opcode::Sbc(v) => write!(f, "sbc A, {}", v),
+			Self::Add(s, v) => write!(f, "add {}, {}", s, v),
+			Self::Adc(v) => write!(f, "adc A, {}", v),
+			Self::Sub(v) => write!(f, "sub A, {}", v),
+			Self::Sbc(v) => write!(f, "sbc A, {}", v),
+			Self::And(v) => write!(f, "and A, {}", v),
+			Self::Or(v) => write!(f, "or A, {}", v),
+			Self::Xor(v) => write!(f, "xor A, {}", v),
+			Self::Cp(v) => write!(f, "cp A, {}", v),
 		}
 	}
 }
@@ -739,6 +751,50 @@ where
 			0x9D => Ok(op!(Sbc, register8!(L).into())),
 			0x9E => Ok(op!(Sbc, Value::IndirectReg16(Reg16::HL))),
 			0xDE => Ok(op!(Sbc, self.get_n().into())),
+
+			// and A, n
+			0xA7 => Ok(op!(And, register8!(A).into())),
+			0xA0 => Ok(op!(And, register8!(B).into())),
+			0xA1 => Ok(op!(And, register8!(C).into())),
+			0xA2 => Ok(op!(And, register8!(D).into())),
+			0xA3 => Ok(op!(And, register8!(E).into())),
+			0xA4 => Ok(op!(And, register8!(H).into())),
+			0xA5 => Ok(op!(And, register8!(L).into())),
+			0xA6 => Ok(op!(And, Value::IndirectReg16(Reg16::HL))),
+			0xE6 => Ok(op!(And, self.get_n().into())),
+
+			// or A, n
+			0xB7 => Ok(op!(Or, register8!(A).into())),
+			0xB0 => Ok(op!(Or, register8!(B).into())),
+			0xB1 => Ok(op!(Or, register8!(C).into())),
+			0xB2 => Ok(op!(Or, register8!(D).into())),
+			0xB3 => Ok(op!(Or, register8!(E).into())),
+			0xB4 => Ok(op!(Or, register8!(H).into())),
+			0xB5 => Ok(op!(Or, register8!(L).into())),
+			0xB6 => Ok(op!(Or, Value::IndirectReg16(Reg16::HL))),
+			0xF6 => Ok(op!(Or, self.get_n().into())),
+
+			// xor A, n
+			0xAF => Ok(op!(Xor, register8!(A).into())),
+			0xA8 => Ok(op!(Xor, register8!(B).into())),
+			0xA9 => Ok(op!(Xor, register8!(C).into())),
+			0xAA => Ok(op!(Xor, register8!(D).into())),
+			0xAB => Ok(op!(Xor, register8!(E).into())),
+			0xAC => Ok(op!(Xor, register8!(H).into())),
+			0xAD => Ok(op!(Xor, register8!(L).into())),
+			0xAE => Ok(op!(Xor, Value::IndirectReg16(Reg16::HL))),
+			0xEE => Ok(op!(Xor, self.get_n().into())),
+
+			// cp A, n
+			0xBF => Ok(op!(Cp, register8!(A).into())),
+			0xB8 => Ok(op!(Cp, register8!(B).into())),
+			0xB9 => Ok(op!(Cp, register8!(C).into())),
+			0xBA => Ok(op!(Cp, register8!(D).into())),
+			0xBB => Ok(op!(Cp, register8!(E).into())),
+			0xBC => Ok(op!(Cp, register8!(H).into())),
+			0xBD => Ok(op!(Cp, register8!(L).into())),
+			0xBE => Ok(op!(Cp, Value::IndirectReg16(Reg16::HL))),
+			0xFE => Ok(op!(Cp, self.get_n().into())),
 
 			_ => Err(Error::UnknownOpcode(current)),
 		})
