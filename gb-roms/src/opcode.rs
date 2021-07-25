@@ -87,6 +87,7 @@ pub enum Opcode {
 	// - r8 + r8 : 4
 	// - r8 + *r16 : 8
 	// - r8 + n : 8
+	// - r16 + d : 16
 	/// Add value to *S*
 	Add(Store, Value),
 	/// Add value + carry to A
@@ -847,6 +848,18 @@ where
 
 			// add sp, d
 			0xE8 => Ok(op!(Add, register_special!(SP).into(), self.get_d().into())),
+
+			// inc nn
+			0x03 => Ok(op!(Inc, register16!(BC).into())),
+			0x13 => Ok(op!(Inc, register16!(DE).into())),
+			0x23 => Ok(op!(Inc, register16!(HL).into())),
+			0x33 => Ok(op!(Inc, register_special!(SP).into())),
+
+			// dec nn
+			0x0B => Ok(op!(Dec, register16!(BC).into())),
+			0x1B => Ok(op!(Dec, register16!(DE).into())),
+			0x2B => Ok(op!(Dec, register16!(HL).into())),
+			0x3B => Ok(op!(Dec, register_special!(SP).into())),
 
 			_ => Err(Error::UnknownOpcode(current)),
 		})
