@@ -182,23 +182,23 @@ where
 
 	fn decode_x(&mut self, v: u8, o: OpcodeBits) -> Result<Opcode, Error> {
 		match o.x() {
-			0 => self.decode_0_z(v, o),
+			0 => self.decode_x0_z(v, o),
 			// 1 => ,
 			// 2 => ,
-			3 => self.decode_3_z(v, o),
+			3 => self.decode_x3_z(v, o),
 			_ => Err(Error::UnknownOpcode(v)),
 		}
 	}
 
-	fn decode_0_z(&mut self, v: u8, o: OpcodeBits) -> Result<Opcode, Error> {
+	fn decode_x0_z(&mut self, v: u8, o: OpcodeBits) -> Result<Opcode, Error> {
 		match o.z() {
-			0 => self.decode_0_0_y(v, o),
-			1 => self.decode_0_1_q(v, o),
+			0 => self.decode_x0_z0_y(v, o),
+			1 => self.decode_x0_z1_q(v, o),
 			_ => Err(Error::UnknownOpcode(v)),
 		}
 	}
 
-	fn decode_0_0_y(&mut self, v: u8, o: OpcodeBits) -> Result<Opcode, Error> {
+	fn decode_x0_z0_y(&mut self, v: u8, o: OpcodeBits) -> Result<Opcode, Error> {
 		let y = o.y();
 
 		match y {
@@ -228,7 +228,7 @@ where
 		}
 	}
 
-	fn decode_0_1_q(&mut self, v: u8, o: OpcodeBits) -> Result<Opcode, Error> {
+	fn decode_x0_z1_q(&mut self, v: u8, o: OpcodeBits) -> Result<Opcode, Error> {
 		use register::Register16Bits;
 
 		match o.q() {
@@ -246,14 +246,14 @@ where
 		}
 	}
 
-	fn decode_3_z(&mut self, v: u8, o: OpcodeBits) -> Result<Opcode, Error> {
+	fn decode_x3_z(&mut self, v: u8, o: OpcodeBits) -> Result<Opcode, Error> {
 		match o.z() {
-			3 => self.decode_3_3_y(v, o),
+			3 => self.decode_x3_z3_y(v, o),
 			_ => Err(Error::UnknownOpcode(v)),
 		}
 	}
 
-	fn decode_3_3_y(&mut self, v: u8, o: OpcodeBits) -> Result<Opcode, Error> {
+	fn decode_x3_z3_y(&mut self, v: u8, o: OpcodeBits) -> Result<Opcode, Error> {
 		match o.y() {
 			0 => Ok(Opcode::Jump(self.get_nn().expect("jump"))),
 			_ => Err(Error::UnknownOpcode(v)),
