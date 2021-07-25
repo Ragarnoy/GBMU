@@ -32,8 +32,20 @@ pub enum Opcode {
 
 	Add(Store, Value),
 
-	/// load value from **Store** and load it to **Store**
+	/// load value from **Value** and load it to **Store**
 	Ld(Store, Value),
+	/// Load value into `*HL` then decrement `HL`
+	/// *HL-- = n
+	LddFrom(Value),
+	/// Load value into `*HL` then increment `HL`
+	/// *HL++ = n
+	LdiFrom(Value),
+	/// Load value from `*HL` store it to `n` then decrement `HL`
+	/// n = *HL--
+	LddInto(Store),
+	/// Load value from `*HL` store it to `n` the increment `HL`
+	/// n = *HL++
+	LdiInto(Store),
 }
 
 impl fmt::Display for Opcode {
@@ -52,13 +64,17 @@ impl fmt::Display for Opcode {
 			Opcode::Add(s, v) => write!(f, "add {}, {}", s, v),
 
 			Opcode::Ld(from, to) => write!(f, "ld {}, {}", from, to),
+			Opcode::LddFrom(v) => write!(f, "ldd (HL), {}", v),
+			Opcode::LdiFrom(v) => write!(f, "ldi (HL), {}", v),
+			Opcode::LddInto(s) => write!(f, "ldd {}, (HL)", s),
+			Opcode::LdiInto(s) => write!(f, "ldi {}, (HL)", s),
 		}
 	}
 }
 
 #[test]
 fn test_display_opcode() {
-	use register::RegisterSpecial;
+	use register::{Register8Bits, RegisterSpecial};
 
 	assert_eq!(Opcode::Jump(0x150).to_string(), "jmp 150");
 
@@ -77,6 +93,23 @@ fn test_display_opcode() {
 		)
 		.to_string(),
 		"ld (123), SP"
+	);
+
+	assert_eq!(
+		Opcode::LddFrom(Register::from(Register8Bits::A).into()).to_string(),
+		"ldd (HL), A"
+	);
+	assert_eq!(
+		Opcode::LdiFrom(Register::from(Register8Bits::A).into()).to_string(),
+		"ldi (HL), A"
+	);
+	assert_eq!(
+		Opcode::LddInto(Register::from(Register8Bits::A).into()).to_string(),
+		"ldd A, (HL)"
+	);
+	assert_eq!(
+		Opcode::LdiInto(Register::from(Register8Bits::A).into()).to_string(),
+		"ldi A, (HL)"
 	);
 }
 
@@ -194,6 +227,7 @@ where
 		match o.z() {
 			0 => self.decode_x0_z0_y(v, o),
 			1 => self.decode_x0_z1_q(v, o),
+			2 => self.decode_x0_z2_q(v, o),
 			_ => Err(Error::UnknownOpcode(v)),
 		}
 	}
@@ -228,7 +262,7 @@ where
 		}
 	}
 
-	fn decode_x0_z1_q(&mut self, v: u8, o: OpcodeBits) -> Result<Opcode, Error> {
+	fn decode_x0_z1_q(&mut self, _v: u8, o: OpcodeBits) -> Result<Opcode, Error> {
 		use register::Register16Bits;
 
 		match o.q() {
@@ -242,7 +276,42 @@ where
 					.expect("invalid opcode encoding")
 					.into(),
 			)),
-			_ => Err(Error::UnknownOpcode(v)),
+			_ => unreachable!(),
+		}
+	}
+
+	fn decode_x0_z2_q(&mut self, v: u8, o: OpcodeBits) -> Result<Opcode, Error> {
+		match o.q() {
+			0 => self.decode_x0_z2_q0(v, o),
+			1 => self.decode_x0_z2_q1(v, o),
+			_ => unreachable!(),
+		}
+	}
+
+	fn decode_x0_z2_q0(&mut self, _v: u8, o: OpcodeBits) -> Result<Opcode, Error> {
+		use register::{Register16Bits, Register8Bits};
+
+		let value: Value = Register::from(Register8Bits::A).into();
+
+		match o.p() {
+			0 => Ok(Opcode::Ld(Register::from(Register16Bits::BC).into(), value)),
+			1 => Ok(Opcode::Ld(Register::from(Register16Bits::DE).into(), value)),
+			2 => Ok(Opcode::LdiFrom(value)),
+			3 => Ok(Opcode::LddFrom(value)),
+			_ => unreachable!(),
+		}
+	}
+
+	fn decode_x0_z2_q1(&mut self, _v: u8, o: OpcodeBits) -> Result<Opcode, Error> {
+		use register::{Register16Bits, Register8Bits};
+
+		let store: Store = Register::from(Register8Bits::A).into();
+		match o.p() {
+			0 => Ok(Opcode::Ld(store, Register::from(Register16Bits::BC).into())),
+			1 => Ok(Opcode::Ld(store, Register::from(Register16Bits::DE).into())),
+			2 => Ok(Opcode::LdiInto(store)),
+			3 => Ok(Opcode::LddInto(store)),
+			_ => unreachable!(),
 		}
 	}
 
@@ -478,6 +547,28 @@ mod test_convert_opcode {
 				Register::from(Register16Bits::DE).into(),
 				Value::Value(0x150)
 			)))
+		);
+	}
+
+	#[test]
+	fn test_ldi_ldd() {
+		use register::{Register, Register8Bits};
+
+		assert_eq!(
+			OpcodeGenerator::from(vec![0x2a].into_iter()).next(),
+			Some(Ok(Opcode::LdiInto(Register::from(Register8Bits::A).into())))
+		);
+		assert_eq!(
+			OpcodeGenerator::from(vec![0x3a].into_iter()).next(),
+			Some(Ok(Opcode::LddInto(Register::from(Register8Bits::A).into())))
+		);
+		assert_eq!(
+			OpcodeGenerator::from(vec![0x22].into_iter()).next(),
+			Some(Ok(Opcode::LdiFrom(Register::from(Register8Bits::A).into())))
+		);
+		assert_eq!(
+			OpcodeGenerator::from(vec![0x32].into_iter()).next(),
+			Some(Ok(Opcode::LddFrom(Register::from(Register8Bits::A).into())))
 		);
 	}
 
