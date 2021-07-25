@@ -1,5 +1,29 @@
 use std::{convert::From, fmt};
 
+macro_rules! register8 {
+	($x:ident) => {
+		Register::Bits8(Register8Bits::$x)
+	};
+}
+
+macro_rules! register16 {
+	($x:ident) => {
+		Register::Bits16(Register16Bits::$x)
+	};
+}
+
+macro_rules! register_special {
+	($x:ident) => {
+		Register::Special(RegisterSpecial::$x)
+	};
+}
+
+macro_rules! register_flag {
+	($x:ident) => {
+		Register::Flag(RegisterFlag::$x)
+	};
+}
+
 #[derive(Debug, PartialEq, Eq)]
 pub enum Register {
 	Bits8(Register8Bits),
