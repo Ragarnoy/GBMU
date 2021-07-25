@@ -103,6 +103,14 @@ pub enum Opcode {
 	Xor(Value),
 	/// Logic compare with A: A == n ?
 	Cp(Value),
+
+	// Timing for inc/dec:
+	// - r8: 4
+	// - *HL: 12
+	/// Increment n
+	Inc(Store),
+	/// Decrement n
+	Dec(Store),
 }
 
 impl fmt::Display for Opcode {
@@ -138,6 +146,9 @@ impl fmt::Display for Opcode {
 			Self::Or(v) => write!(f, "or A, {}", v),
 			Self::Xor(v) => write!(f, "xor A, {}", v),
 			Self::Cp(v) => write!(f, "cp A, {}", v),
+
+			Self::Inc(s) => write!(f, "inc {}", s),
+			Self::Dec(s) => write!(f, "dec {}", s),
 		}
 	}
 }
@@ -795,6 +806,26 @@ where
 			0xBD => Ok(op!(Cp, register8!(L).into())),
 			0xBE => Ok(op!(Cp, Value::IndirectReg16(Reg16::HL))),
 			0xFE => Ok(op!(Cp, self.get_n().into())),
+
+			// inc n
+			0x3C => Ok(op!(Inc, register8!(A).into())),
+			0x04 => Ok(op!(Inc, register8!(B).into())),
+			0x0C => Ok(op!(Inc, register8!(C).into())),
+			0x14 => Ok(op!(Inc, register8!(D).into())),
+			0x1C => Ok(op!(Inc, register8!(E).into())),
+			0x24 => Ok(op!(Inc, register8!(H).into())),
+			0x2C => Ok(op!(Inc, register8!(L).into())),
+			0x34 => Ok(op!(Inc, Store::IndirectReg16(Reg16::HL))),
+
+			// dec n
+			0x3D => Ok(op!(Dec, register8!(A).into())),
+			0x05 => Ok(op!(Dec, register8!(B).into())),
+			0x0D => Ok(op!(Dec, register8!(C).into())),
+			0x15 => Ok(op!(Dec, register8!(D).into())),
+			0x1D => Ok(op!(Dec, register8!(E).into())),
+			0x25 => Ok(op!(Dec, register8!(H).into())),
+			0x2D => Ok(op!(Dec, register8!(L).into())),
+			0x35 => Ok(op!(Dec, Store::IndirectReg16(Reg16::HL))),
 
 			_ => Err(Error::UnknownOpcode(current)),
 		})
