@@ -73,7 +73,7 @@ fn test_display_opcode() {
 	assert_eq!(
 		Opcode::Ld(
 			Store::Indirect(0x123),
-			Store::Register(RegisterSpecial::SP.into())
+			Value::Register(RegisterSpecial::SP.into())
 		)
 		.to_string(),
 		"ld (123), SP"
@@ -103,8 +103,8 @@ impl From<u16> for Store {
 impl fmt::Display for Store {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		match self {
-			Store::Register(reg) => write!(f, "{}", reg),
-			Store::Indirect(addr) => write!(f, "({:x})", addr),
+			Self::Register(reg) => write!(f, "{}", reg),
+			Self::Indirect(addr) => write!(f, "({:x})", addr),
 		}
 	}
 }
@@ -121,6 +121,29 @@ fn test_store_display() {
 pub enum Value {
 	Register(Register),
 	Value(u16),
+}
+
+impl From<u16> for Value {
+	fn from(v: u16) -> Self {
+		Self::Value(v)
+	}
+}
+
+impl fmt::Display for Value {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		match self {
+			Self::Register(reg) => write!(f, "{}", reg),
+			Self::Value(v) => write!(f, "{:x}", v),
+		}
+	}
+}
+
+#[test]
+fn test_value_display() {
+	use register::Register8Bits;
+
+	assert_eq!(Value::Register(Register8Bits::A.into()).to_string(), "A");
+	assert_eq!(Value::Value(0x1023).to_string(), "1023")
 }
 
 pub struct OpcodeGenerator<It>
@@ -180,7 +203,7 @@ where
 
 				Ok(Opcode::Ld(
 					indirect,
-					Store::Register(RegisterSpecial::SP.into()),
+					Value::Register(RegisterSpecial::SP.into()),
 				))
 			}
 			2 => Ok(Opcode::Stop),
@@ -407,7 +430,7 @@ where
 #[cfg(test)]
 mod test_convert_opcode {
 	use super::register::RegisterSpecial;
-	use super::{Opcode, OpcodeGenerator, Store};
+	use super::{Opcode, OpcodeGenerator, Store, Value};
 
 	#[test]
 	fn test_convert_opcode() {
@@ -427,7 +450,7 @@ mod test_convert_opcode {
 			OpcodeGenerator::from(vec![0x8, 0x34, 0x12].into_iter()).next(),
 			Some(Ok(Opcode::Ld(
 				Store::Indirect(0x1234),
-				Store::Register(RegisterSpecial::SP.into())
+				Value::Register(RegisterSpecial::SP.into())
 			)))
 		);
 	}
