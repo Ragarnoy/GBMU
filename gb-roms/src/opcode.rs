@@ -251,6 +251,7 @@ pub enum Value {
 	Indirect8(u8),
 	Nn(u16),
 	N(u8),
+	D(i8),
 }
 
 impl From<Register> for Value {
@@ -271,6 +272,12 @@ impl From<u8> for Value {
 	}
 }
 
+impl From<i8> for Value {
+	fn from(v: i8) -> Self {
+		Self::D(v)
+	}
+}
+
 impl fmt::Display for Value {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		match self {
@@ -281,6 +288,7 @@ impl fmt::Display for Value {
 			Self::Indirect8(addr) => write!(f, "(0xff00 + {:x})", addr),
 			Self::Nn(v) => write!(f, "{:x}", v),
 			Self::N(v) => write!(f, "{:x}", v),
+			Self::D(v) => write!(f, "{:x}", v),
 		}
 	}
 }
@@ -826,6 +834,19 @@ where
 			0x25 => Ok(op!(Dec, register8!(H).into())),
 			0x2D => Ok(op!(Dec, register8!(L).into())),
 			0x35 => Ok(op!(Dec, Store::IndirectReg16(Reg16::HL))),
+
+			// add hl, n
+			0x09 => Ok(op!(Add, register16!(HL).into(), register16!(BC).into())),
+			0x19 => Ok(op!(Add, register16!(HL).into(), register16!(DE).into())),
+			0x29 => Ok(op!(Add, register16!(HL).into(), register16!(HL).into())),
+			0x39 => Ok(op!(
+				Add,
+				register16!(HL).into(),
+				register_special!(SP).into()
+			)),
+
+			// add sp, d
+			0xE8 => Ok(op!(Add, register_special!(SP).into(), self.get_d().into())),
 
 			_ => Err(Error::UnknownOpcode(current)),
 		})
