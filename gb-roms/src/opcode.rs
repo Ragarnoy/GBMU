@@ -50,6 +50,9 @@ pub enum Opcode {
 	/// - *16 -> r8 : 8
 	/// - n -> r8 : 8
 	/// - *nn -> r8 : 16
+	/// - nn -> r16 : 12
+	/// - r16 -> r16 : 8
+	/// - *nn -> SP : 20
 	Ld(Store, Value),
 	/// Load value into `*HL` then decrement `HL`
 	/// *HL-- = n
@@ -63,6 +66,24 @@ pub enum Opcode {
 	/// Load value from `*HL` store it to `n` the increment `HL`
 	/// n = *HL++
 	LdiInto(Store),
+	/// Ldh put *(0xff00 + n) in A
+	/// Timing: 12
+	LdhFrom(u8),
+	/// Ldh put A into *(0xff00 + n)
+	/// Timing: 12
+	LdhInto(u8),
+	/// ldhl put SP + n in HL
+	/// Timing: 12
+	Ldhl(i8),
+
+	/// Push reg16 onto stack
+	/// dec SP twice
+	/// Timing: 16
+	Push(Reg16),
+	/// Pop u16 from stack
+	/// inc SP twice
+	/// Timing: 12
+	Pop(Reg16),
 }
 
 impl fmt::Display for Opcode {
@@ -85,6 +106,12 @@ impl fmt::Display for Opcode {
 			Opcode::LdiFrom(v) => write!(f, "ldi (HL), {}", v),
 			Opcode::LddInto(s) => write!(f, "ldd {}, (HL)", s),
 			Opcode::LdiInto(s) => write!(f, "ldi {}, (HL)", s),
+			Opcode::LdhFrom(v) => write!(f, "ldh A, (0xff00 + {})", v),
+			Opcode::LdhInto(s) => write!(f, "ldh (0xff00 + {}), A", s),
+			Opcode::Ldhl(addr) => write!(f, "ldhl SP, {}", addr),
+
+			Opcode::Push(reg) => write!(f, "push {}", reg),
+			Opcode::Pop(reg) => write!(f, "pop {}", reg),
 		}
 	}
 }
@@ -459,7 +486,7 @@ where
 	type Item = Result<Opcode, Error>;
 
 	fn next(&mut self) -> Option<Self::Item> {
-		use register::Register8Bits;
+		use register::{Register16Bits, Register8Bits, RegisterSpecial};
 
 		let current = self.stream.next()?;
 
@@ -614,6 +641,42 @@ where
 			0x22 => Ok(op!(LdiFrom, register8!(A).into())),
 			0x2A => Ok(op!(LdiInto, register8!(A).into())),
 
+			// ldh (n), A
+			0xE0 => Ok(op!(LdhInto, self.get_n())),
+
+			// ldh A, (n)
+			0xF0 => Ok(op!(LdhFrom, self.get_n())),
+
+			// ld n, nn
+			0x01 => Ok(op!(Ld, register16!(BC).into(), self.get_nn().into())),
+			0x11 => Ok(op!(Ld, register16!(DE).into(), self.get_nn().into())),
+			0x21 => Ok(op!(Ld, register16!(HL).into(), self.get_nn().into())),
+			0x31 => Ok(op!(Ld, register_special!(SP).into(), self.get_nn().into())),
+
+			// ld sp, hl
+			0xF9 => Ok(op!(
+				Ld,
+				register_special!(SP).into(),
+				register16!(HL).into()
+			)),
+
+			// ldhl sp, n
+			0xF8 => Ok(op!(Ldhl, self.get_d())),
+
+			// ld (nn), SP
+			0x08 => Ok(op!(Ld, self.get_nn().into(), register_special!(SP).into())),
+
+			// push r16
+			0xF5 => Ok(op!(Push, Reg16::AF)),
+			0xC5 => Ok(op!(Push, Reg16::BC)),
+			0xD5 => Ok(op!(Push, Reg16::DE)),
+			0xE5 => Ok(op!(Push, Reg16::HL)),
+
+			// pop r16
+			0xF1 => Ok(op!(Pop, Reg16::AF)),
+			0xC1 => Ok(op!(Pop, Reg16::BC)),
+			0xD1 => Ok(op!(Pop, Reg16::DE)),
+			0xE1 => Ok(op!(Pop, Reg16::HL)),
 			_ => Err(Error::UnknownOpcode(current)),
 		})
 	}
