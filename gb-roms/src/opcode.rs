@@ -105,7 +105,7 @@ fn test_display_opcode() {
 	assert_eq!(Opcode::Stop.to_string(), "stop");
 	assert_eq!(
 		Opcode::Ld(
-			Store::Indirect(0x123),
+			Store::Indirect16(0x123),
 			Value::Register(RegisterSpecial::SP.into())
 		)
 		.to_string(),
@@ -136,10 +136,12 @@ pub enum Store {
 	Register(Register),
 	/// Use the addr to register
 	IndirectReg16(Reg16),
-	/// Use the addr that result of `void addr = Reg + 0xff00`
+	/// Use the addr that result of `addr = Reg + 0xff00`
 	IndierectReg8(Reg8),
 	/// Addresse in memory (should be!)
-	Indirect(u16),
+	Indirect16(u16),
+	/// Use the addr that result of `addr = n + 0xff00`
+	Indirect8(u8),
 }
 
 impl From<Register> for Store {
@@ -150,7 +152,7 @@ impl From<Register> for Store {
 
 impl From<u16> for Store {
 	fn from(v: u16) -> Self {
-		Self::Indirect(v)
+		Self::Indirect16(v)
 	}
 }
 
@@ -160,7 +162,8 @@ impl fmt::Display for Store {
 			Self::Register(reg) => write!(f, "{}", reg),
 			Self::IndirectReg16(reg) => write!(f, "({})", reg),
 			Self::IndierectReg8(reg) => write!(f, "(0xff00 + {})", reg),
-			Self::Indirect(addr) => write!(f, "({:x})", addr),
+			Self::Indirect16(addr) => write!(f, "({:x})", addr),
+			Self::Indirect8(addr) => write!(f, "(0xff00 + {:x})", addr),
 		}
 	}
 }
@@ -170,15 +173,18 @@ fn test_store_display() {
 	use register::Register8Bits;
 
 	assert_eq!(Store::Register(Register8Bits::A.into()).to_string(), "A");
-	assert_eq!(Store::Indirect(0x3a).to_string(), "(3a)");
+	assert_eq!(Store::Indirect16(0x3a).to_string(), "(3a)");
 }
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Value {
 	Register(Register),
 	IndirectReg16(Reg16),
+	/// Use the addr that result of `addr = Reg + 0xff00`
 	IndirectReg8(Reg8),
-	Indirect(u16),
+	Indirect16(u16),
+	/// Use the addr that result of `addr = n + 0xff00`
+	Indirect8(u8),
 	Nn(u16),
 	N(u8),
 }
@@ -207,7 +213,8 @@ impl fmt::Display for Value {
 			Self::Register(reg) => write!(f, "{}", reg),
 			Self::IndirectReg16(reg) => write!(f, "({})", reg),
 			Self::IndirectReg8(reg) => write!(f, "(0xff00 + {})", reg),
-			Self::Indirect(adr) => write!(f, "({:x})", adr),
+			Self::Indirect16(adr) => write!(f, "({:x})", adr),
+			Self::Indirect8(addr) => write!(f, "(0xff00 + {:x})", addr),
 			Self::Nn(v) => write!(f, "{:x}", v),
 			Self::N(v) => write!(f, "{:x}", v),
 		}
@@ -594,7 +601,7 @@ where
 			0xFA => Ok(op!(
 				Ld,
 				register8!(A).into(),
-				Value::Indirect(self.get_nn())
+				Value::Indirect16(self.get_nn())
 			)),
 			0x3E => Ok(op!(Ld, register8!(A).into(), self.get_n().into())),
 
@@ -640,7 +647,7 @@ mod test_convert_opcode {
 		assert_eq!(
 			OpcodeGenerator::from(vec![0x8, 0x34, 0x12].into_iter()).next(),
 			Some(Ok(Opcode::Ld(
-				Store::Indirect(0x1234),
+				Store::Indirect16(0x1234),
 				Value::Register(RegisterSpecial::SP.into())
 			)))
 		);
