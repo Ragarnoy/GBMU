@@ -239,7 +239,7 @@ where
 }
 
 #[bitfield]
-#[derive(Debug, PartialEq, Eq)]
+#[derive(PartialEq, Eq)]
 pub struct OpcodeBits {
 	z: B3,
 	y: B3,
@@ -255,6 +255,20 @@ impl OpcodeBits {
 	/// q = y % 2
 	fn q(&self) -> u8 {
 		self.y() & 1
+	}
+}
+
+impl fmt::Debug for OpcodeBits {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		write!(
+			f,
+			"OpcodeBits {{ x: {}, y: {}, z: {}, p: {}, q: {} }}",
+			self.x(),
+			self.y(),
+			self.z(),
+			self.p(),
+			self.q()
+		)
 	}
 }
 
