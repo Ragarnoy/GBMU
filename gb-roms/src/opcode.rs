@@ -13,6 +13,15 @@ use std::{
 	fmt,
 };
 
+macro_rules! op {
+	($t:ident, $($v:expr),+) => {
+		Opcode::$t($($v),+)
+	};
+	($t:ident) => {
+		Opcode::$t
+	};
+}
+
 #[derive(Debug, PartialEq, Eq)]
 pub enum Opcode {
 	/// jump to addr
@@ -434,133 +443,150 @@ where
 
 		Some(match current {
 			// Ld nn, n
-			0x06 => Ok(Opcode::Ld(register8!(B).into(), n().into())),
-			0x0E => Ok(Opcode::Ld(register8!(C).into(), n().into())),
-			0x16 => Ok(Opcode::Ld(register8!(D).into(), n().into())),
-			0x1E => Ok(Opcode::Ld(register8!(E).into(), n().into())),
-			0x26 => Ok(Opcode::Ld(register8!(H).into(), n().into())),
-			0x2E => Ok(Opcode::Ld(register8!(L).into(), n().into())),
+			0x06 => Ok(op!(Ld, register8!(B).into(), n().into())),
+			0x0E => Ok(op!(Ld, register8!(C).into(), n().into())),
+			0x16 => Ok(op!(Ld, register8!(D).into(), n().into())),
+			0x1E => Ok(op!(Ld, register8!(E).into(), n().into())),
+			0x26 => Ok(op!(Ld, register8!(H).into(), n().into())),
+			0x2E => Ok(op!(Ld, register8!(L).into(), n().into())),
 
 			// Ld r1, r2
-			0x7F => Ok(Opcode::Ld(register8!(A).into(), register8!(A).into())),
-			0x78 => Ok(Opcode::Ld(register8!(A).into(), register8!(B).into())),
-			0x79 => Ok(Opcode::Ld(register8!(A).into(), register8!(C).into())),
-			0x7A => Ok(Opcode::Ld(register8!(A).into(), register8!(D).into())),
-			0x7B => Ok(Opcode::Ld(register8!(A).into(), register8!(E).into())),
-			0x7C => Ok(Opcode::Ld(register8!(A).into(), register8!(H).into())),
-			0x7D => Ok(Opcode::Ld(register8!(A).into(), register8!(L).into())),
-			0x7E => Ok(Opcode::Ld(
+			0x7F => Ok(op!(Ld, register8!(A).into(), register8!(A).into())),
+			0x78 => Ok(op!(Ld, register8!(A).into(), register8!(B).into())),
+			0x79 => Ok(op!(Ld, register8!(A).into(), register8!(C).into())),
+			0x7A => Ok(op!(Ld, register8!(A).into(), register8!(D).into())),
+			0x7B => Ok(op!(Ld, register8!(A).into(), register8!(E).into())),
+			0x7C => Ok(op!(Ld, register8!(A).into(), register8!(H).into())),
+			0x7D => Ok(op!(Ld, register8!(A).into(), register8!(L).into())),
+			0x7E => Ok(op!(
+				Ld,
 				register8!(A).into(),
-				Value::IndirectReg(register16!(HL)),
+				Value::IndirectReg(register16!(HL))
 			)),
-			0x40 => Ok(Opcode::Ld(register8!(B).into(), register8!(B).into())),
-			0x41 => Ok(Opcode::Ld(register8!(B).into(), register8!(C).into())),
-			0x42 => Ok(Opcode::Ld(register8!(B).into(), register8!(D).into())),
-			0x43 => Ok(Opcode::Ld(register8!(B).into(), register8!(E).into())),
-			0x44 => Ok(Opcode::Ld(register8!(B).into(), register8!(H).into())),
-			0x45 => Ok(Opcode::Ld(register8!(B).into(), register8!(L).into())),
-			0x46 => Ok(Opcode::Ld(
+			0x40 => Ok(op!(Ld, register8!(B).into(), register8!(B).into())),
+			0x41 => Ok(op!(Ld, register8!(B).into(), register8!(C).into())),
+			0x42 => Ok(op!(Ld, register8!(B).into(), register8!(D).into())),
+			0x43 => Ok(op!(Ld, register8!(B).into(), register8!(E).into())),
+			0x44 => Ok(op!(Ld, register8!(B).into(), register8!(H).into())),
+			0x45 => Ok(op!(Ld, register8!(B).into(), register8!(L).into())),
+			0x46 => Ok(op!(
+				Ld,
 				register8!(B).into(),
-				Value::IndirectReg(register16!(HL)),
+				Value::IndirectReg(register16!(HL))
 			)),
-			0x48 => Ok(Opcode::Ld(register8!(C).into(), register8!(B).into())),
-			0x49 => Ok(Opcode::Ld(register8!(C).into(), register8!(C).into())),
-			0x4A => Ok(Opcode::Ld(register8!(C).into(), register8!(D).into())),
-			0x4B => Ok(Opcode::Ld(register8!(C).into(), register8!(E).into())),
-			0x4C => Ok(Opcode::Ld(register8!(C).into(), register8!(H).into())),
-			0x4D => Ok(Opcode::Ld(register8!(C).into(), register8!(L).into())),
-			0x4E => Ok(Opcode::Ld(
+			0x48 => Ok(op!(Ld, register8!(C).into(), register8!(B).into())),
+			0x49 => Ok(op!(Ld, register8!(C).into(), register8!(C).into())),
+			0x4A => Ok(op!(Ld, register8!(C).into(), register8!(D).into())),
+			0x4B => Ok(op!(Ld, register8!(C).into(), register8!(E).into())),
+			0x4C => Ok(op!(Ld, register8!(C).into(), register8!(H).into())),
+			0x4D => Ok(op!(Ld, register8!(C).into(), register8!(L).into())),
+			0x4E => Ok(op!(
+				Ld,
 				register8!(C).into(),
-				Value::IndirectReg(register16!(HL)),
+				Value::IndirectReg(register16!(HL))
 			)),
-			0x50 => Ok(Opcode::Ld(register8!(D).into(), register8!(B).into())),
-			0x51 => Ok(Opcode::Ld(register8!(D).into(), register8!(C).into())),
-			0x52 => Ok(Opcode::Ld(register8!(D).into(), register8!(D).into())),
-			0x53 => Ok(Opcode::Ld(register8!(D).into(), register8!(E).into())),
-			0x54 => Ok(Opcode::Ld(register8!(D).into(), register8!(H).into())),
-			0x55 => Ok(Opcode::Ld(register8!(D).into(), register8!(L).into())),
-			0x56 => Ok(Opcode::Ld(
+			0x50 => Ok(op!(Ld, register8!(D).into(), register8!(B).into())),
+			0x51 => Ok(op!(Ld, register8!(D).into(), register8!(C).into())),
+			0x52 => Ok(op!(Ld, register8!(D).into(), register8!(D).into())),
+			0x53 => Ok(op!(Ld, register8!(D).into(), register8!(E).into())),
+			0x54 => Ok(op!(Ld, register8!(D).into(), register8!(H).into())),
+			0x55 => Ok(op!(Ld, register8!(D).into(), register8!(L).into())),
+			0x56 => Ok(op!(
+				Ld,
 				register8!(D).into(),
-				Value::IndirectReg(register16!(HL)),
+				Value::IndirectReg(register16!(HL))
 			)),
-			0x58 => Ok(Opcode::Ld(register8!(E).into(), register8!(B).into())),
-			0x59 => Ok(Opcode::Ld(register8!(E).into(), register8!(C).into())),
-			0x5A => Ok(Opcode::Ld(register8!(E).into(), register8!(D).into())),
-			0x5B => Ok(Opcode::Ld(register8!(E).into(), register8!(E).into())),
-			0x5C => Ok(Opcode::Ld(register8!(E).into(), register8!(H).into())),
-			0x5D => Ok(Opcode::Ld(register8!(E).into(), register8!(L).into())),
-			0x5E => Ok(Opcode::Ld(
+			0x58 => Ok(op!(Ld, register8!(E).into(), register8!(B).into())),
+			0x59 => Ok(op!(Ld, register8!(E).into(), register8!(C).into())),
+			0x5A => Ok(op!(Ld, register8!(E).into(), register8!(D).into())),
+			0x5B => Ok(op!(Ld, register8!(E).into(), register8!(E).into())),
+			0x5C => Ok(op!(Ld, register8!(E).into(), register8!(H).into())),
+			0x5D => Ok(op!(Ld, register8!(E).into(), register8!(L).into())),
+			0x5E => Ok(op!(
+				Ld,
 				register8!(E).into(),
-				Value::IndirectReg(register16!(HL)),
+				Value::IndirectReg(register16!(HL))
 			)),
-			0x60 => Ok(Opcode::Ld(register8!(H).into(), register8!(B).into())),
-			0x61 => Ok(Opcode::Ld(register8!(H).into(), register8!(C).into())),
-			0x62 => Ok(Opcode::Ld(register8!(H).into(), register8!(D).into())),
-			0x63 => Ok(Opcode::Ld(register8!(H).into(), register8!(E).into())),
-			0x64 => Ok(Opcode::Ld(register8!(H).into(), register8!(H).into())),
-			0x65 => Ok(Opcode::Ld(register8!(H).into(), register8!(L).into())),
-			0x66 => Ok(Opcode::Ld(
+			0x60 => Ok(op!(Ld, register8!(H).into(), register8!(B).into())),
+			0x61 => Ok(op!(Ld, register8!(H).into(), register8!(C).into())),
+			0x62 => Ok(op!(Ld, register8!(H).into(), register8!(D).into())),
+			0x63 => Ok(op!(Ld, register8!(H).into(), register8!(E).into())),
+			0x64 => Ok(op!(Ld, register8!(H).into(), register8!(H).into())),
+			0x65 => Ok(op!(Ld, register8!(H).into(), register8!(L).into())),
+			0x66 => Ok(op!(
+				Ld,
 				register8!(H).into(),
-				Value::IndirectReg(register16!(HL)),
+				Value::IndirectReg(register16!(HL))
 			)),
-			0x68 => Ok(Opcode::Ld(register8!(L).into(), register8!(B).into())),
-			0x69 => Ok(Opcode::Ld(register8!(L).into(), register8!(C).into())),
-			0x6A => Ok(Opcode::Ld(register8!(L).into(), register8!(D).into())),
-			0x6B => Ok(Opcode::Ld(register8!(L).into(), register8!(E).into())),
-			0x6C => Ok(Opcode::Ld(register8!(L).into(), register8!(H).into())),
-			0x6D => Ok(Opcode::Ld(register8!(L).into(), register8!(L).into())),
-			0x6E => Ok(Opcode::Ld(
+			0x68 => Ok(op!(Ld, register8!(L).into(), register8!(B).into())),
+			0x69 => Ok(op!(Ld, register8!(L).into(), register8!(C).into())),
+			0x6A => Ok(op!(Ld, register8!(L).into(), register8!(D).into())),
+			0x6B => Ok(op!(Ld, register8!(L).into(), register8!(E).into())),
+			0x6C => Ok(op!(Ld, register8!(L).into(), register8!(H).into())),
+			0x6D => Ok(op!(Ld, register8!(L).into(), register8!(L).into())),
+			0x6E => Ok(op!(
+				Ld,
 				register8!(L).into(),
-				Value::IndirectReg(register16!(HL)),
+				Value::IndirectReg(register16!(HL))
 			)),
-			0x70 => Ok(Opcode::Ld(
+			0x70 => Ok(op!(
+				Ld,
 				Store::IndirectReg(register16!(HL)),
-				register8!(B).into(),
+				register8!(B).into()
 			)),
-			0x71 => Ok(Opcode::Ld(
+			0x71 => Ok(op!(
+				Ld,
 				Store::IndirectReg(register16!(HL)),
-				register8!(C).into(),
+				register8!(C).into()
 			)),
-			0x72 => Ok(Opcode::Ld(
+			0x72 => Ok(op!(
+				Ld,
 				Store::IndirectReg(register16!(HL)),
-				register8!(D).into(),
+				register8!(D).into()
 			)),
-			0x73 => Ok(Opcode::Ld(
+			0x73 => Ok(op!(
+				Ld,
 				Store::IndirectReg(register16!(HL)),
-				register8!(E).into(),
+				register8!(E).into()
 			)),
-			0x74 => Ok(Opcode::Ld(
+			0x74 => Ok(op!(
+				Ld,
 				Store::IndirectReg(register16!(HL)),
-				register8!(H).into(),
+				register8!(H).into()
 			)),
-			0x75 => Ok(Opcode::Ld(
+			0x75 => Ok(op!(
+				Ld,
 				Store::IndirectReg(register16!(HL)),
-				register8!(L).into(),
+				register8!(L).into()
 			)),
-			0x36 => Ok(Opcode::Ld(Store::IndirectReg(register16!(HL)), n().into())),
+			0x36 => Ok(op!(Ld, Store::IndirectReg(register16!(HL)), n().into())),
 
 			// LD A, n
-			0x7F => Ok(Opcode::Ld(register8!(A).into(), register8!(A).into())),
-			0x78 => Ok(Opcode::Ld(register8!(A).into(), register8!(B).into())),
-			0x79 => Ok(Opcode::Ld(register8!(A).into(), register8!(C).into())),
-			0x7A => Ok(Opcode::Ld(register8!(A).into(), register8!(D).into())),
-			0x7B => Ok(Opcode::Ld(register8!(A).into(), register8!(E).into())),
-			0x7C => Ok(Opcode::Ld(register8!(A).into(), register8!(H).into())),
-			0x7D => Ok(Opcode::Ld(register8!(A).into(), register8!(L).into())),
-			0x0A => Ok(Opcode::Ld(
+			0x7F => Ok(op!(Ld, register8!(A).into(), register8!(A).into())),
+			0x78 => Ok(op!(Ld, register8!(A).into(), register8!(B).into())),
+			0x79 => Ok(op!(Ld, register8!(A).into(), register8!(C).into())),
+			0x7A => Ok(op!(Ld, register8!(A).into(), register8!(D).into())),
+			0x7B => Ok(op!(Ld, register8!(A).into(), register8!(E).into())),
+			0x7C => Ok(op!(Ld, register8!(A).into(), register8!(H).into())),
+			0x7D => Ok(op!(Ld, register8!(A).into(), register8!(L).into())),
+			0x0A => Ok(op!(
+				Ld,
 				register8!(A).into(),
-				Value::IndirectReg(register16!(BC)),
+				Value::IndirectReg(register16!(BC))
 			)),
-			0x1A => Ok(Opcode::Ld(
+			0x1A => Ok(op!(
+				Ld,
 				register8!(A).into(),
-				Value::IndirectReg(register16!(DE)),
+				Value::IndirectReg(register16!(DE))
 			)),
-			0x7E => Ok(Opcode::Ld(
+			0x7E => Ok(op!(
+				Ld,
 				register8!(A).into(),
-				Value::IndirectReg(register16!(HL)),
+				Value::IndirectReg(register16!(HL))
 			)),
-			0xFA => Ok(Opcode::Ld(register8!(A).into(), Value::Indirect(nn()))),
-			0x3E => Ok(Opcode::Ld(register8!(A).into(), n().into())),
+			0xFA => Ok(op!(Ld, register8!(A).into(), Value::Indirect(nn()))),
+			0x3E => Ok(op!(Ld, register8!(A).into(), n().into())),
+
 			_ => Err(Error::UnknownOpcode(current)),
 		})
 	}
