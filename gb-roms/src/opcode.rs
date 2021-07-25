@@ -6,7 +6,7 @@ use modular_bitfield::{
 	bitfield,
 	specifiers::{B2, B3},
 };
-use register::Register;
+use register::{Register, Register16Bits};
 use std::{
 	convert::{From, TryFrom},
 	fmt,
@@ -33,6 +33,13 @@ pub enum Opcode {
 	Add(Store, Value),
 
 	/// load value from **Value** and load it to **Store**
+	///
+	/// Timing:
+	/// - r8 -> r8 : 4
+	/// - r8 -> *r16 : 8
+	/// - *16 -> r8 : 8
+	/// - n -> r8 : 8
+	/// - *nn -> r8 : 16
 	Ld(Store, Value),
 	/// Load value into `*HL` then decrement `HL`
 	/// *HL-- = n
@@ -117,6 +124,8 @@ fn test_display_opcode() {
 pub enum Store {
 	/// Register Id
 	Register(Register),
+	/// Use the addr to register
+	IndirectReg(Register16Bits),
 	/// Addresse in memory (should be!)
 	Indirect(u16),
 }
@@ -137,6 +146,7 @@ impl fmt::Display for Store {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		match self {
 			Self::Register(reg) => write!(f, "{}", reg),
+			Self::IndirectReg(reg) => write!(f, "({})", reg),
 			Self::Indirect(addr) => write!(f, "({:x})", addr),
 		}
 	}
@@ -153,6 +163,8 @@ fn test_store_display() {
 #[derive(Debug, PartialEq, Eq)]
 pub enum Value {
 	Register(Register),
+	IndirectReg(Register16Bits),
+	Indirect(u16),
 	Nn(u16),
 	N(u8),
 }
@@ -179,6 +191,8 @@ impl fmt::Display for Value {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		match self {
 			Self::Register(reg) => write!(f, "{}", reg),
+			Self::IndirectReg(reg) => write!(f, "({})", reg),
+			Self::Indirect(adr) => write!(f, "({:x})", adr),
 			Self::Nn(v) => write!(f, "{:x}", v),
 			Self::N(v) => write!(f, "{:x}", v),
 		}
@@ -397,11 +411,14 @@ where
 	type Item = Result<Opcode, Error>;
 
 	fn next(&mut self) -> Option<Self::Item> {
-		use register::Register8Bits;
+		use register::{Register16Bits, Register8Bits};
 
 		let current = self.stream.next()?;
 		let mut n = || self.get_n().expect("next `n` value");
 		Some(match current {
+			//
+			// Ld nn, n
+			//
 			0x06 => Ok(Opcode::Ld(
 				Register::from(Register8Bits::B).into(),
 				n().into(),
@@ -426,6 +443,238 @@ where
 				Register::from(Register8Bits::L).into(),
 				n().into(),
 			)),
+
+			//
+			// Ld r1, r2
+			//
+			0x7F => Ok(Opcode::Ld(
+				Register::from(Register8Bits::A).into(),
+				Register::from(Register8Bits::A).into(),
+			)), // 4
+			0x78 => Ok(Opcode::Ld(
+				Register::from(Register8Bits::A).into(),
+				Register::from(Register8Bits::B).into(),
+			)), // 4
+			0x79 => Ok(Opcode::Ld(
+				Register::from(Register8Bits::A).into(),
+				Register::from(Register8Bits::C).into(),
+			)), // 4
+			0x7A => Ok(Opcode::Ld(
+				Register::from(Register8Bits::A).into(),
+				Register::from(Register8Bits::D).into(),
+			)), // 4
+			0x7B => Ok(Opcode::Ld(
+				Register::from(Register8Bits::A).into(),
+				Register::from(Register8Bits::E).into(),
+			)), // 4
+			0x7C => Ok(Opcode::Ld(
+				Register::from(Register8Bits::A).into(),
+				Register::from(Register8Bits::H).into(),
+			)), // 4
+			0x7D => Ok(Opcode::Ld(
+				Register::from(Register8Bits::A).into(),
+				Register::from(Register8Bits::L).into(),
+			)), // 4
+			0x7E => Ok(Opcode::Ld(
+				Register::from(Register8Bits::A).into(),
+				Value::IndirectReg(Register16Bits::HL),
+			)), // 8
+			0x40 => Ok(Opcode::Ld(
+				Register::from(Register8Bits::B).into(),
+				Register::from(Register8Bits::B).into(),
+			)), // 4
+			0x41 => Ok(Opcode::Ld(
+				Register::from(Register8Bits::B).into(),
+				Register::from(Register8Bits::C).into(),
+			)), // 4
+			0x42 => Ok(Opcode::Ld(
+				Register::from(Register8Bits::B).into(),
+				Register::from(Register8Bits::D).into(),
+			)), // 4
+			0x43 => Ok(Opcode::Ld(
+				Register::from(Register8Bits::B).into(),
+				Register::from(Register8Bits::E).into(),
+			)), // 4
+			0x44 => Ok(Opcode::Ld(
+				Register::from(Register8Bits::B).into(),
+				Register::from(Register8Bits::H).into(),
+			)), // 4
+			0x45 => Ok(Opcode::Ld(
+				Register::from(Register8Bits::B).into(),
+				Register::from(Register8Bits::L).into(),
+			)), // 4
+			0x46 => Ok(Opcode::Ld(
+				Register::from(Register8Bits::B).into(),
+				Value::IndirectReg(Register16Bits::HL),
+			)), // 8
+			0x48 => Ok(Opcode::Ld(
+				Register::from(Register8Bits::C).into(),
+				Register::from(Register8Bits::B).into(),
+			)), // 4
+			0x49 => Ok(Opcode::Ld(
+				Register::from(Register8Bits::C).into(),
+				Register::from(Register8Bits::C).into(),
+			)), // 4
+			0x4A => Ok(Opcode::Ld(
+				Register::from(Register8Bits::C).into(),
+				Register::from(Register8Bits::D).into(),
+			)), // 4
+			0x4B => Ok(Opcode::Ld(
+				Register::from(Register8Bits::C).into(),
+				Register::from(Register8Bits::E).into(),
+			)), // 4
+			0x4C => Ok(Opcode::Ld(
+				Register::from(Register8Bits::C).into(),
+				Register::from(Register8Bits::H).into(),
+			)), // 4
+			0x4D => Ok(Opcode::Ld(
+				Register::from(Register8Bits::C).into(),
+				Register::from(Register8Bits::L).into(),
+			)), // 4
+			0x4E => Ok(Opcode::Ld(
+				Register::from(Register8Bits::C).into(),
+				Value::IndirectReg(Register16Bits::HL),
+			)), // 8
+			0x50 => Ok(Opcode::Ld(
+				Register::from(Register8Bits::D).into(),
+				Register::from(Register8Bits::B).into(),
+			)), // 4
+			0x51 => Ok(Opcode::Ld(
+				Register::from(Register8Bits::D).into(),
+				Register::from(Register8Bits::C).into(),
+			)), // 4
+			0x52 => Ok(Opcode::Ld(
+				Register::from(Register8Bits::D).into(),
+				Register::from(Register8Bits::D).into(),
+			)), // 4
+			0x53 => Ok(Opcode::Ld(
+				Register::from(Register8Bits::D).into(),
+				Register::from(Register8Bits::E).into(),
+			)), // 4
+			0x54 => Ok(Opcode::Ld(
+				Register::from(Register8Bits::D).into(),
+				Register::from(Register8Bits::H).into(),
+			)), // 4
+			0x55 => Ok(Opcode::Ld(
+				Register::from(Register8Bits::D).into(),
+				Register::from(Register8Bits::L).into(),
+			)), // 4
+			0x56 => Ok(Opcode::Ld(
+				Register::from(Register8Bits::D).into(),
+				Value::IndirectReg(Register16Bits::HL),
+			)), // 8
+			0x58 => Ok(Opcode::Ld(
+				Register::from(Register8Bits::E).into(),
+				Register::from(Register8Bits::B).into(),
+			)), // 4
+			0x59 => Ok(Opcode::Ld(
+				Register::from(Register8Bits::E).into(),
+				Register::from(Register8Bits::C).into(),
+			)), // 4
+			0x5A => Ok(Opcode::Ld(
+				Register::from(Register8Bits::E).into(),
+				Register::from(Register8Bits::D).into(),
+			)), // 4
+			0x5B => Ok(Opcode::Ld(
+				Register::from(Register8Bits::E).into(),
+				Register::from(Register8Bits::E).into(),
+			)), // 4
+			0x5C => Ok(Opcode::Ld(
+				Register::from(Register8Bits::E).into(),
+				Register::from(Register8Bits::H).into(),
+			)), // 4
+			0x5D => Ok(Opcode::Ld(
+				Register::from(Register8Bits::E).into(),
+				Register::from(Register8Bits::L).into(),
+			)), // 4
+			0x5E => Ok(Opcode::Ld(
+				Register::from(Register8Bits::E).into(),
+				Value::IndirectReg(Register16Bits::HL),
+			)), // 8
+			0x60 => Ok(Opcode::Ld(
+				Register::from(Register8Bits::H).into(),
+				Register::from(Register8Bits::B).into(),
+			)), // 4
+			0x61 => Ok(Opcode::Ld(
+				Register::from(Register8Bits::H).into(),
+				Register::from(Register8Bits::C).into(),
+			)), // 4
+			0x62 => Ok(Opcode::Ld(
+				Register::from(Register8Bits::H).into(),
+				Register::from(Register8Bits::D).into(),
+			)), // 4
+			0x63 => Ok(Opcode::Ld(
+				Register::from(Register8Bits::H).into(),
+				Register::from(Register8Bits::E).into(),
+			)), // 4
+			0x64 => Ok(Opcode::Ld(
+				Register::from(Register8Bits::H).into(),
+				Register::from(Register8Bits::H).into(),
+			)), // 4
+			0x65 => Ok(Opcode::Ld(
+				Register::from(Register8Bits::H).into(),
+				Register::from(Register8Bits::L).into(),
+			)), // 4
+			0x66 => Ok(Opcode::Ld(
+				Register::from(Register8Bits::H).into(),
+				Value::IndirectReg(Register16Bits::HL),
+			)), // 8
+			0x68 => Ok(Opcode::Ld(
+				Register::from(Register8Bits::L).into(),
+				Register::from(Register8Bits::B).into(),
+			)), // 4
+			0x69 => Ok(Opcode::Ld(
+				Register::from(Register8Bits::L).into(),
+				Register::from(Register8Bits::C).into(),
+			)), // 4
+			0x6A => Ok(Opcode::Ld(
+				Register::from(Register8Bits::L).into(),
+				Register::from(Register8Bits::D).into(),
+			)), // 4
+			0x6B => Ok(Opcode::Ld(
+				Register::from(Register8Bits::L).into(),
+				Register::from(Register8Bits::E).into(),
+			)), // 4
+			0x6C => Ok(Opcode::Ld(
+				Register::from(Register8Bits::L).into(),
+				Register::from(Register8Bits::H).into(),
+			)), // 4
+			0x6D => Ok(Opcode::Ld(
+				Register::from(Register8Bits::L).into(),
+				Register::from(Register8Bits::L).into(),
+			)), // 4
+			0x6E => Ok(Opcode::Ld(
+				Register::from(Register8Bits::L).into(),
+				Value::IndirectReg(Register16Bits::HL),
+			)), // 8
+			0x70 => Ok(Opcode::Ld(
+				Store::IndirectReg(Register16Bits::HL),
+				Register::from(Register8Bits::B).into(),
+			)), // 8
+			0x71 => Ok(Opcode::Ld(
+				Store::IndirectReg(Register16Bits::HL),
+				Register::from(Register8Bits::C).into(),
+			)), // 8
+			0x72 => Ok(Opcode::Ld(
+				Store::IndirectReg(Register16Bits::HL),
+				Register::from(Register8Bits::D).into(),
+			)), // 8
+			0x73 => Ok(Opcode::Ld(
+				Store::IndirectReg(Register16Bits::HL),
+				Register::from(Register8Bits::E).into(),
+			)), // 8
+			0x74 => Ok(Opcode::Ld(
+				Store::IndirectReg(Register16Bits::HL),
+				Register::from(Register8Bits::H).into(),
+			)), // 8
+			0x75 => Ok(Opcode::Ld(
+				Store::IndirectReg(Register16Bits::HL),
+				Register::from(Register8Bits::L).into(),
+			)), // 8
+			0x36 => Ok(Opcode::Ld(
+				Store::IndirectReg(Register16Bits::HL),
+				n().into(),
+			)), // 12
 			_ => Err(Error::UnknownOpcode(current)),
 		})
 	}
