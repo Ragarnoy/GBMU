@@ -598,6 +598,15 @@ where
 			)),
 			0x3E => Ok(op!(Ld, register8!(A).into(), self.get_n().into())),
 
+			0xF2 => Ok(op!(Ld, register8!(A).into(), Value::IndirectReg8(Reg8::C))),
+			0xE2 => Ok(op!(Ld, Store::IndierectReg8(Reg8::C), register8!(A).into())),
+
+			0x32 => Ok(op!(LddFrom, register8!(A).into())),
+			0x3A => Ok(op!(LddInto, register8!(A).into())),
+
+			0x22 => Ok(op!(LdiFrom, register8!(A).into())),
+			0x2A => Ok(op!(LdiInto, register8!(A).into())),
+
 			_ => Err(Error::UnknownOpcode(current)),
 		})
 	}
