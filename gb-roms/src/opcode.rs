@@ -196,6 +196,25 @@ pub enum Opcode {
 	/// - r8: 8
 	/// - *HL: 16
 	Rr(Store),
+
+	/// Shift n left into Carry,
+	/// Timing:
+	/// - r8: 8
+	/// - *HL: 16
+	Sla(Store),
+
+	/// Shift n right into carry,
+	/// Msb doesn't change
+	/// Timing:
+	/// - r8: 8
+	/// - *HL: 16
+	Sra(Store),
+
+	/// Shift n right into carry
+	/// Timing:
+	/// - r8: 8
+	/// - *HL: 16
+	Srl(Store),
 }
 
 impl fmt::Display for Opcode {
@@ -256,6 +275,10 @@ impl fmt::Display for Opcode {
 			Self::Rl(n) => write!(f, "rl {}", n),
 			Self::Rrc(n) => write!(f, "rrc {}", n),
 			Self::Rr(n) => write!(f, "rr {}", n),
+
+			Self::Sla(n) => write!(f, "sla {}", n),
+			Self::Sra(n) => write!(f, "sra {}", n),
+			Self::Srl(n) => write!(f, "srl {}", n),
 		}
 	}
 }
@@ -675,6 +698,7 @@ where
 			0x0D => Ok(op!(Rrc, register8!(L).into())),
 			0x0E => Ok(op!(Rrc, Store::IndirectReg16(Reg16::HL))),
 
+			// rr n
 			0x1F => Ok(op!(Rr, register8!(A).into())),
 			0x18 => Ok(op!(Rr, register8!(B).into())),
 			0x19 => Ok(op!(Rr, register8!(C).into())),
@@ -683,6 +707,36 @@ where
 			0x1C => Ok(op!(Rr, register8!(H).into())),
 			0x1D => Ok(op!(Rr, register8!(L).into())),
 			0x1E => Ok(op!(Rr, Store::IndirectReg16(Reg16::HL))),
+
+			// sla n
+			0x27 => Ok(op!(Sla, register8!(A).into())),
+			0x20 => Ok(op!(Sla, register8!(B).into())),
+			0x21 => Ok(op!(Sla, register8!(C).into())),
+			0x22 => Ok(op!(Sla, register8!(D).into())),
+			0x23 => Ok(op!(Sla, register8!(E).into())),
+			0x24 => Ok(op!(Sla, register8!(H).into())),
+			0x25 => Ok(op!(Sla, register8!(L).into())),
+			0x26 => Ok(op!(Sla, Store::IndirectReg16(Reg16::HL))),
+
+			// sra n
+			0x2F => Ok(op!(Sra, register8!(A).into())),
+			0x28 => Ok(op!(Sra, register8!(B).into())),
+			0x29 => Ok(op!(Sra, register8!(C).into())),
+			0x2A => Ok(op!(Sra, register8!(D).into())),
+			0x2B => Ok(op!(Sra, register8!(E).into())),
+			0x2C => Ok(op!(Sra, register8!(H).into())),
+			0x2D => Ok(op!(Sra, register8!(L).into())),
+			0x2E => Ok(op!(Sra, Store::IndirectReg16(Reg16::HL))),
+
+			// srl n
+			0x3F => Ok(op!(Srl, register8!(A).into())),
+			0x38 => Ok(op!(Srl, register8!(B).into())),
+			0x39 => Ok(op!(Srl, register8!(C).into())),
+			0x3A => Ok(op!(Srl, register8!(D).into())),
+			0x3B => Ok(op!(Srl, register8!(E).into())),
+			0x3C => Ok(op!(Srl, register8!(H).into())),
+			0x3D => Ok(op!(Srl, register8!(L).into())),
+			0x3E => Ok(op!(Srl, Store::IndirectReg16(Reg16::HL))),
 
 			_ => Err(Error::UnknownOpcode(current)),
 		}
