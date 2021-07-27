@@ -179,11 +179,23 @@ pub enum Opcode {
 	/// - *HL: 16
 	Rlc(Store),
 
+	/// Rotate n left
+	/// Timing:
+	/// - r8: 8
+	/// - *HL: 16
+	Rl(Store),
+
 	/// Rotate n right
 	/// Timing:
 	/// - r8: 8
 	/// - *HL: 16
 	Rrc(Store),
+
+	/// Rotate n right
+	/// Timing:
+	/// - r8: 8
+	/// - *HL: 16
+	Rr(Store),
 }
 
 impl fmt::Display for Opcode {
@@ -241,7 +253,9 @@ impl fmt::Display for Opcode {
 			Self::Rra => write!(f, "rra"),
 
 			Self::Rlc(n) => write!(f, "rlc {}", n),
+			Self::Rl(n) => write!(f, "rl {}", n),
 			Self::Rrc(n) => write!(f, "rrc {}", n),
+			Self::Rr(n) => write!(f, "rr {}", n),
 		}
 	}
 }
@@ -641,6 +655,16 @@ where
 			0x05 => Ok(op!(Rlc, register8!(L).into())),
 			0x06 => Ok(op!(Rlc, Store::IndirectReg16(Reg16::HL))),
 
+			// rl n
+			0x17 => Ok(op!(Rl, register8!(A).into())),
+			0x10 => Ok(op!(Rl, register8!(B).into())),
+			0x11 => Ok(op!(Rl, register8!(C).into())),
+			0x12 => Ok(op!(Rl, register8!(D).into())),
+			0x13 => Ok(op!(Rl, register8!(E).into())),
+			0x14 => Ok(op!(Rl, register8!(H).into())),
+			0x15 => Ok(op!(Rl, register8!(L).into())),
+			0x16 => Ok(op!(Rl, Store::IndirectReg16(Reg16::HL))),
+
 			// rrc n
 			0x0F => Ok(op!(Rrc, register8!(A).into())),
 			0x08 => Ok(op!(Rrc, register8!(B).into())),
@@ -650,6 +674,15 @@ where
 			0x0C => Ok(op!(Rrc, register8!(H).into())),
 			0x0D => Ok(op!(Rrc, register8!(L).into())),
 			0x0E => Ok(op!(Rrc, Store::IndirectReg16(Reg16::HL))),
+
+			0x1F => Ok(op!(Rr, register8!(A).into())),
+			0x18 => Ok(op!(Rr, register8!(B).into())),
+			0x19 => Ok(op!(Rr, register8!(C).into())),
+			0x1A => Ok(op!(Rr, register8!(D).into())),
+			0x1B => Ok(op!(Rr, register8!(E).into())),
+			0x1C => Ok(op!(Rr, register8!(H).into())),
+			0x1D => Ok(op!(Rr, register8!(L).into())),
+			0x1E => Ok(op!(Rr, Store::IndirectReg16(Reg16::HL))),
 
 			_ => Err(Error::UnknownOpcode(current)),
 		}
