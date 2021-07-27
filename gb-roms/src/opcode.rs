@@ -172,6 +172,9 @@ pub enum Opcode {
 	/// Rotate A right
 	/// Timimg: 4
 	Rra,
+
+	/// Rotate n left
+	Rlc(Store),
 }
 
 impl fmt::Display for Opcode {
@@ -227,6 +230,8 @@ impl fmt::Display for Opcode {
 
 			Self::Rrca => write!(f, "rrca"),
 			Self::Rra => write!(f, "rra"),
+
+			Self::Rlc(n) => write!(f, "rlc {}", n),
 		}
 	}
 }
@@ -615,6 +620,16 @@ where
 			0x34 => Ok(op!(Swap, register8!(H).into())),
 			0x35 => Ok(op!(Swap, register8!(L).into())),
 			0x36 => Ok(op!(Swap, Store::IndirectReg16(Reg16::HL))),
+
+			// rlc n
+			0x07 => Ok(op!(Rlc, register8!(A).into())),
+			0x00 => Ok(op!(Rlc, register8!(B).into())),
+			0x01 => Ok(op!(Rlc, register8!(C).into())),
+			0x02 => Ok(op!(Rlc, register8!(D).into())),
+			0x03 => Ok(op!(Rlc, register8!(E).into())),
+			0x04 => Ok(op!(Rlc, register8!(H).into())),
+			0x05 => Ok(op!(Rlc, register8!(L).into())),
+			0x06 => Ok(op!(Rlc, Store::IndirectReg16(Reg16::HL))),
 
 			_ => Err(Error::UnknownOpcode(current)),
 		}
