@@ -118,6 +118,27 @@ pub enum Opcode {
 	/// - r8: 8
 	/// - *HL: 16
 	Swap(Store),
+
+	/// Decimal adjust register A
+	/// Adjust register A to obtain a Binary Coded Decimal (BCD)
+	/// - 42 : 0b0010_1010 => `BCD(42) = 0b0100_0010`
+	/// Timing: 4
+	Daa,
+
+	/// Complement a register (flip all bits)
+	/// `0b0011_0101` => `0b1100_1010`
+	/// Timing: 4
+	Cpl,
+
+	/// Complement carry flag (toggle carry flag)
+	/// - On => Off
+	/// - Off => On
+	/// Timing: 4
+	Ccf,
+
+	/// Set carry flag
+	/// Timing: 4
+	Scf,
 }
 
 impl fmt::Display for Opcode {
@@ -158,6 +179,11 @@ impl fmt::Display for Opcode {
 			Self::Dec(s) => write!(f, "dec {}", s),
 
 			Self::Swap(s) => write!(f, "swap {}", s),
+
+			Self::Daa => write!(f, "daa"),
+			Self::Cpl => write!(f, "cpl"),
+			Self::Ccf => write!(f, "ccf"),
+			Self::Scf => write!(f, "scf"),
 		}
 	}
 }
@@ -898,6 +924,11 @@ where
 			0x3B => Ok(op!(Dec, register_special!(SP).into())),
 
 			0xCB => self.decode_cb_prefix(),
+
+			0x27 => Ok(op!(Daa)),
+			0x2F => Ok(op!(Cpl)),
+			0x3F => Ok(op!(Ccf)),
+			0x37 => Ok(op!(Scf)),
 
 			_ => Err(Error::UnknownOpcode(current)),
 		})
