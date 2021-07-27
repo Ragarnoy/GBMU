@@ -37,7 +37,16 @@ pub enum Opcode {
 	/// relative jump to PC + value when flag C is set
 	JumpRNCarry(i8),
 
+	/// No operation
+	/// Timing: 4
 	Nop,
+
+	/// Power down CPU until an interrupt occurs.
+	/// Timing: 4
+	Halt,
+
+	/// Halt CPU & LCD display until button pressed
+	/// Timing: 4
 	Stop,
 
 	/// load value from **Value** and load it to **Store**
@@ -152,6 +161,7 @@ impl fmt::Display for Opcode {
 			Self::JumpRCarry(value) => write!(f, "jrc {:x}", value),
 
 			Self::Nop => write!(f, "nop"),
+			Self::Halt => write!(f, "halt"),
 			Self::Stop => write!(f, "stop"),
 
 			Self::Ld(from, to) => write!(f, "ld {}, {}", from, to),
@@ -929,6 +939,16 @@ where
 			0x2F => Ok(op!(Cpl)),
 			0x3F => Ok(op!(Ccf)),
 			0x37 => Ok(op!(Scf)),
+
+			0x00 => Ok(op!(Nop)),
+			0x76 => Ok(op!(Halt)),
+			0x10 => {
+				if self.stream.next() == Some(0x00) {
+					Ok(op!(Stop))
+				} else {
+					Err(Error::InvalideOpcode(0x10))
+				}
+			}
 
 			_ => Err(Error::UnknownOpcode(current)),
 		})
