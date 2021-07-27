@@ -164,6 +164,14 @@ pub enum Opcode {
 	/// Rotate A left
 	/// Timing: 4
 	Rla,
+
+	/// Rotate A right
+	/// Timing: 4
+	Rrca,
+
+	/// Rotate A right
+	/// Timimg: 4
+	Rra,
 }
 
 impl fmt::Display for Opcode {
@@ -216,6 +224,9 @@ impl fmt::Display for Opcode {
 
 			Self::Rlca => write!(f, "rlca"),
 			Self::Rla => write!(f, "rla"),
+
+			Self::Rrca => write!(f, "rrca"),
+			Self::Rra => write!(f, "rra"),
 		}
 	}
 }
@@ -977,6 +988,9 @@ where
 
 			0x07 => Ok(op!(Rlca)),
 			0x17 => Ok(op!(Rla)),
+
+			0x0F => Ok(op!(Rrca)),
+			0x1F => Ok(op!(Rra)),
 
 			_ => Err(Error::UnknownOpcode(current)),
 		})
