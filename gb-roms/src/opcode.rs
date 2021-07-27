@@ -148,6 +148,14 @@ pub enum Opcode {
 	/// Set carry flag
 	/// Timing: 4
 	Scf,
+
+	/// Disable Interrupts after next instruction
+	/// Timimg: 4
+	Di,
+
+	/// Enable Interrupts after next instruction
+	/// Timing: 4
+	Ei,
 }
 
 impl fmt::Display for Opcode {
@@ -194,6 +202,9 @@ impl fmt::Display for Opcode {
 			Self::Cpl => write!(f, "cpl"),
 			Self::Ccf => write!(f, "ccf"),
 			Self::Scf => write!(f, "scf"),
+
+			Self::Di => write!(f, "di"),
+			Self::Ei => write!(f, "ei"),
 		}
 	}
 }
@@ -949,6 +960,9 @@ where
 					Err(Error::InvalideOpcode(0x10))
 				}
 			}
+
+			0xF3 => Ok(op!(Di)),
+			0xFB => Ok(op!(Ei)),
 
 			_ => Err(Error::UnknownOpcode(current)),
 		})
