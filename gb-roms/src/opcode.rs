@@ -112,6 +112,12 @@ pub enum Opcode {
 	Inc(Store),
 	/// Decrement n
 	Dec(Store),
+
+	/// Swap upper & lower nibles of n
+	/// Timing:
+	/// - r8: 8
+	/// - *HL: 16
+	Swap(Store),
 }
 
 impl fmt::Display for Opcode {
@@ -150,6 +156,8 @@ impl fmt::Display for Opcode {
 
 			Self::Inc(s) => write!(f, "inc {}", s),
 			Self::Dec(s) => write!(f, "dec {}", s),
+
+			Self::Swap(s) => write!(f, "swap {}", s),
 		}
 	}
 }
@@ -516,6 +524,34 @@ fn test_rot_table_convert() {
 	assert_eq!(RotTable::try_from(7), Ok(RotTable::Srl));
 }
 
+impl<It> OpcodeGenerator<It>
+where
+	It: Iterator<Item = u8>,
+{
+	fn decode_cb_prefix(&mut self) -> Result<Opcode, Error> {
+		use register::Register8Bits;
+
+		let current = self
+			.stream
+			.next()
+			.ok_or_else(|| Error::InvalideOpcode(0xCB))?;
+
+		match current {
+			// swap n
+			0x37 => Ok(op!(Swap, register8!(A).into())),
+			0x30 => Ok(op!(Swap, register8!(B).into())),
+			0x31 => Ok(op!(Swap, register8!(C).into())),
+			0x32 => Ok(op!(Swap, register8!(D).into())),
+			0x33 => Ok(op!(Swap, register8!(E).into())),
+			0x34 => Ok(op!(Swap, register8!(H).into())),
+			0x35 => Ok(op!(Swap, register8!(L).into())),
+			0x36 => Ok(op!(Swap, Store::IndirectReg16(Reg16::HL))),
+
+			_ => Err(Error::UnknownOpcode(current)),
+		}
+	}
+}
+
 impl<It> From<It> for OpcodeGenerator<It>
 where
 	It: Iterator<Item = u8>,
@@ -860,6 +896,8 @@ where
 			0x1B => Ok(op!(Dec, register16!(DE).into())),
 			0x2B => Ok(op!(Dec, register16!(HL).into())),
 			0x3B => Ok(op!(Dec, register_special!(SP).into())),
+
+			0xCB => self.decode_cb_prefix(),
 
 			_ => Err(Error::UnknownOpcode(current)),
 		})
