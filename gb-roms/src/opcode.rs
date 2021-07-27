@@ -156,6 +156,14 @@ pub enum Opcode {
 	/// Enable Interrupts after next instruction
 	/// Timing: 4
 	Ei,
+
+	/// Rotate A left
+	/// Timing: 4
+	Rlca,
+
+	/// Rotate A left
+	/// Timing: 4
+	Rla,
 }
 
 impl fmt::Display for Opcode {
@@ -205,6 +213,9 @@ impl fmt::Display for Opcode {
 
 			Self::Di => write!(f, "di"),
 			Self::Ei => write!(f, "ei"),
+
+			Self::Rlca => write!(f, "rlca"),
+			Self::Rla => write!(f, "rla"),
 		}
 	}
 }
@@ -963,6 +974,9 @@ where
 
 			0xF3 => Ok(op!(Di)),
 			0xFB => Ok(op!(Ei)),
+
+			0x07 => Ok(op!(Rlca)),
+			0x17 => Ok(op!(Rla)),
 
 			_ => Err(Error::UnknownOpcode(current)),
 		})
