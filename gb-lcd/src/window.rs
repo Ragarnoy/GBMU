@@ -101,12 +101,7 @@ impl GBWindow {
 		self.sdl_window
 			.gl_make_current(&self.gl_ctx)
 			.map_err(|err| Error::GBWindowFrame(err))?;
-		let (egui_output, paint_cmds) = self.egui_ctx.end_frame();
-
-		//Handle cut, copy text from egui
-		if !egui_output.copied_text.is_empty() {
-			egui_sdl2_gl::copy_to_clipboard(&mut self.egui_input_state, egui_output.copied_text);
-		}
+		let (_egui_output, paint_cmds) = self.egui_ctx.end_frame();
 
 		let paint_jobs = self.egui_ctx.tessellate(paint_cmds);
 
