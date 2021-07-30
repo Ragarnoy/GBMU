@@ -121,7 +121,10 @@ impl GBWindow {
 		Ok(())
 	}
 
-	pub fn resize(&mut self, dim: (u32, u32), video_sys: &VideoSubsystem) {
+	pub fn resize(&mut self, dim: (u32, u32), video_sys: &VideoSubsystem) -> Result<(), Error> {
+		self.sdl_window
+			.gl_make_current(&self.gl_ctx)
+			.map_err(|err| Error::GBWindowFrame(err))?;
 		self.egui_painter = Painter::new(video_sys, dim.0, dim.1);
 		self.egui_input_state = EguiInputState::new(egui::RawInput {
 			screen_rect: Some(Rect::from_min_size(
@@ -131,6 +134,7 @@ impl GBWindow {
 			pixels_per_point: Some(self.pixels_per_point),
 			..Default::default()
 		});
+		return Ok(());
 	}
 
 	pub fn send_event(&mut self, event: Event) {

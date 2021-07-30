@@ -119,11 +119,15 @@ fn main() {
                 } => match win_event {
                     sdl2::event::WindowEvent::SizeChanged(width, height) => {
                         if gb_window.sdl_window().id() == window_id {
-                            gb_window.resize((width as u32, height as u32), &video_subsystem);
+                            gb_window
+                                .resize((width as u32, height as u32), &video_subsystem)
+                                .expect("Fail to resize GB window");
                             display.resize(gb_window.sdl_window().size());
                         } else if let Some(ref mut dbg_wind) = debug_window {
                             if dbg_wind.sdl_window().id() == window_id {
-                                dbg_wind.resize((width as u32, height as u32), &video_subsystem);
+                                dbg_wind
+                                    .resize((width as u32, height as u32), &video_subsystem)
+                                    .expect("Fail to resize debug window");
                             }
                         }
                     }
