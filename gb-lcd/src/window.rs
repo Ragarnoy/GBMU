@@ -4,7 +4,7 @@ use egui_sdl2_gl::{EguiInputState, Painter};
 use sdl2::{
 	event::Event,
 	video::{GLContext, Window as SdlWindow},
-	VideoSubsystem,
+	Sdl, VideoSubsystem,
 };
 use std::time::Instant;
 
@@ -137,7 +137,17 @@ impl GBWindow {
 		return Ok(());
 	}
 
-	pub fn send_event(&mut self, event: Event) {
-		egui_sdl2_gl::input_to_egui(event, &mut self.egui_input_state);
+	pub fn send_event(&mut self, event: &Event, sdl_context: &Sdl) -> bool {
+		if let (Some(id_mouse_focus), Some(id_keyboard_focus)) = (
+			sdl_context.mouse().focused_window_id(),
+			sdl_context.keyboard().focused_window_id(),
+		) {
+			let id = self.sdl_window.id();
+			if id_mouse_focus == id || id_keyboard_focus == id {
+				egui_sdl2_gl::input_to_egui(event.clone(), &mut self.egui_input_state);
+				return true;
+			}
+		}
+		return false;
 	}
 }

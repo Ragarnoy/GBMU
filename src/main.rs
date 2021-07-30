@@ -28,7 +28,7 @@ fn init_gl<'a>(video_subsystem: &'a VideoSubsystem) -> GLAttr<'a> {
 }
 
 fn main() {
-    let (_sdl_context, video_subsystem, mut event_pump) =
+    let (sdl_context, video_subsystem, mut event_pump) =
         init_system().expect("Error while initializing SDL2");
     let _gl_attr = init_gl(&video_subsystem);
 
@@ -143,10 +143,11 @@ fn main() {
                     _ => {}
                 },
                 _ => {
-                    if let Some(ref mut dbg_wind) = debug_window {
-                        dbg_wind.send_event(event.clone());
+                    if !gb_window.send_event(&event, &sdl_context) {
+                        if let Some(ref mut dbg_wind) = debug_window {
+                            dbg_wind.send_event(&event, &sdl_context);
+                        }
                     }
-                    gb_window.send_event(event);
                 }
             }
         }
