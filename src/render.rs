@@ -151,10 +151,10 @@ impl Render {
 
 	pub fn resize(&mut self, dim: (u32, u32)) {
 		let dim = (dim.0 as f32, dim.1 as f32);
-		let actual_ratio = dim.0 / dim.1;
 
 		let free_dim = (dim.0, dim.1 - MENU_BAR_SIZE);
 		let free_ratio = dim.1 / free_dim.1;
+		let actual_ratio = free_dim.0 / free_dim.1;
 
 		let target_dim = if SCREEN_RATIO > actual_ratio {
 			(dim.0, dim.0 / SCREEN_RATIO)
