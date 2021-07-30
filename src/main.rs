@@ -54,7 +54,7 @@ fn main() {
         .set_minimum_size(width, height)
         .expect("Failed to configure main window");
 
-    let mut triangle = render::Triangle::new();
+    let mut display = render::Render::new();
 
     let mut debug_window = None;
 
@@ -64,7 +64,7 @@ fn main() {
             .expect("Fail at the start for the main window");
 
         // emulation render here
-        triangle.draw();
+        display.draw();
 
         // set ui logic here
         egui::containers::TopBottomPanel::top("Top menu").show(gb_window.egui_ctx(), |ui| {
@@ -126,7 +126,7 @@ fn main() {
                     sdl2::event::WindowEvent::SizeChanged(width, height) => {
                         if gb_window.sdl_window().id() == window_id {
                             gb_window.resize((width as u32, height as u32), &video_subsystem);
-                            triangle.resize(gb_window.sdl_window().size());
+                            display.resize(gb_window.sdl_window().size());
                         } else if let Some(ref mut dbg_wind) = debug_window {
                             if dbg_wind.sdl_window().id() == window_id {
                                 dbg_wind.resize((width as u32, height as u32), &video_subsystem);

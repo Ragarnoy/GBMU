@@ -19,7 +19,7 @@ static VERTEX_DATA: [GLfloat; 12] = [
 	-1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0,
 ];
 
-pub struct Triangle {
+pub struct Render {
 	pub vs: GLuint,
 	pub fs: GLuint,
 	pub program: GLuint,
@@ -95,7 +95,7 @@ pub fn link_program(vs: GLuint, fs: GLuint) -> GLuint {
 	}
 }
 
-impl Triangle {
+impl Render {
 	pub fn new() -> Self {
 		// Create Vertex Array Object
 		let mut vao = 0;
@@ -136,7 +136,7 @@ impl Triangle {
 				&texture_data as *const _ as *const c_void,
 			);
 		}
-		Triangle {
+		Render {
 			// Create GLSL shaders
 			vs,
 			fs,
@@ -233,7 +233,7 @@ impl Triangle {
 	}
 }
 
-impl Drop for Triangle {
+impl Drop for Render {
 	fn drop(&mut self) {
 		unsafe {
 			gl::DeleteProgram(self.program);
