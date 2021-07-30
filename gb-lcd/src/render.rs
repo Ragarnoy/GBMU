@@ -10,7 +10,7 @@ pub const SCREEN_WIDTH: u32 = 160;
 pub const SCREEN_HEIGHT: u32 = 144;
 pub const SCREEN_RATIO: f32 = SCREEN_WIDTH as f32 / SCREEN_HEIGHT as f32;
 pub const TEXTURE_SIZE: usize = (SCREEN_WIDTH * SCREEN_HEIGHT) as usize;
-pub use crate::MENU_BAR_SIZE;
+pub const MENU_BAR_SIZE: f32 = 30.0;
 
 pub type TextureData = [[u8; 3]; TEXTURE_SIZE];
 

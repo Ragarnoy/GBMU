@@ -450,6 +450,19 @@ checksum = "3f9eec918d3f24069decb9af1554cad7c880e2da24a9afd88aca000531ab82c1"
 [[package]]
 name = "gb-lcd"
 version = "0.1.0"
+dependencies = [
+ "egui",
+ "egui_sdl2_gl",
+ "gl",
+ "sdl2",
+]
+
+[[package]]
+name = "gb-ppu"
+version = "0.1.0"
+dependencies = [
+ "gb-lcd",
+]
 
 [[package]]
 name = "gb-roms"
@@ -463,8 +476,8 @@ name = "gbmu"
 version = "0.1.0"
 dependencies = [
  "egui",
- "egui_sdl2_gl",
- "gl",
+ "gb-lcd",
+ "gb-ppu",
  "rfd",
  "sdl2",
 ]

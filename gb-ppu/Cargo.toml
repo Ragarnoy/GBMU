@@ -1,5 +1,5 @@
 [package]
-name = "gb-lcd"
+name = "gb-ppu"
 version = "0.1.0"
 authors = ["Guilhem Smith <gsmith@student.42.fr>"]
 edition = "2018"
@@ -7,7 +7,4 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-sdl2 = { version = "0.34", features = ["bundled", "static-link"] }
-egui = { version = "0.13" }
-gl = { version = "0.14" }
-egui_sdl2_gl = { version = "0.13" }
+gb-lcd = { path = "../gb-lcd" }

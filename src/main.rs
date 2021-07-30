@@ -6,21 +6,16 @@ use sdl2::{
     EventPump, Sdl, VideoSubsystem,
 };
 
-pub const MENU_BAR_SIZE: f32 = 30.0;
+use gb_lcd::{error::Error as LCDError, render, window::GBWindow};
+use gb_ppu::PPU;
 
-mod error;
-mod render;
-mod window;
-
-fn init_system() -> Result<(Sdl, VideoSubsystem, EventPump), error::Error> {
-    let sdl_context = sdl2::init().map_err(|err| error::Error::MainSys(err))?;
-    let video_subsystem = sdl_context
-        .video()
-        .map_err(|err| error::Error::MainSys(err))?;
+fn init_system() -> Result<(Sdl, VideoSubsystem, EventPump), LCDError> {
+    let sdl_context = sdl2::init().map_err(|err| LCDError::MainSys(err))?;
+    let video_subsystem = sdl_context.video().map_err(|err| LCDError::MainSys(err))?;
 
     let event_pump = sdl_context
         .event_pump()
-        .map_err(|err| error::Error::MainSys(err))?;
+        .map_err(|err| LCDError::MainSys(err))?;
     Ok((sdl_context, video_subsystem, event_pump))
 }
 
@@ -37,11 +32,11 @@ fn main() {
         init_system().expect("Error while initializing SDL2");
     let _gl_attr = init_gl(&video_subsystem);
 
-    let mut gb_window = window::GBWindow::new(
+    let mut gb_window = GBWindow::new(
         "GBMU",
         (
             render::SCREEN_WIDTH,
-            render::SCREEN_HEIGHT + MENU_BAR_SIZE as u32,
+            render::SCREEN_HEIGHT + render::MENU_BAR_SIZE as u32,
         ),
         true,
         &video_subsystem,
@@ -55,6 +50,7 @@ fn main() {
         .expect("Failed to configure main window");
 
     let mut display = render::Render::new();
+    let mut ppu = PPU::new();
 
     let mut debug_window = None;
 
@@ -63,33 +59,16 @@ fn main() {
             .start_frame()
             .expect("Fail at the start for the main window");
 
-        let mut texture_data: render::TextureData = [[255; 3]; render::TEXTURE_SIZE];
-        for j in 0..render::SCREEN_HEIGHT {
-            for i in 0..render::SCREEN_WIDTH {
-                texture_data[(i + j * render::SCREEN_WIDTH) as usize] = if j == 0
-                    || j == render::SCREEN_HEIGHT - 1
-                    || i == 0
-                    || i == render::SCREEN_WIDTH - 1
-                {
-                    [150, 50, 50]
-                } else {
-                    if (i + j) % 2 == 0 {
-                        [100; 3]
-                    } else {
-                        [200; 3]
-                    }
-                };
-            }
-        }
         // render is updated just before drawing for now but we might want to change that later
-        display.update_render(&texture_data);
+        ppu.compute();
+        display.update_render(ppu.pixels());
         // emulation render here
         display.draw();
 
         // set ui logic here
         egui::containers::TopBottomPanel::top("Top menu").show(gb_window.egui_ctx(), |ui| {
             egui::menu::bar(ui, |ui| {
-                ui.set_height(MENU_BAR_SIZE);
+                ui.set_height(render::MENU_BAR_SIZE);
                 if ui.button("Load").clicked() {
                     let files = FileDialog::new()
                         .add_filter("rom", &["gb", "rom"])
@@ -102,13 +81,8 @@ fn main() {
                 if ui.button("Debug").clicked() {
                     if debug_window.is_none() {
                         debug_window = Some(
-                            window::GBWindow::new(
-                                "GBMU Debug",
-                                (800, 600),
-                                false,
-                                &video_subsystem,
-                            )
-                            .expect("Error while building debug window"),
+                            GBWindow::new("GBMU Debug", (800, 600), false, &video_subsystem)
+                                .expect("Error while building debug window"),
                         );
                     }
                 }
