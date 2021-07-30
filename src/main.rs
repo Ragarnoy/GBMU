@@ -63,6 +63,26 @@ fn main() {
             .start_frame()
             .expect("Fail at the start for the main window");
 
+        let mut texture_data: render::TextureData = [[255; 3]; render::TEXTURE_SIZE];
+        for j in 0..render::SCREEN_HEIGHT {
+            for i in 0..render::SCREEN_WIDTH {
+                texture_data[(i + j * render::SCREEN_WIDTH) as usize] = if j == 0
+                    || j == render::SCREEN_HEIGHT - 1
+                    || i == 0
+                    || i == render::SCREEN_WIDTH - 1
+                {
+                    [150, 50, 50]
+                } else {
+                    if (i + j) % 2 == 0 {
+                        [100; 3]
+                    } else {
+                        [200; 3]
+                    }
+                };
+            }
+        }
+        // render is updated just before drawing for now but we might want to change that later
+        display.update_render(&texture_data);
         // emulation render here
         display.draw();
 

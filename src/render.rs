@@ -12,6 +12,8 @@ pub const SCREEN_RATIO: f32 = SCREEN_WIDTH as f32 / SCREEN_HEIGHT as f32;
 pub const TEXTURE_SIZE: usize = (SCREEN_WIDTH * SCREEN_HEIGHT) as usize;
 pub use crate::MENU_BAR_SIZE;
 
+pub type TextureData = [[u8; 3]; TEXTURE_SIZE];
+
 const VS_SRC: &'static str = include_str!("render.vert");
 const FS_SRC: &'static str = include_str!("render.frag");
 
@@ -107,19 +109,7 @@ impl Render {
 			gl::GenVertexArrays(1, &mut vao);
 			gl::GenBuffers(1, &mut vbo);
 		}
-		let mut texture_data: [[u8; 3]; TEXTURE_SIZE] = [[255; 3]; TEXTURE_SIZE];
-		for j in 0..SCREEN_HEIGHT {
-			for i in 0..SCREEN_WIDTH {
-				if (i + j) % 2 == 0 {
-					texture_data[(i + j * SCREEN_WIDTH) as usize] =
-						if j == 0 || j == SCREEN_HEIGHT - 1 || i == 0 || i == SCREEN_WIDTH - 1 {
-							[150, 50, 50]
-						} else {
-							[100; 3]
-						};
-				}
-			}
-		}
+		let texture_data: TextureData = [[255; 3]; TEXTURE_SIZE];
 		let mut texture_buffer = 0;
 		unsafe {
 			gl::GenTextures(1, &mut texture_buffer);
@@ -128,8 +118,8 @@ impl Render {
 				gl::TEXTURE_2D,
 				0,
 				gl::RGB as i32,
-				160,
-				144,
+				SCREEN_WIDTH as i32,
+				SCREEN_HEIGHT as i32,
 				0,
 				gl::RGB,
 				gl::UNSIGNED_BYTE,
@@ -172,6 +162,23 @@ impl Render {
 		self.offset = (0.0, self.scale.1 - 1.0);
 		if SCREEN_RATIO > actual_ratio {
 			self.offset.1 += 1.0 * (free_dim.1 - target_dim.1) / dim.1;
+		}
+	}
+
+	pub fn update_render(&mut self, texture_pixels: &TextureData) {
+		unsafe {
+			gl::BindTexture(gl::TEXTURE_2D, self.texture_buffer);
+			gl::TexSubImage2D(
+				gl::TEXTURE_2D,
+				0,
+				0,
+				0,
+				SCREEN_WIDTH as i32,
+				SCREEN_HEIGHT as i32,
+				gl::RGB,
+				gl::UNSIGNED_BYTE,
+				texture_pixels as *const _ as *const c_void,
+			);
 		}
 	}
 
