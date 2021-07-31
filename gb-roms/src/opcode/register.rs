@@ -55,12 +55,6 @@ impl From<RegisterSpecial> for Register {
 	}
 }
 
-impl From<RegisterFlag> for Register {
-	fn from(v: RegisterFlag) -> Self {
-		Self::Flag(v)
-	}
-}
-
 #[derive(Debug, PartialEq, Eq)]
 pub enum Register8Bits {
 	/// Accumulator 8-bits register
