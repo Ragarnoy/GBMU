@@ -253,6 +253,30 @@ pub enum Opcode {
 	/// - r8: 8
 	/// - *HL: 16
 	Res(u8, Store),
+
+	/// Push addr of next instruction onto stack and then jump to address nn
+	/// Timing: 12
+	Call(u16),
+
+	/// Push addr of next instruction onto stack and then jump to address nn
+	/// when zero flag is set
+	/// Timing: 12
+	CallZero(u16),
+
+	/// Push addr of next instruction onto stack and then jump to address nn
+	/// when zero flag is not set
+	/// Timing: 12
+	CallNZero(u16),
+
+	/// Push addr of next instruction onto stack and then jump to address nn
+	/// when carry flag is set
+	/// Timing: 12
+	CallCarry(u16),
+
+	/// Push addr of next instruction onto stack and then jump to address nn
+	/// when carry flag is not set
+	/// Timing: 12
+	CallNCarry(u16),
 }
 
 impl fmt::Display for Opcode {
@@ -326,6 +350,12 @@ impl fmt::Display for Opcode {
 			Self::Bit(b, r) => write!(f, "bit {}, {}", b, r),
 			Self::Set(b, r) => write!(f, "set {}, {}", b, r),
 			Self::Res(b, r) => write!(f, "res {}, {}", b, r),
+
+			Self::Call(addr) => write!(f, "call {}", addr),
+			Self::CallZero(addr) => write!(f, "callz {}", addr),
+			Self::CallNZero(addr) => write!(f, "callnz {}", addr),
+			Self::CallCarry(addr) => write!(f, "callc {}", addr),
+			Self::CallNCarry(addr) => write!(f, "callnc {}", addr),
 		}
 	}
 }
@@ -1215,6 +1245,15 @@ where
 			0x28 => Ok(op!(JumpRZero, self.get_d())),
 			0x30 => Ok(op!(JumpRNCarry, self.get_d())),
 			0x38 => Ok(op!(JumpRCarry, self.get_d())),
+
+			// call nn
+			0xCD => Ok(op!(Call, self.get_nn())),
+
+			// call cc, nn
+			0xC4 => Ok(op!(CallNZero, self.get_nn())),
+			0xCC => Ok(op!(CallZero, self.get_nn())),
+			0xD4 => Ok(op!(CallNCarry, self.get_nn())),
+			0xDC => Ok(op!(CallCarry, self.get_nn())),
 
 			_ => Err(Error::UnknownOpcode(current)),
 		})
