@@ -277,6 +277,11 @@ pub enum Opcode {
 	/// when carry flag is not set
 	/// Timing: 12
 	CallNCarry(u16),
+
+	/// Push present addr onto stack
+	/// Then jump to addr n
+	/// Timing: 32
+	Restart(u8),
 }
 
 impl fmt::Display for Opcode {
@@ -351,11 +356,13 @@ impl fmt::Display for Opcode {
 			Self::Set(b, r) => write!(f, "set {}, {}", b, r),
 			Self::Res(b, r) => write!(f, "res {}, {}", b, r),
 
-			Self::Call(addr) => write!(f, "call {}", addr),
-			Self::CallZero(addr) => write!(f, "callz {}", addr),
-			Self::CallNZero(addr) => write!(f, "callnz {}", addr),
-			Self::CallCarry(addr) => write!(f, "callc {}", addr),
-			Self::CallNCarry(addr) => write!(f, "callnc {}", addr),
+			Self::Call(addr) => write!(f, "call {:x}", addr),
+			Self::CallZero(addr) => write!(f, "callz {:x}", addr),
+			Self::CallNZero(addr) => write!(f, "callnz {:x}", addr),
+			Self::CallCarry(addr) => write!(f, "callc {:x}", addr),
+			Self::CallNCarry(addr) => write!(f, "callnc {:x}", addr),
+
+			Self::Restart(addr) => write!(f, "rst {:x}", addr),
 		}
 	}
 }
@@ -1254,6 +1261,16 @@ where
 			0xCC => Ok(op!(CallZero, self.get_nn())),
 			0xD4 => Ok(op!(CallNCarry, self.get_nn())),
 			0xDC => Ok(op!(CallCarry, self.get_nn())),
+
+			// rst n
+			0xC7 => Ok(op!(Restart, 0x00)),
+			0xCF => Ok(op!(Restart, 0x08)),
+			0xD7 => Ok(op!(Restart, 0x10)),
+			0xDF => Ok(op!(Restart, 0x18)),
+			0xE7 => Ok(op!(Restart, 0x20)),
+			0xEF => Ok(op!(Restart, 0x28)),
+			0xF7 => Ok(op!(Restart, 0x30)),
+			0xFF => Ok(op!(Restart, 0x38)),
 
 			_ => Err(Error::UnknownOpcode(current)),
 		})
