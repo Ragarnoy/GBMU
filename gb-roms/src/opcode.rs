@@ -1201,6 +1201,15 @@ where
 			// jp (hl)
 			0xE9 => Ok(op!(Jump, Value::IndirectReg16(Reg16::HL))),
 
+			// jr d
+			0x18 => Ok(op!(JumpR, self.get_d())),
+
+			// jr cc,d
+			0x20 => Ok(op!(JumpRNZero, self.get_d())),
+			0x28 => Ok(op!(JumpRZero, self.get_d())),
+			0x30 => Ok(op!(JumpRNCarry, self.get_d())),
+			0x38 => Ok(op!(JumpRCarry, self.get_d())),
+
 			_ => Err(Error::UnknownOpcode(current)),
 		})
 	}
