@@ -1,9 +1,5 @@
 use clap::Clap;
-use std::{
-	fs::File,
-	io::{Read, Seek, SeekFrom},
-	iter::{Peekable, Take},
-};
+use std::{fs::File, io::Read, iter::Peekable};
 
 use gb_roms::OpcodeGenerator;
 
@@ -14,9 +10,9 @@ struct DisasOpt {
 	files: Vec<String>,
 }
 
-fn disas_file(name: &String, start: u64) {
+fn disas_file(name: &String) {
 	println!("current file: \"{}\"", name);
-	let mut file = File::open(name).expect("cannot open file");
+	let file = File::open(name).expect("cannot open file");
 
 	let mut it = file.bytes().enumerate().map(|(pos, v)| (pos, v.unwrap()));
 	test(&mut it.by_ref().take(0x100 + 4).peekable());
@@ -41,5 +37,5 @@ fn test(it: &mut Peekable<impl Iterator<Item = (usize, u8)>>) {
 
 fn main() {
 	let opts: DisasOpt = DisasOpt::parse();
-	opts.files.iter().for_each(|f| disas_file(f, opts.start_at));
+	opts.files.iter().for_each(|f| disas_file(f));
 }
