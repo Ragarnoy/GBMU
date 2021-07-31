@@ -407,7 +407,7 @@ impl fmt::Display for Opcode {
 fn test_display_opcode() {
 	use register::{Register8Bits, RegisterSpecial};
 
-	assert_eq!(Opcode::Jump(0x150_u16.into()).to_string(), "jmp 150");
+	assert_eq!(Opcode::Jump(0x150_u16.into()).to_string(), "jp 150");
 
 	assert_eq!(Opcode::JumpR(0x42).to_string(), "jr 42");
 	assert_eq!(Opcode::JumpRNZero(0x42).to_string(), "jrnz 42");
@@ -1341,7 +1341,7 @@ mod test_convert_opcode {
 			Some(Ok(op!(Nop)))
 		);
 		assert_eq!(
-			OpcodeGenerator::from(vec![0x10].into_iter()).next(),
+			OpcodeGenerator::from(vec![0x10, 0x00].into_iter()).next(),
 			Some(Ok(op!(Stop)))
 		);
 	}

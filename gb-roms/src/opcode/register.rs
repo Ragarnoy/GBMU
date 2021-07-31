@@ -18,12 +18,6 @@ macro_rules! register_special {
 	};
 }
 
-macro_rules! register_flag {
-	($x:ident) => {
-		Register::Flag(RegisterFlag::$x)
-	};
-}
-
 #[derive(Debug, PartialEq, Eq)]
 pub enum Register {
 	Bits8(Register8Bits),
