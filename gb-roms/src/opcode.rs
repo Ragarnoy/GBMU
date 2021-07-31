@@ -26,19 +26,19 @@ macro_rules! op {
 pub enum Opcode {
 	/// jump to addr
 	/// Timing: 12
-	Jump(u16),
+	Jump(Value),
 	/// jump to addr when zero flag is set
 	/// Timing: 12
-	JumpZero(u16),
+	JumpZero(Value),
 	/// jump to addr when zero flag is not set
 	/// Timing: 12
-	JumpNZero(u16),
+	JumpNZero(Value),
 	/// jump to addr when carry flag is set
 	/// Timing: 12
-	JumpCarry(u16),
+	JumpCarry(Value),
 	/// jump to addr when carry flag is not set
 	/// Timing: 12
-	JumpNCarry(u16),
+	JumpNCarry(Value),
 
 	/// relative jump to PC + value
 	JumpR(i8),
@@ -252,11 +252,11 @@ pub enum Opcode {
 impl fmt::Display for Opcode {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		match self {
-			Self::Jump(addr) => write!(f, "jp {:x}", addr),
-			Self::JumpZero(addr) => write!(f, "jpz {:x}", addr),
-			Self::JumpNZero(addr) => write!(f, "jpnz {:x}", addr),
-			Self::JumpCarry(addr) => write!(f, "jpc {:x}", addr),
-			Self::JumpNCarry(addr) => write!(f, "jpnc {:x}", addr),
+			Self::Jump(addr) => write!(f, "jp {}", addr),
+			Self::JumpZero(addr) => write!(f, "jpz {}", addr),
+			Self::JumpNZero(addr) => write!(f, "jpnz {}", addr),
+			Self::JumpCarry(addr) => write!(f, "jpc {}", addr),
+			Self::JumpNCarry(addr) => write!(f, "jpnc {}", addr),
 
 			Self::JumpR(value) => write!(f, "jr {:x}", value),
 			Self::JumpRNZero(value) => write!(f, "jrnz {:x}", value),
@@ -328,7 +328,7 @@ impl fmt::Display for Opcode {
 fn test_display_opcode() {
 	use register::{Register8Bits, RegisterSpecial};
 
-	assert_eq!(Opcode::Jump(0x150).to_string(), "jmp 150");
+	assert_eq!(Opcode::Jump(0x150_u16.into()).to_string(), "jmp 150");
 
 	assert_eq!(Opcode::JumpR(0x42).to_string(), "jr 42");
 	assert_eq!(Opcode::JumpRNZero(0x42).to_string(), "jrnz 42");
@@ -1190,13 +1190,16 @@ where
 			0x1F => Ok(op!(Rra)),
 
 			// jp nn
-			0xC3 => Ok(op!(Jump, self.get_nn())),
+			0xC3 => Ok(op!(Jump, self.get_nn().into())),
 
 			// jp cc,nn
-			0xC2 => Ok(op!(JumpNZero, self.get_nn())),
-			0xCA => Ok(op!(JumpZero, self.get_nn())),
-			0xD2 => Ok(op!(JumpNCarry, self.get_nn())),
-			0xDA => Ok(op!(JumpCarry, self.get_nn())),
+			0xC2 => Ok(op!(JumpNZero, self.get_nn().into())),
+			0xCA => Ok(op!(JumpZero, self.get_nn().into())),
+			0xD2 => Ok(op!(JumpNCarry, self.get_nn().into())),
+			0xDA => Ok(op!(JumpCarry, self.get_nn().into())),
+
+			// jp (hl)
+			0xE9 => Ok(op!(Jump, Value::IndirectReg16(Reg16::HL))),
 
 			_ => Err(Error::UnknownOpcode(current)),
 		})
@@ -1212,7 +1215,7 @@ mod test_convert_opcode {
 	fn test_convert_opcode() {
 		assert_eq!(
 			OpcodeGenerator::from(vec![0xc3, 0x50, 0x01].into_iter()).next(),
-			Some(Ok(op!(Jump, 0x150)))
+			Some(Ok(op!(Jump, 0x150_u16.into())))
 		);
 		assert_eq!(
 			OpcodeGenerator::from(vec![0x0].into_iter()).next(),
