@@ -25,20 +25,26 @@ macro_rules! op {
 #[derive(Debug, PartialEq, Eq)]
 pub enum Opcode {
 	/// jump to addr
-	/// Timing: 12
+	/// Timing:
+	/// - u16: 12
+	/// - *HL: 4
 	Jump(Value),
+
 	/// jump to addr when zero flag is set
 	/// Timing: 12
-	JumpZero(Value),
+	JumpZero(u16),
+
 	/// jump to addr when zero flag is not set
 	/// Timing: 12
-	JumpNZero(Value),
+	JumpNZero(u16),
+
 	/// jump to addr when carry flag is set
 	/// Timing: 12
-	JumpCarry(Value),
+	JumpCarry(u16),
+
 	/// jump to addr when carry flag is not set
 	/// Timing: 12
-	JumpNCarry(Value),
+	JumpNCarry(u16),
 
 	/// relative jump to PC + value
 	JumpR(i8),
