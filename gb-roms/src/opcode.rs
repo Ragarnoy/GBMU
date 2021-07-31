@@ -692,18 +692,26 @@ mod test_convert_opcode {
 	}
 
 	#[test]
-	fn test_stop() {
-		assert_eq!(
-			OpcodeGenerator::from(vec![0x10, 0x00].into_iter()).next(),
-			Some(Ok(op!(Stop)))
-		);
-	}
-
-	#[test]
 	fn test_nop() {
 		assert_eq!(
 			OpcodeGenerator::from(vec![0x0].into_iter()).next(),
 			Some(Ok(op!(Nop)))
+		);
+	}
+
+	#[test]
+	fn test_halt() {
+		assert_eq!(
+			OpcodeGenerator::from(vec![0x76].into_iter()).next(),
+			Some(Ok(op!(Halt)))
+		)
+	}
+
+	#[test]
+	fn test_stop() {
+		assert_eq!(
+			OpcodeGenerator::from(vec![0x10, 0x00].into_iter()).next(),
+			Some(Ok(op!(Stop)))
 		);
 	}
 
