@@ -287,6 +287,11 @@ pub enum Opcode {
 	/// Timing: 8
 	Return,
 
+	/// Pop u16 from stack & jump to that addr
+	/// Then enable interrupts
+	/// Timing: 8
+	ReturnI,
+
 	/// When zero flag is set
 	/// Pop u16 from stack & jump to that addr
 	/// Timing: 8
@@ -389,6 +394,7 @@ impl fmt::Display for Opcode {
 			Self::Restart(addr) => write!(f, "rst {:x}", addr),
 
 			Self::Return => write!(f, "ret"),
+			Self::ReturnI => write!(f, "reti"),
 			Self::ReturnZero => write!(f, "retz"),
 			Self::ReturnNZero => write!(f, "retnz"),
 			Self::ReturnCarry => write!(f, "retc"),
@@ -1310,6 +1316,9 @@ where
 			0xC8 => Ok(op!(ReturnZero)),
 			0xD0 => Ok(op!(ReturnNCarry)),
 			0xD8 => Ok(op!(ReturnCarry)),
+
+			// reti
+			0xD9 => Ok(op!(ReturnI)),
 
 			_ => Err(Error::UnknownOpcode(current)),
 		})
