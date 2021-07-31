@@ -282,6 +282,30 @@ pub enum Opcode {
 	/// Then jump to addr n
 	/// Timing: 32
 	Restart(u8),
+
+	/// Pop u16 from stack & jump to that addr
+	/// Timing: 8
+	Return,
+
+	/// When zero flag is set
+	/// Pop u16 from stack & jump to that addr
+	/// Timing: 8
+	ReturnZero,
+
+	/// When zero flag is not set
+	/// Pop u16 from stack & jump to that addr
+	/// Timing: 8
+	ReturnNZero,
+
+	/// When carry flag is set
+	/// Pop u16 from stack & jump to that addr
+	/// Timing: 8
+	ReturnCarry,
+
+	/// When carry flag is not set
+	/// Pop u16 from stack & jump to that addr
+	/// Timing: 8
+	ReturnNCarry,
 }
 
 impl fmt::Display for Opcode {
@@ -363,6 +387,12 @@ impl fmt::Display for Opcode {
 			Self::CallNCarry(addr) => write!(f, "callnc {:x}", addr),
 
 			Self::Restart(addr) => write!(f, "rst {:x}", addr),
+
+			Self::Return => write!(f, "ret"),
+			Self::ReturnZero => write!(f, "retz"),
+			Self::ReturnNZero => write!(f, "retnz"),
+			Self::ReturnCarry => write!(f, "retc"),
+			Self::ReturnNCarry => write!(f, "retnc"),
 		}
 	}
 }
@@ -1271,6 +1301,15 @@ where
 			0xEF => Ok(op!(Restart, 0x28)),
 			0xF7 => Ok(op!(Restart, 0x30)),
 			0xFF => Ok(op!(Restart, 0x38)),
+
+			// ret
+			0xC9 => Ok(op!(Return)),
+
+			// ret cc
+			0xC0 => Ok(op!(ReturnNZero)),
+			0xC8 => Ok(op!(ReturnZero)),
+			0xD0 => Ok(op!(ReturnNCarry)),
+			0xD8 => Ok(op!(ReturnCarry)),
 
 			_ => Err(Error::UnknownOpcode(current)),
 		})
