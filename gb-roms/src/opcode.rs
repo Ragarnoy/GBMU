@@ -25,7 +25,21 @@ macro_rules! op {
 #[derive(Debug, PartialEq, Eq)]
 pub enum Opcode {
 	/// jump to addr
+	/// Timing: 12
 	Jump(u16),
+	/// jump to addr when zero flag is set
+	/// Timing: 12
+	JumpZero(u16),
+	/// jump to addr when zero flag is not set
+	/// Timing: 12
+	JumpNZero(u16),
+	/// jump to addr when carry flag is set
+	/// Timing: 12
+	JumpCarry(u16),
+	/// jump to addr when carry flag is not set
+	/// Timing: 12
+	JumpNCarry(u16),
+
 	/// relative jump to PC + value
 	JumpR(i8),
 	/// relative jump to PC + value when flag Z is unset
@@ -238,7 +252,12 @@ pub enum Opcode {
 impl fmt::Display for Opcode {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		match self {
-			Self::Jump(addr) => write!(f, "jmp {:x}", addr),
+			Self::Jump(addr) => write!(f, "jp {:x}", addr),
+			Self::JumpZero(addr) => write!(f, "jpz {:x}", addr),
+			Self::JumpNZero(addr) => write!(f, "jpnz {:x}", addr),
+			Self::JumpCarry(addr) => write!(f, "jpc {:x}", addr),
+			Self::JumpNCarry(addr) => write!(f, "jpnc {:x}", addr),
+
 			Self::JumpR(value) => write!(f, "jr {:x}", value),
 			Self::JumpRNZero(value) => write!(f, "jrnz {:x}", value),
 			Self::JumpRZero(value) => write!(f, "jrz {:x}", value),
@@ -1169,6 +1188,15 @@ where
 
 			0x0F => Ok(op!(Rrca)),
 			0x1F => Ok(op!(Rra)),
+
+			// jp nn
+			0xC3 => Ok(op!(Jump, self.get_nn())),
+
+			// jp cc,nn
+			0xC2 => Ok(op!(JumpNZero, self.get_nn())),
+			0xCA => Ok(op!(JumpZero, self.get_nn())),
+			0xD2 => Ok(op!(JumpNCarry, self.get_nn())),
+			0xDA => Ok(op!(JumpCarry, self.get_nn())),
 
 			_ => Err(Error::UnknownOpcode(current)),
 		})
