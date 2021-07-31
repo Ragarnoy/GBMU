@@ -639,8 +639,8 @@ where
 }
 
 #[cfg(test)]
-mod test_convert_opcode {
-	use super::register::{self, Register};
+mod test_decode {
+	use super::register::{self, Register, Register8Bits};
 	use super::{Opcode, OpcodeGenerator, Reg16, Store, Value};
 
 	#[test]
@@ -739,8 +739,6 @@ mod test_convert_opcode {
 
 	#[test]
 	fn test_ldi_ldd() {
-		use register::{Register, Register8Bits};
-
 		assert_eq!(
 			OpcodeGenerator::from(vec![0x2a].into_iter()).next(),
 			Some(Ok(op!(LdiInto, register8!(A).into())))
@@ -778,6 +776,22 @@ mod test_convert_opcode {
 		assert_eq!(
 			OpcodeGenerator::from(vec![0xf8, 0xcd].into_iter()).next(),
 			Some(Ok(op!(Ldhl, -0x33)))
+		)
+	}
+
+	#[test]
+	fn test_push() {
+		assert_eq!(
+			OpcodeGenerator::from(vec![0xc5].into_iter()).next(),
+			Some(Ok(op!(Push, Reg16::BC)))
+		)
+	}
+
+	#[test]
+	fn test_pop() {
+		assert_eq!(
+			OpcodeGenerator::from(vec![0xd1].into_iter()).next(),
+			Some(Ok(op!(Pop, Reg16::DE)))
 		)
 	}
 
