@@ -14,6 +14,7 @@ impl PPU {
     pub fn pixels(&self) -> &TextureData {
         &self.pixels
     }
+
     pub fn compute(&mut self) {
         for j in 0..SCREEN_HEIGHT {
             for i in 0..SCREEN_WIDTH {
