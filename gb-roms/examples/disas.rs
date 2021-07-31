@@ -32,7 +32,10 @@ fn disas_file(name: &String, start: u64) {
 fn test(it: impl Iterator<Item = u8>) {
 	let mut gen = OpcodeGenerator::from(it);
 	while let Some(op) = gen.next() {
-		println!("op: {}", op.expect("error while reading opcode"));
+		match op {
+			Ok(op) => println!("op: {}", op),
+			Err(e) => eprintln!("error: {:?}", e),
+		}
 	}
 }
 
