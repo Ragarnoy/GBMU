@@ -721,14 +721,16 @@ mod test_convert_opcode {
 
 		assert_eq!(
 			OpcodeGenerator::from(vec![0x8, 0x34, 0x12].into_iter()).next(),
-			Some(Ok(Opcode::Ld(
+			Some(Ok(op!(
+				Ld,
 				Store::Indirect16(0x1234),
 				Value::Register(RegisterSpecial::SP.into())
 			)))
 		);
 		assert_eq!(
 			OpcodeGenerator::from(vec![0x11, 0x50, 0x01].into_iter()).next(),
-			Some(Ok(Opcode::Ld(
+			Some(Ok(op!(
+				Ld,
 				Register::from(Reg16::DE).into(),
 				Value::Nn(0x150)
 			)))
@@ -741,20 +743,42 @@ mod test_convert_opcode {
 
 		assert_eq!(
 			OpcodeGenerator::from(vec![0x2a].into_iter()).next(),
-			Some(Ok(Opcode::LdiInto(register8!(A).into())))
-		);
-		assert_eq!(
-			OpcodeGenerator::from(vec![0x3a].into_iter()).next(),
-			Some(Ok(Opcode::LddInto(register8!(A).into())))
+			Some(Ok(op!(LdiInto, register8!(A).into())))
 		);
 		assert_eq!(
 			OpcodeGenerator::from(vec![0x22].into_iter()).next(),
-			Some(Ok(Opcode::LdiFrom(register8!(A).into())))
+			Some(Ok(op!(LdiFrom, register8!(A).into())))
+		);
+	}
+
+	#[test]
+	fn test_ldd() {
+		use register::{Register, Register8Bits};
+
+		assert_eq!(
+			OpcodeGenerator::from(vec![0x3a].into_iter()).next(),
+			Some(Ok(op!(LddInto, register8!(A).into())))
 		);
 		assert_eq!(
 			OpcodeGenerator::from(vec![0x32].into_iter()).next(),
-			Some(Ok(Opcode::LddFrom(register8!(A).into())))
+			Some(Ok(op!(LddFrom, register8!(A).into())))
 		);
+	}
+
+	#[test]
+	fn test_ldh() {
+		assert_eq!(
+			OpcodeGenerator::from(vec![0xe0, 0xb0].into_iter()).next(),
+			Some(Ok(op!(LdhInto, 0xb0)))
+		);
+		assert_eq!(
+			OpcodeGenerator::from(vec![0xf0, 0x4f].into_iter()).next(),
+			Some(Ok(op!(LdhFrom, 0x4f)))
+		);
+		assert_eq!(
+			OpcodeGenerator::from(vec![0xf8, 0xcd].into_iter()).next(),
+			Some(Ok(op!(Ldhl, -0x33)))
+		)
 	}
 
 	#[test]

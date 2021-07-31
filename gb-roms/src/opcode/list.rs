@@ -317,9 +317,9 @@ impl fmt::Display for Opcode {
 			Self::LdiFrom(v) => write!(f, "ldi (HL), {}", v),
 			Self::LddInto(s) => write!(f, "ldd {}, (HL)", s),
 			Self::LdiInto(s) => write!(f, "ldi {}, (HL)", s),
-			Self::LdhFrom(v) => write!(f, "ldh A, (0xff00 + {})", v),
-			Self::LdhInto(s) => write!(f, "ldh (0xff00 + {}), A", s),
-			Self::Ldhl(addr) => write!(f, "ldhl SP, {}", addr),
+			Self::LdhFrom(v) => write!(f, "ldh A, (0xff00 + {:x})", v),
+			Self::LdhInto(s) => write!(f, "ldh (0xff00 + {:x}), A", s),
+			Self::Ldhl(addr) => write!(f, "ldhl SP, {:x}", addr),
 
 			Self::Push(reg) => write!(f, "push {}", reg),
 			Self::Pop(reg) => write!(f, "pop {}", reg),
