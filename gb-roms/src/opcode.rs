@@ -668,6 +668,30 @@ mod test_convert_opcode {
 	}
 
 	#[test]
+	fn test_jump_relative() {
+		assert_eq!(
+			OpcodeGenerator::from(vec![0x18, 0x42].into_iter()).next(),
+			Some(Ok(op!(JumpR, 0x42)))
+		);
+		assert_eq!(
+			OpcodeGenerator::from(vec![0x28, 0x42].into_iter()).next(),
+			Some(Ok(op!(JumpRZero, 0x42)))
+		);
+		assert_eq!(
+			OpcodeGenerator::from(vec![0x20, 0x42].into_iter()).next(),
+			Some(Ok(op!(JumpRNZero, 0x42)))
+		);
+		assert_eq!(
+			OpcodeGenerator::from(vec![0x38, 0x42].into_iter()).next(),
+			Some(Ok(op!(JumpRCarry, 0x42)))
+		);
+		assert_eq!(
+			OpcodeGenerator::from(vec![0x30, 0x42].into_iter()).next(),
+			Some(Ok(op!(JumpRNCarry, 0x42)))
+		);
+	}
+
+	#[test]
 	fn test_stop() {
 		assert_eq!(
 			OpcodeGenerator::from(vec![0x10, 0x00].into_iter()).next(),
