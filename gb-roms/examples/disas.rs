@@ -2,6 +2,7 @@ use clap::Clap;
 use std::{
 	fs::File,
 	io::{Read, Seek, SeekFrom},
+	iter::{Peekable, Take},
 };
 
 use gb_roms::OpcodeGenerator;
@@ -11,30 +12,29 @@ use gb_roms::OpcodeGenerator;
 struct DisasOpt {
 	#[clap(required = true)]
 	files: Vec<String>,
-
-	#[clap(short, long, default_value = "0")]
-	start_at: u64,
 }
 
 fn disas_file(name: &String, start: u64) {
 	println!("current file: \"{}\"", name);
 	let mut file = File::open(name).expect("cannot open file");
 
-	if start != 0 {
-		file.seek(SeekFrom::Start(start)).expect("cannot seek");
-	}
-	test(file.bytes().map(|v| {
-		println!("readed: {:x?}", v);
-		v.unwrap()
-	}));
+	let mut it = file.bytes().enumerate().map(|(pos, v)| (pos, v.unwrap()));
+	test(&mut it.by_ref().take(0x100 + 4).peekable());
+	let it = it.skip(0x50 - 4); // skip header - first 4 bytes
+	test(&mut it.peekable());
 }
 
-fn test(it: impl Iterator<Item = u8>) {
-	let mut gen = OpcodeGenerator::from(it);
-	while let Some(op) = gen.next() {
-		match op {
-			Ok(op) => println!("op: {}", op),
-			Err(e) => eprintln!("error: {:?}", e),
+fn test(it: &mut Peekable<impl Iterator<Item = (usize, u8)>>) {
+	while let Some((pos, v)) = it.peek() {
+		let current_pos: usize = *pos;
+		let current_opcode: u8 = *v;
+		let mut gen = OpcodeGenerator::from(it.map(|(_, v)| v));
+		match gen.next().expect("expected opcode") {
+			Ok(op) => println!("{:#08x} ({:2x}): {}", current_pos, current_opcode, op),
+			Err(e) => println!(
+				"position={:x}, opcode={:x}, error={:x?}",
+				current_pos, current_opcode, e
+			),
 		}
 	}
 }
