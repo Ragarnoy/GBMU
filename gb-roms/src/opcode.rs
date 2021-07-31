@@ -215,6 +215,24 @@ pub enum Opcode {
 	/// - r8: 8
 	/// - *HL: 16
 	Srl(Store),
+
+	/// Test bit b in register r
+	/// Timing:
+	/// - r8: 8
+	/// - *HL: 16
+	Bit(u8, Store),
+
+	/// Set bit b in register r
+	/// Timing:
+	/// - r8: 8
+	/// - *HL: 16
+	Set(u8, Store),
+
+	/// Reset bit b in register r
+	/// Timing:
+	/// - r8: 8
+	/// - *HL: 16
+	Res(u8, Store),
 }
 
 impl fmt::Display for Opcode {
@@ -279,6 +297,10 @@ impl fmt::Display for Opcode {
 			Self::Sla(n) => write!(f, "sla {}", n),
 			Self::Sra(n) => write!(f, "sra {}", n),
 			Self::Srl(n) => write!(f, "srl {}", n),
+
+			Self::Bit(b, r) => write!(f, "bit {}, {}", b, r),
+			Self::Set(b, r) => write!(f, "set {}, {}", b, r),
+			Self::Res(b, r) => write!(f, "res {}, {}", b, r),
 		}
 	}
 }
@@ -358,6 +380,24 @@ impl fmt::Display for Store {
 			Self::IndierectReg8(reg) => write!(f, "(0xff00 + {})", reg),
 			Self::Indirect16(addr) => write!(f, "({:x})", addr),
 			Self::Indirect8(addr) => write!(f, "(0xff00 + {:x})", addr),
+		}
+	}
+}
+
+impl Store {
+	fn from_r_table(v: u8) -> Option<Store> {
+		use register::Register8Bits;
+
+		match v {
+			0 => Some(register8!(B).into()),
+			1 => Some(register8!(C).into()),
+			2 => Some(register8!(D).into()),
+			3 => Some(register8!(E).into()),
+			4 => Some(register8!(H).into()),
+			5 => Some(register8!(L).into()),
+			6 => Some(Store::IndirectReg16(Reg16::HL)),
+			7 => Some(register8!(A).into()),
+			_ => None,
 		}
 	}
 }
@@ -738,7 +778,23 @@ where
 			0x3D => Ok(op!(Srl, register8!(L).into())),
 			0x3E => Ok(op!(Srl, Store::IndirectReg16(Reg16::HL))),
 
-			_ => Err(Error::UnknownOpcode(current)),
+			_ => self.decode_bits_command(current),
+		}
+	}
+
+	fn decode_bits_command(&mut self, cmd: u8) -> Result<Opcode, Error> {
+		let bits = OpcodeBits::from_bytes([cmd]);
+		let bit = bits.y();
+		let reg = Store::from_r_table(bits.z()).expect("expected a valid register from r table");
+
+		match bits.x() {
+			// bit b,n
+			0x01 => Ok(op!(Bit, bit, reg)),
+			// set b,n
+			0x02 => Ok(op!(Set, bit, reg)),
+			// res b,n
+			0x03 => Ok(op!(Res, bit, reg)),
+			_ => Err(Error::UnknownOpcode(cmd)),
 		}
 	}
 }
