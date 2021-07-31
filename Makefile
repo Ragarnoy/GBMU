@@ -25,6 +25,7 @@ requirement: roms
 
 roms: $(ROMS)
 
+
 roms.zip:
 	wget $(ROMS_LINK) -O $@
 
@@ -33,4 +34,28 @@ $(ROMS_DIR)/%: roms.zip
 	unzip $< 'roms/*' -x '*/.DS_Store'
 	touch roms/*
 
-.PHONY: requirement roms
+CURRENT_OS=
+ifeq ($(OS),Windows_NT)
+	CURRENT_OS := windows
+else
+	UNAME_S := $(shell uname -s)
+	ifeq ($(UNAME_S),Linux)
+		CURRENT_OS := Linux
+	endif
+	ifeq ($(UNAME_S),Darwin)
+		CURRENT_OS := MacOS
+	endif
+endif
+
+extern_dependencies:
+ifeq ($(CURRENT_OS),Linux)
+	sudo apt install cmake libgtk-3-dev
+endif
+ifeq ($(CURRENT_OS),MacOS)
+	brew install cmake
+endif
+ifeq ($(CURRENT_OS),Windows)
+	echo missing dependencies on windows
+endif
+
+.PHONY: requirement roms extern_dependencies
