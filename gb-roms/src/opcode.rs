@@ -644,18 +644,42 @@ mod test_convert_opcode {
 	use super::{Opcode, OpcodeGenerator, Reg16, Store, Value};
 
 	#[test]
-	fn test_convert_opcode() {
+	fn test_jump() {
 		assert_eq!(
 			OpcodeGenerator::from(vec![0xc3, 0x50, 0x01].into_iter()).next(),
 			Some(Ok(op!(Jump, 0x150_u16.into())))
 		);
 		assert_eq!(
-			OpcodeGenerator::from(vec![0x0].into_iter()).next(),
-			Some(Ok(op!(Nop)))
+			OpcodeGenerator::from(vec![0xca, 0x55, 0x00].into_iter()).next(),
+			Some(Ok(op!(JumpZero, 0x55)))
 		);
+		assert_eq!(
+			OpcodeGenerator::from(vec![0xc2, 0x55, 0x00].into_iter()).next(),
+			Some(Ok(op!(JumpNZero, 0x55)))
+		);
+		assert_eq!(
+			OpcodeGenerator::from(vec![0xda, 0x55, 0x00].into_iter()).next(),
+			Some(Ok(op!(JumpCarry, 0x55)))
+		);
+		assert_eq!(
+			OpcodeGenerator::from(vec![0xd2, 0x55, 0x00].into_iter()).next(),
+			Some(Ok(op!(JumpNCarry, 0x55)))
+		);
+	}
+
+	#[test]
+	fn test_stop() {
 		assert_eq!(
 			OpcodeGenerator::from(vec![0x10, 0x00].into_iter()).next(),
 			Some(Ok(op!(Stop)))
+		);
+	}
+
+	#[test]
+	fn test_nop() {
+		assert_eq!(
+			OpcodeGenerator::from(vec![0x0].into_iter()).next(),
+			Some(Ok(op!(Nop)))
 		);
 	}
 
