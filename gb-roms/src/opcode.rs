@@ -854,22 +854,42 @@ mod test_decode {
 
 	#[test]
 	fn test_and() {
-		unimplemented!();
+		assert_eq!(
+			OpcodeGenerator::from(vec![0xa6].into_iter()).next(),
+			Some(Ok(op!(And, Value::IndirectReg16(Reg16::HL))))
+		);
+		assert_eq!(
+			OpcodeGenerator::from(vec![0xa2].into_iter()).next(),
+			Some(Ok(op!(And, register8!(D).into())))
+		);
 	}
 
 	#[test]
 	fn test_or() {
-		unimplemented!();
+		assert_eq!(
+			OpcodeGenerator::from(vec![0xb0].into_iter()).next(),
+			Some(Ok(op!(Or, register8!(B).into())))
+		)
 	}
 
 	#[test]
 	fn test_xor() {
-		unimplemented!();
+		assert_eq!(
+			OpcodeGenerator::from(vec![0xaa].into_iter()).next(),
+			Some(Ok(op!(Xor, register8!(D).into())))
+		);
 	}
 
 	#[test]
 	fn test_cp() {
-		unimplemented!();
+		assert_eq!(
+			OpcodeGenerator::from(vec![0xbc].into_iter()).next(),
+			Some(Ok(op!(Cp, register8!(H).into())))
+		);
+		assert_eq!(
+			OpcodeGenerator::from(vec![0xfe, 0x42].into_iter()).next(),
+			Some(Ok(op!(Cp, 0x42_u8.into())))
+		);
 	}
 
 	#[test]
