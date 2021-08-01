@@ -689,6 +689,26 @@ mod test_decode {
 			OpcodeGenerator::from(vec![0x30, 0x42].into_iter()).next(),
 			Some(Ok(op!(JumpRNCarry, 0x42)))
 		);
+		assert_eq!(
+			OpcodeGenerator::from(vec![0x18, (-24_i8).to_le_bytes()[0]].into_iter()).next(),
+			Some(Ok(Opcode::JumpR(-24)))
+		);
+		assert_eq!(
+			OpcodeGenerator::from(vec![0x20, (-24_i8).to_le_bytes()[0]].into_iter()).next(),
+			Some(Ok(Opcode::JumpRNZero(-24)))
+		);
+		assert_eq!(
+			OpcodeGenerator::from(vec![0x28, (-24_i8).to_le_bytes()[0]].into_iter()).next(),
+			Some(Ok(Opcode::JumpRZero(-24)))
+		);
+		assert_eq!(
+			OpcodeGenerator::from(vec![0x30, (-24_i8).to_le_bytes()[0]].into_iter()).next(),
+			Some(Ok(Opcode::JumpRNCarry(-24)))
+		);
+		assert_eq!(
+			OpcodeGenerator::from(vec![0x38, (-24_i8).to_le_bytes()[0]].into_iter()).next(),
+			Some(Ok(Opcode::JumpRCarry(-24)))
+		);
 	}
 
 	#[test]
@@ -809,26 +829,7 @@ mod test_decode {
 	}
 
 	#[test]
-	fn test_relative_jump() {
-		assert_eq!(
-			OpcodeGenerator::from(vec![0x18, (-24_i8).to_le_bytes()[0]].into_iter()).next(),
-			Some(Ok(Opcode::JumpR(-24)))
-		);
-		assert_eq!(
-			OpcodeGenerator::from(vec![0x20, (-24_i8).to_le_bytes()[0]].into_iter()).next(),
-			Some(Ok(Opcode::JumpRNZero(-24)))
-		);
-		assert_eq!(
-			OpcodeGenerator::from(vec![0x28, (-24_i8).to_le_bytes()[0]].into_iter()).next(),
-			Some(Ok(Opcode::JumpRZero(-24)))
-		);
-		assert_eq!(
-			OpcodeGenerator::from(vec![0x30, (-24_i8).to_le_bytes()[0]].into_iter()).next(),
-			Some(Ok(Opcode::JumpRNCarry(-24)))
-		);
-		assert_eq!(
-			OpcodeGenerator::from(vec![0x38, (-24_i8).to_le_bytes()[0]].into_iter()).next(),
-			Some(Ok(Opcode::JumpRCarry(-24)))
-		);
+	fn test_addc() {
+		unimplemented!();
 	}
 }
