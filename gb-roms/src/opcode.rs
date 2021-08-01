@@ -641,7 +641,7 @@ where
 #[cfg(test)]
 mod test_decode {
 	use super::register::{self, Register, Register8Bits};
-	use super::{Opcode, OpcodeGenerator, Reg16, Store, Value};
+	use super::{Opcode, OpcodeGenerator, Reg16, Reg8, Store, Value};
 
 	#[test]
 	fn test_jump() {
@@ -829,18 +829,27 @@ mod test_decode {
 	}
 
 	#[test]
-	fn test_addc() {
-		unimplemented!();
+	fn test_adc() {
+		assert_eq!(
+			OpcodeGenerator::from(vec![0x89].into_iter()).next(),
+			Some(Ok(op!(Adc, register8!(C).into())))
+		);
 	}
 
 	#[test]
 	fn test_sub() {
-		unimplemented!();
+		assert_eq!(
+			OpcodeGenerator::from(vec![0x97].into_iter()).next(),
+			Some(Ok(op!(Sub, register8!(A).into())))
+		);
 	}
 
 	#[test]
 	fn test_sbc() {
-		unimplemented!();
+		assert_eq!(
+			OpcodeGenerator::from(vec![0x9d].into_iter()).next(),
+			Some(Ok(op!(Sbc, register8!(L).into())))
+		);
 	}
 
 	#[test]
