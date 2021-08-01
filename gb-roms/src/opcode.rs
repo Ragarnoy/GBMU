@@ -639,6 +639,13 @@ where
 }
 
 #[cfg(test)]
+macro_rules! op_gen {
+	($vec: expr) => {
+		OpcodeGenerator::from($vec)
+	};
+}
+
+#[cfg(test)]
 mod test_decode {
 	use super::register::{self, Register, Register16Bits, Register8Bits};
 	use super::{Opcode, OpcodeGenerator, Reg16, Reg8, Store, Value};
@@ -910,7 +917,7 @@ mod test_decode {
 
 	#[test]
 	fn test_daa() {
-		unimplemented!();
+		assert_eq!(op_gen!(vec![0x27].into_iter()).next(), Some(Ok(op!(Daa))))
 	}
 
 	#[test]
