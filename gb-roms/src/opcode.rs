@@ -908,57 +908,22 @@ mod test_decode {
 
 	#[test]
 	fn test_rlca() {
-		unimplemented!();
+		assert_eq!(op_gen![0x07].next(), Some(Ok(op!(Rlca))))
 	}
 
 	#[test]
 	fn test_rla() {
-		unimplemented!();
+		assert_eq!(op_gen![0x17].next(), Some(Ok(op!(Rla))))
 	}
 
 	#[test]
 	fn test_rrca() {
-		unimplemented!();
+		assert_eq!(op_gen![0x0f].next(), Some(Ok(op!(Rrca))))
 	}
 
 	#[test]
 	fn test_rra() {
-		unimplemented!();
-	}
-
-	#[test]
-	fn test_rlc() {
-		unimplemented!();
-	}
-
-	#[test]
-	fn test_rl() {
-		unimplemented!();
-	}
-
-	#[test]
-	fn test_rrc() {
-		unimplemented!();
-	}
-
-	#[test]
-	fn test_rr() {
-		unimplemented!();
-	}
-
-	#[test]
-	fn test_sla() {
-		unimplemented!();
-	}
-
-	#[test]
-	fn test_sra() {
-		unimplemented!();
-	}
-
-	#[test]
-	fn test_srl() {
-		unimplemented!();
+		assert_eq!(op_gen![0x1f].next(), Some(Ok(op!(Rra))))
 	}
 
 	#[test]
@@ -1002,6 +967,62 @@ mod test_decode_cb_prefix {
 		assert_eq!(
 			op_gen![0xcb, 0x33].next(),
 			Some(Ok(op!(Swap, register8!(E).into())))
+		)
+	}
+
+	#[test]
+	fn test_rlc() {
+		assert_eq!(
+			op_gen![0xcb, 0x07].next(),
+			Some(Ok(op!(Rlc, register8!(A).into())))
+		)
+	}
+
+	#[test]
+	fn test_rl() {
+		assert_eq!(
+			op_gen![0xcb, 0x14].next(),
+			Some(Ok(op!(Rl, register8!(H).into())))
+		)
+	}
+
+	#[test]
+	fn test_rrc() {
+		assert_eq!(
+			op_gen![0xcb, 0x0a].next(),
+			Some(Ok(op!(Rrc, register8!(D).into())))
+		)
+	}
+
+	#[test]
+	fn test_rr() {
+		assert_eq!(
+			op_gen![0xcb, 0x1b].next(),
+			Some(Ok(op!(Rr, register8!(E).into())))
+		)
+	}
+
+	#[test]
+	fn test_sla() {
+		assert_eq!(
+			op_gen![0xcb, 0x25].next(),
+			Some(Ok(op!(Sla, register8!(L).into())))
+		)
+	}
+
+	#[test]
+	fn test_sra() {
+		assert_eq!(
+			op_gen![0xcb, 0x2e].next(),
+			Some(Ok(op!(Sra, Store::IndirectReg16(Reg16::HL))))
+		)
+	}
+
+	#[test]
+	fn test_srl() {
+		assert_eq!(
+			op_gen![0xcb, 0x3c].next(),
+			Some(Ok(op!(Srl, register8!(H).into())))
 		)
 	}
 }
