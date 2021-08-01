@@ -957,7 +957,12 @@ mod test_decode {
 
 	#[test]
 	fn test_return() {
-		unimplemented!();
+		assert_eq!(op_gen![0xc9].next(), Some(Ok(op!(Return))));
+		assert_eq!(op_gen![0xc0].next(), Some(Ok(op!(ReturnNZero))));
+		assert_eq!(op_gen![0xc8].next(), Some(Ok(op!(ReturnZero))));
+		assert_eq!(op_gen![0xd0].next(), Some(Ok(op!(ReturnNCarry))));
+		assert_eq!(op_gen![0xd8].next(), Some(Ok(op!(ReturnCarry))));
+		assert_eq!(op_gen![0xd9].next(), Some(Ok(op!(ReturnI))));
 	}
 }
 
