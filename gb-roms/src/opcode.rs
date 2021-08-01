@@ -933,7 +933,7 @@ mod test_decode {
 
 	#[test]
 	fn test_restart() {
-		unimplemented!();
+		assert_eq!(op_gen![0xe7].next(), Some(Ok(op!(Restart, 0x20))))
 	}
 
 	#[test]
