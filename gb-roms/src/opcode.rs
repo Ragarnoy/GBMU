@@ -648,7 +648,7 @@ macro_rules! op_gen {
 #[cfg(test)]
 mod test_decode {
 	use super::register::{self, Register, Register16Bits, Register8Bits};
-	use super::{Opcode, OpcodeGenerator, Reg16, Reg8, Store, Value};
+	use super::{Opcode, OpcodeGenerator, Reg16, Store, Value};
 
 	#[test]
 	fn test_jump() {
@@ -968,8 +968,8 @@ mod test_decode {
 
 #[cfg(test)]
 mod test_decode_cb_prefix {
-	use super::register::{self, Register, Register16Bits, Register8Bits};
-	use super::{Opcode, OpcodeGenerator, Reg16, Reg8, Store, Value};
+	use super::register::{Register, Register8Bits};
+	use super::{Opcode, OpcodeGenerator, Reg16, Store};
 
 	#[test]
 	fn test_swap() {
