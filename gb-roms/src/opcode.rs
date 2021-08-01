@@ -928,7 +928,26 @@ mod test_decode {
 
 	#[test]
 	fn test_call() {
-		unimplemented!();
+		assert_eq!(
+			op_gen![0xcd, 0x42, 0x42].next(),
+			Some(Ok(op!(Call, 0x4242)))
+		);
+		assert_eq!(
+			op_gen![0xc4, 0x34, 0x12].next(),
+			Some(Ok(op!(CallNZero, 0x1234)))
+		);
+		assert_eq!(
+			op_gen![0xcc, 0x34, 0x12].next(),
+			Some(Ok(op!(CallZero, 0x1234)))
+		);
+		assert_eq!(
+			op_gen![0xd4, 0x34, 0x12].next(),
+			Some(Ok(op!(CallNCarry, 0x1234)))
+		);
+		assert_eq!(
+			op_gen![0xdc, 0x34, 0x12].next(),
+			Some(Ok(op!(CallCarry, 0x1234)))
+		);
 	}
 
 	#[test]
