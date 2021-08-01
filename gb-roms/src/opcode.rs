@@ -909,11 +909,6 @@ mod test_decode {
 	}
 
 	#[test]
-	fn test_swap() {
-		unimplemented!();
-	}
-
-	#[test]
 	fn test_daa() {
 		unimplemented!();
 	}
@@ -1026,5 +1021,19 @@ mod test_decode {
 	#[test]
 	fn test_return() {
 		unimplemented!();
+	}
+}
+
+#[cfg(test)]
+mod test_decode_cb_prefix {
+	use super::register::{self, Register, Register16Bits, Register8Bits};
+	use super::{Opcode, OpcodeGenerator, Reg16, Reg8, Store, Value};
+
+	#[test]
+	fn test_swap() {
+		assert_eq!(
+			OpcodeGenerator::from(vec![0xcb, 0x33].into_iter()).next(),
+			Some(Ok(op!(Swap, register8!(E).into())))
+		)
 	}
 }
