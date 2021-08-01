@@ -832,4 +832,164 @@ mod test_decode {
 	fn test_addc() {
 		unimplemented!();
 	}
+
+	#[test]
+	fn test_sub() {
+		unimplemented!();
+	}
+
+	#[test]
+	fn test_sbc() {
+		unimplemented!();
+	}
+
+	#[test]
+	fn test_and() {
+		unimplemented!();
+	}
+
+	#[test]
+	fn test_or() {
+		unimplemented!();
+	}
+
+	#[test]
+	fn test_xor() {
+		unimplemented!();
+	}
+
+	#[test]
+	fn test_cp() {
+		unimplemented!();
+	}
+
+	#[test]
+	fn test_inc() {
+		unimplemented!();
+	}
+
+	#[test]
+	fn test_dec() {
+		unimplemented!();
+	}
+
+	#[test]
+	fn test_swap() {
+		unimplemented!();
+	}
+
+	#[test]
+	fn test_daa() {
+		unimplemented!();
+	}
+
+	#[test]
+	fn test_cpl() {
+		unimplemented!();
+	}
+
+	#[test]
+	fn test_ccf() {
+		unimplemented!();
+	}
+
+	#[test]
+	fn test_scf() {
+		unimplemented!();
+	}
+
+	#[test]
+	fn test_di() {
+		unimplemented!();
+	}
+
+	#[test]
+	fn test_ei() {
+		unimplemented!();
+	}
+
+	#[test]
+	fn test_rlca() {
+		unimplemented!();
+	}
+
+	#[test]
+	fn test_rla() {
+		unimplemented!();
+	}
+
+	#[test]
+	fn test_rrca() {
+		unimplemented!();
+	}
+
+	#[test]
+	fn test_rra() {
+		unimplemented!();
+	}
+
+	#[test]
+	fn test_rlc() {
+		unimplemented!();
+	}
+
+	#[test]
+	fn test_rl() {
+		unimplemented!();
+	}
+
+	#[test]
+	fn test_rrc() {
+		unimplemented!();
+	}
+
+	#[test]
+	fn test_rr() {
+		unimplemented!();
+	}
+
+	#[test]
+	fn test_sla() {
+		unimplemented!();
+	}
+
+	#[test]
+	fn test_sra() {
+		unimplemented!();
+	}
+
+	#[test]
+	fn test_srl() {
+		unimplemented!();
+	}
+
+	#[test]
+	fn test_bit() {
+		unimplemented!();
+	}
+
+	#[test]
+	fn test_set() {
+		unimplemented!();
+	}
+
+	#[test]
+	fn test_res() {
+		unimplemented!();
+	}
+
+	#[test]
+	fn test_call() {
+		unimplemented!();
+	}
+
+	#[test]
+	fn test_restart() {
+		unimplemented!();
+	}
+
+	#[test]
+	fn test_return() {
+		unimplemented!();
+	}
 }
