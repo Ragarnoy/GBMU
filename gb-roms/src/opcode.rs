@@ -201,10 +201,10 @@ where
 		match bits.x() {
 			// bit b,n
 			0x01 => Ok(op!(Bit, bit, reg)),
-			// set b,n
-			0x02 => Ok(op!(Set, bit, reg)),
 			// res b,n
-			0x03 => Ok(op!(Res, bit, reg)),
+			0x02 => Ok(op!(Res, bit, reg)),
+			// set b,n
+			0x03 => Ok(op!(Set, bit, reg)),
 			_ => Err(Error::UnknownOpcode(cmd)),
 		}
 	}
@@ -927,21 +927,6 @@ mod test_decode {
 	}
 
 	#[test]
-	fn test_bit() {
-		unimplemented!();
-	}
-
-	#[test]
-	fn test_set() {
-		unimplemented!();
-	}
-
-	#[test]
-	fn test_res() {
-		unimplemented!();
-	}
-
-	#[test]
 	fn test_call() {
 		unimplemented!();
 	}
@@ -1023,6 +1008,30 @@ mod test_decode_cb_prefix {
 		assert_eq!(
 			op_gen![0xcb, 0x3c].next(),
 			Some(Ok(op!(Srl, register8!(H).into())))
+		)
+	}
+
+	#[test]
+	fn test_bit() {
+		assert_eq!(
+			op_gen![0xcb, 0x52].next(),
+			Some(Ok(op!(Bit, 2, register8!(D).into())))
+		)
+	}
+
+	#[test]
+	fn test_set() {
+		assert_eq!(
+			op_gen![0xcb, 0xfd].next(),
+			Some(Ok(op!(Set, 7, register8!(L).into())))
+		)
+	}
+
+	#[test]
+	fn test_res() {
+		assert_eq!(
+			op_gen![0xcb, 0x80].next(),
+			Some(Ok(op!(Res, 0, register8!(B).into())))
 		)
 	}
 }
