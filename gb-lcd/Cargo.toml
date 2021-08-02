@@ -1,5 +1,5 @@
 [package]
-name = "gbmu"
+name = "gb-lcd"
 version = "0.1.0"
 authors = ["Guilhem Smith <gsmith@student.42.fr>"]
 edition = "2018"
@@ -9,13 +9,5 @@ edition = "2018"
 [dependencies]
 sdl2 = { version = "0.34", features = ["bundled", "static-link"] }
 egui = { version = "0.13" }
-rfd = { version = "0.4" }
-gb-lcd = { path= "./gb-lcd" }
-gb-ppu = { path = "./gb-ppu" }
-
-[workspace]
-members = [
-  "gb-roms",
-  "gb-ppu",
-  "gb-lcd",
-]
+gl = { version = "0.14" }
+egui_sdl2_gl = { version = "0.13", default-features = false }
