@@ -23,6 +23,18 @@ jobs:
     - name: Check code format
       run: cargo fmt -- --check
 
+    - name: cache cargo artifact
+      uses: actions/cache@v2
+      env:
+        cache-name: cache-cargo-build
+      with:
+        path: target/develop/build
+        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-build-${{ env-cache-name }}
+          ${{ runner.os }}-build-
+          ${{ runner.os }}-
+
     - name: Build
       run: cargo build --verbose
 
