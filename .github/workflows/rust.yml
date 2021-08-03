@@ -16,7 +16,7 @@ jobs:
 
     steps:
     - name: install linux requirements
-      run: sudo apt install -y cmake gtk3
+      run: sudo sh -c "apt-get update && apt-get install -y cmake gtk3"
 
     - uses: actions/checkout@v2
 
