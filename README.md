@@ -2,12 +2,28 @@
 
 Rust GameBoy Advanced Emulator
 
-## Compilation
-### Linux
-Building this project on linux requires cmake and gtk3.
+## Dependencies
 
-### MacOS
-Building this project on MacOs requires cmake.
+### For Linux
 
-### Windows
-TODO
+Building this project on linux requires `cmake` and `gtk3`.
+
+#### using apt
+
+```sh
+apt update && apt install cmake gtk3
+```
+
+#### using pacman
+
+```sh
+pacman -Sy cmake gtk3
+```
+
+### For MacOS
+
+Building this project on MacOs requires `cmake`.
+
+```sh
+brew install cmake
+```
