@@ -1,4 +1,6 @@
 use super::{Error, Position};
+use rand::{rngs::SmallRng, Rng, SeedableRng};
+use std::cell::RefCell;
 
 /// RomOperation basic trait to implement for a ROM Emulator.
 /// Rom is generally Read-only so `write` is not often used
@@ -26,6 +28,7 @@ impl RomOperation for CharDevice {
         self.0 = v;
         Ok(())
     }
+
     fn read(&self, _addr: Position) -> Result<u8, Error> {
         Ok(self.0)
     }
@@ -39,5 +42,34 @@ impl FileOperation for CharDevice {
 
     fn read(&self, _addr: Position) -> Result<u8, Error> {
         Ok(self.0)
+    }
+}
+
+/// A Random Device that yeild random bytes
+pub struct RandomDevice {
+    gen: RefCell<SmallRng>,
+}
+
+impl Default for RandomDevice {
+    fn default() -> Self {
+        Self {
+            gen: RefCell::new(SmallRng::from_entropy()),
+        }
+    }
+}
+
+impl RomOperation for RandomDevice {
+    fn read(&self, _addr: Position) -> Result<u8, Error> {
+        Ok(self.gen.borrow_mut().gen::<u8>())
+    }
+}
+
+impl FileOperation for RandomDevice {
+    fn read(&self, _addr: Position) -> Result<u8, Error> {
+        Ok(self.gen.borrow_mut().gen::<u8>())
+    }
+
+    fn write(&mut self, _v: u8, addr: Position) -> Result<(), Error> {
+        Err(Error::SegmentationFault(addr.absolute))
     }
 }
