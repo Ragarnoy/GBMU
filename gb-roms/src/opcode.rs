@@ -103,10 +103,7 @@ where
     fn decode_cb_prefix(&mut self) -> Result<Opcode, Error> {
         use register::Register8Bits;
 
-        let current = self
-            .stream
-            .next()
-            .ok_or_else(|| Error::InvalideOpcode(0xCB))?;
+        let current = self.stream.next().ok_or(Error::InvalideOpcode(0xCB))?;
 
         match current {
             // swap n
@@ -585,10 +582,10 @@ where
             0xC3 => Ok(op!(Jump, self.get_nn().into())),
 
             // jp cc,nn
-            0xC2 => Ok(op!(JumpNZero, self.get_nn().into())),
-            0xCA => Ok(op!(JumpZero, self.get_nn().into())),
-            0xD2 => Ok(op!(JumpNCarry, self.get_nn().into())),
-            0xDA => Ok(op!(JumpCarry, self.get_nn().into())),
+            0xC2 => Ok(op!(JumpNZero, self.get_nn())),
+            0xCA => Ok(op!(JumpZero, self.get_nn())),
+            0xD2 => Ok(op!(JumpNCarry, self.get_nn())),
+            0xDA => Ok(op!(JumpCarry, self.get_nn())),
 
             // jp (hl)
             0xE9 => Ok(op!(Jump, Value::IndirectReg16(Reg16::HL))),
