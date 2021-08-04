@@ -130,10 +130,10 @@ pub enum Error {
 #[derive(Debug)]
 /// Position contain the relative and absolute address
 pub struct Position {
-    /// relative address is the relative address into the current area of the address bus
+    /// relative address into the current area of the address bus
     pub relative: u16,
 
-    /// absolute address is the absolute address used in the address bus
+    /// absolute address used in the address bus
     pub absolute: u16,
 }
 
@@ -145,6 +145,15 @@ impl Position {
         }
     }
 
+    /// Create a Position from an absolute adress and an offset
+    ///
+    /// ```
+    /// # use gb_cpu::address_bus::Position;
+    /// let pos = Position::from_offset(0x42, 0x10);
+    ///
+    /// assert_eq!(pos.absolute, 0x42);
+    /// assert_eq!(pos.relative, 0x32);
+    /// ```
     pub fn from_offset(addr: u16, offset: u16) -> Self {
         Self::new(addr - offset, addr)
     }
