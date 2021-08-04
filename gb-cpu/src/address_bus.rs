@@ -79,11 +79,13 @@ impl AddressBus {
     }
 }
 
+#[derive(Debug)]
 pub enum Error {
     BusError(u16),
     SegmentationFault(u16),
 }
 
+#[derive(Debug)]
 /// Position contain the relative and absolute address
 pub struct Position {
     /// relative address is the relative address into the current area of the address bus
@@ -118,7 +120,7 @@ pub trait RomOperation {
     fn read(&mut self, addr: Position) -> Result<u8, Error>;
 }
 
-/// FileOperation basic trait to implement for a RAM Emulator.
+/// FileOperation basic trait to implement for a RAM Emulator or other area.
 pub trait FileOperation {
     fn write(&mut self, v: u8, addr: Position) -> Result<(), Error>;
     fn read(&mut self, addr: Position) -> Result<u8, Error>;
