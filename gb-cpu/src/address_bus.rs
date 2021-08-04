@@ -89,7 +89,7 @@ impl AddressBus {
 
 #[cfg(test)]
 mod test_address_bus {
-    use super::{operation::CharDevice, AddressBus, Position};
+    use super::{operation::CharDevice, AddressBus};
 
     #[test]
     fn read() {
