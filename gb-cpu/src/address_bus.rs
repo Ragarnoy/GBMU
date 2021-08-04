@@ -24,6 +24,16 @@ impl AddressBus {
                 }
             }
             0x0000..=0x7fff => self.rom.write(v, Position::new(addr, addr)),
+            0x8000..=0x9fff => self.vram.write(v, Position::from_offset(addr, 0x8000)),
+            0xa000..=0xbfff => self.ext_ram.write(v, Position::from_offset(addr, 0xa000)),
+            0xc000..=0xdfff => self.ram.write(v, Position::from_offset(addr, 0xc000)),
+            0xe000..=0xfdff => self.echo_ram.write(v, Position::from_offset(addr, 0xe000)),
+            0xfe00..=0xfe9f => self
+                .sprite_table
+                .write(v, Position::from_offset(addr, 0xfe00)),
+            0xff00..=0xff7f => self.io_reg.write(v, Position::from_offset(addr, 0xff00)),
+            0xff80..=0xfffe => self.high_ram.write(v, Position::from_offset(addr, 0xff80)),
+            0xffff => self.ie_reg.write(v, Position::from_offset(addr, 0xffff)),
             _ => Err(Error::BusError(addr)),
         }
     }
@@ -49,6 +59,10 @@ impl Position {
             relative: relative_addr,
             absolute: absolute_addr,
         }
+    }
+
+    pub fn from_offset(addr: u16, offset: u16) -> Self {
+        Self::new(addr - offset, addr)
     }
 }
 
