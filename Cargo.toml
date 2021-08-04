@@ -18,4 +18,5 @@ members = [
   "gb-roms",
   "gb-ppu",
   "gb-lcd",
+  "gb-cpu"
 ]
