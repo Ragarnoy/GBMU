@@ -48,10 +48,10 @@ impl AddressBus {
         }
     }
 
-    pub fn read(&mut self, addr: u16) -> Result<u8, Error> {
+    pub fn read(&self, addr: u16) -> Result<u8, Error> {
         match addr {
             0x0000..=0x00ff if self.bios.is_some() => {
-                if let Some(ref mut b) = self.bios {
+                if let Some(ref b) = self.bios {
                     b.read(Position::new(addr, addr))
                 } else {
                     unreachable!("we already checked that bios is something")
@@ -76,6 +76,44 @@ impl AddressBus {
 
     pub fn remove_bios(&mut self) {
         self.bios = None
+    }
+
+    pub fn iter(&self) -> Iter {
+        Iter::new(self)
+    }
+}
+
+pub struct Iter<'a> {
+    current_address: u16,
+    stop: bool,
+    bus: &'a AddressBus,
+}
+
+impl<'a> Iter<'a> {
+    fn new(bus: &'a AddressBus) -> Self {
+        Self {
+            current_address: 0,
+            stop: false,
+            bus,
+        }
+    }
+}
+
+impl<'a> Iterator for Iter<'a> {
+    type Item = u8;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.stop {
+            let bit = self.bus.read(self.current_address).ok();
+            match self.current_address {
+                0xfea0..=0xfeff => self.current_address = 0xff00,
+                0xffff => self.stop = true,
+                _ => self.current_address += 1,
+            }
+            bit
+        } else {
+            None
+        }
     }
 }
 
@@ -117,11 +155,11 @@ pub trait RomOperation {
     }
 
     /// read one byte of data from rom
-    fn read(&mut self, addr: Position) -> Result<u8, Error>;
+    fn read(&self, addr: Position) -> Result<u8, Error>;
 }
 
 /// FileOperation basic trait to implement for a RAM Emulator or other area.
 pub trait FileOperation {
     fn write(&mut self, v: u8, addr: Position) -> Result<(), Error>;
-    fn read(&mut self, addr: Position) -> Result<u8, Error>;
+    fn read(&self, addr: Position) -> Result<u8, Error>;
 }
