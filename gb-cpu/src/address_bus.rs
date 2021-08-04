@@ -37,6 +37,28 @@ impl AddressBus {
             _ => Err(Error::BusError(addr)),
         }
     }
+
+    pub fn read(&mut self, addr: u16) -> Result<u8, Error> {
+        match addr {
+            0x0000..=0x00ff if self.bios.is_some() => {
+                if let Some(ref mut b) = self.bios {
+                    b.read(Position::new(addr, addr))
+                } else {
+                    unreachable!("we already checked that bios is something")
+                }
+            }
+            0x0000..=0x7fff => self.rom.read(Position::new(addr, addr)),
+            0x8000..=0x9fff => self.vram.read(Position::from_offset(addr, 0x8000)),
+            0xa000..=0xbfff => self.ext_ram.read(Position::from_offset(addr, 0xa000)),
+            0xc000..=0xdfff => self.ram.read(Position::from_offset(addr, 0xc000)),
+            0xe000..=0xfdff => self.echo_ram.read(Position::from_offset(addr, 0xe000)),
+            0xfe00..=0xfe9f => self.sprite_table.read(Position::from_offset(addr, 0xfe00)),
+            0xff00..=0xff7f => self.io_reg.read(Position::from_offset(addr, 0xff00)),
+            0xff80..=0xfffe => self.high_ram.read(Position::from_offset(addr, 0xff80)),
+            0xffff => self.ie_reg.read(Position::from_offset(addr, 0xffff)),
+            _ => Err(Error::BusError(addr)),
+        }
+    }
 }
 
 pub enum Error {
