@@ -13,6 +13,27 @@ pub struct AddressBus {
     ie_reg: Box<dyn FileOperation>,
 }
 
+impl AddressBus {
+    pub fn write(&mut self, v: u8, addr: u16) -> Result<(), Error> {
+        match addr {
+            0x0000..=0x00ff if self.bios.is_some() => {
+                if let Some(ref mut b) = self.bios {
+                    b.write(v, Position::new(addr, addr))
+                } else {
+                    unreachable!("we already checked that bios is something")
+                }
+            }
+            0x0000..=0x7fff => self.rom.write(v, Position::new(addr, addr)),
+            _ => Err(Error::BusError(addr)),
+        }
+    }
+}
+
+pub enum Error {
+    BusError(u16),
+    SegmentationFault(u16),
+}
+
 /// Position contain the relative and absolute address
 pub struct Position {
     /// relative address is the relative address into the current area of the address bus
@@ -22,20 +43,29 @@ pub struct Position {
     pub absolute: u16,
 }
 
+impl Position {
+    pub fn new(relative_addr: u16, absolute_addr: u16) -> Self {
+        Self {
+            relative: relative_addr,
+            absolute: absolute_addr,
+        }
+    }
+}
+
 /// RomOperation basic trait to implement for a ROM Emulator.
 /// Rom is generally Read-only so `write` is not often used
 pub trait RomOperation {
     /// writing to rom can be use full for MBC controller to set their own registry
-    fn write(&mut self, _v: u8, _addr: Position) -> Result<(), ()> {
-        Err(())
+    fn write(&mut self, _v: u8, addr: Position) -> Result<(), Error> {
+        Err(Error::SegmentationFault(addr.absolute))
     }
 
     /// read one byte of data from rom
-    fn read(&mut self, addr: Position) -> Result<u8, ()>;
+    fn read(&mut self, addr: Position) -> Result<u8, Error>;
 }
 
 /// FileOperation basic trait to implement for a RAM Emulator.
 pub trait FileOperation {
-    fn write(&mut self, v: u8, addr: Position) -> Result<(), ()>;
-    fn read(&mut self, addr: Position) -> Result<u8, ()>;
+    fn write(&mut self, v: u8, addr: Position) -> Result<(), Error>;
+    fn read(&mut self, addr: Position) -> Result<u8, Error>;
 }
