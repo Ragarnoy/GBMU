@@ -17,3 +17,27 @@ pub trait FileOperation {
     fn write(&mut self, v: u8, addr: Position) -> Result<(), Error>;
     fn read(&self, addr: Position) -> Result<u8, Error>;
 }
+
+/// A Char Device yield current setted byte
+pub struct CharDevice(u8);
+
+impl RomOperation for CharDevice {
+    fn write(&mut self, v: u8, _addr: Position) -> Result<(), Error> {
+        self.0 = v;
+        Ok(())
+    }
+    fn read(&self, _addr: Position) -> Result<u8, Error> {
+        Ok(self.0)
+    }
+}
+
+impl FileOperation for CharDevice {
+    fn write(&mut self, v: u8, _addr: Position) -> Result<(), Error> {
+        self.0 = v;
+        Ok(())
+    }
+
+    fn read(&self, _addr: Position) -> Result<u8, Error> {
+        Ok(self.0)
+    }
+}
