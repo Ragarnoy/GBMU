@@ -69,6 +69,14 @@ impl AddressBus {
             _ => Err(Error::BusError(addr)),
         }
     }
+
+    pub fn set_bios(&mut self, bios: Box<dyn RomOperation>) {
+        self.bios = Some(bios)
+    }
+
+    pub fn remove_bios(&mut self) {
+        self.bios = None
+    }
 }
 
 pub enum Error {
