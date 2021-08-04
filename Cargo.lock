@@ -282,6 +282,7 @@ name = "gb-roms"
 version = "0.1.0"
 dependencies = [
  "clap",
+ "gb-cpu",
  "modular-bitfield",
 ]
 
