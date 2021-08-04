@@ -87,6 +87,73 @@ impl AddressBus {
     }
 }
 
+#[cfg(test)]
+mod test_address_bus {
+    use super::{operation::CharDevice, AddressBus, Position};
+
+    #[test]
+    fn read() {
+        let addr_bus = AddressBus {
+            bios: None,
+            rom: Box::new(CharDevice(1)),
+            vram: Box::new(CharDevice(2)),
+            ext_ram: Box::new(CharDevice(3)),
+            ram: Box::new(CharDevice(4)),
+            eram: Box::new(CharDevice(5)),
+            oam: Box::new(CharDevice(6)),
+            io_reg: Box::new(CharDevice(7)),
+            hram: Box::new(CharDevice(8)),
+            ie_reg: Box::new(CharDevice(9)),
+        };
+
+        assert_eq!(addr_bus.read(0x10), Ok(1));
+        assert_eq!(addr_bus.read(0x8042), Ok(2));
+        assert_eq!(addr_bus.read(0xa000), Ok(3));
+        assert_eq!(addr_bus.read(0xdfff), Ok(4));
+        assert_eq!(addr_bus.read(0xe000), Ok(5));
+        assert_eq!(addr_bus.read(0xfe00), Ok(6));
+        assert_eq!(addr_bus.read(0xff00), Ok(7));
+        assert_eq!(addr_bus.read(0xff80), Ok(8));
+        assert_eq!(addr_bus.read(0xffff), Ok(9));
+    }
+
+    #[test]
+    fn write() {
+        let mut addr_bus = AddressBus {
+            bios: None,
+            rom: Box::new(CharDevice(1)),
+            vram: Box::new(CharDevice(2)),
+            ext_ram: Box::new(CharDevice(3)),
+            ram: Box::new(CharDevice(4)),
+            eram: Box::new(CharDevice(5)),
+            oam: Box::new(CharDevice(6)),
+            io_reg: Box::new(CharDevice(7)),
+            hram: Box::new(CharDevice(8)),
+            ie_reg: Box::new(CharDevice(9)),
+        };
+
+        assert_eq!(addr_bus.write(0x30, 0x11), Ok(()));
+        assert_eq!(addr_bus.write(0x31, 0x8242), Ok(()));
+        assert_eq!(addr_bus.write(0x32, 0xa050), Ok(()));
+        assert_eq!(addr_bus.write(0x33, 0xdf8f), Ok(()));
+        assert_eq!(addr_bus.write(0x34, 0xe006), Ok(()));
+        assert_eq!(addr_bus.write(0x35, 0xfe80), Ok(()));
+        assert_eq!(addr_bus.write(0x36, 0xff70), Ok(()));
+        assert_eq!(addr_bus.write(0x37, 0xff8e), Ok(()));
+        assert_eq!(addr_bus.write(0x38, 0xffff), Ok(()));
+
+        assert_eq!(addr_bus.read(0x10), Ok(0x30));
+        assert_eq!(addr_bus.read(0x8042), Ok(0x31));
+        assert_eq!(addr_bus.read(0xa000), Ok(0x32));
+        assert_eq!(addr_bus.read(0xdfff), Ok(0x33));
+        assert_eq!(addr_bus.read(0xe000), Ok(0x34));
+        assert_eq!(addr_bus.read(0xfe00), Ok(0x35));
+        assert_eq!(addr_bus.read(0xff00), Ok(0x36));
+        assert_eq!(addr_bus.read(0xff80), Ok(0x37));
+        assert_eq!(addr_bus.read(0xffff), Ok(0x38));
+    }
+}
+
 pub struct Iter<'a> {
     current_address: u16,
     stop: bool,

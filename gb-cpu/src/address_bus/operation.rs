@@ -21,7 +21,7 @@ pub trait FileOperation {
 }
 
 /// A Char Device yield current setted byte
-pub struct CharDevice(u8);
+pub struct CharDevice(pub u8);
 
 impl RomOperation for CharDevice {
     fn write_rom(&mut self, v: u8, _addr: Position) -> Result<(), Error> {
