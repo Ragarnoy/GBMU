@@ -1,15 +1,27 @@
 /// AddressBus map specific range address to specific area like ROM/RAM.
 /// This Implementation of an AddressBus will be limited to 16-bit address
 pub struct AddressBus {
+    /// Optional BIOS Rom
+    /// Usually set at startup then removed
     bios: Option<Box<dyn RomOperation>>,
+    /// Rom from the cartridge
     rom: Box<dyn RomOperation>,
+    /// Video Ram
     vram: Box<dyn FileOperation>,
+    /// Ram from the cartridge
     ext_ram: Box<dyn FileOperation>,
+    /// Internal gameboy ram
     ram: Box<dyn FileOperation>,
-    echo_ram: Box<dyn FileOperation>,
-    sprite_table: Box<dyn FileOperation>,
+    /// Echo Ram area, usually a mirron of ram
+    eram: Box<dyn FileOperation>,
+    /// Sprite attribute table
+    oam: Box<dyn FileOperation>,
+    /// io registers table
     io_reg: Box<dyn FileOperation>,
-    high_ram: Box<dyn FileOperation>,
+    /// high ram
+    /// allow for faster access in gameboy
+    hram: Box<dyn FileOperation>,
+    /// register to enable/disable all interrupts
     ie_reg: Box<dyn FileOperation>,
 }
 
@@ -27,12 +39,10 @@ impl AddressBus {
             0x8000..=0x9fff => self.vram.write(v, Position::from_offset(addr, 0x8000)),
             0xa000..=0xbfff => self.ext_ram.write(v, Position::from_offset(addr, 0xa000)),
             0xc000..=0xdfff => self.ram.write(v, Position::from_offset(addr, 0xc000)),
-            0xe000..=0xfdff => self.echo_ram.write(v, Position::from_offset(addr, 0xe000)),
-            0xfe00..=0xfe9f => self
-                .sprite_table
-                .write(v, Position::from_offset(addr, 0xfe00)),
+            0xe000..=0xfdff => self.eram.write(v, Position::from_offset(addr, 0xe000)),
+            0xfe00..=0xfe9f => self.oam.write(v, Position::from_offset(addr, 0xfe00)),
             0xff00..=0xff7f => self.io_reg.write(v, Position::from_offset(addr, 0xff00)),
-            0xff80..=0xfffe => self.high_ram.write(v, Position::from_offset(addr, 0xff80)),
+            0xff80..=0xfffe => self.hram.write(v, Position::from_offset(addr, 0xff80)),
             0xffff => self.ie_reg.write(v, Position::from_offset(addr, 0xffff)),
             _ => Err(Error::BusError(addr)),
         }
@@ -51,10 +61,10 @@ impl AddressBus {
             0x8000..=0x9fff => self.vram.read(Position::from_offset(addr, 0x8000)),
             0xa000..=0xbfff => self.ext_ram.read(Position::from_offset(addr, 0xa000)),
             0xc000..=0xdfff => self.ram.read(Position::from_offset(addr, 0xc000)),
-            0xe000..=0xfdff => self.echo_ram.read(Position::from_offset(addr, 0xe000)),
-            0xfe00..=0xfe9f => self.sprite_table.read(Position::from_offset(addr, 0xfe00)),
+            0xe000..=0xfdff => self.eram.read(Position::from_offset(addr, 0xe000)),
+            0xfe00..=0xfe9f => self.oam.read(Position::from_offset(addr, 0xfe00)),
             0xff00..=0xff7f => self.io_reg.read(Position::from_offset(addr, 0xff00)),
-            0xff80..=0xfffe => self.high_ram.read(Position::from_offset(addr, 0xff80)),
+            0xff80..=0xfffe => self.hram.read(Position::from_offset(addr, 0xff80)),
             0xffff => self.ie_reg.read(Position::from_offset(addr, 0xffff)),
             _ => Err(Error::BusError(addr)),
         }
