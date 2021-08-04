@@ -34,12 +34,12 @@ impl AddressBus {
         match addr {
             0x0000..=0x00ff if self.bios.is_some() => {
                 if let Some(ref mut b) = self.bios {
-                    b.write(v, Position::new(addr, addr))
+                    b.write_rom(v, Position::new(addr, addr))
                 } else {
                     unreachable!("we already checked that bios is something")
                 }
             }
-            0x0000..=0x7fff => self.rom.write(v, Position::new(addr, addr)),
+            0x0000..=0x7fff => self.rom.write_rom(v, Position::new(addr, addr)),
             0x8000..=0x9fff => self.vram.write(v, Position::from_offset(addr, 0x8000)),
             0xa000..=0xbfff => self.ext_ram.write(v, Position::from_offset(addr, 0xa000)),
             0xc000..=0xdfff => self.ram.write(v, Position::from_offset(addr, 0xc000)),
@@ -56,12 +56,12 @@ impl AddressBus {
         match addr {
             0x0000..=0x00ff if self.bios.is_some() => {
                 if let Some(ref b) = self.bios {
-                    b.read(Position::new(addr, addr))
+                    b.read_rom(Position::new(addr, addr))
                 } else {
                     unreachable!("we already checked that bios is something")
                 }
             }
-            0x0000..=0x7fff => self.rom.read(Position::new(addr, addr)),
+            0x0000..=0x7fff => self.rom.read_rom(Position::new(addr, addr)),
             0x8000..=0x9fff => self.vram.read(Position::from_offset(addr, 0x8000)),
             0xa000..=0xbfff => self.ext_ram.read(Position::from_offset(addr, 0xa000)),
             0xc000..=0xdfff => self.ram.read(Position::from_offset(addr, 0xc000)),
@@ -121,7 +121,7 @@ impl<'a> Iterator for Iter<'a> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Error {
     BusError(u16),
     SegmentationFault(u16),
