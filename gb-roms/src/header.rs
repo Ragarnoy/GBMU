@@ -40,7 +40,7 @@ impl Header {
 
         f.seek(SeekFrom::Start(0x100))
             .expect("cannot seek file to header");
-        f.read(&mut chunk).expect("cannot read header");
+        f.read_exact(&mut chunk).expect("cannot read header");
         Header::from_chunk(chunk)
     }
 

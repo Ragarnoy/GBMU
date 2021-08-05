@@ -10,12 +10,12 @@ struct DecomposeOpts {
 }
 
 fn parse_value(arg: &str) -> Result<u8, std::num::ParseIntError> {
-    if arg.starts_with("0x") {
-        u8::from_str_radix(&arg[2..], 16)
-    } else if arg.starts_with("0o") {
-        u8::from_str_radix(&arg[2..], 8)
-    } else if arg.starts_with("0b") {
-        u8::from_str_radix(&arg[2..], 2)
+    if let Some(end) = arg.strip_prefix("0x") {
+        u8::from_str_radix(end, 16)
+    } else if let Some(end) = arg.strip_prefix("0o") {
+        u8::from_str_radix(end, 8)
+    } else if let Some(end) = arg.strip_prefix("0b") {
+        u8::from_str_radix(end, 2)
     } else {
         arg.parse::<u8>()
     }
