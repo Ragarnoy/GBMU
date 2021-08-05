@@ -164,6 +164,8 @@ impl FileOperation for MBC1 {
         if !self.regs.ram_enabled {
             return Err(Error::SegmentationFault(addr.absolute));
         }
+        let ram = self.get_selected_ram_mut();
+        ram[addr.relative as usize] = v;
         Ok(())
     }
 
@@ -171,6 +173,7 @@ impl FileOperation for MBC1 {
         if !self.regs.ram_enabled {
             return Err(Error::SegmentationFault(addr.absolute));
         }
-        Ok(42)
+        let ram = self.get_selected_ram();
+        Ok(ram[addr.relative as usize])
     }
 }
