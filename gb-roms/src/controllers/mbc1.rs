@@ -44,7 +44,7 @@ impl MBC1 {
         Ok(ctl)
     }
 
-    fn get_selected_rom(&self) -> &[u8; MBC1_ROM_SIZE] {}
+    fn get_selected_rom(&self, root_bank: bool) -> &[u8; MBC1_ROM_SIZE] {}
 
     fn get_selected_ram_mut(&mut self) -> &mut [u8; MBC1_RAM_SIZE] {}
     fn get_selected_ram(&self) -> &[u8; MBC1_RAM_SIZE] {}
@@ -147,6 +147,14 @@ impl RomOperation for MBC1 {
     }
 
     fn read_rom(&self, addr: Position) -> Result<u8, Error> {
-        unimplemented!("read operation are not implemented for mbc1 on rom")
+        let root_bank = addr.relative < 0x3fff;
+        let rom = self.get_selected_rom(root_bank);
+
+        if root_bank {
+            Ok(rom[addr.relative as usize])
+        } else {
+            let addr = addr.relative - 0x4000;
+            Ok(rom[addr as usize])
+        }
     }
 }
