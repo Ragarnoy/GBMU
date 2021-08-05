@@ -1,3 +1,5 @@
+use gb_cpu::{Error, RomOperation};
+
 pub const MBC1_ROM_BANK_MAX_SIZE: usize = 0x4000;
 pub const MBC1_MAX_ROM_BANK: usize = 0x80;
 pub const MBC1_RAM_SIZE: usize = 0x2000;
@@ -45,5 +47,13 @@ impl Default for MBC1Reg {
             special: 0,
             banking_mode: BankingMode::Simple,
         }
+    }
+}
+
+impl RomOperation for MBC1 {
+    fn write_rom(&mut self, v: u8, addr: Position) -> Result<(), Error> {}
+
+    fn read_rom(&self, addr: Position) -> Result<u8, Error> {
+        unimplemented!("read operation are not implemented for mbc1 on rom")
     }
 }
