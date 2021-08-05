@@ -46,8 +46,25 @@ impl MBC1 {
 
     fn get_selected_rom(&self, root_bank: bool) -> &[u8; MBC1_ROM_SIZE] {}
 
-    fn get_selected_ram_mut(&mut self) -> &mut [u8; MBC1_RAM_SIZE] {}
-    fn get_selected_ram(&self) -> &[u8; MBC1_RAM_SIZE] {}
+    fn get_selected_ram_mut(&mut self) -> &mut [u8; MBC1_RAM_SIZE] {
+        if self.regs.banking_mode == BankingMode::Simple
+            || self.configuration == Configuration::LargeRom
+        {
+            &mut self.ram_bank[0]
+        } else {
+            &mut self.ram_bank[(self.regs.special & 0x3) as usize]
+        }
+    }
+
+    fn get_selected_ram(&self) -> &[u8; MBC1_RAM_SIZE] {
+        if self.regs.banking_mode == BankingMode::Simple
+            || self.configuration == Configuration::LargeRom
+        {
+            &self.ram_bank[0]
+        } else {
+            &self.ram_bank[(self.regs.special & 0x3) as usize]
+        }
+    }
 }
 
 struct MBC1Reg {
@@ -63,6 +80,7 @@ struct MBC1Reg {
     banking_mode: BankingMode,
 }
 
+#[derive(PartialEq, Eq)]
 enum BankingMode {
     Simple,
     Advanced,
