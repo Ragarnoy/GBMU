@@ -43,6 +43,11 @@ impl MBC1 {
         }
         Ok(ctl)
     }
+
+    fn get_selected_rom(&self) -> &[u8; MBC1_ROM_SIZE] {}
+
+    fn get_selected_ram_mut(&mut self) -> &mut [u8; MBC1_RAM_SIZE] {}
+    fn get_selected_ram(&self) -> &[u8; MBC1_RAM_SIZE] {}
 }
 
 struct MBC1Reg {
