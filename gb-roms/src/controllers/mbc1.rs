@@ -44,11 +44,35 @@ impl MBC1 {
         Ok(ctl)
     }
 
-    fn get_selected_rom(&self, root_bank: bool) -> &[u8; MBC1_ROM_SIZE] {}
+    fn get_selected_rom(&self, root_bank: bool) -> &[u8; MBC1_ROM_SIZE] {
+        let index = if root_bank {
+            self.get_main_rom_index()
+        } else {
+            self.get_extra_rom_index()
+        };
+
+        &self.rom_bank[index]
+    }
+
+    /// Return the rom index for the area 0x0000-0x3fff
+    fn get_main_rom_index(&self) -> usize {
+        if self.regs.banking_mode == BankingMode::Simple
+            || self.configuration != Configuration::LargeRom
+        {
+            0
+        } else {
+            ((self.regs.special & 3) << 5) as usize
+        }
+    }
+
+    /// Return the rom index for the area 0x4000-0x7fff
+    fn get_extra_rom_index(&self) -> usize {
+        (self.regs.rom_number & 0x1f) as usize
+    }
 
     fn get_selected_ram_mut(&mut self) -> &mut [u8; MBC1_RAM_SIZE] {
         if self.regs.banking_mode == BankingMode::Simple
-            || self.configuration == Configuration::LargeRom
+            || self.configuration != Configuration::LargeRam
         {
             &mut self.ram_bank[0]
         } else {
@@ -58,7 +82,7 @@ impl MBC1 {
 
     fn get_selected_ram(&self) -> &[u8; MBC1_RAM_SIZE] {
         if self.regs.banking_mode == BankingMode::Simple
-            || self.configuration == Configuration::LargeRom
+            || self.configuration != Configuration::LargeRam
         {
             &self.ram_bank[0]
         } else {
