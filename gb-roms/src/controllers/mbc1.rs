@@ -106,12 +106,16 @@ mod test_mbc1 {
     #[test]
     fn large_rom() {
         let mut ctl = MBC1::new(RamSize::KByte8, RomSize::MByte1);
+
+        assert_eq!(ctl.configuration, Configuration::LargeRom);
         unimplemented!();
     }
 
     #[test]
     fn large_ram() {
         let mut ctl = MBC1::new(RamSize::KByte32, RomSize::KByte256);
+
+        assert_eq!(ctl.configuration, Configuration::LargeRam);
         unimplemented!();
     }
 }
