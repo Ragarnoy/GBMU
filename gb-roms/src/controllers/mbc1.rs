@@ -1,3 +1,5 @@
+pub const MBC1_RAM_BANK_MAX_SIZE: usize = 0x4000;
+
 pub struct MBC1 {
     ram_enabled: bool,
     rom_bank_number: u8,
