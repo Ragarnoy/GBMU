@@ -1,5 +1,5 @@
 use crate::header::size::{RamSize, RomSize};
-use gb_cpu::{address_bus::Error, Position, RomOperation};
+use gb_cpu::{address_bus::Error, FileOperation, Position, RomOperation};
 use std::io::{self, Read};
 
 pub const MBC1_ROM_SIZE: usize = 0x4000;
@@ -156,5 +156,21 @@ impl RomOperation for MBC1 {
             let addr = addr.relative - 0x4000;
             Ok(rom[addr as usize])
         }
+    }
+}
+
+impl FileOperation for MBC1 {
+    fn write(&mut self, v: u8, addr: Position) -> Result<(), Error> {
+        if !self.regs.ram_enabled {
+            return Err(Error::SegmentationFault(addr.absolute));
+        }
+        Ok(())
+    }
+
+    fn read(&self, addr: Position) -> Result<u8, Error> {
+        if !self.regs.ram_enabled {
+            return Err(Error::SegmentationFault(addr.absolute));
+        }
+        Ok(42)
     }
 }
