@@ -71,22 +71,22 @@ impl MBC1 {
     }
 
     fn get_selected_ram_mut(&mut self) -> &mut [u8; MBC1_RAM_SIZE] {
-        if self.regs.banking_mode == BankingMode::Simple
-            || self.configuration != Configuration::LargeRam
-        {
-            &mut self.ram_bank[0]
-        } else {
-            &mut self.ram_bank[(self.regs.special & 0x3) as usize]
-        }
+        let index = self.get_ram_index();
+
+        &mut self.ram_bank[index]
     }
 
     fn get_selected_ram(&self) -> &[u8; MBC1_RAM_SIZE] {
+        &self.ram_bank[self.get_ram_index()]
+    }
+
+    fn get_ram_index(&self) -> usize {
         if self.regs.banking_mode == BankingMode::Simple
             || self.configuration != Configuration::LargeRam
         {
-            &self.ram_bank[0]
+            0
         } else {
-            &self.ram_bank[(self.regs.special & 0x3) as usize]
+            (self.regs.special & 0x3) as usize
         }
     }
 }
@@ -105,6 +105,7 @@ mod test_mbc1 {
 
         assert_eq!(ctl.get_main_rom_index(), 0);
         assert_eq!(ctl.get_extra_rom_index(), 1);
+        assert_eq!(ctl.get_ram_index(), 0);
         unimplemented!();
     }
 
@@ -118,6 +119,7 @@ mod test_mbc1 {
 
         assert_eq!(ctl.get_main_rom_index(), 0);
         assert_eq!(ctl.get_extra_rom_index(), 1);
+        assert_eq!(ctl.get_ram_index(), 0);
         unimplemented!();
     }
 
@@ -131,6 +133,7 @@ mod test_mbc1 {
 
         assert_eq!(ctl.get_main_rom_index(), 0);
         assert_eq!(ctl.get_extra_rom_index(), 1);
+        assert_eq!(ctl.get_ram_index(), 0);
         unimplemented!();
     }
 }
