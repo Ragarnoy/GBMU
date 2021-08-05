@@ -1,11 +1,8 @@
-use crate::header::{
-    cartridge_type::CartridgeType,
-    size::{RamSize, RomSize},
-};
+use crate::header::size::{RamSize, RomSize};
 use gb_cpu::{address_bus::Error, Position, RomOperation};
-use std::io::{self, Read, Seek, SeekFrom};
+use std::io::{self, Read};
 
-pub const MBC1_ROM_BANK_SIZE: usize = 0x4000;
+pub const MBC1_ROM_SIZE: usize = 0x4000;
 pub const MBC1_MAX_ROM_BANK: usize = 0x80;
 pub const MBC1_RAM_SIZE: usize = 0x2000;
 pub const MBC1_MAX_RAM_BANK: usize = 0x4;
@@ -14,18 +11,37 @@ pub struct MBC1 {
     configuration: Configuration,
     max_ram_bank: usize,
     max_rom_bank: usize,
-    rom_bank: Vec<[u8; MBC1_ROM_BANK_SIZE]>,
+    rom_bank: Vec<[u8; MBC1_ROM_SIZE]>,
     ram_bank: Vec<[u8; MBC1_RAM_SIZE]>,
     regs: MBC1Reg,
 }
 
 impl MBC1 {
-    pub fn new(
+    pub fn new(ram_size: RamSize, rom_size: RomSize) -> Self {
+        let ram_bank = ram_size.get_bank_amounts();
+        let rom_bank = rom_size.get_bank_amounts();
+
+        Self {
+            configuration: Configuration::from_sizes(ram_size, rom_size),
+            max_ram_bank: ram_bank,
+            max_rom_bank: rom_bank,
+            rom_bank: vec![[0_u8; MBC1_ROM_SIZE]; rom_bank],
+            ram_bank: vec![[0_u8; MBC1_RAM_SIZE]; ram_bank],
+            regs: MBC1Reg::default(),
+        }
+    }
+
+    pub fn from_file(
         mut file: impl Read,
         ram_size: RamSize,
         rom_size: RomSize,
     ) -> Result<Self, io::Error> {
-        let conf = Configuration::from_sizes(ram_size, rom_size);
+        let mut ctl = Self::new(ram_size, rom_size);
+
+        for e in ctl.rom_bank.iter_mut() {
+            file.read_exact(e)?;
+        }
+        Ok(ctl)
     }
 }
 
