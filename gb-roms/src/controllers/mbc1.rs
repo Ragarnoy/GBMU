@@ -150,7 +150,19 @@ mod test_mbc1 {
         assert_eq!(ctl.get_main_rom_index(), 0);
         assert_eq!(ctl.get_extra_rom_index(), 1);
         assert_eq!(ctl.get_ram_index(), 0);
-        unimplemented!();
+
+        ctl.regs.rom_number = 11;
+        ctl.regs.special = 3;
+
+        assert_eq!(ctl.get_main_rom_index(), 0);
+        assert_eq!(ctl.get_extra_rom_index(), (3 << 5) | 11);
+        assert_eq!(ctl.get_ram_index(), 0);
+
+        ctl.regs.banking_mode = BankingMode::Advanced;
+
+        assert_eq!(ctl.get_main_rom_index(), 3 << 5);
+        assert_eq!(ctl.get_extra_rom_index(), (3 << 5) | 11);
+        assert_eq!(ctl.get_ram_index(), 0);
     }
 
     #[test]
