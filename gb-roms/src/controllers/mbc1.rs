@@ -100,6 +100,8 @@ mod test_mbc1 {
         let mut ctl = MBC1::new(RamSize::KByte8, RomSize::KByte256);
 
         assert_eq!(ctl.configuration, Configuration::Basic);
+        assert_eq!(ctl.ram_bank.len(), RamSize::KByte8.get_bank_amounts());
+        assert_eq!(ctl.rom_bank.len(), RomSize::KByte256.get_bank_amounts());
         unimplemented!();
     }
 
@@ -108,6 +110,8 @@ mod test_mbc1 {
         let mut ctl = MBC1::new(RamSize::KByte8, RomSize::MByte1);
 
         assert_eq!(ctl.configuration, Configuration::LargeRom);
+        assert_eq!(ctl.ram_bank.len(), RamSize::KByte8.get_bank_amounts());
+        assert_eq!(ctl.rom_bank.len(), RomSize::MByte1.get_bank_amounts());
         unimplemented!();
     }
 
@@ -116,6 +120,8 @@ mod test_mbc1 {
         let mut ctl = MBC1::new(RamSize::KByte32, RomSize::KByte256);
 
         assert_eq!(ctl.configuration, Configuration::LargeRam);
+        assert_eq!(ctl.ram_bank.len(), RamSize::KByte32.get_bank_amounts());
+        assert_eq!(ctl.rom_bank.len(), RomSize::KByte256.get_bank_amounts());
         unimplemented!();
     }
 }
