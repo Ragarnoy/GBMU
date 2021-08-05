@@ -1,9 +1,9 @@
-mod cartridge_type;
+pub mod cartridge_type;
 mod destination_code;
 mod error;
 mod flag;
 mod license_code;
-mod size;
+pub mod size;
 
 use std::convert::{From, TryFrom, TryInto};
 
