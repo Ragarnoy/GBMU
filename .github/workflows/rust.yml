@@ -10,18 +10,6 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  check:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Check code format
-        run: cargo fmt -- --check
-
-      - name: Lint code base
-        run: cargo clippy --workspace
-
   build:
 
     runs-on: ubuntu-latest
@@ -45,6 +33,12 @@ jobs:
           ${{ runner.os }}-build-${{ env.cache-name }}
           ${{ runner.os }}-build-
           ${{ runner.os }}-
+
+    - name: Check code format
+      run: cargo fmt -- --check
+
+    - name: Lint code base
+      run: cargo clippy --workspace
 
     - name: Build
       run: cargo build --verbose
