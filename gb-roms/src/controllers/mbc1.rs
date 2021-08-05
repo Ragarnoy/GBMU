@@ -98,6 +98,8 @@ mod test_mbc1 {
     #[test]
     fn basic_card() {
         let mut ctl = MBC1::new(RamSize::KByte8, RomSize::KByte256);
+
+        assert_eq!(ctl.configuration, Configuration::Basic);
         unimplemented!();
     }
 
@@ -138,7 +140,7 @@ enum Configuration {
     /// When Card has one of:
     /// <= 8 KiB RAM
     /// <= 512 KiB ROM
-    None,
+    Basic,
     /// Rom mode when mbc1 has >= 1MiB
     LargeRom,
     /// Ram mode when mbc1 has > 8KiB RAM
@@ -152,7 +154,7 @@ impl Configuration {
         } else if ram > RamSize::KByte8 {
             Self::LargeRam
         } else {
-            Self::None
+            Self::Basic
         }
     }
 }
@@ -169,7 +171,7 @@ fn test_conf_sizes() {
     );
     assert_eq!(
         Configuration::from_sizes(RamSize::KByte8, RomSize::KByte512),
-        Configuration::None
+        Configuration::Basic
     )
 }
 
