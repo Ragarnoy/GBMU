@@ -35,10 +35,10 @@ jobs:
           ${{ runner.os }}-
 
     - name: Check code format
-      run: cargo fmt -- --check
+      run: cargo fmt --verbose -- --check
 
     - name: Lint code base
-      run: cargo clippy --workspace
+      run: cargo clippy --workspace --verbose -- -D warnings
 
     - name: Build
       run: cargo build --verbose
