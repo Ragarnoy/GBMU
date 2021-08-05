@@ -1,4 +1,4 @@
-use gb_cpu::{Error, RomOperation};
+use gb_cpu::{address_bus::Error, Position, RomOperation};
 
 pub const MBC1_ROM_BANK_MAX_SIZE: usize = 0x4000;
 pub const MBC1_MAX_ROM_BANK: usize = 0x80;
@@ -12,7 +12,7 @@ pub struct MBC1 {
 
 struct MBC1Reg {
     /// Enable READ/WRITE operation on RAM
-    ram_enable: bool,
+    ram_enabled: bool,
     /// Select ROM bank id in area 0x4000-0xbfff
     rom_number: u8,
     /// Special register that can be used to specify:
@@ -43,7 +43,7 @@ impl Default for MBC1Reg {
     fn default() -> Self {
         Self {
             ram_enabled: false,
-            rom_bank_number: 1,
+            rom_number: 1,
             special: 0,
             banking_mode: BankingMode::Simple,
         }
@@ -51,7 +51,9 @@ impl Default for MBC1Reg {
 }
 
 impl RomOperation for MBC1 {
-    fn write_rom(&mut self, v: u8, addr: Position) -> Result<(), Error> {}
+    fn write_rom(&mut self, v: u8, addr: Position) -> Result<(), Error> {
+        Ok(())
+    }
 
     fn read_rom(&self, addr: Position) -> Result<u8, Error> {
         unimplemented!("read operation are not implemented for mbc1 on rom")
