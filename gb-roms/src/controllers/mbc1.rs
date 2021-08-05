@@ -67,7 +67,14 @@ impl MBC1 {
 
     /// Return the rom index for the area 0x4000-0x7fff
     fn get_extra_rom_index(&self) -> usize {
-        self.get_rom_index_special() | (((self.regs.rom_number & 0x1f) | 1) as usize)
+        let upper_index = self.get_rom_index_special();
+        let index = self.regs.rom_number & 0x1f;
+
+        if index == 0 {
+            upper_index | 1
+        } else {
+            upper_index | index as usize
+        }
     }
 
     fn get_selected_ram_mut(&mut self) -> &mut [u8; MBC1_RAM_SIZE] {
@@ -96,6 +103,17 @@ mod test_mbc1 {
     use super::{BankingMode, Configuration, MBC1Reg, RamSize, RomSize, MBC1};
 
     #[test]
+    fn test_extra_rom_default_selection() {
+        let mut ctl = MBC1::new(RamSize::KByte8, RomSize::KByte256);
+
+        ctl.regs.rom_number = 0;
+        assert_eq!(ctl.get_extra_rom_index(), 1);
+
+        ctl.regs.rom_number = 2;
+        assert_eq!(ctl.get_extra_rom_index(), 2);
+    }
+
+    #[test]
     fn basic_card() {
         let mut ctl = MBC1::new(RamSize::KByte8, RomSize::KByte256);
 
@@ -106,7 +124,19 @@ mod test_mbc1 {
         assert_eq!(ctl.get_main_rom_index(), 0);
         assert_eq!(ctl.get_extra_rom_index(), 1);
         assert_eq!(ctl.get_ram_index(), 0);
-        unimplemented!();
+
+        ctl.regs.rom_number = 11;
+        ctl.regs.special = 2;
+
+        assert_eq!(ctl.get_main_rom_index(), 0);
+        assert_eq!(ctl.get_extra_rom_index(), (2 << 5) | 11);
+        assert_eq!(ctl.get_ram_index(), 0);
+
+        ctl.regs.banking_mode = BankingMode::Advanced;
+
+        assert_eq!(ctl.get_main_rom_index(), 0);
+        assert_eq!(ctl.get_extra_rom_index(), (2 << 5) | 11);
+        assert_eq!(ctl.get_ram_index(), 0);
     }
 
     #[test]
@@ -212,7 +242,10 @@ impl RomOperation for MBC1 {
     fn write_rom(&mut self, v: u8, addr: Position) -> Result<(), Error> {
         match addr.relative {
             0x0000..=0x1fff => self.regs.ram_enabled = (v & 0xf) == 0xa,
-            0x2000..=0x3fff => self.regs.rom_number = (v & 0x1f) | 1,
+            0x2000..=0x3fff => {
+                let index = v & 0x1f;
+                self.regs.rom_number = if index == 0 { 1 } else { index };
+            }
             0x4000..=0x5fff => {
                 self.regs.special = v & 0x3;
             }
