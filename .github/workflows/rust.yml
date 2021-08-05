@@ -10,6 +10,18 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Check code format
+        run: cargo fmt -- --check
+
+      - name: Lint code base
+        run: cargo clippy --workspace
+
   build:
 
     runs-on: ubuntu-latest
@@ -19,9 +31,6 @@ jobs:
       run: sudo sh -c "apt-get update && apt-get install -y cmake libgtk-3-dev"
 
     - uses: actions/checkout@v2
-
-    - name: Check code format
-      run: cargo fmt -- --check
 
     - name: cache cargo artifact
       uses: actions/cache@v2
