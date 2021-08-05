@@ -16,7 +16,7 @@ pub struct AddressBus {
     ext_ram: Box<dyn FileOperation>,
     /// Internal gameboy ram
     ram: Box<dyn FileOperation>,
-    /// Echo Ram area, usually a mirron of ram
+    /// Echo Ram area, usually a mirror of ram
     eram: Box<dyn FileOperation>,
     /// Sprite attribute table
     oam: Box<dyn FileOperation>,
@@ -33,11 +33,8 @@ impl AddressBus {
     pub fn write(&mut self, v: u8, addr: u16) -> Result<(), Error> {
         match addr {
             0x0000..=0x00ff if self.bios.is_some() => {
-                if let Some(ref mut b) = self.bios {
-                    b.write_rom(v, Position::new(addr, addr))
-                } else {
-                    unreachable!("we already checked that bios is something")
-                }
+                let b = self.bios.as_mut().unwrap();
+                b.write_rom(v, Position::from_offset(addr, 0))
             }
             0x0000..=0x7fff => self.rom.write_rom(v, Position::new(addr, addr)),
             0x8000..=0x9fff => self.vram.write(v, Position::from_offset(addr, 0x8000)),
@@ -55,11 +52,8 @@ impl AddressBus {
     pub fn read(&self, addr: u16) -> Result<u8, Error> {
         match addr {
             0x0000..=0x00ff if self.bios.is_some() => {
-                if let Some(ref b) = self.bios {
-                    b.read_rom(Position::new(addr, addr))
-                } else {
-                    unreachable!("we already checked that bios is something")
-                }
+                let t = self.bios.as_ref().unwrap();
+                t.read_rom(Position::from_offset(addr, 0))
             }
             0x0000..=0x7fff => self.rom.read_rom(Position::new(addr, addr)),
             0x8000..=0x9fff => self.vram.read(Position::from_offset(addr, 0x8000)),
