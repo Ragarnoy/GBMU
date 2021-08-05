@@ -9,8 +9,6 @@ pub const MBC1_MAX_RAM_BANK: usize = 0x4;
 
 pub struct MBC1 {
     configuration: Configuration,
-    max_ram_bank: usize,
-    max_rom_bank: usize,
     rom_bank: Vec<[u8; MBC1_ROM_SIZE]>,
     ram_bank: Vec<[u8; MBC1_RAM_SIZE]>,
     regs: MBC1Reg,
@@ -23,8 +21,6 @@ impl MBC1 {
 
         Self {
             configuration: Configuration::from_sizes(ram_size, rom_size),
-            max_ram_bank: ram_bank,
-            max_rom_bank: rom_bank,
             rom_bank: vec![[0_u8; MBC1_ROM_SIZE]; rom_bank],
             ram_bank: vec![[0_u8; MBC1_RAM_SIZE]; ram_bank],
             regs: MBC1Reg::default(),
