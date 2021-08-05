@@ -91,6 +91,29 @@ impl MBC1 {
     }
 }
 
+#[cfg(test)]
+mod test_mbc1 {
+    use super::{BankingMode, Configuration, MBC1Reg, RamSize, RomSize, MBC1};
+
+    #[test]
+    fn basic_card() {
+        let mut ctl = MBC1::new(RamSize::KByte8, RomSize::KByte256);
+        unimplemented!();
+    }
+
+    #[test]
+    fn large_rom() {
+        let mut ctl = MBC1::new(RamSize::KByte8, RomSize::MByte1);
+        unimplemented!();
+    }
+
+    #[test]
+    fn large_ram() {
+        let mut ctl = MBC1::new(RamSize::KByte32, RomSize::KByte256);
+        unimplemented!();
+    }
+}
+
 struct MBC1Reg {
     /// Enable READ/WRITE operation on RAM
     ram_enabled: bool,
@@ -124,7 +147,7 @@ enum Configuration {
 
 impl Configuration {
     fn from_sizes(ram: RamSize, rom: RomSize) -> Self {
-        if rom > RomSize::MByte1 {
+        if rom >= RomSize::MByte1 {
             Self::LargeRom
         } else if ram > RamSize::KByte8 {
             Self::LargeRam
@@ -137,11 +160,11 @@ impl Configuration {
 #[test]
 fn test_conf_sizes() {
     assert_eq!(
-        Configuration::from_sizes(RamSize::KByte8, RomSize::MByte2),
+        Configuration::from_sizes(RamSize::KByte8, RomSize::MByte1),
         Configuration::LargeRom
     );
     assert_eq!(
-        Configuration::from_sizes(RamSize::KByte32, RomSize::MByte1),
+        Configuration::from_sizes(RamSize::KByte32, RomSize::KByte256),
         Configuration::LargeRam
     );
     assert_eq!(
