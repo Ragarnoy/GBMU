@@ -1,13 +1,32 @@
+use crate::header::{
+    cartridge_type::CartridgeType,
+    size::{RamSize, RomSize},
+};
 use gb_cpu::{address_bus::Error, Position, RomOperation};
+use std::io::{self, Read, Seek, SeekFrom};
 
-pub const MBC1_ROM_BANK_MAX_SIZE: usize = 0x4000;
+pub const MBC1_ROM_BANK_SIZE: usize = 0x4000;
 pub const MBC1_MAX_ROM_BANK: usize = 0x80;
 pub const MBC1_RAM_SIZE: usize = 0x2000;
 pub const MBC1_MAX_RAM_BANK: usize = 0x4;
 
 pub struct MBC1 {
     configuration: Configuration,
+    max_ram_bank: usize,
+    max_rom_bank: usize,
+    rom_bank: Vec<[u8; MBC1_ROM_BANK_SIZE]>,
+    ram_bank: Vec<[u8; MBC1_RAM_SIZE]>,
     regs: MBC1Reg,
+}
+
+impl MBC1 {
+    pub fn new(
+        mut file: impl Read,
+        ram_size: RamSize,
+        rom_size: RomSize,
+    ) -> Result<Self, io::Error> {
+        let conf = Configuration::from_sizes(ram_size, rom_size);
+    }
 }
 
 struct MBC1Reg {
@@ -28,6 +47,7 @@ enum BankingMode {
     Advanced,
 }
 
+#[derive(Debug, PartialEq, Eq)]
 enum Configuration {
     /// When Card has one of:
     /// <= 8 KiB RAM
@@ -37,6 +57,34 @@ enum Configuration {
     LargeRom,
     /// Ram mode when mbc1 has > 8KiB RAM
     LargeRam,
+}
+
+impl Configuration {
+    fn from_sizes(ram: RamSize, rom: RomSize) -> Self {
+        if rom > RomSize::MByte1 {
+            Self::LargeRom
+        } else if ram > RamSize::KByte8 {
+            Self::LargeRam
+        } else {
+            Self::None
+        }
+    }
+}
+
+#[test]
+fn test_conf_sizes() {
+    assert_eq!(
+        Configuration::from_sizes(RamSize::KByte8, RomSize::MByte2),
+        Configuration::LargeRom
+    );
+    assert_eq!(
+        Configuration::from_sizes(RamSize::KByte32, RomSize::MByte1),
+        Configuration::LargeRam
+    );
+    assert_eq!(
+        Configuration::from_sizes(RamSize::KByte8, RomSize::KByte512),
+        Configuration::None
+    )
 }
 
 impl Default for MBC1Reg {
