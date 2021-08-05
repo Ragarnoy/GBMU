@@ -52,6 +52,28 @@ impl Default for MBC1Reg {
 
 impl RomOperation for MBC1 {
     fn write_rom(&mut self, v: u8, addr: Position) -> Result<(), Error> {
+        match addr.relative {
+            0x0000..=0x1fff => self.regs.ram_enabled = (v & 0xf) == 0xa,
+            0x2000..=0x3fff => {
+                let n = v & 0x1f;
+                if n == 0 {
+                    self.regs.rom_number = 1;
+                } else {
+                    self.regs.rom_number = n;
+                }
+            }
+            0x4000..=0x5fff => {
+                self.regs.special = v & 0x3;
+            }
+            0x6000..=0x7fff => {
+                self.regs.banking_mode = if (v & 1) == 1 {
+                    BankingMode::Advanced
+                } else {
+                    BankingMode::Simple
+                }
+            }
+            _ => return Err(Error::SegmentationFault(addr.absolute)),
+        }
         Ok(())
     }
 
