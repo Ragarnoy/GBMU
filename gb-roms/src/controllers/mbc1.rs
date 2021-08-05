@@ -61,13 +61,17 @@ impl MBC1 {
         {
             0
         } else {
-            ((self.regs.special & 3) << 5) as usize
+            self.get_rom_index_special()
         }
+    }
+
+    fn get_rom_index_special(&self) -> usize {
+        ((self.regs.special & 3) << 5) as usize
     }
 
     /// Return the rom index for the area 0x4000-0x7fff
     fn get_extra_rom_index(&self) -> usize {
-        (self.regs.rom_number & 0x1f) as usize
+        self.get_rom_index_special() | (((self.regs.rom_number & 0x1f) | 1) as usize)
     }
 
     fn get_selected_ram_mut(&mut self) -> &mut [u8; MBC1_RAM_SIZE] {
@@ -165,14 +169,7 @@ impl RomOperation for MBC1 {
     fn write_rom(&mut self, v: u8, addr: Position) -> Result<(), Error> {
         match addr.relative {
             0x0000..=0x1fff => self.regs.ram_enabled = (v & 0xf) == 0xa,
-            0x2000..=0x3fff => {
-                let n = v & 0x1f;
-                if n == 0 {
-                    self.regs.rom_number = 1;
-                } else {
-                    self.regs.rom_number = n;
-                }
-            }
+            0x2000..=0x3fff => self.regs.rom_number = (v & 0x1f) | 1,
             0x4000..=0x5fff => {
                 self.regs.special = v & 0x3;
             }
