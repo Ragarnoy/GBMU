@@ -1,15 +1,15 @@
 pub mod operation;
 
-pub use operation::{FileOperation, RomOperation};
+pub use operation::FileOperation;
 
 /// AddressBus map specific range address to specific area like ROM/RAM.
 /// This Implementation of an AddressBus will be limited to 16-bit address
 pub struct AddressBus {
     /// Optional BIOS Rom
     /// Usually set at startup then removed
-    bios: Option<Box<dyn RomOperation>>,
+    bios: Option<Box<dyn FileOperation>>,
     /// Rom from the cartridge
-    rom: Box<dyn RomOperation>,
+    rom: Box<dyn FileOperation>,
     /// Video Ram
     vram: Box<dyn FileOperation>,
     /// Ram from the cartridge
@@ -34,11 +34,9 @@ impl AddressBus {
         match addr {
             0x0000..=0x00ff if self.bios.is_some() => {
                 let b = self.bios.as_mut().unwrap();
-                b.write_rom(v, Address::from_offset(Area::Bios, addr, 0))
+                b.write(v, Address::from_offset(Area::Bios, addr, 0))
             }
-            0x0000..=0x7fff => self
-                .rom
-                .write_rom(v, Address::from_offset(Area::Rom, addr, 0)),
+            0x0000..=0x7fff => self.rom.write(v, Address::from_offset(Area::Rom, addr, 0)),
             0x8000..=0x9fff => self
                 .vram
                 .write(v, Address::from_offset(Area::Vram, addr, 0x8000)),
@@ -75,9 +73,9 @@ impl AddressBus {
         match addr {
             0x0000..=0x00ff if self.bios.is_some() => {
                 let b = self.bios.as_ref().unwrap();
-                b.read_rom(Address::from_offset(Area::Bios, addr, 0))
+                b.read(Address::from_offset(Area::Bios, addr, 0))
             }
-            0x0000..=0x7fff => self.rom.read_rom(Address::from_offset(Area::Rom, addr, 0)),
+            0x0000..=0x7fff => self.rom.read(Address::from_offset(Area::Rom, addr, 0)),
             0x8000..=0x9fff => self
                 .vram
                 .read(Address::from_offset(Area::Vram, addr, 0x8000)),
@@ -106,7 +104,7 @@ impl AddressBus {
         }
     }
 
-    pub fn set_bios(&mut self, bios: Box<dyn RomOperation>) {
+    pub fn set_bios(&mut self, bios: Box<dyn FileOperation>) {
         self.bios = Some(bios)
     }
 
