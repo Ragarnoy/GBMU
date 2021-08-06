@@ -20,5 +20,5 @@ fn get_gb_header_from_file(name: &str) {
 
 fn main() {
     let opts: CliOpts = CliOpts::parse();
-    opts.files.iter().for_each(|s| get_gb_header_from_file(&s));
+    opts.files.iter().for_each(|s| get_gb_header_from_file(s));
 }

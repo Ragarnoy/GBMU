@@ -29,7 +29,7 @@ pub enum NewLicenseCode {
     KemcoJapan,
     Konami,
     Kss,
-    LJN,
+    Ljn,
     Lozc,
     LucasArts,
     Malibu,
@@ -49,7 +49,7 @@ pub enum NewLicenseCode {
     Sci,
     Sculptured,
     Seta,
-    THQ,
+    Thq,
     Taito,
     Titus,
     TokumaShotenIntermedia,
@@ -102,7 +102,7 @@ impl TryFrom<&str> for NewLicenseCode {
             "34" | "54" | "A4" => Ok(NewLicenseCode::Konami),
             "20" => Ok(NewLicenseCode::Kss),
 
-            "56" => Ok(NewLicenseCode::LJN),
+            "56" => Ok(NewLicenseCode::Ljn),
             "83" => Ok(NewLicenseCode::Lozc),
             "64" => Ok(NewLicenseCode::LucasArts),
 
@@ -129,7 +129,7 @@ impl TryFrom<&str> for NewLicenseCode {
             "29" => Ok(NewLicenseCode::Seta),
 
             "37" => Ok(NewLicenseCode::Taito),
-            "78" => Ok(NewLicenseCode::THQ),
+            "78" => Ok(NewLicenseCode::Thq),
             "60" => Ok(NewLicenseCode::Titus),
             "86" => Ok(NewLicenseCode::TokumaShotenIntermedia),
             "87" => Ok(NewLicenseCode::TsukudaOriginal),
