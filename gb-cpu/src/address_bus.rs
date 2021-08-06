@@ -36,7 +36,7 @@ impl AddressBus {
                 let b = self.bios.as_mut().unwrap();
                 b.write_rom(v, Position::from_offset(addr, 0))
             }
-            0x0000..=0x7fff => self.rom.write_rom(v, Position::new(addr, addr)),
+            0x0000..=0x7fff => self.rom.write_rom(v, Position::from_offset(addr, 0)),
             0x8000..=0x9fff => self.vram.write(v, Position::from_offset(addr, 0x8000)),
             0xa000..=0xbfff => self.ext_ram.write(v, Position::from_offset(addr, 0xa000)),
             0xc000..=0xdfff => self.ram.write(v, Position::from_offset(addr, 0xc000)),
@@ -55,7 +55,7 @@ impl AddressBus {
                 let t = self.bios.as_ref().unwrap();
                 t.read_rom(Position::from_offset(addr, 0))
             }
-            0x0000..=0x7fff => self.rom.read_rom(Position::new(addr, addr)),
+            0x0000..=0x7fff => self.rom.read_rom(Position::from_offset(addr, 0)),
             0x8000..=0x9fff => self.vram.read(Position::from_offset(addr, 0x8000)),
             0xa000..=0xbfff => self.ext_ram.read(Position::from_offset(addr, 0xa000)),
             0xc000..=0xdfff => self.ram.read(Position::from_offset(addr, 0xc000)),
