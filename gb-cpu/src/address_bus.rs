@@ -34,17 +34,35 @@ impl AddressBus {
         match addr {
             0x0000..=0x00ff if self.bios.is_some() => {
                 let b = self.bios.as_mut().unwrap();
-                b.write_rom(v, Position::from_offset(addr, 0))
+                b.write_rom(v, Address::from_offset(Area::Bios, addr, 0))
             }
-            0x0000..=0x7fff => self.rom.write_rom(v, Position::from_offset(addr, 0)),
-            0x8000..=0x9fff => self.vram.write(v, Position::from_offset(addr, 0x8000)),
-            0xa000..=0xbfff => self.ext_ram.write(v, Position::from_offset(addr, 0xa000)),
-            0xc000..=0xdfff => self.ram.write(v, Position::from_offset(addr, 0xc000)),
-            0xe000..=0xfdff => self.eram.write(v, Position::from_offset(addr, 0xe000)),
-            0xfe00..=0xfe9f => self.oam.write(v, Position::from_offset(addr, 0xfe00)),
-            0xff00..=0xff7f => self.io_reg.write(v, Position::from_offset(addr, 0xff00)),
-            0xff80..=0xfffe => self.hram.write(v, Position::from_offset(addr, 0xff80)),
-            0xffff => self.ie_reg.write(v, Position::from_offset(addr, 0xffff)),
+            0x0000..=0x7fff => self
+                .rom
+                .write_rom(v, Address::from_offset(Area::Rom, addr, 0)),
+            0x8000..=0x9fff => self
+                .vram
+                .write(v, Address::from_offset(Area::Vram, addr, 0x8000)),
+            0xa000..=0xbfff => self
+                .ext_ram
+                .write(v, Address::from_offset(Area::ExtRam, addr, 0xa000)),
+            0xc000..=0xdfff => self
+                .ram
+                .write(v, Address::from_offset(Area::Ram, addr, 0xc000)),
+            0xe000..=0xfdff => self
+                .eram
+                .write(v, Address::from_offset(Area::ERam, addr, 0xe000)),
+            0xfe00..=0xfe9f => self
+                .oam
+                .write(v, Address::from_offset(Area::Oam, addr, 0xfe00)),
+            0xff00..=0xff7f => self
+                .io_reg
+                .write(v, Address::from_offset(Area::IoReg, addr, 0xff00)),
+            0xff80..=0xfffe => self
+                .hram
+                .write(v, Address::from_offset(Area::HighRam, addr, 0xff80)),
+            0xffff => self
+                .ie_reg
+                .write(v, Address::from_offset(Area::IEReg, addr, 0xffff)),
             _ => Err(Error::BusError(addr)),
         }
     }
@@ -52,18 +70,30 @@ impl AddressBus {
     pub fn read(&self, addr: u16) -> Result<u8, Error> {
         match addr {
             0x0000..=0x00ff if self.bios.is_some() => {
-                let t = self.bios.as_ref().unwrap();
-                t.read_rom(Position::from_offset(addr, 0))
+                let b = self.bios.as_ref().unwrap();
+                b.read_rom(Address::from_offset(Area::Bios, addr, 0))
             }
-            0x0000..=0x7fff => self.rom.read_rom(Position::from_offset(addr, 0)),
-            0x8000..=0x9fff => self.vram.read(Position::from_offset(addr, 0x8000)),
-            0xa000..=0xbfff => self.ext_ram.read(Position::from_offset(addr, 0xa000)),
-            0xc000..=0xdfff => self.ram.read(Position::from_offset(addr, 0xc000)),
-            0xe000..=0xfdff => self.eram.read(Position::from_offset(addr, 0xe000)),
-            0xfe00..=0xfe9f => self.oam.read(Position::from_offset(addr, 0xfe00)),
-            0xff00..=0xff7f => self.io_reg.read(Position::from_offset(addr, 0xff00)),
-            0xff80..=0xfffe => self.hram.read(Position::from_offset(addr, 0xff80)),
-            0xffff => self.ie_reg.read(Position::from_offset(addr, 0xffff)),
+            0x0000..=0x7fff => self.rom.read_rom(Address::from_offset(Area::Rom, addr, 0)),
+            0x8000..=0x9fff => self
+                .vram
+                .read(Address::from_offset(Area::Vram, addr, 0x8000)),
+            0xa000..=0xbfff => self
+                .ext_ram
+                .read(Address::from_offset(Area::ExtRam, addr, 0xa000)),
+            0xc000..=0xdfff => self.ram.read(Address::from_offset(Area::Ram, addr, 0xc000)),
+            0xe000..=0xfdff => self
+                .eram
+                .read(Address::from_offset(Area::ERam, addr, 0xe000)),
+            0xfe00..=0xfe9f => self.oam.read(Address::from_offset(Area::Oam, addr, 0xfe00)),
+            0xff00..=0xff7f => self
+                .io_reg
+                .read(Address::from_offset(Area::IoReg, addr, 0xff00)),
+            0xff80..=0xfffe => self
+                .hram
+                .read(Address::from_offset(Area::HighRam, addr, 0xff80)),
+            0xffff => self
+                .ie_reg
+                .read(Address::from_offset(Area::IEReg, addr, 0xffff)),
             _ => Err(Error::BusError(addr)),
         }
     }
@@ -189,33 +219,50 @@ pub enum Error {
 }
 
 #[derive(Debug)]
-/// Position contain the relative and absolute address
-pub struct Position {
+/// Address contain the relative and absolute address
+pub struct Address {
     /// relative address into the current area of the address bus
     pub relative: u16,
 
     /// absolute address used in the address bus
     pub absolute: u16,
+
+    pub area: Area,
 }
 
-impl Position {
-    pub fn new(relative_addr: u16, absolute_addr: u16) -> Self {
+#[derive(Debug)]
+pub enum Area {
+    Bios,
+    Rom,
+    Vram,
+    ExtRam,
+    Ram,
+    ERam,
+    Oam,
+    IoReg,
+    HighRam,
+    IEReg,
+}
+
+impl Address {
+    pub fn new(area: Area, relative_addr: u16, absolute_addr: u16) -> Self {
         Self {
             relative: relative_addr,
             absolute: absolute_addr,
+            area,
         }
     }
 
-    /// Create a Position from an absolute adress and an offset
+    /// Create a Address from an absolute adress and an offset
     ///
     /// ```
-    /// # use gb_cpu::address_bus::Position;
-    /// let pos = Position::from_offset(0x42, 0x10);
+    /// # use gb_cpu::address_bus::{Address, Area};
+    /// let pos = Address::from_offset(Area::Bios, 0x42, 0x10);
     ///
     /// assert_eq!(pos.absolute, 0x42);
     /// assert_eq!(pos.relative, 0x32);
     /// ```
-    pub fn from_offset(addr: u16, offset: u16) -> Self {
-        Self::new(addr - offset, addr)
+    pub fn from_offset(area: Area, addr: u16, offset: u16) -> Self {
+        Self::new(area, addr - offset, addr)
     }
 }
