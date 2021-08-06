@@ -1,4 +1,4 @@
-use gb_cpu::address_bus::{Error, Position, RomOperation};
+use gb_cpu::address_bus::{Address, Error, FileOperation};
 use std::io::{self, ErrorKind, Read};
 
 pub const MAX_ROM_ONLY_SIZE: usize = 32_768;
@@ -28,21 +28,23 @@ impl RomOnlyController {
     }
 }
 
-impl RomOperation for RomOnlyController {
-    fn read_rom(&self, addr: Position) -> Result<u8, Error> {
+impl FileOperation for RomOnlyController {
+    fn read(&self, addr: Address) -> Result<u8, Error> {
         if (addr.relative as usize) < self.rom.len() {
             Ok(self.rom[addr.relative as usize])
         } else {
-            Err(Error::BusError(addr.absolute))
+            Err(Error::BusError(addr))
         }
     }
 }
 
 #[test]
 fn test_romonly_impl() {
+    use gb_cpu::address_bus::Area;
+
     let rom = RomOnlyController {
         rom: [42; MAX_ROM_ONLY_SIZE],
     };
 
-    assert_eq!(rom.read_rom(Position::from_offset(0x7fff, 0)), Ok(42));
+    assert_eq!(rom.read(Address::from_offset(Area::Rom, 0x7fff, 0)), Ok(42));
 }
