@@ -27,10 +27,11 @@ impl Vram {
         let byte_a = self.data[adr];
         let byte_b = self.data[adr + 1];
         for (i, pixel) in pixels.iter_mut().enumerate() {
-            *pixel = if i < 7 {
-                (byte_a & 0b1000_0000 >> i) >> (7 - i) | (byte_b & 0b1000_0000 >> i) >> (6 - i)
+            let bit = 0b0000_0001 << i;
+            *pixel = if i > 0 {
+                (byte_a & bit) >> i | (byte_b & bit) >> (i - 1)
             } else {
-                (byte_a & 0b0000_0001) | (byte_b & 0b0000_0001) << 1
+                (byte_a & bit) | (byte_b & bit) << 1
             };
         }
         Ok(pixels)
@@ -53,14 +54,14 @@ mod tests {
         vram.data[42] = 0x33;
         vram.data[43] = 0x66;
         let pixels = vram.read_8_pixels(42).unwrap();
-        assert_eq!(pixels[0], 0, "pixel 0 wrong");
-        assert_eq!(pixels[1], 2, "pixel 1 wrong");
-        assert_eq!(pixels[2], 3, "pixel 2 wrong");
-        assert_eq!(pixels[3], 1, "pixel 3 wrong");
-        assert_eq!(pixels[4], 0, "pixel 4 wrong");
-        assert_eq!(pixels[5], 2, "pixel 5 wrong");
-        assert_eq!(pixels[6], 3, "pixel 6 wrong");
-        assert_eq!(pixels[7], 1, "pixel 7 wrong");
+        assert_eq!(pixels[0], 1, "pixel 0 wrong");
+        assert_eq!(pixels[1], 3, "pixel 1 wrong");
+        assert_eq!(pixels[2], 2, "pixel 2 wrong");
+        assert_eq!(pixels[3], 0, "pixel 3 wrong");
+        assert_eq!(pixels[4], 1, "pixel 4 wrong");
+        assert_eq!(pixels[5], 3, "pixel 5 wrong");
+        assert_eq!(pixels[6], 2, "pixel 6 wrong");
+        assert_eq!(pixels[7], 0, "pixel 7 wrong");
     }
 
     #[test]
