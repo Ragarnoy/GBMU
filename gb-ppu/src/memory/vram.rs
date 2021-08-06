@@ -36,6 +36,21 @@ impl Vram {
         }
         Ok(pixels)
     }
+
+    pub fn read_8x8_tile(&self, adr: usize) -> PPUResult<[[u8; 8]; 8], usize> {
+        let mut tile = [[0; 8]; 8];
+        if adr * 8 * 2 > TILEDATA_ADRESS_MAX - 8 * 2 {
+            return Err(Error::OutOfBound {
+                value: adr,
+                min_bound: TILEDATA_ADRESS_MIN,
+                max_bound: TILEDATA_ADRESS_MAX - 8 * 2,
+            });
+        }
+        for (i, row) in tile.iter_mut().enumerate() {
+            *row = self.read_8_pixels((adr * 8 + i) * 2)?;
+        }
+        Ok(tile)
+    }
 }
 
 impl Default for Vram {
