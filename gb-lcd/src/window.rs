@@ -36,16 +36,13 @@ impl GBWindow {
 
         let gl_ctx = sdl_window
             .gl_create_context()
-            .map_err(|err| Error::GBWindowInit(err))?;
+            .map_err(Error::GBWindowInit)?;
 
         let egui_painter = Painter::new(video_sys, dim.0, dim.1);
         let egui_ctx = CtxRef::default();
 
-        let native_pixels_per_point = 96f32
-            / video_sys
-                .display_dpi(0)
-                .map_err(|err| Error::GBWindowInit(err))?
-                .0;
+        let native_pixels_per_point =
+            96f32 / video_sys.display_dpi(0).map_err(Error::GBWindowInit)?.0;
 
         let egui_input_state = EguiInputState::new(egui::RawInput {
             screen_rect: Some(Rect::from_min_size(
@@ -84,7 +81,7 @@ impl GBWindow {
     pub fn start_frame(&mut self) -> Result<(), Error> {
         self.sdl_window
             .gl_make_current(&self.gl_ctx)
-            .map_err(|err| Error::GBWindowFrame(err))?;
+            .map_err(Error::GBWindowFrame)?;
         self.egui_input_state.input.time = Some(self.start_time.elapsed().as_secs_f64());
         self.egui_ctx
             .begin_frame(self.egui_input_state.input.take());
@@ -100,7 +97,7 @@ impl GBWindow {
     pub fn end_frame(&mut self) -> Result<(), Error> {
         self.sdl_window
             .gl_make_current(&self.gl_ctx)
-            .map_err(|err| Error::GBWindowFrame(err))?;
+            .map_err(Error::GBWindowFrame)?;
         let (_egui_output, paint_cmds) = self.egui_ctx.end_frame();
 
         let paint_jobs = self.egui_ctx.tessellate(paint_cmds);
@@ -119,7 +116,7 @@ impl GBWindow {
     pub fn resize(&mut self, dim: (u32, u32), video_sys: &VideoSubsystem) -> Result<(), Error> {
         self.sdl_window
             .gl_make_current(&self.gl_ctx)
-            .map_err(|err| Error::GBWindowFrame(err))?;
+            .map_err(Error::GBWindowFrame)?;
         self.egui_painter = Painter::new(video_sys, dim.0, dim.1);
         self.egui_input_state = EguiInputState::new(egui::RawInput {
             screen_rect: Some(Rect::from_min_size(
@@ -129,7 +126,7 @@ impl GBWindow {
             pixels_per_point: Some(self.pixels_per_point),
             ..Default::default()
         });
-        return Ok(());
+        Ok(())
     }
 
     pub fn send_event(&mut self, event: &Event, sdl_context: &Sdl) -> bool {
@@ -143,6 +140,6 @@ impl GBWindow {
                 return true;
             }
         }
-        return false;
+        false
     }
 }
