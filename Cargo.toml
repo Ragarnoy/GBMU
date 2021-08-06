@@ -4,7 +4,8 @@ version = "0.1.0"
 authors = [
   "Guilhem Smith <gsmith@student.42.fr>",
   "Florian Bennetot <fbenneto@student.42.fr>",
-  "Tiago Lernould <tlernoul@student.42.fr>"
+  "Tiago Lernould <tlernoul@student.42.fr>",
+  "Cedric M'Passi <cedricmpassi@gmail.com>"
 ]
 edition = "2018"
 
