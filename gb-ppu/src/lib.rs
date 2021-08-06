@@ -1,12 +1,19 @@
+mod error;
+mod memory;
+
 use gb_lcd::render::{TextureData, SCREEN_HEIGHT, SCREEN_WIDTH, TEXTURE_SIZE};
 
+use memory::Vram;
+
 pub struct PPU {
+    vram: Vram,
     pixels: TextureData,
 }
 
 impl PPU {
     pub fn new() -> Self {
         Self {
+            vram: Vram::new(),
             pixels: [[255; 3]; TEXTURE_SIZE],
         }
     }
@@ -16,6 +23,7 @@ impl PPU {
     }
 
     pub fn compute(&mut self) {
+        self.vram.read_8_pixels(0).unwrap();
         for j in 0..SCREEN_HEIGHT {
             for i in 0..SCREEN_WIDTH {
                 self.pixels[(i + j * SCREEN_WIDTH) as usize] =
