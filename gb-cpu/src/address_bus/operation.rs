@@ -7,7 +7,7 @@ use std::cell::RefCell;
 pub trait RomOperation {
     /// writing to rom can be use full for MBC controller to set their own registry
     fn write_rom(&mut self, _v: u8, addr: Address) -> Result<(), Error> {
-        Err(Error::SegmentationFault(addr.absolute))
+        Err(Error::SegmentationFault(addr))
     }
 
     /// read one byte of data from rom
@@ -97,6 +97,6 @@ impl FileOperation for RandomDevice {
     }
 
     fn write(&mut self, _v: u8, addr: Address) -> Result<(), Error> {
-        Err(Error::SegmentationFault(addr.absolute))
+        Err(Error::SegmentationFault(addr))
     }
 }

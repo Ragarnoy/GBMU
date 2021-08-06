@@ -63,7 +63,11 @@ impl AddressBus {
             0xffff => self
                 .ie_reg
                 .write(v, Address::from_offset(Area::IEReg, addr, 0xffff)),
-            _ => Err(Error::BusError(addr)),
+            _ => Err(Error::BusError(Address::from_offset(
+                Area::Unbound,
+                addr,
+                0,
+            ))),
         }
     }
 
@@ -94,7 +98,11 @@ impl AddressBus {
             0xffff => self
                 .ie_reg
                 .read(Address::from_offset(Area::IEReg, addr, 0xffff)),
-            _ => Err(Error::BusError(addr)),
+            _ => Err(Error::BusError(Address::from_offset(
+                Area::Unbound,
+                addr,
+                0,
+            ))),
         }
     }
 
@@ -214,11 +222,11 @@ impl<'a> Iterator for Iter<'a> {
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Error {
-    BusError(u16),
-    SegmentationFault(u16),
+    BusError(Address),
+    SegmentationFault(Address),
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 /// Address contain the relative and absolute address
 pub struct Address {
     /// relative address into the current area of the address bus
@@ -230,7 +238,7 @@ pub struct Address {
     pub area: Area,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Area {
     Bios,
     Rom,
@@ -242,6 +250,7 @@ pub enum Area {
     IoReg,
     HighRam,
     IEReg,
+    Unbound,
 }
 
 impl Address {
