@@ -1,5 +1,8 @@
 use crate::header::size::{RamSize, RomSize};
-use gb_cpu::{address_bus::Error, FileOperation, Position, RomOperation};
+use gb_cpu::{
+    address_bus::{Address, Area, Error},
+    FileOperation,
+};
 use std::io::{self, Read};
 
 pub const MBC1_ROM_SIZE: usize = 0x4000;
@@ -38,6 +41,57 @@ impl MBC1 {
             file.read_exact(e)?;
         }
         Ok(ctl)
+    }
+
+    fn write_rom(&mut self, v: u8, addr: Address) -> Result<(), Error> {
+        match addr.relative {
+            0x0000..=0x1fff => self.regs.ram_enabled = (v & 0xf) == 0xa,
+            0x2000..=0x3fff => {
+                let index = v & 0x1f;
+                self.regs.rom_number = if index == 0 { 1 } else { index };
+            }
+            0x4000..=0x5fff => {
+                self.regs.special = v & 0x3;
+            }
+            0x6000..=0x7fff => {
+                self.regs.banking_mode = if (v & 1) == 1 {
+                    BankingMode::Advanced
+                } else {
+                    BankingMode::Simple
+                }
+            }
+            _ => return Err(Error::SegmentationFault(addr)),
+        }
+        Ok(())
+    }
+
+    fn read_rom(&self, addr: Address) -> Result<u8, Error> {
+        let root_bank = addr.relative < 0x3fff;
+        let rom = self.get_selected_rom(root_bank);
+
+        if root_bank {
+            Ok(rom[addr.relative as usize])
+        } else {
+            let addr = addr.relative - 0x4000;
+            Ok(rom[addr as usize])
+        }
+    }
+
+    fn write_ram(&mut self, v: u8, addr: Address) -> Result<(), Error> {
+        if !self.regs.ram_enabled {
+            return Err(Error::SegmentationFault(addr));
+        }
+        let ram = self.get_selected_ram_mut();
+        ram[addr.relative as usize] = v;
+        Ok(())
+    }
+
+    fn read_ram(&self, addr: Address) -> Result<u8, Error> {
+        if !self.regs.ram_enabled {
+            return Err(Error::SegmentationFault(addr));
+        }
+        let ram = self.get_selected_ram();
+        Ok(ram[addr.relative as usize])
     }
 
     fn get_selected_rom(&self, root_bank: bool) -> &[u8; MBC1_ROM_SIZE] {
@@ -100,7 +154,7 @@ impl MBC1 {
 
 #[cfg(test)]
 mod test_mbc1 {
-    use super::{BankingMode, Configuration, MBC1Reg, RamSize, RomSize, MBC1};
+    use super::{BankingMode, Configuration, RamSize, RomSize, MBC1};
 
     #[test]
     fn test_extra_rom_default_selection() {
@@ -262,57 +316,20 @@ impl Default for MBC1Reg {
     }
 }
 
-impl RomOperation for MBC1 {
-    fn write_rom(&mut self, v: u8, addr: Position) -> Result<(), Error> {
-        match addr.relative {
-            0x0000..=0x1fff => self.regs.ram_enabled = (v & 0xf) == 0xa,
-            0x2000..=0x3fff => {
-                let index = v & 0x1f;
-                self.regs.rom_number = if index == 0 { 1 } else { index };
-            }
-            0x4000..=0x5fff => {
-                self.regs.special = v & 0x3;
-            }
-            0x6000..=0x7fff => {
-                self.regs.banking_mode = if (v & 1) == 1 {
-                    BankingMode::Advanced
-                } else {
-                    BankingMode::Simple
-                }
-            }
-            _ => return Err(Error::SegmentationFault(addr.absolute)),
-        }
-        Ok(())
-    }
-
-    fn read_rom(&self, addr: Position) -> Result<u8, Error> {
-        let root_bank = addr.relative < 0x3fff;
-        let rom = self.get_selected_rom(root_bank);
-
-        if root_bank {
-            Ok(rom[addr.relative as usize])
-        } else {
-            let addr = addr.relative - 0x4000;
-            Ok(rom[addr as usize])
-        }
-    }
-}
-
 impl FileOperation for MBC1 {
-    fn write(&mut self, v: u8, addr: Position) -> Result<(), Error> {
-        if !self.regs.ram_enabled {
-            return Err(Error::SegmentationFault(addr.absolute));
+    fn write(&mut self, v: u8, addr: Address) -> Result<(), Error> {
+        match addr.area {
+            Area::Rom => self.write_rom(v, addr),
+            Area::Ram => self.write_ram(v, addr),
+            _ => Err(Error::BusError(addr)),
         }
-        let ram = self.get_selected_ram_mut();
-        ram[addr.relative as usize] = v;
-        Ok(())
     }
 
-    fn read(&self, addr: Position) -> Result<u8, Error> {
-        if !self.regs.ram_enabled {
-            return Err(Error::SegmentationFault(addr.absolute));
+    fn read(&self, addr: Address) -> Result<u8, Error> {
+        match addr.area {
+            Area::Rom => self.read_rom(addr),
+            Area::Ram => self.read_ram(addr),
+            _ => Err(Error::BusError(addr)),
         }
-        let ram = self.get_selected_ram();
-        Ok(ram[addr.relative as usize])
     }
 }
