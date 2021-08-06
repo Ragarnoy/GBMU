@@ -152,6 +152,24 @@ impl MBC1 {
     }
 }
 
+impl FileOperation for MBC1 {
+    fn write(&mut self, v: u8, addr: Address) -> Result<(), Error> {
+        match addr.area {
+            Area::Rom => self.write_rom(v, addr),
+            Area::Ram => self.write_ram(v, addr),
+            _ => Err(Error::BusError(addr)),
+        }
+    }
+
+    fn read(&self, addr: Address) -> Result<u8, Error> {
+        match addr.area {
+            Area::Rom => self.read_rom(addr),
+            Area::Ram => self.read_ram(addr),
+            _ => Err(Error::BusError(addr)),
+        }
+    }
+}
+
 #[cfg(test)]
 mod test_mbc1 {
     use super::{BankingMode, Configuration, RamSize, RomSize, MBC1};
@@ -259,6 +277,17 @@ struct MBC1Reg {
     banking_mode: BankingMode,
 }
 
+impl Default for MBC1Reg {
+    fn default() -> Self {
+        Self {
+            ram_enabled: false,
+            rom_number: 1,
+            special: 0,
+            banking_mode: BankingMode::Simple,
+        }
+    }
+}
+
 #[derive(PartialEq, Eq)]
 enum BankingMode {
     Simple,
@@ -303,33 +332,4 @@ fn test_conf_sizes() {
         Configuration::from_sizes(RamSize::KByte8, RomSize::KByte512),
         Configuration::Basic
     )
-}
-
-impl Default for MBC1Reg {
-    fn default() -> Self {
-        Self {
-            ram_enabled: false,
-            rom_number: 1,
-            special: 0,
-            banking_mode: BankingMode::Simple,
-        }
-    }
-}
-
-impl FileOperation for MBC1 {
-    fn write(&mut self, v: u8, addr: Address) -> Result<(), Error> {
-        match addr.area {
-            Area::Rom => self.write_rom(v, addr),
-            Area::Ram => self.write_ram(v, addr),
-            _ => Err(Error::BusError(addr)),
-        }
-    }
-
-    fn read(&self, addr: Address) -> Result<u8, Error> {
-        match addr.area {
-            Area::Rom => self.read_rom(addr),
-            Area::Ram => self.read_ram(addr),
-            _ => Err(Error::BusError(addr)),
-        }
-    }
 }
