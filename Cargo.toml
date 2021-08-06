@@ -1,7 +1,12 @@
 [package]
 name = "gbmu"
 version = "0.1.0"
-authors = ["Guilhem Smith <gsmith@student.42.fr>"]
+authors = [
+  "Guilhem Smith <gsmith@student.42.fr>",
+  "Florian Bennetot <fbenneto@student.42.fr>",
+  "Tiago Lernould <tlernoul@student.42.fr>",
+  "Cedric M'Passi <cedricmpassi@gmail.com>"
+]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
