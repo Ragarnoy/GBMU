@@ -191,6 +191,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "egui_memory_editor"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d5c851a6967f1a782d691543e8cca9f3ed9354ade027cd3ae9006cb4869e53d5"
+dependencies = [
+ "egui",
+]
+
+[[package]]
 name = "egui_sdl2_gl"
 version = "0.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -254,6 +263,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "gb-dbg"
+version = "0.1.0"
+dependencies = [
+ "egui",
+ "egui_memory_editor",
+]
+
+[[package]]
 name = "gb-lcd"
 version = "0.1.0"
 dependencies = [
@@ -283,6 +300,7 @@ name = "gbmu"
 version = "0.1.0"
 dependencies = [
  "egui",
+ "egui_memory_editor",
  "gb-lcd",
  "gb-ppu",
  "rfd",
