@@ -11,3 +11,4 @@ gb-lcd = { path = "../gb-lcd" }
 
 [dev-dependencies]
 sdl2 = { version = "0.34", features = ["bundled", "static-link"] }
+egui = { version = "0.13" }

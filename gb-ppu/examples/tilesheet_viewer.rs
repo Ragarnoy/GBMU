@@ -9,7 +9,10 @@ pub fn tilesheet_viewer(bytes: [u8; 0x2000]) {
 
     let mut gb_window = GBWindow::new(
         "TileSheet",
-        (TILESHEET_WIDTH as u32, TILESHEET_HEIGHT as u32),
+        (
+            TILESHEET_WIDTH as u32,
+            TILESHEET_HEIGHT as u32 + render::MENU_BAR_SIZE as u32,
+        ),
         true,
         &video_subsystem,
     )
@@ -21,15 +24,27 @@ pub fn tilesheet_viewer(bytes: [u8; 0x2000]) {
         .set_minimum_size(width, height)
         .expect("Failed to configure main window");
 
-    let mut display = render::RenderImage::<TILESHEET_WIDTH, TILESHEET_HEIGHT>::with_bar_size(0.0);
+    let mut display = render::RenderImage::<TILESHEET_WIDTH, TILESHEET_HEIGHT>::with_bar_size(
+        render::MENU_BAR_SIZE,
+    );
     let mut ppu = PPU::new();
     ppu.overwrite_vram(bytes);
-    let image = ppu.tilesheet_image();
+    let mut image = ppu.tilesheet_image();
 
     'running: loop {
         gb_window
             .start_frame()
             .expect("Fail at the start for the main window");
+
+        egui::containers::TopBottomPanel::top("Top menu").show(gb_window.egui_ctx(), |ui| {
+            egui::menu::bar(ui, |ui| {
+                ui.set_height(render::MENU_BAR_SIZE);
+                if ui.button("refresh").clicked() {
+                    println!("refresh tilesheet image");
+                    image = ppu.tilesheet_image();
+                }
+            })
+        });
         display.update_render(&image);
         display.draw();
         gb_window
