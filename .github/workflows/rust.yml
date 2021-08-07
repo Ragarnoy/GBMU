@@ -48,7 +48,7 @@ jobs:
       run: cargo clippy --workspace --verbose -- -D warnings
 
     - name: Build
-      run: cargo build --verbose
+      run: cargo build --verbose --workspace
 
     - name: Run tests
-      run: cargo test --verbose
+      run: cargo test --verbose --workspace

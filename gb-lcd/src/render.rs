@@ -14,8 +14,8 @@ pub const MENU_BAR_SIZE: f32 = 30.0;
 
 pub type TextureData = [[u8; 3]; TEXTURE_SIZE];
 
-const VS_SRC: &'static str = include_str!("render.vert");
-const FS_SRC: &'static str = include_str!("render.frag");
+const VS_SRC: &str = include_str!("render.vert");
+const FS_SRC: &str = include_str!("render.frag");
 
 static VERTEX_DATA: [GLfloat; 12] = [
     -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0,
@@ -250,5 +250,11 @@ impl Drop for Render {
             gl::DeleteVertexArrays(1, &self.vao);
             gl::DeleteTextures(1, &self.texture_buffer);
         }
+    }
+}
+
+impl Default for Render {
+    fn default() -> Render {
+        Render::new()
     }
 }
