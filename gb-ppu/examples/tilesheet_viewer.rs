@@ -3,7 +3,7 @@ use sdl2::{event::Event, keyboard::Keycode};
 use gb_lcd::{render, window::GBWindow};
 use gb_ppu::{PPU, TILESHEET_HEIGHT, TILESHEET_WIDTH};
 
-pub fn tilesheet_viewer(bytes: [u8; 0x2000]) {
+pub fn main() {
     let (sdl_context, video_subsystem, mut event_pump) =
         gb_lcd::init().expect("Error while initializing LCD");
 
@@ -28,7 +28,15 @@ pub fn tilesheet_viewer(bytes: [u8; 0x2000]) {
         render::MENU_BAR_SIZE,
     );
     let mut ppu = PPU::new();
-    ppu.overwrite_vram(bytes);
+    let dumps = [
+        ("mario", include_bytes!("memory dumps/Super_Mario_Land.dmp")),
+        (
+            "zelda",
+            include_bytes!("memory dumps/Legend_of_Zelda_link_Awaking.dmp"),
+        ),
+        ("pokemon", include_bytes!("memory dumps/Pokemon_Bleue.dmp")),
+    ];
+    ppu.overwrite_vram(dumps[0].1);
     let mut image = ppu.tilesheet_image();
 
     'running: loop {
@@ -39,9 +47,11 @@ pub fn tilesheet_viewer(bytes: [u8; 0x2000]) {
         egui::containers::TopBottomPanel::top("Top menu").show(gb_window.egui_ctx(), |ui| {
             egui::menu::bar(ui, |ui| {
                 ui.set_height(render::MENU_BAR_SIZE);
-                if ui.button("refresh").clicked() {
-                    println!("refresh tilesheet image");
-                    image = ppu.tilesheet_image();
+                for (title, dump) in dumps {
+                    if ui.button(title).clicked() {
+                        ppu.overwrite_vram(dump);
+                        image = ppu.tilesheet_image();
+                    }
                 }
             })
         });
@@ -85,9 +95,4 @@ pub fn tilesheet_viewer(bytes: [u8; 0x2000]) {
         }
         // std::thread::sleep(::std::time::Duration::new(0, 1_000_000_000u32 / 60));
     }
-}
-
-#[allow(dead_code)]
-fn main() {
-    tilesheet_viewer([0; 0x2000]);
 }

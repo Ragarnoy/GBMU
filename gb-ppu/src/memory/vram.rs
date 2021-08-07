@@ -52,8 +52,8 @@ impl Vram {
         Ok(tile)
     }
 
-    pub fn overwrite(&mut self, data: [u8; VRAM_SIZE as usize]) {
-        self.data = data;
+    pub fn overwrite(&mut self, data: &[u8; VRAM_SIZE as usize]) {
+        self.data = *data;
     }
 }
 
