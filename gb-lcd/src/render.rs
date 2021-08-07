@@ -12,7 +12,7 @@ pub const SCREEN_WIDTH: usize = 160;
 pub const SCREEN_HEIGHT: usize = 144;
 pub const MENU_BAR_SIZE: f32 = 30.0;
 
-pub type RenderData<const RES: usize> = [[u8; 3]; RES];
+pub type RenderData<const WIDTH: usize, const HEIGHT: usize> = [[[u8; 3]; WIDTH]; HEIGHT];
 pub type Render = RenderImage<SCREEN_WIDTH, SCREEN_HEIGHT>;
 
 const VS_SRC: &str = include_str!("render.vert");
@@ -111,13 +111,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> RenderImage<WIDTH, HEIGHT> {
         }
     }
 
-    pub fn update_render<const RES: usize>(&mut self, texture_pixels: &RenderData<RES>) {
-        // Ideally we would use WIDTH * HEIGHT in the function declaration, but using const operation for generics parameters is still an unstable feature
-        assert_eq!(
-            RES,
-            WIDTH * HEIGHT,
-            "render update with invalid buffer size"
-        );
+    pub fn update_render(&mut self, texture_pixels: &RenderData<WIDTH, HEIGHT>) {
         unsafe {
             gl::BindTexture(gl::TEXTURE_2D, self.texture_buffer);
             gl::TexSubImage2D(
