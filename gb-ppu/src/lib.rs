@@ -53,7 +53,7 @@ impl PPU {
     }
 
     pub fn overwrite_vram(&mut self, data: &[u8; VRAM_SIZE as usize]) {
-        self.vram.overwrite(&data);
+        self.vram.overwrite(data);
     }
 
     pub fn tilesheet_image(&self) -> RenderData<TILESHEET_WIDTH, TILESHEET_HEIGHT> {
