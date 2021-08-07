@@ -47,7 +47,7 @@ fn main() {
                 ui.set_height(render::MENU_BAR_SIZE);
                 if ui.button("Load").clicked() {
                     let files = FileDialog::new()
-                        .add_filter("rom", &["gb", "rom"])
+                        .add_filter("rom", &["gb", "gbc", "rom"])
                         .set_directory(
                             std::env::current_dir()
                                 .unwrap_or_else(|_| std::path::PathBuf::from("/")),
