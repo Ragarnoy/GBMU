@@ -216,7 +216,7 @@ fn test_convert_new_license_code() {
         NewLicenseCode::try_from("55"),
         Ok(NewLicenseCode::HiTechEntertainment)
     );
-    assert_eq!(NewLicenseCode::try_from("56"), Ok(NewLicenseCode::LJN));
+    assert_eq!(NewLicenseCode::try_from("56"), Ok(NewLicenseCode::Ljn));
     assert_eq!(NewLicenseCode::try_from("57"), Ok(NewLicenseCode::Matchbox));
     assert_eq!(NewLicenseCode::try_from("58"), Ok(NewLicenseCode::Mattel));
     assert_eq!(
@@ -251,7 +251,7 @@ fn test_convert_new_license_code() {
         Ok(NewLicenseCode::Sculptured)
     );
     assert_eq!(NewLicenseCode::try_from("75"), Ok(NewLicenseCode::Sci));
-    assert_eq!(NewLicenseCode::try_from("78"), Ok(NewLicenseCode::THQ));
+    assert_eq!(NewLicenseCode::try_from("78"), Ok(NewLicenseCode::Thq));
     assert_eq!(NewLicenseCode::try_from("79"), Ok(NewLicenseCode::Accolade));
     assert_eq!(NewLicenseCode::try_from("80"), Ok(NewLicenseCode::Misawa));
     assert_eq!(NewLicenseCode::try_from("83"), Ok(NewLicenseCode::Lozc));
