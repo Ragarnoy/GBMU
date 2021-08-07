@@ -3,16 +3,16 @@ use sdl2::{event::Event, keyboard::Keycode};
 use gb_lcd::{render, window::GBWindow};
 use gb_ppu::PPU;
 
+const EXAMPLE_WIDTH: usize = 128;
+const EXAMPLE_HEIGHT: usize = 192;
+
 fn main() {
     let (sdl_context, video_subsystem, mut event_pump) =
         gb_lcd::init().expect("Error while initializing LCD");
 
     let mut gb_window = GBWindow::new(
-        "GBMU",
-        (
-            render::SCREEN_WIDTH,
-            render::SCREEN_HEIGHT + render::MENU_BAR_SIZE as u32,
-        ),
+        "TileSheet",
+        (EXAMPLE_WIDTH as u32, EXAMPLE_HEIGHT as u32),
         true,
         &video_subsystem,
     )
@@ -24,21 +24,17 @@ fn main() {
         .set_minimum_size(width, height)
         .expect("Failed to configure main window");
 
-    let mut display = render::Render::new();
+    let mut display = render::RenderImage::<EXAMPLE_WIDTH, EXAMPLE_HEIGHT>::with_bar_size(0.0);
     let mut ppu = PPU::new();
     ppu.overwrite_vram(*include_bytes!("memory dumps/Super_Mario_land.dmp"));
+    let image = ppu.tilesheet_image();
 
     'running: loop {
         gb_window
             .start_frame()
             .expect("Fail at the start for the main window");
-
-        // render is updated just before drawing for now but we might want to change that later
-        ppu.compute();
-        display.update_render(ppu.pixels());
-        // emulation render here
+        display.update_render(&image);
         display.draw();
-
         gb_window
             .end_frame()
             .expect("Fail at the end for the main window");
@@ -47,7 +43,6 @@ fn main() {
             match event {
                 Event::Quit { .. }
                 | Event::KeyDown {
-                    // here for debug, maybe remove later ?
                     keycode: Some(Keycode::Escape),
                     ..
                 } => break 'running,

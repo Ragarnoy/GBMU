@@ -11,8 +11,8 @@ fn main() {
     let mut gb_window = GBWindow::new(
         "GBMU",
         (
-            render::SCREEN_WIDTH,
-            render::SCREEN_HEIGHT + render::MENU_BAR_SIZE as u32,
+            render::SCREEN_WIDTH as u32,
+            render::SCREEN_HEIGHT as u32 + render::MENU_BAR_SIZE as u32,
         ),
         true,
         &video_subsystem,

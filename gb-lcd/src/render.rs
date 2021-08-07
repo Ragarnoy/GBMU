@@ -6,13 +6,14 @@ use std::os::raw::c_void;
 use std::ptr;
 use std::str;
 
-pub const SCREEN_WIDTH: u32 = 160;
-pub const SCREEN_HEIGHT: u32 = 144;
-pub const SCREEN_RATIO: f32 = SCREEN_WIDTH as f32 / SCREEN_HEIGHT as f32;
-pub const TEXTURE_SIZE: usize = (SCREEN_WIDTH * SCREEN_HEIGHT) as usize;
+use crate::shader;
+
+pub const SCREEN_WIDTH: usize = 160;
+pub const SCREEN_HEIGHT: usize = 144;
 pub const MENU_BAR_SIZE: f32 = 30.0;
 
-pub type TextureData = [[u8; 3]; TEXTURE_SIZE];
+pub type RenderData<const RES: usize> = [[u8; 3]; RES];
+pub type Render = RenderImage<SCREEN_WIDTH, SCREEN_HEIGHT>;
 
 const VS_SRC: &str = include_str!("render.vert");
 const FS_SRC: &str = include_str!("render.frag");
@@ -21,95 +22,37 @@ static VERTEX_DATA: [GLfloat; 12] = [
     -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0,
 ];
 
-pub struct Render {
-    pub vs: GLuint,
-    pub fs: GLuint,
-    pub program: GLuint,
-    pub vao: GLuint,
-    pub vbo: GLuint,
-    pub texture_buffer: GLuint,
-    pub scale: (f32, f32),
-    pub offset: (f32, f32),
+pub struct RenderImage<const WIDTH: usize, const HEIGHT: usize> {
+    vs: GLuint,
+    fs: GLuint,
+    program: GLuint,
+    vao: GLuint,
+    vbo: GLuint,
+    texture_buffer: GLuint,
+    scale: (f32, f32),
+    offset: (f32, f32),
+    menu_bar_size: f32,
 }
 
-pub fn compile_shader(src: &str, ty: GLenum) -> GLuint {
-    let shader;
-    unsafe {
-        shader = gl::CreateShader(ty);
-        // Attempt to compile the shader
-        let c_str = CString::new(src.as_bytes()).unwrap();
-        gl::ShaderSource(shader, 1, &c_str.as_ptr(), ptr::null());
-        gl::CompileShader(shader);
-
-        // Get the compile status
-        let mut status = gl::FALSE as GLint;
-        gl::GetShaderiv(shader, gl::COMPILE_STATUS, &mut status);
-
-        // Fail on error
-        if status != (gl::TRUE as GLint) {
-            let mut len = 0;
-            gl::GetShaderiv(shader, gl::INFO_LOG_LENGTH, &mut len);
-            let mut buf = Vec::with_capacity(len as usize);
-            buf.set_len((len as usize) - 1); // subtract 1 to skip the trailing null character
-            gl::GetShaderInfoLog(
-                shader,
-                len,
-                ptr::null_mut(),
-                buf.as_mut_ptr() as *mut GLchar,
-            );
-            panic!(
-                "{}",
-                str::from_utf8(&buf).expect("ShaderInfoLog not valid utf8")
-            );
-        }
-    }
-    shader
-}
-
-pub fn link_program(vs: GLuint, fs: GLuint) -> GLuint {
-    unsafe {
-        let program = gl::CreateProgram();
-        gl::AttachShader(program, vs);
-        gl::AttachShader(program, fs);
-        gl::LinkProgram(program);
-        // Get the link status
-        let mut status = gl::FALSE as GLint;
-        gl::GetProgramiv(program, gl::LINK_STATUS, &mut status);
-
-        // Fail on error
-        if status != (gl::TRUE as GLint) {
-            let mut len: GLint = 0;
-            gl::GetProgramiv(program, gl::INFO_LOG_LENGTH, &mut len);
-            let mut buf = Vec::with_capacity(len as usize);
-            buf.set_len((len as usize) - 1); // subtract 1 to skip the trailing null character
-            gl::GetProgramInfoLog(
-                program,
-                len,
-                ptr::null_mut(),
-                buf.as_mut_ptr() as *mut GLchar,
-            );
-            panic!(
-                "{}",
-                str::from_utf8(&buf).expect("ProgramInfoLog not valid utf8")
-            );
-        }
-        program
-    }
-}
-
-impl Render {
+impl<const WIDTH: usize, const HEIGHT: usize> RenderImage<WIDTH, HEIGHT> {
     pub fn new() -> Self {
+        Self::with_bar_size(MENU_BAR_SIZE)
+    }
+
+    pub fn with_bar_size(menu_bar_size: f32) -> Self {
+        let texture_size = WIDTH * HEIGHT;
         // Create Vertex Array Object
         let mut vao = 0;
         let mut vbo = 0;
-        let vs = compile_shader(VS_SRC, gl::VERTEX_SHADER);
-        let fs = compile_shader(FS_SRC, gl::FRAGMENT_SHADER);
-        let program = link_program(vs, fs);
+        let vs = shader::compile(VS_SRC, gl::VERTEX_SHADER);
+        let fs = shader::compile(FS_SRC, gl::FRAGMENT_SHADER);
+        let program = shader::link(vs, fs);
         unsafe {
             gl::GenVertexArrays(1, &mut vao);
             gl::GenBuffers(1, &mut vbo);
         }
-        let texture_data: TextureData = [[255; 3]; TEXTURE_SIZE];
+        let mut texture_data: Vec<[u8; 3]> = Vec::new();
+        texture_data.resize(texture_size as usize, [255; 3]);
         let mut texture_buffer = 0;
         unsafe {
             gl::GenTextures(1, &mut texture_buffer);
@@ -118,38 +61,41 @@ impl Render {
                 gl::TEXTURE_2D,
                 0,
                 gl::RGB as i32,
-                SCREEN_WIDTH as i32,
-                SCREEN_HEIGHT as i32,
+                WIDTH as i32,
+                HEIGHT as i32,
                 0,
                 gl::RGB,
                 gl::UNSIGNED_BYTE,
-                &texture_data as *const _ as *const c_void,
+                &texture_data.as_slice() as *const _ as *const c_void,
             );
         }
-        Render {
-            // Create GLSL shaders
+        let mut image = RenderImage {
             vs,
             fs,
             program,
             vao,
             vbo,
             texture_buffer,
-            scale: (1.0, 0.82758623),
-            offset: (0.0, 0.82758623 - 1.0),
-        }
+            scale: (1.0, 1.0),
+            offset: (0.0, 0.0),
+            menu_bar_size,
+        };
+        image.resize((WIDTH as u32, HEIGHT as u32));
+        image
     }
 
     pub fn resize(&mut self, dim: (u32, u32)) {
         let dim = (dim.0 as f32, dim.1 as f32);
+        let screen_ratio = WIDTH as f32 / HEIGHT as f32;
 
-        let free_dim = (dim.0, dim.1 - MENU_BAR_SIZE);
+        let free_dim = (dim.0, dim.1 - self.menu_bar_size);
         let free_ratio = dim.1 / free_dim.1;
         let actual_ratio = free_dim.0 / free_dim.1;
 
-        let target_dim = if SCREEN_RATIO > actual_ratio {
-            (dim.0, dim.0 / SCREEN_RATIO)
+        let target_dim = if screen_ratio > actual_ratio {
+            (dim.0, dim.0 / screen_ratio)
         } else {
-            let tmp_dim = (dim.1 * SCREEN_RATIO, dim.1);
+            let tmp_dim = (dim.1 * screen_ratio, dim.1);
             if tmp_dim.1 > free_dim.1 {
                 (tmp_dim.0 / free_ratio, tmp_dim.1 / free_ratio)
             } else {
@@ -160,12 +106,18 @@ impl Render {
 
         self.scale = (final_dim.0 as f32 / dim.0, final_dim.1 as f32 / dim.1);
         self.offset = (0.0, self.scale.1 - 1.0);
-        if SCREEN_RATIO > actual_ratio {
+        if screen_ratio > actual_ratio {
             self.offset.1 += 1.0 * (free_dim.1 - target_dim.1) / dim.1;
         }
     }
 
-    pub fn update_render(&mut self, texture_pixels: &TextureData) {
+    pub fn update_render<const RES: usize>(&mut self, texture_pixels: &RenderData<RES>) {
+        // Ideally we would use WIDTH * HEIGHT in the function declaration, but using const operation for generics parameters is still an unstable feature
+        assert_eq!(
+            RES,
+            WIDTH * HEIGHT,
+            "render update with invalid buffer size"
+        );
         unsafe {
             gl::BindTexture(gl::TEXTURE_2D, self.texture_buffer);
             gl::TexSubImage2D(
@@ -173,8 +125,8 @@ impl Render {
                 0,
                 0,
                 0,
-                SCREEN_WIDTH as i32,
-                SCREEN_HEIGHT as i32,
+                WIDTH as i32,
+                HEIGHT as i32,
                 gl::RGB,
                 gl::UNSIGNED_BYTE,
                 texture_pixels as *const _ as *const c_void,
@@ -240,7 +192,7 @@ impl Render {
     }
 }
 
-impl Drop for Render {
+impl<const WIDTH: usize, const HEIGHT: usize> Drop for RenderImage<WIDTH, HEIGHT> {
     fn drop(&mut self) {
         unsafe {
             gl::DeleteProgram(self.program);
@@ -253,8 +205,8 @@ impl Drop for Render {
     }
 }
 
-impl Default for Render {
-    fn default() -> Render {
-        Render::new()
+impl<const WIDTH: usize, const HEIGHT: usize> Default for RenderImage<WIDTH, HEIGHT> {
+    fn default() -> RenderImage<WIDTH, HEIGHT> {
+        RenderImage::new()
     }
 }

@@ -39,11 +39,11 @@ impl Vram {
 
     pub fn read_8x8_tile(&self, adr: usize) -> PPUResult<[[u8; 8]; 8], usize> {
         let mut tile = [[0; 8]; 8];
-        if adr * 8 * 2 > TILEDATA_ADRESS_MAX - 8 * 2 {
+        if adr * 8 * 2 > TILEDATA_ADRESS_MAX + 1 - 8 * 2 {
             return Err(Error::OutOfBound {
                 value: adr,
                 min_bound: TILEDATA_ADRESS_MIN,
-                max_bound: TILEDATA_ADRESS_MAX - 8 * 2,
+                max_bound: TILEDATA_ADRESS_MAX / (8 * 2),
             });
         }
         for (i, row) in tile.iter_mut().enumerate() {

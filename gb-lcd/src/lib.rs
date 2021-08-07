@@ -1,5 +1,6 @@
 pub mod error;
 pub mod render;
+mod shader;
 pub mod window;
 
 use error::Error;
