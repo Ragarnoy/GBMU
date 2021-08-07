@@ -28,7 +28,9 @@ jobs:
       env:
         cache-name: cache-cargo-build
       with:
-        path: target/develop/build
+        path: |
+          target
+          ~/.cargo/registry
         key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/Cargo.lock') }}
         restore-keys: |
           ${{ runner.os }}-build-${{ env.cache-name }}
@@ -36,7 +38,7 @@ jobs:
           ${{ runner.os }}-
 
     - name: Build
-      run: cargo build --verbose
+      run: cargo build --verbose --workspace
 
     - name: Run tests
-      run: cargo test --verbose
+      run: cargo test --verbose --workspace
