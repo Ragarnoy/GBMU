@@ -260,7 +260,7 @@ impl Address {
         }
     }
 
-    /// Create a Address from an absolute adress and an offset
+    /// Create an Address from an absolute adress and an offset
     ///
     /// ```
     /// # use gb_cpu::address_bus::{Address, Area};
