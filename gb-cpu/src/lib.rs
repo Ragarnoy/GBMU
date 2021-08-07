@@ -1,5 +1,7 @@
 pub mod address_bus;
-mod error;
-mod wram;
+pub mod error;
+pub mod wram;
+pub mod registers;
+
 
 pub use address_bus::{AddressBus, Area, FileOperation};
