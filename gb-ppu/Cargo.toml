@@ -8,3 +8,6 @@ edition = "2018"
 
 [dependencies]
 gb-lcd = { path = "../gb-lcd" }
+
+[dev-dependencies]
+sdl2 = { version = "0.34", features = ["bundled", "static-link"] }

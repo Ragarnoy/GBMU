@@ -1,4 +1,4 @@
-const VRAM_SIZE: usize = 0x2000;
+pub const VRAM_SIZE: usize = 0x2000;
 const TILEDATA_ADRESS_MAX: usize = 0x17FF;
 const TILEDATA_ADRESS_MIN: usize = 0x0000;
 
@@ -50,6 +50,10 @@ impl Vram {
             *row = self.read_8_pixels((adr * 8 + i) * 2)?;
         }
         Ok(tile)
+    }
+
+    pub fn overwrite(&mut self, data: [u8; VRAM_SIZE as usize]) {
+        self.data = data;
     }
 }
 

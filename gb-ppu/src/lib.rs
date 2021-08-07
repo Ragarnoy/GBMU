@@ -1,9 +1,9 @@
 mod error;
 mod memory;
 
-use gb_lcd::render::{TextureData, SCREEN_HEIGHT, SCREEN_WIDTH, TEXTURE_SIZE};
+use gb_lcd::render::{TextureData, SCREEN_WIDTH, TEXTURE_SIZE};
 
-use memory::Vram;
+use memory::{Vram, VRAM_SIZE};
 
 pub struct PPU {
     vram: Vram,
@@ -23,20 +23,38 @@ impl PPU {
     }
 
     pub fn compute(&mut self) {
-        self.vram.read_8_pixels(0).unwrap();
-        for j in 0..SCREEN_HEIGHT {
-            for i in 0..SCREEN_WIDTH {
-                self.pixels[(i + j * SCREEN_WIDTH) as usize] =
-                    if j == 0 || j == SCREEN_HEIGHT - 1 || i == 0 || i == SCREEN_WIDTH - 1 {
-                        [150, 50, 50]
-                    } else if (i + j) % 2 == 0 {
-                        [100; 3]
-                    } else {
-                        [200; 3]
-                    };
+        let mut x = 0;
+        let mut y = 0;
+        for k in 0..383 {
+            let tile = self.vram.read_8x8_tile(k).unwrap();
+            for j in 0..8 {
+                for i in 0..8 {
+                    self.pixels[((x + i) + (y + j) * SCREEN_WIDTH) as usize] =
+                        match tile[j as usize][i as usize] {
+                            3 => [0; 3],
+                            2 => [85; 3],
+                            1 => [170; 3],
+                            0 => [255; 3],
+                            _ => [255; 3],
+                        }
+                }
+            }
+            x += 8;
+            if x >= 160 {
+                x = 0;
+                y += 8;
+            }
+            if y >= 144 {
+                return;
             }
         }
     }
+
+    pub fn overwrite_vram(&mut self, data: [u8; VRAM_SIZE as usize]) {
+        self.vram.overwrite(data);
+    }
+
+    pub fn tilesheet_image(&self) {}
 }
 
 impl Default for PPU {

@@ -275,6 +275,7 @@ name = "gb-ppu"
 version = "0.1.0"
 dependencies = [
  "gb-lcd",
+ "sdl2",
 ]
 
 [[package]]
