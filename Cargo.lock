@@ -293,6 +293,7 @@ name = "gbmu"
 version = "0.1.0"
 dependencies = [
  "egui",
+ "gb-cpu",
  "gb-lcd",
  "gb-ppu",
  "rfd",
