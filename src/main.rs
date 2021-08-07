@@ -76,7 +76,7 @@ fn main() {
             dgb_wind
                 .start_frame()
                 .expect("Fail at the start for the debug window");
-            egui::containers::CentralPanel::default().show(dgb_wind.egui_ctx(), |ui| {
+            egui::SidePanel::left("left_panel").resizable(false).default_width(200.0).show(dgb_wind.egui_ctx(), |ui| {
                 mem_view.draw_editor_contents(ui, &mut mem)
             });
             dgb_wind
