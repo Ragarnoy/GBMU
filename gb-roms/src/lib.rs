@@ -1,3 +1,4 @@
+pub mod controllers;
 pub mod header;
 pub mod opcode;
 
