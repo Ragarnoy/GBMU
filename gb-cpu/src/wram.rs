@@ -2,7 +2,8 @@ use super::error::Error;
 
 const WRAM_SIZE: usize = 8192;
 
-struct Wram {
+#[derive(Debug)]
+pub struct Wram {
     data: [u8; WRAM_SIZE],
 }
 
@@ -13,7 +14,7 @@ impl Default for Wram {
 }
 
 impl Wram {
-    pub fn new() -> Wram {
+    pub fn new() -> Self {
         Wram {
             data: [0; WRAM_SIZE],
         }
