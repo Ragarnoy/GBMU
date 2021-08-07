@@ -1,7 +1,7 @@
 use super::error::Error;
 use std::convert::TryFrom;
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, PartialOrd, Ord)]
 #[repr(usize)]
 pub enum RomSize {
     KByte32,
@@ -87,7 +87,7 @@ fn test_convert_rom_size() {
 }
 
 #[repr(usize)]
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, PartialOrd, Ord)]
 pub enum RamSize {
     NoRamOrUnused = 0,
     KByte8 = 1,
