@@ -1,5 +1,5 @@
 pub mod address_bus;
-mod wram;
 mod error;
+mod wram;
 
 pub use address_bus::{AddressBus, Area, FileOperation};
