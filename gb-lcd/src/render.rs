@@ -69,7 +69,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> RenderImage<WIDTH, HEIGHT> {
                 &texture_data.as_slice() as *const _ as *const c_void,
             );
         }
-        let mut image = RenderImage {
+        RenderImage {
             vs,
             fs,
             program,
@@ -79,9 +79,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> RenderImage<WIDTH, HEIGHT> {
             scale: (1.0, 1.0),
             offset: (0.0, 0.0),
             menu_bar_size,
-        };
-        image.resize((WIDTH as u32, HEIGHT as u32));
-        image
+        }
     }
 
     pub fn resize(&mut self, dim: (u32, u32)) {
