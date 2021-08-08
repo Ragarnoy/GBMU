@@ -1,5 +1,7 @@
-use super::error::Error;
-use super::registers::Registers;
+pub mod registers;
+
+use crate::error::Error;
+use registers::*;
 use crate::memory::Memory;
 
 #[derive(Debug, Default)]

@@ -1,6 +1,6 @@
 pub mod area;
 
-use super::error::Error;
+use crate::error::Error;
 use area::Area;
 use std::fmt;
 
