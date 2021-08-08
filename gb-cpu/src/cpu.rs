@@ -1,6 +1,6 @@
+use super::error::Error;
 use super::registers::Registers;
 use crate::memory::Memory;
-use super::error::Error;
 
 #[derive(Debug, Default)]
 pub struct Cpu {
@@ -9,12 +9,12 @@ pub struct Cpu {
 
 impl Cpu {
     fn next(&mut self, memory: &Memory) -> Result<u8, Error> {
-        match memory.read(self.registers.pc){
+        match memory.read(self.registers.pc) {
             Ok(byte) => {
                 self.registers.next_pc();
                 Ok(byte)
             }
-            Err(_) => Err(Error::InvalidPC(self.registers.pc))
+            Err(_) => Err(Error::InvalidPC(self.registers.pc)),
         }
     }
 

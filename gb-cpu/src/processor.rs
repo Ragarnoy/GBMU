@@ -1,5 +1,5 @@
-use crate::memory::Memory;
 use super::cpu::Cpu;
+use crate::memory::Memory;
 
 #[derive(Debug)]
 pub struct Processor {

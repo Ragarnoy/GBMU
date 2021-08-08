@@ -10,4 +10,3 @@ pub enum Area {
     HighRam,
     IEReg,
 }
-

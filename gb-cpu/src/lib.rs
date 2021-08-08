@@ -1,9 +1,9 @@
+pub mod address;
 pub mod address_bus;
+pub mod cpu;
 pub mod error;
-pub mod registers;
 pub mod memory;
 pub mod processor;
-pub mod cpu;
-pub mod address;
+pub mod registers;
 
 pub use address_bus::{AddressBus, Area, FileOperation};

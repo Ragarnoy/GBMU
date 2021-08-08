@@ -35,14 +35,14 @@ mod test_memory {
     use super::Memory;
 
     #[test]
-    fn test_invalid_read(){
+    fn test_invalid_read() {
         let memory = Memory::default();
 
         assert!(memory.read(0xfea1).is_err())
     }
 
     #[test]
-    fn test_invalid_write(){
+    fn test_invalid_write() {
         let mut memory = Memory::default();
 
         assert!(memory.write(0xfea1, 42).is_err())
@@ -73,5 +73,4 @@ mod test_memory {
         assert!(read.is_ok());
         assert_eq!(read.unwrap(), 42);
     }
-
 }

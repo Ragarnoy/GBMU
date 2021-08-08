@@ -108,31 +108,31 @@ impl Registers {
             Area::SP => {
                 self.sp = data;
                 Ok(())
-            },
+            }
             Area::PC => {
                 self.pc;
                 Ok(())
-            },
+            }
             Area::AF => {
                 self.a = (data >> 8) as u8;
                 self.f = data as u8;
                 Ok(())
-            },
+            }
             Area::BC => {
                 self.b = (data >> 8) as u8;
                 self.c = data as u8;
                 Ok(())
-            },
+            }
             Area::DE => {
                 self.d = (data >> 8) as u8;
                 self.e = data as u8;
                 Ok(())
-            },
+            }
             Area::HL => {
                 self.h = (data >> 8) as u8;
                 self.l = data as u8;
                 Ok(())
-            },
+            }
             _ => Err(Error::InvalidRegister(area)),
         }
     }
