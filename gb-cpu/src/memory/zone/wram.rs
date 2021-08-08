@@ -1,4 +1,4 @@
-use super::error::Error;
+use crate::error::Error;
 
 const WRAM_SIZE: usize = 8192;
 
@@ -34,5 +34,36 @@ impl Wram {
         } else {
             Err(Error::InvalidRelativeAddress(address))
         }
+    }
+}
+
+#[cfg(test)]
+mod test_wram {
+    use super::Wram;
+
+    #[test]
+    fn test_read_wram() {
+        let wram = Wram::default();
+
+        assert!(wram.read(0x10).is_ok());
+    }
+
+    #[test]
+    fn test_write_wram() {
+        let mut wram = Wram::default();
+
+        assert!(wram.write(0x10, 2).is_ok());
+    }
+
+    #[test]
+    fn test_write_read_wram() {
+        let mut wram = Wram::default();
+
+        assert!(wram.write(0x42, 42).is_ok());
+
+        let read = wram.read(0x42);
+
+        assert!(read.is_ok());
+        assert_eq!(read.unwrap(), 42);
     }
 }
