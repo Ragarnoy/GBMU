@@ -1,5 +1,5 @@
 use super::registers::Registers;
-use super::memory::Memory;
+use crate::memory::Memory;
 use super::error::Error;
 
 #[derive(Debug, Default)]

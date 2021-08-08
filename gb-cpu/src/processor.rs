@@ -1,4 +1,4 @@
-use super::memory::Memory;
+use crate::memory::Memory;
 use super::cpu::Cpu;
 
 #[derive(Debug)]
