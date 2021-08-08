@@ -23,15 +23,16 @@ impl Wram {
     pub fn read(&self, address: usize) -> Result<u8, Error> {
         match self.data.get(address) {
             Some(data) => Ok(*data),
-            None => Err(Error::InvalidAddress(address)),
+            None => Err(Error::InvalidRelativeAddress(address)),
         }
     }
+
     pub fn write(&mut self, address: usize, data: u8) -> Result<(), Error> {
         if address < WRAM_SIZE {
             self.data[address] = data;
             Ok(())
         } else {
-            Err(Error::InvalidAddress(address))
+            Err(Error::InvalidRelativeAddress(address))
         }
     }
 }
