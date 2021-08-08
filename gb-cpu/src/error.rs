@@ -1,4 +1,4 @@
-use crate::registers::area;
+use crate::processor::cpu::registers::area;
 
 #[derive(Debug)]
 pub enum Error {
