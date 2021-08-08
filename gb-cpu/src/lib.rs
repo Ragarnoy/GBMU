@@ -1,3 +1,4 @@
+pub mod address;
 pub mod address_bus;
 
 pub mod bus;
