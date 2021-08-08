@@ -11,7 +11,7 @@ pub struct Registers {
     h: u8,
     l: u8,
     sp: u16,
-    cp: u16,
+    pub pc: u16,
 }
 
 impl fmt::Display for Registers {
@@ -26,6 +26,12 @@ impl fmt::Display for Registers {
             self.h,
             self.l,
             self.sp,
-            self.cp)
+            self.pc)
+    }
+}
+
+impl Registers {
+    pub fn next_pc(&mut self) {
+        self.pc = self.pc.wrapping_add(1);
     }
 }
