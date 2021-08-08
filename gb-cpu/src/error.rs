@@ -1,4 +1,6 @@
 #[derive(Debug, PartialEq, Eq)]
 pub enum Error {
-    InvalidAddress(usize),
+    InvalidRelativeAddress(usize),
+    InvalidAbsoluteAddress(u16),
+    InvalidPC(u16),
 }
