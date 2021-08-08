@@ -1,5 +1,6 @@
-pub mod address;
 pub mod address_bus;
+
+pub mod address;
 pub mod cpu;
 pub mod error;
 pub mod memory;

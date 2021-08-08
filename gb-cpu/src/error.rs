@@ -1,4 +1,4 @@
-use super::registers::area;
+use crate::registers::area;
 
 #[derive(Debug)]
 pub enum Error {
