@@ -1,5 +1,3 @@
-use crate::error::Error;
-
 const WRAM_SIZE: usize = 8192;
 
 #[derive(Debug)]
@@ -20,20 +18,12 @@ impl Wram {
         }
     }
 
-    pub fn read(&self, address: usize) -> Result<u8, Error> {
-        match self.data.get(address) {
-            Some(data) => Ok(*data),
-            None => Err(Error::InvalidRelativeAddress(address)),
-        }
+    pub fn read(&self, address: usize) -> u8 {
+        *self.data.get(address).unwrap()
     }
 
-    pub fn write(&mut self, address: usize, data: u8) -> Result<(), Error> {
-        if address < WRAM_SIZE {
-            self.data[address] = data;
-            Ok(())
-        } else {
-            Err(Error::InvalidRelativeAddress(address))
-        }
+    pub fn write(&mut self, address: usize, data: u8) {
+        self.data[address] = data;
     }
 }
 
@@ -45,25 +35,16 @@ mod test_wram {
     fn test_read_wram() {
         let wram = Wram::default();
 
-        assert!(wram.read(0x10).is_ok());
-    }
-
-    #[test]
-    fn test_write_wram() {
-        let mut wram = Wram::default();
-
-        assert!(wram.write(0x10, 2).is_ok());
+        assert_eq!(wram.read(0x10), 0x10);
     }
 
     #[test]
     fn test_write_read_wram() {
         let mut wram = Wram::default();
 
-        assert!(wram.write(0x42, 42).is_ok());
-
+        wram.write(0x42, 42);
         let read = wram.read(0x42);
 
-        assert!(read.is_ok());
-        assert_eq!(read.unwrap(), 42);
+        assert_eq!(read, 42);
     }
 }

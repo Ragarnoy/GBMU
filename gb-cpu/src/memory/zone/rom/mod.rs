@@ -4,7 +4,6 @@ mod mbc;
 use std::fs::File;
 use std::io::prelude::*;
 
-use crate::error::Error;
 use controllers::romonly::*;
 use mbc::*;
 
@@ -28,13 +27,13 @@ impl Rom {
         }
     }
 
-    pub fn read(&self, address: usize) -> Result<u8, Error> {
+    pub fn read(&self, address: usize) -> u8 {
         match self.mbc {
             Mbc::RomOnly => RomOnly::read(&self.data, address)
         }
     }
 
-    pub fn write(&mut self, address: usize, data: u8) -> Result<(), Error> {
+    pub fn write(&mut self, address: usize, data: u8) {
         match self.mbc {
             Mbc::RomOnly => RomOnly::write(&mut self.data, address, data)
         }
