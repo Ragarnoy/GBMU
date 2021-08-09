@@ -1,7 +1,6 @@
 pub mod area;
 
-use crate::error::Error;
-use area::Area;
+use area::*;
 use std::fmt;
 
 #[derive(Debug, Default)]
@@ -34,106 +33,98 @@ impl fmt::Display for Registers {
     }
 }
 
+impl RWRegister<_8Bits> for Registers {
+    type Output = u8;
+
+    fn read(&self, area: _8Bits) -> u8 {
+        match area {
+            _8Bits::B => self.b,
+            _8Bits::C => self.c,
+            _8Bits::D => self.d,
+            _8Bits::E => self.e,
+            _8Bits::H => self.h,
+            _8Bits::L => self.l,
+        }
+    }
+
+    fn write(&mut self, area: _8Bits, data: u8) {
+        match area {
+            _8Bits::B => self.b = data,
+            _8Bits::C => self.c = data,
+            _8Bits::D => self.d = data,
+            _8Bits::E => self.e = data,
+            _8Bits::H => self.h = data,
+            _8Bits::L => self.l = data,
+        };
+    }
+}
+
+impl RWRegister<_16Bits> for Registers {
+    type Output = u16;
+
+    fn read(&self, area: _16Bits) -> u16 {
+        match area {
+            _16Bits::SP => self.sp,
+            _16Bits::PC => self.pc,
+            _16Bits::BC => (self.b as u16) << 8 | self.c as u16,
+            _16Bits::DE => (self.d as u16) << 8 | self.e as u16,
+            _16Bits::HL => (self.h as u16) << 8 | self.l as u16,
+        }
+    }
+
+    fn write(&mut self, area: _16Bits, data: u16){
+        match area{
+            _16Bits::SP => {
+                self.sp = data;
+            },
+            _16Bits::PC => {
+                self.pc = data;
+            },
+            _16Bits::BC => {
+                self.b = (data >> 8) as u8;
+                self.c = data as u8;
+            },
+            _16Bits::DE => {
+                self.d = (data >> 8) as u8;
+                self.e = data as u8;
+            },
+            _16Bits::HL => {
+                self.h = (data >> 8) as u8;
+                self.l = data as u8;
+            },
+        }
+    }
+}
+
+
 impl Registers {
     pub fn next_pc(&mut self) {
         self.pc = self.pc.wrapping_add(1);
     }
+}
 
-    pub fn read_u8(&self, area: Area) -> Result<u8, Error> {
-        match area {
-            Area::A => Ok(self.a),
-            Area::F => Ok(self.f),
-            Area::B => Ok(self.b),
-            Area::C => Ok(self.c),
-            Area::D => Ok(self.d),
-            Area::E => Ok(self.e),
-            Area::H => Ok(self.h),
-            Area::L => Ok(self.l),
-            _ => Err(Error::InvalidRegister(area)),
-        }
+#[cfg(test)]
+mod test_registers{
+    use super::Registers;
+    use super::area::*;
+
+    #[test]
+    fn test_valid_write_read_8bits() {
+        let mut registers = Registers::default();
+
+
+        registers.write(_8Bits::C, 42);
+        let value: u8 = registers.read(_8Bits::C);
+        assert_eq!(value, 42);
     }
 
-    pub fn read_u16(&self, area: Area) -> Result<u16, Error> {
-        match area {
-            Area::SP => Ok(self.sp),
-            Area::PC => Ok(self.pc),
-            Area::AF => Ok((self.a as u16) << 8 | self.f as u16),
-            Area::BC => Ok((self.b as u16) << 8 | self.c as u16),
-            Area::DE => Ok((self.d as u16) << 8 | self.e as u16),
-            Area::HL => Ok((self.h as u16) << 8 | self.l as u16),
-            _ => Err(Error::InvalidRegister(area)),
-        }
-    }
+    #[test]
+    fn test_valid_write_read_16bits() {
+        let mut registers = Registers::default();
 
-    pub fn write_u8(&mut self, area: Area, data: u8) -> Result<(), Error> {
-        match area {
-            Area::A => {
-                self.a = data;
-                Ok(())
-            }
-            Area::F => {
-                self.f = data;
-                Ok(())
-            }
-            Area::B => {
-                self.b = data;
-                Ok(())
-            }
-            Area::C => {
-                self.c = data;
-                Ok(())
-            }
-            Area::D => {
-                self.d = data;
-                Ok(())
-            }
-            Area::E => {
-                self.e = data;
-                Ok(())
-            }
-            Area::H => {
-                self.h = data;
-                Ok(())
-            }
-            Area::L => {
-                self.l = data;
-                Ok(())
-            }
-            _ => Err(Error::InvalidRegister(area)),
-        }
-    }
 
-    pub fn write_u16(&mut self, area: Area, data: u16) -> Result<(), Error> {
-        match area {
-            Area::SP => {
-                self.sp = data;
-                Ok(())
-            },
-            Area::PC => {
-                self.pc;
-                Ok(())
-            },
-            Area::AF => {
-                self.a = (data >> 8) as u8;
-                self.f = data as u8;
-                Ok(())
-            },
-            Area::BC => {
-                self.b = (data >> 8) as u8;
-                self.c = data as u8;
-                Ok(())
-            },
-            Area::DE => {
-                self.d = (data >> 8) as u8;
-                self.e = data as u8;
-                Ok(())
-            },
-            Area::HL => {
-                self.h = (data >> 8) as u8;
-                self.l = data as u8;
-                Ok(())
-            },
-            _ => Err(Error::InvalidRegister(area)),
-        }
+        registers.write(_16Bits::BC, 42);
+        let value: u16 = registers.read(_16Bits::BC);
+        assert_eq!(value, 42);
     }
 }
