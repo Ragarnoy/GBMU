@@ -35,7 +35,7 @@ mod test_wram {
     fn test_read_wram() {
         let wram = Wram::default();
 
-        assert_eq!(wram.read(0x10), 0x10);
+        assert_eq!(wram.read(0x10), 0);
     }
 
     #[test]
