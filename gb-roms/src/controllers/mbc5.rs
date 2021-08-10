@@ -54,7 +54,7 @@ impl MBC5 {
     fn read_rom(&self, addr: Address) -> Result<u8, Error> {
         match addr.relative {
             0x0000..=0x3FFF => Ok(self.rom_bank[0][addr.relative as usize]),
-            0x4000..=0x7FFF => Ok(self.get_selected_rom()[addr.relative as usize]),
+            0x4000..=0x7FFF => Ok(self.get_selected_rom()[addr.relative as usize - 0x4000]),
             _ => Err(Error::SegmentationFault(addr)),
         }
     }
@@ -104,6 +104,27 @@ impl FileOperation for MBC5 {
             Area::ExtRam => self.write_ram(v, addr),
             _ => panic!("mbc5 should not be mapped to the area {:?}", addr.area),
         }
+    }
+}
+
+#[cfg(test)]
+mod test_mbc5 {
+    use super::{Address, Area, RamSize, RomSize, MBC5};
+
+    #[test]
+    fn basic() {
+        let mut ctl = MBC5::empty(RamSize::KByte32, RomSize::KByte256);
+
+        assert_eq!(ctl.ram_bank.len(), RamSize::KByte32.get_bank_amounts());
+        assert_eq!(ctl.rom_bank.len(), RomSize::KByte256.get_bank_amounts());
+
+        ctl.rom_bank[4][0x42] = 42;
+
+        ctl.regs.set_lower_rom_number(4);
+        assert_eq!(
+            ctl.read_rom(Address::from_offset(Area::Rom, 0x4042, 0)),
+            Ok(42)
+        );
     }
 }
 
