@@ -39,21 +39,54 @@ impl MBC5 {
             regs: MBC5Reg::default()
         }
     }
+
+    fn write_rom(&mut self, v: u8, addr: Address) -> Result<(), Error> {
+        unimplemented!("write mbc5 rom")
+    }
+
+    fn read_rom(&self, addr) -> Result<u8, Error> {
+        unimplemented!("read mbc5 rom")
+    }
+
+    fn write_ram(&mut self, v: u8, addr: Address) -> Result<(), Error> {
+        if !self.regs.ram_enabled {
+            return Err(Error::SegmentationFault(addr));
+        }
+        let ram = self.get_selected_ram_mut();
+        ram[addr.relative as usize] = v;
+        Ok(())
+    }
+
+    fn read_ram(&self, addr: Address) -> Result<u8, Error> {
+        if !self.regs.ram_enabled {
+            return Err(Error::SegmentationFault(addr))
+        }
+        let ram = self.get_selected_ram();
+        Ok(ram[addr.relative as usize])
+    }
+
+    fn get_selected_ram_mut(&mut self) -> &mut [u8; MBC5_RAM_BANK_SIZE] {
+        &mut self.ram_bank[self.regs.ram_number]
+    }
+
+    fn get_selected_ram(&self) -> &[u8; MBC5_RAM_BANK_SIZE] {
+        &self.ram_bank[self.regs.ram_number]
+    }
 }
 
 impl FileOperation for MBC5 {
     fn read(&self, addr: Address) -> Result<u8, Error> {
         match addr.area {
-            Area::Rom => unimplemented!("no read for mbc5 on ROM"),
-            Area::ExtRam => unimplemented!("no read for mbc5 on RAM"),
+            Area::Rom => self.read_rom(addr),
+            Area::ExtRam => self.read_ram(addr),
             _ => panic!("mbc5 should not be mapped to the area {:?}", addr.area)
         }
     }
 
     fn write(&mut self, v: u8, addr: Address) -> Result<(), Error> {
         match addr.area {
-            Area::Rom => unimplemented!("no write for mbc5 on ROM")
-            Area::ExtRam => unimplemented!("no write for mbc5 on RAM")
+            Area::Rom => self.write_rom(v, addr),
+            Area::ExtRam => self.write_ram(v, addr),
             _ => panic!("mbc5 should not be mapped to the area {:?}", addr.area)
         }
     }
