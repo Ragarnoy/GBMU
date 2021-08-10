@@ -44,8 +44,16 @@ impl MBC5 {
         unimplemented!("write mbc5 rom")
     }
 
-    fn read_rom(&self, addr) -> Result<u8, Error> {
-        unimplemented!("read mbc5 rom")
+    fn read_rom(&self, addr: Address) -> Result<u8, Error> {
+        match addr.relative {
+            0x0000..=0x3FFF => Ok(self.rom_bank[0][addr.relative])
+            0x4000..=0x7FFF => Ok(self.get_selected_rom()[addr.relative])
+            _ => Err(Error::SegmentationFault(addr))
+        }
+    }
+
+    fn get_selected_rom(&self) -> &[u8; MBC5_ROM_BANK_SIZE] {
+        &self.rom_bank[self.regs.rom_number]
     }
 
     fn write_ram(&mut self, v: u8, addr: Address) -> Result<(), Error> {
