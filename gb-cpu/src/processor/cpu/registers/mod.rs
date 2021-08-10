@@ -2,6 +2,7 @@ pub mod area;
 
 use area::*;
 use std::fmt;
+use crate::getset::*;
 
 #[derive(Debug, Default)]
 pub struct Registers {
@@ -32,22 +33,11 @@ impl fmt::Display for Registers {
             self.pc)
     }
 }
+impl Set<_8Bits> for Registers {
+    type Output = ();
+    type Data = u8;
 
-impl RWRegister<_8Bits> for Registers {
-    type Output = u8;
-
-    fn read(&self, area: _8Bits) -> u8 {
-        match area {
-            _8Bits::B => self.b,
-            _8Bits::C => self.c,
-            _8Bits::D => self.d,
-            _8Bits::E => self.e,
-            _8Bits::H => self.h,
-            _8Bits::L => self.l,
-        }
-    }
-
-    fn write(&mut self, area: _8Bits, data: u8) {
+    fn set(&mut self, area: _8Bits, data: u8) {
         match area {
             _8Bits::B => self.b = data,
             _8Bits::C => self.c = data,
@@ -59,10 +49,25 @@ impl RWRegister<_8Bits> for Registers {
     }
 }
 
-impl RWRegister<_16Bits> for Registers {
+impl Get<_8Bits> for Registers {
+    type Output = u8;
+
+    fn get(&self, area: _8Bits) -> u8 {
+        match area {
+            _8Bits::B => self.b,
+            _8Bits::C => self.c,
+            _8Bits::D => self.d,
+            _8Bits::E => self.e,
+            _8Bits::H => self.h,
+            _8Bits::L => self.l,
+        }
+    }
+}
+
+impl Get<_16Bits> for Registers {
     type Output = u16;
 
-    fn read(&self, area: _16Bits) -> u16 {
+    fn get(&self, area: _16Bits) -> u16 {
         match area {
             _16Bits::SP => self.sp,
             _16Bits::PC => self.pc,
@@ -71,31 +76,35 @@ impl RWRegister<_16Bits> for Registers {
             _16Bits::HL => (self.h as u16) << 8 | self.l as u16,
         }
     }
+}
 
-    fn write(&mut self, area: _16Bits, data: u16){
-        match area{
+impl Set<_16Bits> for Registers {
+    type Output = ();
+    type Data = u16;
+
+    fn set(&mut self, area: _16Bits, data: u16) {
+        match area {
             _16Bits::SP => {
                 self.sp = data;
-            },
+            }
             _16Bits::PC => {
                 self.pc = data;
-            },
+            }
             _16Bits::BC => {
                 self.b = (data >> 8) as u8;
                 self.c = data as u8;
-            },
+            }
             _16Bits::DE => {
                 self.d = (data >> 8) as u8;
                 self.e = data as u8;
-            },
+            }
             _16Bits::HL => {
                 self.h = (data >> 8) as u8;
                 self.l = data as u8;
-            },
+            }
         }
     }
 }
-
 
 impl Registers {
     pub fn next_pc(&mut self) {
@@ -104,17 +113,17 @@ impl Registers {
 }
 
 #[cfg(test)]
-mod test_registers{
-    use super::Registers;
+mod test_registers {
     use super::area::*;
+    use super::Registers;
+    use crate::getset::*;
 
     #[test]
     fn test_valid_write_read_8bits() {
         let mut registers = Registers::default();
 
-
-        registers.write(_8Bits::C, 42);
-        let value: u8 = registers.read(_8Bits::C);
+        registers.set(_8Bits::C, 42);
+        let value = registers.get(_8Bits::C);
         assert_eq!(value, 42);
     }
 
@@ -122,9 +131,8 @@ mod test_registers{
     fn test_valid_write_read_16bits() {
         let mut registers = Registers::default();
 
-
-        registers.write(_16Bits::BC, 42);
-        let value: u16 = registers.read(_16Bits::BC);
+        registers.set(_16Bits::BC, 42);
+        let value = registers.get(_16Bits::BC);
         assert_eq!(value, 42);
     }
 }

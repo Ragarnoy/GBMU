@@ -8,6 +8,7 @@ pub enum _8Bits {
     L,
 }
 
+#[derive(Debug)]
 pub enum _16Bits {
     SP,
     PC,
@@ -16,6 +17,7 @@ pub enum _16Bits {
     HL,
 }
 
+#[derive(Debug)]
 pub enum Flags {
     /// Zero flag
     /// This flag is set when :
@@ -38,9 +40,3 @@ pub enum Flags {
     C,
 }
 
-pub trait RWRegister<T> {
-     type Output;
-
-     fn read(&self, _: T) -> Self::Output;
-     fn write(&mut self, _: T, data: Self::Output);
- }

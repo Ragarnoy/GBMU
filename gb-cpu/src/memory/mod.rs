@@ -3,30 +3,32 @@ mod zone;
 use std::fs::File;
 
 use crate::error::Error;
+use crate::getset::*;
 
 use crate::address;
 use crate::address::area::Area;
 use crate::address::consts::*;
-use zone::rom::Rom;
 use zone::wram::Wram;
+use zone::rom::Rom;
 
 #[derive(Debug)]
 pub struct Memory {
     pub wram: Wram,
-    pub rom: Rom,
+    pub rom: Rom
 }
+
 
 impl Memory {
     pub fn new(bios: File, cartrige: File) -> Self {
-        Memory {
+        Memory{
             rom: Rom::new(bios, cartrige),
-            wram: Wram::default(),
+            wram: Wram::default()
         }
     }
 
     pub fn read(&self, address: u16) -> Result<u8, Error> {
         match address {
-            WRAM_MIN..=WRAM_MAX => Ok(self.wram.read(address::relative(Area::Wram, address))),
+            WRAM_MIN..=WRAM_MAX => Ok(self.wram.get(address::relative(Area::Wram, address))),
             _ => Err(Error::InvalidAbsoluteAddress(address)),
         }
     }
@@ -35,7 +37,7 @@ impl Memory {
         match address {
             WRAM_MIN..=WRAM_MAX => Ok(self
                 .wram
-                .write(address::relative(Area::Wram, address), data)),
+                .set(address::relative(Area::Wram, address), data)),
             _ => Err(Error::InvalidAbsoluteAddress(address)),
         }
     }
