@@ -34,4 +34,8 @@ $(ROMS_DIR)/%: roms.zip
 	unzip $< 'roms/*' -x '*/.DS_Store'
 	touch roms/*
 
+docker:
+	docker build -t gbmu:latest .
+	docker run -it --net=host --env=DISPLAY --rm gbmu:latest
+
 .PHONY: requirement roms
