@@ -42,7 +42,7 @@ impl MBC5 {
 
     fn write_rom(&mut self, v: u8, addr: Address) -> Result<(), Error> {
         match addr.relative {
-            0x0000..=0x1FFF => self.regs.ram_enabled = (v & 0xf) == 0xa,
+            0x0000..=0x1FFF => self.regs.set_ram_enabling_state(v),
             0x2000..=0x2FFF => self.regs.set_lower_rom_number(v),
             0x3000..=0x3FFF => self.regs.set_upper_rom_number(v),
             0x4000..=0x5FFF => self.regs.set_ram_number(v),
@@ -107,6 +107,7 @@ impl FileOperation for MBC5 {
     }
 }
 
+#[derive(Debug, PartialEq, Eq)]
 struct MBC5Reg {
     /// Enable read/write operation on the RAM
     ram_enabled: bool,
@@ -117,6 +118,10 @@ struct MBC5Reg {
 }
 
 impl MBC5Reg {
+    fn set_ram_enabling_state(&mut self, v: u8) {
+        self.ram_enabled = (v & 0xf) == 0xa
+    }
+
     fn set_lower_rom_number(&mut self, number: u8) {
         let upper = self.rom_number & 0x100;
         self.rom_number = upper | number as u16;
@@ -136,8 +141,56 @@ impl Default for MBC5Reg {
     fn default() -> Self {
         Self {
             ram_enabled: false,
-            rom_number: 0,
+            rom_number: 1,
             ram_number: 0,
         }
+    }
+}
+
+#[cfg(test)]
+mod test_mbc5_regs {
+    use super::MBC5Reg;
+
+    #[test]
+    fn default() {
+        assert_eq!(
+            MBC5Reg::default(),
+            MBC5Reg {
+                ram_enabled: false,
+                rom_number: 1,
+                ram_number: 0
+            }
+        )
+    }
+
+    #[test]
+    fn ram_enabling() {
+        let mut regs = MBC5Reg::default();
+
+        assert_eq!(regs.ram_enabled, false);
+        regs.set_ram_enabling_state(0xa);
+        assert_eq!(regs.ram_enabled, true);
+        regs.set_ram_enabling_state(0);
+        assert_eq!(regs.ram_enabled, false);
+    }
+
+    #[test]
+    fn ram_number() {
+        let mut regs = MBC5Reg::default();
+
+        assert_eq!(regs.ram_number, 0);
+        regs.set_ram_number(5);
+        assert_eq!(regs.ram_number, 5);
+    }
+
+    #[test]
+    fn rom_number() {
+        let mut regs = MBC5Reg::default();
+
+        assert_eq!(regs.rom_number, 1);
+        regs.set_upper_rom_number(1);
+        assert_eq!(regs.rom_number, 0x101);
+        regs.set_lower_rom_number(0x42);
+        assert_eq!(regs.rom_number, 0x142);
     }
 }
