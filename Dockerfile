@@ -15,4 +15,4 @@ COPY --chown=tester:tester . /app/
 WORKDIR /app
 RUN cargo build --workspace && cargo build --workspace --examples
 
-# ENTRYPOINT [ "target/debug/gbmu" ]
+ENTRYPOINT [ "target/debug/gbmu" ]
