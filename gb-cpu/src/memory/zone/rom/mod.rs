@@ -1,16 +1,38 @@
 mod controllers;
 mod mbc;
 
+use std::io::Read;
 use std::fs::File;
-use std::io::prelude::*;
 
 use controllers::romonly::*;
 use mbc::*;
+use crate::getset::*;
 
 #[derive(Debug)]
 pub struct Rom {
     mbc: Mbc,
     data: Vec<u8>,
+}
+
+impl Get<Mbc> for Rom {
+    type Output = u8;
+
+    fn get(&self, area: Mbc) -> u8 {
+        match area {
+            Mbc::RomOnly(address) => RomOnly::read(&self.data, address)
+        }
+    }
+}
+
+impl Set<Mbc> for Rom {
+    type Output = ();
+    type Data = u8;
+
+    fn set(&mut self, area: Mbc, data: u8) {
+        match self.mbc {
+            Mbc::RomOnly(address) => RomOnly::write(&mut self.data, address, data)
+        }
+    }
 }
 
 impl Rom {
@@ -22,20 +44,8 @@ impl Rom {
         data.append(&mut rom);
 
         Rom {
-            mbc: Mbc::RomOnly,
+            mbc: Mbc::RomOnly(0),
             data,
-        }
-    }
-
-    pub fn read(&self, address: usize) -> u8 {
-        match self.mbc {
-            Mbc::RomOnly => RomOnly::read(&self.data, address)
-        }
-    }
-
-    pub fn write(&mut self, address: usize, data: u8) {
-        match self.mbc {
-            Mbc::RomOnly => RomOnly::write(&mut self.data, address, data)
         }
     }
 }
