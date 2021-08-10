@@ -125,6 +125,12 @@ mod test_mbc5 {
             ctl.read_rom(Address::from_offset(Area::Rom, 0x4042, 0)),
             Ok(42)
         );
+        ctl.regs.set_ram_number(2);
+        ctl.regs.set_ram_enabling_state(0xa);
+
+        let addr = Address::from_offset(Area::ExtRam, 0x42, 0);
+        assert_eq!(ctl.write_ram(42, addr), Ok(()));
+        assert_eq!(ctl.read_ram(addr), Ok(42));
     }
 }
 
