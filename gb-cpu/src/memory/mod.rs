@@ -1,16 +1,19 @@
 mod zone;
 
 use crate::error::Error;
+use crate::getset::*;
 
 use crate::address;
 use crate::address::area::Area;
 use crate::address::consts::*;
 use zone::wram::Wram;
+use zone::rom::Rom;
 
 #[derive(Debug, Default)]
 pub struct Memory {
     pub wram: Wram,
 }
+
 
 impl Memory {
     pub fn read(&self, address: u16) -> Result<u8, Error> {
