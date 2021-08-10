@@ -7,7 +7,8 @@ RUN rustup component add rustfmt clippy \
   libgtk-3-dev \
   curl \
   clang \
-  && useradd tester
+  dbus-x11 \
+  && useradd tester -d /home/tester -m
 
 USER tester
 COPY --chown=tester:tester . /app/
