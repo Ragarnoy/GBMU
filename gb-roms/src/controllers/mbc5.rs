@@ -2,12 +2,15 @@ use crate::header::size::{RamSize, RomSize};
 use gb_cpu::address_bus::{Address, Area, Error, FileOperation};
 use std::io::{self, Read};
 
-pub struct MBC5 {}
-
 pub const MBC5_ROM_BANK_SIZE: usize = 0x4000;
 pub const MBC5_MAX_ROM_BANK: usize = 0x1FF;
 pub const MBC5_RAM_BANK_SIZE: usize = 0x2000;
 pub const MBC5_MAX_RAM_BANK: usize = 0x10;
+
+pub struct MBC5 {
+    rom_bank: Vec<[u8; MBC5_ROM_BANK_SIZE]>,
+    ram_bank: Vec<[u8; MBC5_RAM_BANK_SIZE]>,
+}
 
 impl MBC5 {
     /// initialize the controller using a file as the rom
@@ -23,7 +26,13 @@ impl MBC5 {
 
     /// empty return an empty initialized controller
     pub fn empty(ram_size: RamSize, rom_size: RomSize) -> MBC5 {
-        unimplemented!("cannot create mbc5 controller")
+        let ram_bank = ram_size.get_bank_amounts();
+        let rom_bank = rom_size.get_bank_amounts();
+
+        Self {
+            rom_bank: vec![[0_u8; MBC5_ROM_BANK_SIZE]; rom_bank],
+            ram_bank: vec![[0_u8; MBC5_RAM_BANK_SIZE]; ram_bank],
+        }
     }
 }
 
