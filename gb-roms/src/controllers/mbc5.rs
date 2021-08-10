@@ -20,7 +20,7 @@ impl MBC5 {
         ram_size: RamSize,
         rom_size: RomSize,
     ) -> Result<MBC5, io::Error> {
-        let ctl = MBC5::empty(ram_size, rom_size);
+        let mut ctl = MBC5::empty(ram_size, rom_size);
 
         for e in ctl.rom_bank.iter_mut() {
             file.read_exact(e)?;
@@ -36,24 +36,16 @@ impl MBC5 {
         Self {
             rom_bank: vec![[0_u8; MBC5_ROM_BANK_SIZE]; rom_bank],
             ram_bank: vec![[0_u8; MBC5_RAM_BANK_SIZE]; ram_bank],
-            regs: MBC5Reg::default()
+            regs: MBC5Reg::default(),
         }
     }
 
     fn write_rom(&mut self, v: u8, addr: Address) -> Result<(), Error> {
         match addr.relative {
             0x0000..=0x1FFF => self.regs.ram_enabled = (v & 0xf) == 0xa,
-            0x2000..=0x2FFF => {
-                let current = self.regs.rom_number;
-
-                self.regs.rom_number = (current & 0x100) | v as u16
-            }
-            0x3000..=0x3FFF => {
-                let current = self.regs.rom_number;
-
-                self.regs.rom_number = ((v & 1) << 9) | (current & 0xFF)
-            }
-            0x4000..=0x5FFF => self.regs.ram_number = v & 0xf
+            0x2000..=0x2FFF => self.regs.set_lower_rom_number(v),
+            0x3000..=0x3FFF => self.regs.set_upper_rom_number(v),
+            0x4000..=0x5FFF => self.regs.set_ram_number(v),
             _ => return Err(Error::SegmentationFault(addr)),
         }
         Ok(())
@@ -61,14 +53,14 @@ impl MBC5 {
 
     fn read_rom(&self, addr: Address) -> Result<u8, Error> {
         match addr.relative {
-            0x0000..=0x3FFF => Ok(self.rom_bank[0][addr.relative])
-            0x4000..=0x7FFF => Ok(self.get_selected_rom()[addr.relative])
-            _ => Err(Error::SegmentationFault(addr))
+            0x0000..=0x3FFF => Ok(self.rom_bank[0][addr.relative as usize]),
+            0x4000..=0x7FFF => Ok(self.get_selected_rom()[addr.relative as usize]),
+            _ => Err(Error::SegmentationFault(addr)),
         }
     }
 
     fn get_selected_rom(&self) -> &[u8; MBC5_ROM_BANK_SIZE] {
-        &self.rom_bank[self.regs.rom_number]
+        &self.rom_bank[self.regs.rom_number as usize]
     }
 
     fn write_ram(&mut self, v: u8, addr: Address) -> Result<(), Error> {
@@ -82,18 +74,18 @@ impl MBC5 {
 
     fn read_ram(&self, addr: Address) -> Result<u8, Error> {
         if !self.regs.ram_enabled {
-            return Err(Error::SegmentationFault(addr))
+            return Err(Error::SegmentationFault(addr));
         }
         let ram = self.get_selected_ram();
         Ok(ram[addr.relative as usize])
     }
 
     fn get_selected_ram_mut(&mut self) -> &mut [u8; MBC5_RAM_BANK_SIZE] {
-        &mut self.ram_bank[self.regs.ram_number]
+        &mut self.ram_bank[self.regs.ram_number as usize]
     }
 
     fn get_selected_ram(&self) -> &[u8; MBC5_RAM_BANK_SIZE] {
-        &self.ram_bank[self.regs.ram_number]
+        &self.ram_bank[self.regs.ram_number as usize]
     }
 }
 
@@ -102,7 +94,7 @@ impl FileOperation for MBC5 {
         match addr.area {
             Area::Rom => self.read_rom(addr),
             Area::ExtRam => self.read_ram(addr),
-            _ => panic!("mbc5 should not be mapped to the area {:?}", addr.area)
+            _ => panic!("mbc5 should not be mapped to the area {:?}", addr.area),
         }
     }
 
@@ -110,7 +102,7 @@ impl FileOperation for MBC5 {
         match addr.area {
             Area::Rom => self.write_rom(v, addr),
             Area::ExtRam => self.write_ram(v, addr),
-            _ => panic!("mbc5 should not be mapped to the area {:?}", addr.area)
+            _ => panic!("mbc5 should not be mapped to the area {:?}", addr.area),
         }
     }
 }
@@ -122,6 +114,22 @@ struct MBC5Reg {
     rom_number: u16,
     /// Selected ram bank number
     ram_number: u8,
+}
+
+impl MBC5Reg {
+    fn set_lower_rom_number(&mut self, number: u8) {
+        let upper = self.rom_number & 0x100;
+        self.rom_number = upper | number as u16;
+    }
+
+    fn set_upper_rom_number(&mut self, number: u8) {
+        let lower = self.rom_number & 0xff;
+        self.rom_number = ((number & 1) as u16) << 8 | lower;
+    }
+
+    fn set_ram_number(&mut self, number: u8) {
+        self.ram_number = number & 0xf
+    }
 }
 
 impl Default for MBC5Reg {
