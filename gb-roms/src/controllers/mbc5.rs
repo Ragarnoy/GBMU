@@ -4,6 +4,11 @@ use std::io::{self, Read};
 
 pub struct MBC5 {}
 
+pub const MBC5_ROM_BANK_SIZE: usize = 0x4000;
+pub const MBC5_MAX_ROM_BANK: usize = 0x1FF;
+pub const MBC5_RAM_BANK_SIZE: usize = 0x2000;
+pub const MBC5_MAX_RAM_BANK: usize = 0x10;
+
 impl MBC5 {
     /// initialize the controller using a file as the rom
     pub fn from_file(
