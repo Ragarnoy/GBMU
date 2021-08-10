@@ -36,6 +36,7 @@ impl MBC5 {
         Self {
             rom_bank: vec![[0_u8; MBC5_ROM_BANK_SIZE]; rom_bank],
             ram_bank: vec![[0_u8; MBC5_RAM_BANK_SIZE]; ram_bank],
+            regs: MBC5Reg::default()
         }
     }
 }
