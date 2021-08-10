@@ -21,6 +21,9 @@ impl MBC5 {
     ) -> Result<MBC5, io::Error> {
         let ctl = MBC5::empty(ram_size, rom_size);
 
+        for e in ctl.rom_bank.iter_mut() {
+            file.read_exact(e)?;
+        }
         Ok(ctl)
     }
 
