@@ -41,7 +41,22 @@ impl MBC5 {
     }
 
     fn write_rom(&mut self, v: u8, addr: Address) -> Result<(), Error> {
-        unimplemented!("write mbc5 rom")
+        match addr.relative {
+            0x0000..=0x1FFF => self.regs.ram_enabled = (v & 0xf) == 0xa,
+            0x2000..=0x2FFF => {
+                let current = self.regs.rom_number;
+
+                self.regs.rom_number = (current & 0x100) | v as u16
+            }
+            0x3000..=0x3FFF => {
+                let current = self.regs.rom_number;
+
+                self.regs.rom_number = ((v & 1) << 9) | (current & 0xFF)
+            }
+            0x4000..=0x5FFF => self.regs.ram_number = v & 0xf
+            _ => return Err(Error::SegmentationFault(addr)),
+        }
+        Ok(())
     }
 
     fn read_rom(&self, addr: Address) -> Result<u8, Error> {
