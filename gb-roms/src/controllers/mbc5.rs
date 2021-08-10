@@ -10,6 +10,7 @@ pub const MBC5_MAX_RAM_BANK: usize = 0x10;
 pub struct MBC5 {
     rom_bank: Vec<[u8; MBC5_ROM_BANK_SIZE]>,
     ram_bank: Vec<[u8; MBC5_RAM_BANK_SIZE]>,
+    regs: MBC5Reg,
 }
 
 impl MBC5 {
@@ -46,5 +47,24 @@ impl FileOperation for MBC5 {
 
     fn write(&mut self, v: u8, addr: Address) -> Result<(), Error> {
         unimplemented!("no write for mbc5")
+    }
+}
+
+struct MBC5Reg {
+    /// Enable read/write operation on the RAM
+    ram_enabled: bool,
+    /// Selected rom bank number
+    rom_number: u16,
+    /// Selected ram bank number
+    ram_number: u8,
+}
+
+impl Default for MBC5Reg {
+    fn default() -> Self {
+        Self {
+            ram_enabled: false,
+            rom_number: 0,
+            ram_number: 0,
+        }
     }
 }
