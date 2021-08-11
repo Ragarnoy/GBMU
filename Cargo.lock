@@ -274,7 +274,9 @@ dependencies = [
 name = "gb-ppu"
 version = "0.1.0"
 dependencies = [
+ "egui",
  "gb-lcd",
+ "sdl2",
 ]
 
 [[package]]
