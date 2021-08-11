@@ -24,10 +24,10 @@ pub struct MemoryEditorBuilder<'d, T> {
 
 impl<T> MemoryEditorBuilder<'_, T> {
     pub fn new(read_func: ReadFunction<T>, memory: T) -> Self {
-        let vec: [(&str, Range<usize>); 3] = [
+        let arr: [(&str, Range<usize>); 3] = [
             ("WRam", 0..0xAA),
             ("VRam", 0xAA..0xBB),
-            ("Pholder", 0xBB..0xCC),
+            ("Placeholder", 0xBB..0xCC),
         ];
         Self {
             read_func,
