@@ -10,7 +10,6 @@ pub enum Area {
     Oam,
     IOReg,
     HighRam,
-    IEReg,
 }
 
 impl Area {
