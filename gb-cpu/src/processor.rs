@@ -4,7 +4,6 @@ use crate::memory::area::rom::mbc::Mbc;
 use crate::memory::Memory;
 use cpu::Cpu;
 
-#[derive(Debug)]
 pub struct Processor {
     clock: u32,
     cpu: Cpu,
