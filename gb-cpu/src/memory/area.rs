@@ -1,7 +1,13 @@
+<<<<<<< HEAD
 pub mod wram;
 
 use super::consts;
 pub use wram::Wram;
+=======
+pub mod rom;
+
+use super::consts;
+>>>>>>> a6ff073 (Format code)
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Area {
