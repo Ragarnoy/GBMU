@@ -1,5 +1,5 @@
 #[derive(Debug)]
-pub enum _8Bits {
+pub enum Bits8 {
     B,
     C,
     D,
@@ -9,7 +9,7 @@ pub enum _8Bits {
 }
 
 #[derive(Debug)]
-pub enum _16Bits {
+pub enum Bits16 {
     SP,
     PC,
     BC,

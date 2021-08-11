@@ -13,7 +13,7 @@ impl Default for Wram {
 }
 
 impl Get<usize> for Wram {
-    type Output = u8;
+    type Item = u8;
 
     fn get(&self, address: usize) -> u8 {
         *self.data.get(address).unwrap()
@@ -21,7 +21,7 @@ impl Get<usize> for Wram {
 }
 
 impl Set<usize> for Wram {
-    type Output = ();
+    type Result = ();
     type Data = u8;
 
     fn set(&mut self, address: usize, data: u8) {
