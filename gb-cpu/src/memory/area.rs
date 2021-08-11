@@ -10,3 +10,5 @@ pub enum Area {
     HighRam,
     IEReg,
 }
+pub mod wram;
+pub mod rom;
