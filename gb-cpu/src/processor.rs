@@ -1,9 +1,8 @@
 pub mod cpu;
 
-use std::fs::File;
-
 use cpu::Cpu;
 use crate::memory::Memory;
+use crate::memory::area::rom::mbc::Mbc;
 
 #[derive(Debug)]
 pub struct Processor {
@@ -14,11 +13,11 @@ pub struct Processor {
 
 
 impl Processor {
-    pub fn new(bios: File, cartridge: File) -> Self {
+    pub fn new(mbc: Mbc, data: Vec<u8>) -> Self {
         Processor {
             clock: 0,
             cpu: Cpu::default(),
-            memory: Memory::new(bios, cartridge)
+            memory: Memory::new(mbc, data)
         }
     }
     pub fn run(&mut self) {

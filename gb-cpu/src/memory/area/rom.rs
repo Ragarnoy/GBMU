@@ -1,11 +1,8 @@
-mod mbc;
-
-use std::io::Read;
-use std::fs::File;
+pub mod mbc;
 
 use mbc::Mbc;
 use mbc::nombc::NoMbc;
-use crate::getset::*;
+use crate::getset::{Get,Set};
 
 #[derive(Debug)]
 pub struct Rom {
@@ -35,13 +32,7 @@ impl Set<usize> for Rom {
 }
 
 impl Rom {
-    pub fn new(bios: File, cartrige: File) -> Self {
-        let mut data: Vec<u8> = Vec::new();
-        data = bios.bytes().map(|x| x.unwrap()).collect();
-
-        let mut rom: Vec<u8> = cartrige.bytes().map(|x| x.unwrap()).collect();
-        data.append(&mut rom);
-
+    pub fn new(mbc: Mbc, data: Vec<u8>) -> Self {
         Rom {
             mbc: Mbc::NoMbc,
             data,

@@ -1,5 +1,5 @@
 const WRAM_SIZE: usize = 8192;
-use crate::getset::*;
+use crate::getset::{Get,Set};
 
 #[derive(Debug)]
 pub struct Wram {
