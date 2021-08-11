@@ -3,8 +3,8 @@ mod consts;
 
 use crate::error::Error;
 
-use area::wram::Wram;
-use area::Area;
+use crate::bus::Bus;
+use area::{Area, Wram};
 
 #[derive(Debug, Default)]
 pub struct Memory {
@@ -12,24 +12,30 @@ pub struct Memory {
 }
 
 impl Memory {
-    pub fn new(mbc: Mbc, data: Vec<u8>) -> Self {
+    pub fn new() -> Self {
         Memory {
             wram: Wram::default(),
         }
     }
+}
 
-impl Memory {
-    pub fn read(&self, address: u16) -> Result<u8, Error> {
+impl Bus<u16> for Memory {
+    type Item = Result<u8, Error>;
+    type Result = Result<(), Error>;
+    type Data = u8;
+
+    fn get(&self, address: u16) -> Self::Item {
         match address {
-            WRAM_MIN..=WRAM_MAX => self.wram.get(address::relative(Area::Wram, address)),
-            _ => Err(Error::InvalidAbsoluteAddress(address)),
+            consts::WRAM_MIN..=consts::WRAM_MAX => Ok(self.wram.get(Area::Wram.relative(address))),
+            _ => Err(Error::SegmentationFault(address)),
         }
     }
 
-    pub fn write(&mut self, address: u16, data: u8) -> Result<(), Error> {
+    fn set(&mut self, address: u16, data: Self::Data) -> Self::Result {
         match address {
             consts::WRAM_MIN..=consts::WRAM_MAX => {
-                Ok(self.wram.set(Area::Wram.relative(address), data))
+                self.wram.set(Area::Wram.relative(address), data);
+                Ok(())
             }
             _ => Err(Error::InvalidAbsoluteAddress(address)),
         }
@@ -38,46 +44,46 @@ impl Memory {
 
 #[cfg(test)]
 mod test_memory {
+    use super::Bus;
     use super::Memory;
 
     #[test]
     fn test_invalid_read() {
         let memory = Memory::default();
 
-        assert!(memory.read(0xfea1).is_err())
+        assert!(memory.get(0xfea1).is_err())
     }
 
     #[test]
     fn test_invalid_write() {
         let mut memory = Memory::default();
 
-        assert!(memory.write(0xfea1, 42).is_err())
+        assert!(memory.set(0xfea1, 42).is_err())
     }
 
     #[test]
     fn test_read_wram() {
         let memory = Memory::default();
 
-        assert!(memory.read(0xc010).is_ok());
+        assert!(memory.get(0xc010).is_ok());
     }
 
     #[test]
     fn test_write_wram() {
         let mut memory = Memory::default();
 
-        assert!(memory.write(0xc010, 42).is_ok());
+        assert!(memory.set(0xc010, 42).is_ok());
     }
 
     #[test]
     fn test_write_read_wram() {
         let mut memory = Memory::default();
 
-        assert!(memory.write(0xc010, 42).is_ok());
+        assert!(memory.set(0xc010, 42).is_ok());
 
-        let read = memory.read(0xc010);
+        let read = memory.get(0xc010);
 
         assert!(read.is_ok());
         assert_eq!(read.unwrap(), 42);
     }
 }
->>>>>>> dbc332a (Remove mod.rs files)
