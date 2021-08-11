@@ -1,4 +1,4 @@
-mod area;
+pub mod area;
 mod consts;
 
 use crate::error::Error;
