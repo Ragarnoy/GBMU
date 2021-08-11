@@ -1,12 +1,12 @@
 pub trait Get<T> {
-    type Output;
+    type Item;
 
-    fn get(&self, _: T) -> Self::Output;
+    fn get(&self, _: T) -> Self::Item;
 }
 
-pub trait Set<T> {
-    type Output;
+pub trait Set<T>: Get<T> {
+    type Result;
     type Data;
 
-    fn set(&mut self, _: T, data: Self::Data) -> Self::Output;
+    fn set(&mut self, _: T, data: Self::Data) -> Self::Result;
 }
