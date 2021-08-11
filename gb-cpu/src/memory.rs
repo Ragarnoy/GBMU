@@ -3,25 +3,14 @@ mod consts;
 
 use crate::error::Error;
 use crate::bus::Bus;
-use area::{Area, Wram, Rom};
 use area::rom::{Mbc, NoMbc};
+use area::{Area, Wram};
+
+type Rom = Box<dyn Bus<usize, Item = u8, Result = Result<(), Error>, Data = u8>>;
 
 pub struct Memory {
     pub wram: Wram,
-    pub rom: Box<dyn Rom<Item = u8, Result = Result<(), Error>>>,
-}
-
-impl Memory {
-    pub fn new(mbc: Mbc, data: Vec<u8>) -> Self {
-        let rom: Box<dyn Rom<Item = u8, Result = Result<(), Error>>> = match mbc {
-            Mbc::NoMbc => Box::new(NoMbc::new(data)),
-        };
-
-        Memory {
-            rom,
-            wram: Wram::default(),
-        }
-    }
+    pub rom: Rom,
 }
 
 impl Bus<u16> for Memory {
@@ -52,12 +41,24 @@ impl Bus<u16> for Memory {
     }
 }
 
+impl Memory {
+    pub fn new(mbc: Mbc, data: Vec<u8>) -> Self {
+        let rom: Rom = match mbc {
+            Mbc::NoMbc => Box::new(NoMbc::new(data)),
+        };
+
+        Memory {
+            rom,
+            wram: Wram::default(),
+        }
+    }
+}
+
 impl Default for Memory {
     fn default() -> Self {
         Memory::new(Mbc::NoMbc, vec![5])
     }
 }
-
 
 #[cfg(test)]
 mod test_memory {

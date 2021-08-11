@@ -3,11 +3,10 @@ pub mod rom;
 
 use super::consts;
 pub use wram::Wram;
-pub use rom::Rom;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Area {
-    _Rom,
+    Rom,
     _Vram,
     _ExtRam,
     Wram,
@@ -20,7 +19,7 @@ pub enum Area {
 impl Area {
     pub fn relative(self, address: u16) -> usize {
         let result = match self {
-            Area::_Rom => address,
+            Area::Rom => address,
             Area::_Vram => address - consts::ROM_MIN,
             Area::_ExtRam => address - consts::EXT_RAM_MIN,
             Area::Wram => address - consts::WRAM_MIN,
