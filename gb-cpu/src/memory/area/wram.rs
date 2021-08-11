@@ -1,5 +1,4 @@
 use crate::bus::Bus;
-
 const WRAM_SIZE: usize = 8192;
 
 #[derive(Debug)]
