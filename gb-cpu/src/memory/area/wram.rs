@@ -1,5 +1,5 @@
 const WRAM_SIZE: usize = 8192;
-use crate::getset::{Get,Set};
+use crate::getset::{Get, Set};
 
 #[derive(Debug)]
 pub struct Wram {
@@ -35,7 +35,6 @@ impl Wram {
             data: [0; WRAM_SIZE],
         }
     }
-
 }
 
 #[cfg(test)]

@@ -1,8 +1,8 @@
 pub mod registers;
 
 use crate::error::Error;
-use registers::*;
 use crate::memory::Memory;
+use registers::*;
 
 #[derive(Debug, Default)]
 pub struct Cpu {

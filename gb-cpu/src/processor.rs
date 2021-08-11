@@ -1,8 +1,8 @@
 pub mod cpu;
 
-use cpu::Cpu;
-use crate::memory::Memory;
 use crate::memory::area::rom::mbc::Mbc;
+use crate::memory::Memory;
+use cpu::Cpu;
 
 #[derive(Debug)]
 pub struct Processor {
@@ -11,13 +11,12 @@ pub struct Processor {
     memory: Memory,
 }
 
-
 impl Processor {
     pub fn new(mbc: Mbc, data: Vec<u8>) -> Self {
         Processor {
             clock: 0,
             cpu: Cpu::default(),
-            memory: Memory::new(mbc, data)
+            memory: Memory::new(mbc, data),
         }
     }
     pub fn run(&mut self) {

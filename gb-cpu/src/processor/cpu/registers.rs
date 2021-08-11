@@ -1,8 +1,8 @@
 pub mod area;
 
-use area::{Bits8,Bits16};
-use std::fmt;
 use crate::getset::*;
+use area::{Bits16, Bits8};
+use std::fmt;
 
 #[derive(Debug, Default)]
 pub struct Registers {

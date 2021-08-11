@@ -1,8 +1,8 @@
 pub mod mbc;
 
-use mbc::Mbc;
+use crate::getset::{Get, Set};
 use mbc::nombc::NoMbc;
-use crate::getset::{Get,Set};
+use mbc::Mbc;
 
 #[derive(Debug)]
 pub struct Rom {
@@ -15,7 +15,7 @@ impl Get<usize> for Rom {
 
     fn get(&self, address: usize) -> u8 {
         match self.mbc {
-            Mbc::NoMbc => NoMbc::read(&self.data, address)
+            Mbc::NoMbc => NoMbc::read(&self.data, address),
         }
     }
 }
@@ -26,7 +26,7 @@ impl Set<usize> for Rom {
 
     fn set(&mut self, address: usize, data: u8) {
         match self.mbc {
-            Mbc::NoMbc => NoMbc::write(&mut self.data, address, data)
+            Mbc::NoMbc => NoMbc::write(&mut self.data, address, data),
         }
     }
 }

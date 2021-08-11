@@ -4,21 +4,21 @@ mod consts;
 use crate::error::Error;
 use crate::getset::*;
 
-use area::Area;
-use area::wram::Wram;
 use area::rom::{mbc::Mbc, Rom};
+use area::wram::Wram;
+use area::Area;
 
 #[derive(Debug)]
 pub struct Memory {
     pub wram: Wram,
-    pub rom: Rom
+    pub rom: Rom,
 }
 
 impl Memory {
     pub fn new(mbc: Mbc, data: Vec<u8>) -> Self {
-        Memory{
+        Memory {
             rom: Rom::new(mbc, data),
-            wram: Wram::default()
+            wram: Wram::default(),
         }
     }
 
@@ -31,9 +31,9 @@ impl Memory {
 
     pub fn write(&mut self, address: u16, data: u8) -> Result<(), Error> {
         match address {
-            consts::WRAM_MIN..=consts::WRAM_MAX => Ok(self
-                .wram
-                .set(Area::Wram.relative(address), data)),
+            consts::WRAM_MIN..=consts::WRAM_MAX => {
+                Ok(self.wram.set(Area::Wram.relative(address), data))
+            }
             _ => Err(Error::InvalidAbsoluteAddress(address)),
         }
     }

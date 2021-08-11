@@ -39,4 +39,3 @@ pub enum Flags {
     /// - Reg A is the smaller value when doing a `Cmp` OP
     C,
 }
-
