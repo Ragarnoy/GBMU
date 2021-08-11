@@ -5,15 +5,18 @@ use crate::error::Error;
 
 use crate::bus::Bus;
 use area::{Area, Wram};
+use area::rom::{mbc::Mbc, Rom};
 
 #[derive(Debug, Default)]
 pub struct Memory {
     pub wram: Wram,
+    pub rom: Rom,
 }
 
 impl Memory {
-    pub fn new() -> Self {
+    pub fn new(mbc: Mbc, data: Vec<u8>) -> Self {
         Memory {
+            rom: Rom::new(mbc, data),
             wram: Wram::default(),
         }
     }
