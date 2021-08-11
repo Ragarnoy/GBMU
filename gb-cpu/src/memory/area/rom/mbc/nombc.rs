@@ -1,10 +1,10 @@
-pub struct RomOnly {
+pub struct NoMbc {
     data: Vec<u8>
 }
 
-impl RomOnly {
+impl NoMbc {
     pub fn new(data: Vec<u8>) -> Self {
-        RomOnly {
+        NoMbc {
             data
         }
     }
