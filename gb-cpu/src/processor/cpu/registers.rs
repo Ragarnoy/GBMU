@@ -1,6 +1,6 @@
 pub mod area;
 
-use crate::getset::*;
+use crate::bus::Bus;
 use area::{Bits16, Bits8};
 use std::fmt;
 
@@ -33,9 +33,21 @@ impl fmt::Display for Registers {
             self.pc)
     }
 }
-impl Set<Bits8> for Registers {
+impl Bus<Bits8> for Registers {
     type Result = ();
     type Data = u8;
+    type Item = u8;
+
+    fn get(&self, area: Bits8) -> u8 {
+        match area {
+            Bits8::B => self.b,
+            Bits8::C => self.c,
+            Bits8::D => self.d,
+            Bits8::E => self.e,
+            Bits8::H => self.h,
+            Bits8::L => self.l,
+        }
+    }
 
     fn set(&mut self, area: Bits8, data: u8) {
         match area {
@@ -49,36 +61,8 @@ impl Set<Bits8> for Registers {
     }
 }
 
-impl Get<Bits8> for Registers {
-    type Item = u8;
-
-    fn get(&self, area: Bits8) -> u8 {
-        match area {
-            Bits8::B => self.b,
-            Bits8::C => self.c,
-            Bits8::D => self.d,
-            Bits8::E => self.e,
-            Bits8::H => self.h,
-            Bits8::L => self.l,
-        }
-    }
-}
-
-impl Get<Bits16> for Registers {
+impl Bus<Bits16> for Registers {
     type Item = u16;
-
-    fn get(&self, area: Bits16) -> u16 {
-        match area {
-            Bits16::SP => self.sp,
-            Bits16::PC => self.pc,
-            Bits16::BC => (self.b as u16) << 8 | self.c as u16,
-            Bits16::DE => (self.d as u16) << 8 | self.e as u16,
-            Bits16::HL => (self.h as u16) << 8 | self.l as u16,
-        }
-    }
-}
-
-impl Set<Bits16> for Registers {
     type Result = ();
     type Data = u16;
 
@@ -104,6 +88,16 @@ impl Set<Bits16> for Registers {
             }
         }
     }
+
+    fn get(&self, area: Bits16) -> u16 {
+        match area {
+            Bits16::SP => self.sp,
+            Bits16::PC => self.pc,
+            Bits16::BC => (self.b as u16) << 8 | self.c as u16,
+            Bits16::DE => (self.d as u16) << 8 | self.e as u16,
+            Bits16::HL => (self.h as u16) << 8 | self.l as u16,
+        }
+    }
 }
 
 impl Registers {
@@ -116,7 +110,7 @@ impl Registers {
 mod test_registers {
     use super::area::*;
     use super::Registers;
-    use crate::getset::*;
+    use crate::bus::Bus;
 
     #[test]
     fn test_valid_write_read_8bits() {

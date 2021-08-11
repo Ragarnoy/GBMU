@@ -1,5 +1,6 @@
 pub mod registers;
 
+use crate::bus::Bus;
 use crate::error::Error;
 use crate::memory::Memory;
 use registers::*;
@@ -11,7 +12,7 @@ pub struct Cpu {
 
 impl Cpu {
     fn next(&mut self, memory: &Memory) -> Result<u8, Error> {
-        match memory.read(self.registers.pc) {
+        match memory.get(self.registers.pc) {
             Ok(byte) => {
                 self.registers.next_pc();
                 Ok(byte)

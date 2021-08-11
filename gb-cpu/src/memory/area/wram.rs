@@ -1,5 +1,5 @@
 const WRAM_SIZE: usize = 8192;
-use crate::getset::{Get, Set};
+use crate::bus::Bus;
 
 #[derive(Debug)]
 pub struct Wram {
@@ -12,20 +12,17 @@ impl Default for Wram {
     }
 }
 
-impl Get<usize> for Wram {
+impl Bus<usize> for Wram {
     type Item = u8;
-
-    fn get(&self, address: usize) -> u8 {
-        *self.data.get(address).unwrap()
-    }
-}
-
-impl Set<usize> for Wram {
     type Result = ();
     type Data = u8;
 
     fn set(&mut self, address: usize, data: u8) {
         self.data[address] = data;
+    }
+
+    fn get(&self, address: usize) -> u8 {
+        *self.data.get(address).unwrap()
     }
 }
 
@@ -40,7 +37,7 @@ impl Wram {
 #[cfg(test)]
 mod test_wram {
     use super::Wram;
-    use crate::getset::*;
+    use crate::bus::Bus;
 
     #[test]
     fn test_read_wram() {

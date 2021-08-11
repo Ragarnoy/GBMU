@@ -3,7 +3,6 @@ pub mod wram;
 
 use super::consts;
 pub use wram::Wram;
-pub use rom::Rom;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Area {
