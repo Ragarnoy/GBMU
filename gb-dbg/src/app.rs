@@ -1,4 +1,4 @@
 
-pub struct App {
+pub struct DebugApp {
 
 }
