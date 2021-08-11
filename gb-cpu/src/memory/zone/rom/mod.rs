@@ -15,7 +15,7 @@ pub struct Rom {
 }
 
 impl Get<usize> for Rom {
-    type Output = u8;
+    type Item = u8;
 
     fn get(&self, address: usize) -> u8 {
         match self.mbc {
@@ -25,7 +25,7 @@ impl Get<usize> for Rom {
 }
 
 impl Set<usize> for Rom {
-    type Output = ();
+    type Result = ();
     type Data = u8;
 
     fn set(&mut self, address: usize, data: u8) {
