@@ -1,5 +1,5 @@
 pub const ROM_MIN: u16 = 0x000;
-pub const _ROM_MAX: u16 = 0x7fff;
+pub const ROM_MAX: u16 = 0x7fff;
 pub const _VRAM_MIN: u16 = 0x8000;
 pub const _VRAM_MAX: u16 = 0x9fff;
 pub const EXT_RAM_MIN: u16 = 0xa000;
