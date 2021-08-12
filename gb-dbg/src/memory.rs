@@ -1,4 +1,4 @@
-use egui::Ui;
+use egui::{Ui, Label, Color32};
 use egui_memory_editor::option_data::MemoryEditorOptions;
 use egui_memory_editor::{MemoryEditor, ReadFunction, WriteFunction};
 use std::ops::Range;
@@ -10,6 +10,7 @@ pub struct GBMemoryEditor<T> {
 
 impl<T> GBMemoryEditor<T> {
     pub fn draw(&mut self, ui: &mut Ui) {
+        ui.label(Label::new("Memory Editor").text_color(Color32::WHITE));
         self.memory_editor
             .draw_editor_contents(ui, &mut self.memory);
     }

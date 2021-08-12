@@ -21,7 +21,12 @@ impl<T> DebugApp<T> {
             self.flow_controller.draw(ui);
         });
         egui::SidePanel::left("left_panel").resizable(false).default_width(200.0).show(ctx, |ui| {
-            self.memory_editor.draw(ui);
+            ui.vertical(|ui| {
+                ui.separator();
+                self.memory_editor.draw(ui);
+            });
+        });
+        egui::SidePanel::right("right_panel").resizable(false).show(ctx, |ui| {
         });
     }
 }
