@@ -32,7 +32,7 @@ impl<T> MemoryEditorBuilder<'_, T> {
         Self {
             read_func,
             write_func: None,
-            address_ranges: vec,
+            address_ranges: arr,
             memory,
         }
     }
