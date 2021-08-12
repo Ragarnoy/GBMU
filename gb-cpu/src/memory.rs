@@ -21,8 +21,8 @@ impl Bus<u16> for Memory {
 
     fn get(&self, address: u16) -> Result<u8, Error> {
         match address {
-            consts::ROM_MIN..=consts::ROM_MAX => Ok(self.rom.get(Area::Rom.relative(address))),
-            consts::WRAM_MIN..=consts::WRAM_MAX => Ok(self.wram.get(Area::Wram.relative(address))),
+            consts::ROM_MIN..=consts::ROM_MAX => Ok(self.rom.get(Area::Rom(address).relative())),
+            consts::WRAM_MIN..=consts::WRAM_MAX => Ok(self.wram.get(Area::Wram(address).relative())),
             _ => Err(Error::InvalidAbsoluteAddress(address)),
         }
     }
@@ -30,7 +30,7 @@ impl Bus<u16> for Memory {
     fn set(&mut self, address: u16, data: u8) -> Result<(), Error> {
         match address {
             consts::WRAM_MIN..=consts::WRAM_MAX => {
-                Ok(self.wram.set(Area::Wram.relative(address), data))
+                Ok(self.wram.set(Area::Wram(address).relative(), data))
             }
             _ => Err(Error::InvalidAbsoluteAddress(address)),
         }
