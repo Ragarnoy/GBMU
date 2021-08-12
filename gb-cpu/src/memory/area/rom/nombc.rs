@@ -15,7 +15,7 @@ impl Bus<usize> for NoMbc {
     }
 
     fn set(&mut self, address: usize, data: Self::Data) -> Self::Result {
-        Err(Error::SetError(address, data))
+        Err(Error::IllegalSet(address, data))
     }
 }
 
