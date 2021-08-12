@@ -1,5 +1,6 @@
 #[derive(Debug)]
 pub enum Error {
-    InvalidAbsoluteAddress(u16),
     InvalidPC(u16),
+    SetError(usize, u8),
+    SegmentationFault(u16),
 }

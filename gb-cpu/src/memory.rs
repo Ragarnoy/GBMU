@@ -23,7 +23,7 @@ impl Bus<u16> for Memory {
         match address {
             consts::ROM_MIN..=consts::ROM_MAX => Ok(self.rom.get(Area::Rom(address).relative())),
             consts::WRAM_MIN..=consts::WRAM_MAX => Ok(self.wram.get(Area::Wram(address).relative())),
-            _ => Err(Error::InvalidAbsoluteAddress(address)),
+            _ => Err(Error::SegmentationFault(address)),
         }
     }
 
@@ -32,7 +32,7 @@ impl Bus<u16> for Memory {
             consts::WRAM_MIN..=consts::WRAM_MAX => {
                 Ok(self.wram.set(Area::Wram(address).relative(), data))
             }
-            _ => Err(Error::InvalidAbsoluteAddress(address)),
+            _ => Err(Error::SegmentationFault(address)),
         }
     }
 }
