@@ -2,7 +2,6 @@ pub mod area;
 
 use crate::bus::Bus;
 use area::{Bits16, Bits8};
-use std::fmt;
 
 #[derive(Debug, Default)]
 pub struct Registers {
@@ -18,21 +17,6 @@ pub struct Registers {
     pub pc: u16,
 }
 
-impl fmt::Display for Registers {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Registers {{ a: {}, f: {}, b: {}, c: {}, d: {}, e: {}, h: {}, l: {}, sp: {}, cp: {} }}",
-            self.a,
-            self.f,
-            self.b,
-            self.c,
-            self.d,
-            self.e,
-            self.h,
-            self.l,
-            self.sp,
-            self.pc)
-    }
-}
 impl Bus<Bits8> for Registers {
     type Result = ();
     type Data = u8;
