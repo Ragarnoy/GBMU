@@ -17,12 +17,12 @@ impl Bus<usize> for Wram {
     type Result = ();
     type Data = u8;
 
-    fn set(&mut self, address: usize, data: u8) {
+    fn set(&mut self, address: usize, data: Self::Data) -> Self::Result {
         self.data[address] = data;
     }
 
-    fn get(&self, address: usize) -> u8 {
-        *self.data.get(address).unwrap()
+    fn get(&self, address: usize) -> Self::Item {
+        self.data[address]
     }
 }
 

@@ -19,7 +19,7 @@ impl Bus<u16> for Memory {
     type Result = Result<(), Error>;
     type Data = u8;
 
-    fn get(&self, address: u16) -> Result<u8, Error> {
+    fn get(&self, address: u16) -> Self::Item {
         match address {
             consts::ROM_MIN..=consts::ROM_MAX => Ok(self.rom.get(Area::Rom(address).relative())),
             consts::WRAM_MIN..=consts::WRAM_MAX => Ok(self.wram.get(Area::Wram(address).relative())),
@@ -27,7 +27,7 @@ impl Bus<u16> for Memory {
         }
     }
 
-    fn set(&mut self, address: u16, data: u8) -> Result<(), Error> {
+    fn set(&mut self, address: u16, data: Self::Data) -> Self::Result {
         match address {
             consts::WRAM_MIN..=consts::WRAM_MAX => {
                 Ok(self.wram.set(Area::Wram(address).relative(), data))
