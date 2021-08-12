@@ -10,12 +10,12 @@ impl Bus<usize> for NoMbc {
     type Result = Result<(), Error>;
     type Data = u8;
 
-    fn get(&self, address: usize) -> u8 {
+    fn get(&self, address: usize) -> Self::Item {
         *self.data.get(address).unwrap()
     }
 
-    fn set(&mut self, _address: usize, _data: u8) -> Self::Result {
-        Ok(())
+    fn set(&mut self, address: usize, data: Self::Data) -> Self::Result {
+        Err(Error::SetError(address, data))
     }
 }
 
