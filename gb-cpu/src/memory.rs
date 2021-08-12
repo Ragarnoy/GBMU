@@ -37,7 +37,7 @@ impl Bus<u16> for Memory {
                 self.wram.set(Area::Wram.relative(address), data);
                 Ok(())
             }
-            _ => Err(Error::InvalidAbsoluteAddress(address)),
+            _ => Err(Error::SegmentationFault(address)),
         }
     }
 }
