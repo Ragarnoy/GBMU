@@ -1,7 +1,10 @@
 mod error;
 mod memory;
+mod registers;
 
 use gb_lcd::render::{RenderData, SCREEN_HEIGHT, SCREEN_WIDTH};
+
+use registers::Control;
 
 pub const TILESHEET_WIDTH: usize = 128;
 pub const TILESHEET_HEIGHT: usize = 192;
@@ -10,6 +13,7 @@ use memory::{Vram, VRAM_SIZE};
 
 pub struct PPU {
     vram: Vram,
+    control: Control,
     pixels: RenderData<SCREEN_WIDTH, SCREEN_HEIGHT>,
 }
 
@@ -17,6 +21,7 @@ impl PPU {
     pub fn new() -> Self {
         Self {
             vram: Vram::new(),
+            control: Control::new(),
             pixels: [[[255; 3]; SCREEN_WIDTH]; SCREEN_HEIGHT],
         }
     }
