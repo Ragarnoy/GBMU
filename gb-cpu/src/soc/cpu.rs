@@ -3,7 +3,7 @@ pub mod registers;
 use crate::bus::Bus;
 use crate::error::Error;
 use crate::memory::Memory;
-use registers::*;
+use registers::Registers;
 
 #[derive(Debug, Default)]
 pub struct Cpu {

@@ -22,7 +22,9 @@ impl Bus<u16> for Memory {
     fn get(&self, address: u16) -> Self::Item {
         match address {
             consts::ROM_MIN..=consts::ROM_MAX => Ok(self.rom.get(Area::Rom(address).relative())),
-            consts::WRAM_MIN..=consts::WRAM_MAX => Ok(self.wram.get(Area::Wram(address).relative())),
+            consts::WRAM_MIN..=consts::WRAM_MAX => {
+                Ok(self.wram.get(Area::Wram(address).relative()))
+            }
             _ => Err(Error::SegmentationFault(address)),
         }
     }

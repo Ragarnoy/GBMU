@@ -4,15 +4,15 @@ use crate::memory::area::rom::mbc::Mbc;
 use crate::memory::Memory;
 use cpu::Cpu;
 
-pub struct Processor {
+pub struct SOC {
     clock: u32,
     cpu: Cpu,
     memory: Memory,
 }
 
-impl Processor {
+impl SOC {
     pub fn new(mbc: Mbc, data: Vec<u8>) -> Self {
-        Processor {
+        SOC {
             clock: 0,
             cpu: Cpu::default(),
             memory: Memory::new(mbc, data),
