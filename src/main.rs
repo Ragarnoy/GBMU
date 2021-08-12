@@ -5,6 +5,7 @@ use gb_lcd::{render, window::GBWindow};
 use gb_ppu::PPU;
 use gb_dbg::*;
 use gb_dbg::memory::MemoryEditorBuilder;
+use gb_dbg::app::DebugApp;
 
 fn main() {
     let (sdl_context, video_subsystem, mut event_pump) =
@@ -34,7 +35,7 @@ fn main() {
     let mem = vec![0u8; u16::MAX as usize];
     let gbm_mem = MemoryEditorBuilder::new(|mem , address| *mem.get(address).unwrap(), mem)
         .with_write_function(|mem, address, value| mem[address] = value).build();
-    let mut dbg_app = gb_dbg::app::DebugApp::new(gbm_mem);
+    let mut dbg_app = DebugApp::new(gbm_mem, gb_dbg::flow_control::FlowController);
     // let mut mem_view = egui_memory_editor::MemoryEditor::<Vec<u8>>::new(|mem, address| *mem.get(address).unwrap())
     //     .with_address_range("All", 0..0xFFFF)
     //     .with_write_function(|mem, address, value| mem[address] = value);
