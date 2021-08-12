@@ -14,7 +14,6 @@ pub enum Area {
     Oam(u16),
     IOReg(u16),
     HighRam(u16),
-    IEReg,
 }
 
 impl Area {
@@ -28,7 +27,6 @@ impl Area {
             Area::Oam(address) => *address - consts::OAM_MIN,
             Area::IOReg(address) => *address - consts::IOREG_MIN,
             Area::HighRam(address) => *address - consts::HIGH_MIN,
-            Area::IEReg => consts::INTERUPT_ENABLE,
         };
         result as usize
     }

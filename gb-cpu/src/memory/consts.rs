@@ -14,4 +14,4 @@ pub const IOREG_MIN: u16 = 0xff00;
 pub const _IOREM_MAX: u16 = 0xff7f;
 pub const HIGH_MIN: u16 = 0xff80;
 pub const _HIGH_MAX: u16 = 0xfffe;
-pub const INTERUPT_ENABLE: u16 = 0xffff;
+pub const _INTERUPT_ENABLE: u16 = 0xffff;
