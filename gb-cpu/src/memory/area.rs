@@ -16,7 +16,7 @@ pub enum Area {
 }
 
 impl Area {
-    pub fn relative(&self, address: u16) -> usize {
+    pub fn relative(self, address: u16) -> usize {
         let result = match self {
             Area::_Rom => address,
             Area::_Vram => address - consts::ROM_MIN,
