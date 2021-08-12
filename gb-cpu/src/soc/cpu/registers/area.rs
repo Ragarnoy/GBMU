@@ -1,5 +1,6 @@
 #[derive(Debug)]
 pub enum Bits8 {
+    A,
     B,
     C,
     D,
@@ -10,6 +11,7 @@ pub enum Bits8 {
 
 #[derive(Debug)]
 pub enum Bits16 {
+    AF,
     SP,
     PC,
     BC,
