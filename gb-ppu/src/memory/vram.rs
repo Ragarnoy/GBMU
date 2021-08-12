@@ -1,6 +1,10 @@
 pub const VRAM_SIZE: usize = 0x2000;
 const TILEDATA_ADRESS_MAX: usize = 0x17FF;
 const TILEDATA_ADRESS_MIN: usize = 0x0000;
+const TILEMAP_POSITION_MAX: usize = 0x3FF;
+const TILEMAP_POSITION_MIN: usize = 0x0000;
+const TILEMAP_START_0: usize = 0x9800;
+const TILEMAP_START_1: usize = 0x9C00;
 
 use crate::error::{Error, PPUResult};
 
@@ -12,6 +16,22 @@ impl Vram {
     pub fn new() -> Self {
         Vram {
             data: [0x00; VRAM_SIZE as usize],
+        }
+    }
+
+    /// return the index of a tile from the correct map area depending on the area_bit.
+    pub fn get_map_tile_index(&self, pos: usize, area_bit: u8) -> PPUResult<u8, usize> {
+        if pos > TILEMAP_POSITION_MAX {
+            return Err(Error::OutOfBound {
+                value: pos,
+                min_bound: TILEMAP_POSITION_MIN,
+                max_bound: TILEMAP_POSITION_MAX,
+            });
+        }
+        if area_bit == 0 {
+            Ok(self.data[TILEMAP_START_0 + pos])
+        } else {
+            Ok(self.data[TILEMAP_START_1 + pos])
         }
     }
 
