@@ -24,6 +24,7 @@ impl Bus<Bits8> for Registers {
 
     fn get(&self, area: Bits8) -> Self::Item {
         match area {
+            Bits8::A => self.a,
             Bits8::B => self.b,
             Bits8::C => self.c,
             Bits8::D => self.d,
@@ -35,6 +36,7 @@ impl Bus<Bits8> for Registers {
 
     fn set(&mut self, area: Bits8, data: Self::Data) -> Self::Result {
         match area {
+            Bits8::A => self.a = data,
             Bits8::B => self.b = data,
             Bits8::C => self.c = data,
             Bits8::D => self.d = data,
@@ -52,6 +54,10 @@ impl Bus<Bits16> for Registers {
 
     fn set(&mut self, area: Bits16, data: Self::Data) -> Self::Result {
         match area {
+            Bits16::AF => {
+                self.a = (data >> 8) as u8;
+                self.f = data as u8;
+            }
             Bits16::SP => {
                 self.sp = data;
             }
@@ -77,6 +83,7 @@ impl Bus<Bits16> for Registers {
         match area {
             Bits16::SP => self.sp,
             Bits16::PC => self.pc,
+            Bits16::AF => (self.a as u16) << 8 | self.f as u16,
             Bits16::BC => (self.b as u16) << 8 | self.c as u16,
             Bits16::DE => (self.d as u16) << 8 | self.e as u16,
             Bits16::HL => (self.h as u16) << 8 | self.l as u16,
