@@ -8,9 +8,17 @@ use registers::Control;
 
 pub const TILESHEET_WIDTH: usize = 128;
 pub const TILESHEET_HEIGHT: usize = 192;
+pub const TILESHEET_TILE_COUNT: usize = 16 * 24;
+
+pub const TILEMAP_DIM: usize = 256;
+pub const TILEMAP_TILE_COUNT: usize = 32 * 32;
 
 use memory::{Vram, VRAM_SIZE};
 
+/// Pixel Process Unit: is in charge of selecting the pixel to be displayed on the lcd screen.
+///
+/// Memory field (Vram, OAM) and registers owned by the ppu are simply exposed by public function when required for examples for now.
+/// This impl propably won't work once the cpu will need to access them.
 pub struct PPU {
     vram: Vram,
     control: Control,
@@ -28,6 +36,14 @@ impl PPU {
 
     pub fn pixels(&self) -> &RenderData<SCREEN_WIDTH, SCREEN_HEIGHT> {
         &self.pixels
+    }
+
+    pub fn control(&self) -> &Control {
+        &self.control
+    }
+
+    pub fn control_mut(&mut self) -> &mut Control {
+        &mut self.control
     }
 
     pub fn compute(&mut self) {
@@ -52,7 +68,7 @@ impl PPU {
         let mut image = [[[255; 3]; TILESHEET_WIDTH]; TILESHEET_HEIGHT];
         let mut x = 0;
         let mut y = 0;
-        for k in 0..384 {
+        for k in 0..TILESHEET_TILE_COUNT {
             let tile = self.vram.read_8x8_tile(k).unwrap();
             for j in 0..8 {
                 for i in 0..8 {
@@ -72,6 +88,40 @@ impl PPU {
                 y += 1;
             }
             if y * 8 >= TILESHEET_HEIGHT {
+                return image;
+            }
+        }
+        image
+    }
+
+    pub fn tilemap_image(&self) -> RenderData<TILEMAP_DIM, TILEMAP_DIM> {
+        let mut image = [[[255; 3]; TILEMAP_DIM]; TILEMAP_DIM];
+        let mut x = 0;
+        let mut y = 0;
+        for k in 0..TILEMAP_TILE_COUNT {
+            let index = self
+                .vram
+                .get_map_tile_index(k, self.control.bg_tilemap_area())
+                .unwrap();
+            let tile = self.vram.read_8x8_tile(index as usize).unwrap();
+            for j in 0..8 {
+                for i in 0..8 {
+                    image[y * 8 + j][TILEMAP_DIM - (x + 1) * 8 + i] =
+                        match tile[j as usize][i as usize] {
+                            3 => [0; 3],
+                            2 => [85; 3],
+                            1 => [170; 3],
+                            0 => [255; 3],
+                            _ => [255; 3],
+                        }
+                }
+            }
+            x += 1;
+            if x * 8 >= TILEMAP_DIM {
+                x = 0;
+                y += 1;
+            }
+            if y * 8 >= TILEMAP_DIM {
                 return image;
             }
         }

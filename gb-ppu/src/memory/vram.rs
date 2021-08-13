@@ -3,8 +3,8 @@ const TILEDATA_ADRESS_MAX: usize = 0x17FF;
 const TILEDATA_ADRESS_MIN: usize = 0x0000;
 const TILEMAP_POSITION_MAX: usize = 0x3FF;
 const TILEMAP_POSITION_MIN: usize = 0x0000;
-const TILEMAP_START_0: usize = 0x9800;
-const TILEMAP_START_1: usize = 0x9C00;
+const TILEMAP_START_0: usize = 0x1800;
+const TILEMAP_START_1: usize = 0x1C00;
 
 use crate::error::{Error, PPUResult};
 
