@@ -55,18 +55,18 @@ impl Vram {
     /// Read a row of 8 pixels values contained in a couple of byte in the vram.
     ///
     /// ### Parameters
-    ///  - adr: adress pointing to the couple bytes to be interpreted as pixels values.
-    pub fn read_8_pixels(&self, adr: usize) -> PPUResult<[u8; 8], usize> {
+    ///  - **pos**: position of the couple of bytes to be interpreted as pixels values.
+    pub fn read_8_pixels(&self, pos: usize) -> PPUResult<[u8; 8], usize> {
         let mut pixels = [0; 8];
-        if adr > TILEDATA_ADRESS_MAX - 1 {
+        if pos > TILEDATA_ADRESS_MAX - 1 {
             return Err(Error::OutOfBound {
-                value: adr,
+                value: pos,
                 min_bound: 0,
                 max_bound: TILEDATA_ADRESS_MAX - 1,
             });
         }
-        let byte_a = self.data[adr];
-        let byte_b = self.data[adr + 1];
+        let byte_a = self.data[pos];
+        let byte_b = self.data[pos + 1];
         for (i, pixel) in pixels.iter_mut().enumerate() {
             let bit = 0b0000_0001 << i;
             *pixel = if i > 0 {
@@ -83,18 +83,18 @@ impl Vram {
     /// This function is used for debugging purpose, the ppu does not select pixels tile by tile.
     ///
     /// ### Parameters
-    ///  - adr: adress pointing to the first byte of the tile.
-    pub fn read_8x8_tile(&self, adr: usize) -> PPUResult<[[u8; 8]; 8], usize> {
+    ///  - **pos**: position of the first byte of the tile.
+    pub fn read_8x8_tile(&self, pos: usize) -> PPUResult<[[u8; 8]; 8], usize> {
         let mut tile = [[0; 8]; 8];
-        if adr * 8 * 2 > TILEDATA_ADRESS_MAX + 1 - 8 * 2 {
+        if pos * 8 * 2 > TILEDATA_ADRESS_MAX + 1 - 8 * 2 {
             return Err(Error::OutOfBound {
-                value: adr,
+                value: pos,
                 min_bound: 0,
                 max_bound: TILEDATA_ADRESS_MAX / (8 * 2),
             });
         }
         for (i, row) in tile.iter_mut().enumerate() {
-            *row = self.read_8_pixels((adr * 8 + i) * 2)?;
+            *row = self.read_8_pixels((pos * 8 + i) * 2)?;
         }
         Ok(tile)
     }
