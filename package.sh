@@ -21,5 +21,4 @@ mkdir "${RESOURCES}";
 # sips -s format icns logo.png --out logo.icns
 cp "logo.icns" "${RESOURCES}/";
 
-touch "${APPNAME}.app";
 echo "${PWD}/$APPNAME.app";
