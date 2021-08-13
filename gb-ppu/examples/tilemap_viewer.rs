@@ -38,6 +38,8 @@ pub fn main() {
     ];
     ppu.overwrite_vram(dumps[0].1);
     let mut display_window = false;
+    ppu.control_mut().set_win_tilemap_area(1);
+    ppu.control_mut().set_bg_tilemap_area(0);
     let mut image = ppu.tilemap_image(display_window);
 
     'running: loop {
