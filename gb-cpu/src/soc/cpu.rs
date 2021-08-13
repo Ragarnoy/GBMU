@@ -1,4 +1,6 @@
 pub mod registers;
+mod area;
+mod flags;
 
 use crate::bus::Bus;
 use crate::error::Error;
