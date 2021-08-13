@@ -82,6 +82,13 @@ impl<const WIDTH: usize, const HEIGHT: usize> RenderImage<WIDTH, HEIGHT> {
         }
     }
 
+    #[cfg(feature = "debug")]
+    pub fn switch_draw_mode(&self, lines: bool) {
+        unsafe {
+            gl::PolygonMode(gl::FRONT_AND_BACK, if lines { gl::LINE } else { gl::FILL });
+        }
+    }
+
     pub fn resize(&mut self, dim: (u32, u32)) {
         let dim = (dim.0 as f32, dim.1 as f32);
         let screen_ratio = WIDTH as f32 / HEIGHT as f32;
@@ -107,6 +114,10 @@ impl<const WIDTH: usize, const HEIGHT: usize> RenderImage<WIDTH, HEIGHT> {
         if screen_ratio > actual_ratio {
             self.offset.1 += 1.0 * (free_dim.1 - target_dim.1) / dim.1;
         }
+        println!("{:?};{:?}", dim.0, dim.1);
+        println!("{:?}:{:?}", free_dim.1, target_dim.1);
+        println!("{:?}:{:?}", self.scale.1, self.scale.1 * dim.1);
+        println!("{:?}:{:?}", self.offset.1, self.offset.1 * dim.1);
     }
 
     pub fn update_render(&mut self, texture_pixels: &RenderData<WIDTH, HEIGHT>) {

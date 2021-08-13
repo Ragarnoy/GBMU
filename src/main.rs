@@ -5,6 +5,9 @@ use gb_dbg::app::Debugger;
 use gb_dbg::disassembler::Disassembler;
 use gb_dbg::flow_control::FlowController;
 use gb_dbg::memory::MemoryEditorBuilder;
+#[cfg(feature = "debug")]
+use sdl2::keyboard::Scancode;
+
 use gb_lcd::{render, window::GBWindow};
 use gb_ppu::PPU;
 
@@ -39,6 +42,9 @@ fn main() {
         .with_address_range("VRam", 0..0xFF)
         .build();
     let mut dbg_app = Debugger::new(gbm_mem, FlowController, Disassembler);
+
+    #[cfg(feature = "debug")]
+    let mut debug = false;
 
     'running: loop {
         gb_window
@@ -95,6 +101,20 @@ fn main() {
                     keycode: Some(Keycode::Escape),
                     ..
                 } => break 'running,
+                #[cfg(feature = "debug")]
+                sdl2::event::Event::KeyDown {
+                    window_id,
+                    scancode,
+                    ..
+                } => {
+                    if gb_window.sdl_window().id() == window_id && scancode == Some(Scancode::Grave)
+                    {
+                        println!("switch: {:?}", debug);
+                        debug = !debug;
+                        display.switch_draw_mode(debug);
+                        gb_window.set_debug(debug);
+                    }
+                }
                 Event::Window {
                     win_event,
                     window_id,

@@ -26,28 +26,13 @@ impl PPU {
     }
 
     pub fn compute(&mut self) {
-        let mut x = 0;
-        let mut y = 0;
-        for k in 0..383 {
-            let tile = self.vram.read_8x8_tile(k).unwrap();
-            for j in 0..8 {
-                for i in 0..8 {
-                    self.pixels[y + j][x + i] = match tile[j as usize][i as usize] {
-                        3 => [0; 3],
-                        2 => [85; 3],
-                        1 => [170; 3],
-                        0 => [255; 3],
-                        _ => [255; 3],
-                    }
+        for j in 0..SCREEN_HEIGHT {
+            for i in 0..SCREEN_WIDTH {
+                if i == 0 || i == SCREEN_WIDTH - 1 || j == 0 || j == SCREEN_HEIGHT - 1 {
+                    self.pixels[j][i] = [255, 0, 0];
+                } else {
+                    self.pixels[j][i] = [0; 3];
                 }
-            }
-            x += 8;
-            if x >= SCREEN_WIDTH {
-                x = 0;
-                y += 8;
-            }
-            if y >= SCREEN_HEIGHT {
-                return;
             }
         }
     }
