@@ -20,7 +20,7 @@ pub enum Bits16 {
 }
 
 #[derive(Debug)]
-pub enum Flags {
+pub enum Flag {
     /// Zero flag
     /// This flag is set when :
     /// - the result of a math op is zero
