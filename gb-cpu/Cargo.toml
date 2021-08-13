@@ -8,3 +8,4 @@ edition = "2018"
 
 [dependencies]
 rand = { version = "0.8.4", features = ["small_rng"] }
+modular-bitfield = "0.11.2"
