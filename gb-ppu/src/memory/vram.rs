@@ -1,11 +1,8 @@
 pub const VRAM_SIZE: usize = 0x2000;
 const TILEDATA_ADRESS_MAX: usize = 0x17FF;
-const TILEDATA_ADRESS_MIN: usize = 0x0000;
 const TILEMAP_POSITION_MAX: usize = 0x3FF;
-const TILEMAP_POSITION_MIN: usize = 0x0000;
 const TILEMAP_START_0: usize = 0x1800;
 const TILEMAP_START_1: usize = 0x1C00;
-const TILEDATA_START_0: usize = 0;
 const TILEDATA_START_1: usize = 0x1000 / 16;
 
 use crate::error::{Error, PPUResult};
@@ -31,7 +28,7 @@ impl Vram {
         if pos > TILEMAP_POSITION_MAX {
             return Err(Error::OutOfBound {
                 value: pos,
-                min_bound: TILEMAP_POSITION_MIN,
+                min_bound: 0,
                 max_bound: TILEMAP_POSITION_MAX,
             });
         }
@@ -41,7 +38,7 @@ impl Vram {
             self.data[TILEMAP_START_1 + pos]
         };
         if data_area_bit == 0 {
-            Ok(TILEDATA_START_0 + index as usize)
+            Ok(index as usize)
         } else {
             let index = index as i8;
             Ok((TILEDATA_START_1 as i32 + index as i32) as usize)
@@ -53,7 +50,7 @@ impl Vram {
         if adr > TILEDATA_ADRESS_MAX - 1 {
             return Err(Error::OutOfBound {
                 value: adr,
-                min_bound: TILEDATA_ADRESS_MIN,
+                min_bound: 0,
                 max_bound: TILEDATA_ADRESS_MAX - 1,
             });
         }
@@ -75,7 +72,7 @@ impl Vram {
         if adr * 8 * 2 > TILEDATA_ADRESS_MAX + 1 - 8 * 2 {
             return Err(Error::OutOfBound {
                 value: adr,
-                min_bound: TILEDATA_ADRESS_MIN,
+                min_bound: 0,
                 max_bound: TILEDATA_ADRESS_MAX / (8 * 2),
             });
         }
