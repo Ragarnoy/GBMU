@@ -1,21 +1,22 @@
-pub const VRAM_SIZE: usize = 0x2000;
-const TILEDATA_ADRESS_MAX: usize = 0x17FF;
-const TILEMAP_POSITION_MAX: usize = 0x3FF;
-const TILEMAP_START_0: usize = 0x1800;
-const TILEMAP_START_1: usize = 0x1C00;
-const TILEDATA_START_1: usize = 0x1000 / 16;
-
 use crate::error::{Error, PPUResult};
+
+pub const TILEDATA_ADRESS_MAX: usize = 0x17FF;
+pub const TILEMAP_POSITION_MAX: usize = 0x3FF;
+pub const TILEMAP_START_0: usize = 0x1800;
+pub const TILEMAP_START_1: usize = 0x1C00;
+pub const TILEDATA_START_1: usize = 0x1000 / 16;
 
 /// Contains operations to read more easily the differents values of the vram.
 pub struct Vram {
-    data: [u8; VRAM_SIZE as usize],
+    data: [u8; Vram::SIZE as usize],
 }
 
 impl Vram {
+    pub const SIZE: usize = 0x2000;
+
     pub fn new() -> Self {
         Vram {
-            data: [0x00; VRAM_SIZE as usize],
+            data: [0x00; Self::SIZE as usize],
         }
     }
 
@@ -98,7 +99,7 @@ impl Vram {
         Ok(tile)
     }
 
-    pub fn overwrite(&mut self, data: &[u8; VRAM_SIZE as usize]) {
+    pub fn overwrite(&mut self, data: &[u8; Self::SIZE as usize]) {
         self.data = *data;
     }
 }

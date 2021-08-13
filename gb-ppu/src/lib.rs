@@ -4,8 +4,6 @@ mod registers;
 
 use gb_lcd::render::{RenderData, SCREEN_HEIGHT, SCREEN_WIDTH};
 
-use registers::Control;
-
 pub const TILESHEET_WIDTH: usize = 128;
 pub const TILESHEET_HEIGHT: usize = 192;
 pub const TILESHEET_TILE_COUNT: usize = 16 * 24;
@@ -13,7 +11,8 @@ pub const TILESHEET_TILE_COUNT: usize = 16 * 24;
 pub const TILEMAP_DIM: usize = 256;
 pub const TILEMAP_TILE_COUNT: usize = 32 * 32;
 
-use memory::{Vram, VRAM_SIZE};
+use memory::Vram;
+use registers::Control;
 
 /// Pixel Process Unit: is in charge of selecting the pixel to be displayed on the lcd screen.
 ///
@@ -60,7 +59,7 @@ impl PPU {
         }
     }
 
-    pub fn overwrite_vram(&mut self, data: &[u8; VRAM_SIZE as usize]) {
+    pub fn overwrite_vram(&mut self, data: &[u8; Vram::SIZE as usize]) {
         self.vram.overwrite(data);
     }
 
