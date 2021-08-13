@@ -72,14 +72,13 @@ impl PPU {
             let tile = self.vram.read_8x8_tile(k).unwrap();
             for j in 0..8 {
                 for i in 0..8 {
-                    image[y * 8 + j][TILESHEET_WIDTH - (x + 1) * 8 + i] =
-                        match tile[j as usize][i as usize] {
-                            3 => [0; 3],
-                            2 => [85; 3],
-                            1 => [170; 3],
-                            0 => [255; 3],
-                            _ => [255; 3],
-                        }
+                    image[y * 8 + j][TILESHEET_WIDTH - (x + 1) * 8 + i] = match tile[j][i] {
+                        3 => [0; 3],
+                        2 => [85; 3],
+                        1 => [170; 3],
+                        0 => [255; 3],
+                        _ => [255; 3],
+                    }
                 }
             }
             x += 1;
@@ -101,19 +100,22 @@ impl PPU {
         for k in 0..TILEMAP_TILE_COUNT {
             let index = self
                 .vram
-                .get_map_tile_index(k, self.control.bg_tilemap_area())
+                .get_map_tile_index(
+                    k,
+                    self.control.bg_tilemap_area(),
+                    self.control.bg_win_tiledata_area(),
+                )
                 .unwrap();
-            let tile = self.vram.read_8x8_tile(index as usize).unwrap();
+            let tile = self.vram.read_8x8_tile(index).unwrap();
             for j in 0..8 {
                 for i in 0..8 {
-                    image[y * 8 + j][TILEMAP_DIM - (x + 1) * 8 + i] =
-                        match tile[j as usize][i as usize] {
-                            3 => [0; 3],
-                            2 => [85; 3],
-                            1 => [170; 3],
-                            0 => [255; 3],
-                            _ => [255; 3],
-                        }
+                    image[y * 8 + j][TILEMAP_DIM - (x + 1) * 8 + i] = match tile[j][i] {
+                        3 => [0; 3],
+                        2 => [85; 3],
+                        1 => [170; 3],
+                        0 => [255; 3],
+                        _ => [255; 3],
+                    }
                 }
             }
             x += 1;

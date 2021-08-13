@@ -27,7 +27,7 @@ pub fn main() {
     let mut display =
         render::RenderImage::<TILEMAP_DIM, TILEMAP_DIM>::with_bar_size(render::MENU_BAR_SIZE);
     let mut ppu = PPU::new();
-    ppu.control_mut().set_bg_win_tiledata_area(0);
+    ppu.control_mut().set_bg_win_tiledata_area(1);
     let dumps = [
         ("mario", include_bytes!("memory dumps/Super_Mario_Land.dmp")),
         (
