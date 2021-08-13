@@ -23,3 +23,6 @@ roms/Pokemon - Jaune.gbc
 target
 
 build
+
+# mac app
+gbmu.app
