@@ -86,7 +86,7 @@ impl PPU {
     /// Create an image of the current tilemap.
     ///
     /// This function is used for debugging purpose.
-    pub fn tilemap_image(&self) -> RenderData<TILEMAP_DIM, TILEMAP_DIM> {
+    pub fn tilemap_image(&self, window: bool) -> RenderData<TILEMAP_DIM, TILEMAP_DIM> {
         let mut image = [[[255; 3]; TILEMAP_DIM]; TILEMAP_DIM];
         let mut x = 0;
         let mut y = 0;
@@ -95,7 +95,11 @@ impl PPU {
                 .vram
                 .get_map_tile_index(
                     k,
-                    self.control.bg_tilemap_area(),
+                    if !window {
+                        self.control.bg_tilemap_area()
+                    } else {
+                        self.control.win_tilemap_area()
+                    },
                     self.control.bg_win_tiledata_area(),
                 )
                 .unwrap();

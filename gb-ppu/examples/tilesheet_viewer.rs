@@ -49,12 +49,14 @@ pub fn main() {
         egui::containers::TopBottomPanel::top("Top menu").show(gb_window.egui_ctx(), |ui| {
             egui::menu::bar(ui, |ui| {
                 ui.set_height(render::MENU_BAR_SIZE);
-                for (title, dump) in dumps {
-                    if ui.button(title).clicked() {
-                        ppu.overwrite_vram(dump);
-                        image = ppu.tilesheet_image();
+                egui::menu::menu(ui, "dump", |ui| {
+                    for (title, dump) in dumps {
+                        if ui.button(title).clicked() {
+                            ppu.overwrite_vram(dump);
+                            image = ppu.tilesheet_image();
+                        }
                     }
-                }
+                });
             })
         });
         display.update_render(&image);

@@ -37,7 +37,8 @@ pub fn main() {
         ("pokemon", include_bytes!("memory dumps/Pokemon_Bleue.dmp")),
     ];
     ppu.overwrite_vram(dumps[0].1);
-    let mut image = ppu.tilemap_image();
+    let mut display_window = false;
+    let mut image = ppu.tilemap_image(display_window);
 
     'running: loop {
         gb_window
@@ -47,12 +48,24 @@ pub fn main() {
         egui::containers::TopBottomPanel::top("Top menu").show(gb_window.egui_ctx(), |ui| {
             egui::menu::bar(ui, |ui| {
                 ui.set_height(render::MENU_BAR_SIZE);
-                for (title, dump) in dumps {
-                    if ui.button(title).clicked() {
-                        ppu.overwrite_vram(dump);
-                        image = ppu.tilemap_image();
+                egui::menu::menu(ui, "dump", |ui| {
+                    for (title, dump) in dumps {
+                        if ui.button(title).clicked() {
+                            ppu.overwrite_vram(dump);
+                            image = ppu.tilemap_image(display_window);
+                        }
                     }
-                }
+                });
+                egui::menu::menu(ui, "bg/win", |ui| {
+                    if ui.button("background").clicked() {
+                        display_window = false;
+                        image = ppu.tilemap_image(display_window);
+                    }
+                    if ui.button("window").clicked() {
+                        display_window = true;
+                        image = ppu.tilemap_image(display_window);
+                    }
+                });
             })
         });
         display.update_render(&image);
