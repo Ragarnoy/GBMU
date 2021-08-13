@@ -257,6 +257,7 @@ dependencies = [
 name = "gb-cpu"
 version = "0.1.0"
 dependencies = [
+ "modular-bitfield",
  "rand",
 ]
 
