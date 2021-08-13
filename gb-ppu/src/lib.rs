@@ -63,6 +63,9 @@ impl PPU {
         self.vram.overwrite(data);
     }
 
+    /// Create an image of the current tilesheet.
+    ///
+    /// This function is used for debugging purpose.
     pub fn tilesheet_image(&self) -> RenderData<TILESHEET_WIDTH, TILESHEET_HEIGHT> {
         let mut image = [[[255; 3]; TILESHEET_WIDTH]; TILESHEET_HEIGHT];
         let mut x = 0;
@@ -85,13 +88,13 @@ impl PPU {
                 x = 0;
                 y += 1;
             }
-            if y * 8 >= TILESHEET_HEIGHT {
-                return image;
-            }
         }
         image
     }
 
+    /// Create an image of the current tilemap.
+    ///
+    /// This function is used for debugging purpose.
     pub fn tilemap_image(&self) -> RenderData<TILEMAP_DIM, TILEMAP_DIM> {
         let mut image = [[[255; 3]; TILEMAP_DIM]; TILEMAP_DIM];
         let mut x = 0;
@@ -121,9 +124,6 @@ impl PPU {
             if x * 8 >= TILEMAP_DIM {
                 x = 0;
                 y += 1;
-            }
-            if y * 8 >= TILEMAP_DIM {
-                return image;
             }
         }
         image
