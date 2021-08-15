@@ -1,3 +1,5 @@
+pub mod wram;
+
 use super::consts;
 
 #[derive(Debug, PartialEq, Eq)]
