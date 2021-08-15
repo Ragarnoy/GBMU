@@ -27,7 +27,6 @@ impl Area {
             Area::Oam => address - consts::OAM_MIN,
             Area::IOReg => address - consts::IOREG_MIN,
             Area::HighRam => address - consts::HIGH_MIN,
-            Area::IEReg => consts::INTERUPT_ENABLE,
         };
         result as usize
     }
