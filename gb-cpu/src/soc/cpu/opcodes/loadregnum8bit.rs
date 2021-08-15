@@ -18,15 +18,15 @@ pub enum LoadRegNum8bit {
 }
 
 impl<'a> LoadRegNum8bit {
-    pub fn proceed(self, registers: &'a mut Registers, memory: &'a Memory) -> Result<u32, Error> {
+    pub fn proceed(self, registers: &'a mut Registers, memory: &'a mut Memory) -> Result<u32, Error> {
         if let Ok(byte) = registers.pc.next(memory) {
             match self {
-                LoadRegNum8bit::B => registers.set(Bits8::B, byte),
-                LoadRegNum8bit::C => registers.set(Bits8::C, byte),
-                LoadRegNum8bit::D => registers.set(Bits8::D, byte),
-                LoadRegNum8bit::E => registers.set(Bits8::E, byte),
-                LoadRegNum8bit::H => registers.set(Bits8::H, byte),
-                LoadRegNum8bit::L => registers.set(Bits8::L, byte),
+                LoadRegNum8bit::B => memory.set(byte, registers.b),
+                LoadRegNum8bit::C => memory.set(byte, registers.c),
+                LoadRegNum8bit::D => memory.set(byte, registers.d),
+                LoadRegNum8bit::E => memory.set(byte, registers.e),
+                LoadRegNum8bit::H => memory.set(byte, registers.h),
+                LoadRegNum8bit::L => memory.set(byte, registers.l),
             };
             Ok(8)
         }
