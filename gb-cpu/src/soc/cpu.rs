@@ -17,7 +17,7 @@ pub struct Cpu {
 }
 
 impl Cpu {
-    pub fn step(&mut self, memory: &Memory) -> Result<u32, Error> {
+    pub fn step(&mut self, memory: &mut Memory) -> Result<u32, Error> {
         match self.registers.pc.next(memory) {
             Ok(opcode) => {
                 if let Ok(load) = LoadRegNum8bit::try_from(opcode) {

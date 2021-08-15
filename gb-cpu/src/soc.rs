@@ -25,7 +25,7 @@ impl SOC {
     }
 
     pub fn run(&mut self) {
-        match self.cpu.step(&self.memory) {
+        match self.cpu.step(&mut self.memory) {
             Ok(cycles) => self.clock += cycles,
             Err(_) => (),
         }
