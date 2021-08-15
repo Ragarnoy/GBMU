@@ -1,7 +1,8 @@
 pub mod mbc;
+pub mod nombc;
 
 pub use mbc::Mbc;
-pub use mbc::NoMbc;
+pub use nombc::NoMbc;
 
 pub trait Rom {
     type Item;
