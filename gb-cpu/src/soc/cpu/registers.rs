@@ -105,23 +105,10 @@ impl Bus<Flag> for Registers {
     }
 }
 
-<<<<<<< HEAD
-impl Registers {
-    pub fn next_pc(&mut self) {
-        self.pc = self.pc.wrapping_add(1);
-    }
-}
-
-#[cfg(test)]
-mod test_registers {
-    use super::Registers;
-    use super::{Bits16, Bits8};
-=======
 #[cfg(test)]
 mod test_registers {
     use super::{Bits16, Bits8};
     use super::Registers;
->>>>>>> b06cdfc (Add Pc trait)
     use crate::bus::Bus;
 
     #[test]
