@@ -11,7 +11,7 @@ impl Bus<usize> for NoMbc {
     type Data = u8;
 
     fn get(&self, address: usize) -> Self::Item {
-        *self.data.get(address).unwrap()
+        self.data[address]
     }
 
     fn set(&mut self, address: usize, data: Self::Data) -> Self::Result {

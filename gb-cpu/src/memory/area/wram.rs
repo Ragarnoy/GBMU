@@ -1,6 +1,6 @@
 use crate::bus::Bus;
+
 const WRAM_SIZE: usize = 8192;
-use crate::bus::Bus;
 
 #[derive(Debug)]
 pub struct Wram {
