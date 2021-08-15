@@ -1,5 +1,5 @@
-pub mod wram;
 pub mod rom;
+pub mod wram;
 
 use super::consts;
 pub use wram::Wram;
