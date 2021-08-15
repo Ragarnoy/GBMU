@@ -1,6 +1,7 @@
+use crate::bus::Bus;
 use super::area::{Bits16, Bits8, Flag};
 use super::flags::Flags;
-use crate::bus::Bus;
+use super::pc::Pc;
 
 #[derive(Debug, Default)]
 pub struct Registers {
@@ -13,7 +14,7 @@ pub struct Registers {
     h: u8,
     l: u8,
     sp: u16,
-    pub pc: u16,
+    pub pc: Pc,
 }
 
 impl Bus<Bits8> for Registers {
@@ -104,6 +105,7 @@ impl Bus<Flag> for Registers {
     }
 }
 
+<<<<<<< HEAD
 impl Registers {
     pub fn next_pc(&mut self) {
         self.pc = self.pc.wrapping_add(1);
@@ -114,6 +116,12 @@ impl Registers {
 mod test_registers {
     use super::Registers;
     use super::{Bits16, Bits8};
+=======
+#[cfg(test)]
+mod test_registers {
+    use super::{Bits16, Bits8};
+    use super::Registers;
+>>>>>>> b06cdfc (Add Pc trait)
     use crate::bus::Bus;
 
     #[test]
