@@ -3,6 +3,9 @@ use sdl2::{event::Event, keyboard::Keycode};
 
 use gb_lcd::{render, window::GBWindow};
 use gb_ppu::PPU;
+use gb_dbg::memory::MemoryEditorBuilder;
+use gb_dbg::app::DebugApp;
+use gb_dbg::flow_control::FlowController;
 
 fn main() {
     let (sdl_context, video_subsystem, mut event_pump) =
@@ -29,10 +32,13 @@ fn main() {
     let mut ppu = PPU::new();
 
     let mut debug_window = None;
-    let mut mem_view = egui_memory_editor::MemoryEditor::<Vec<u8>>::new(|mem, address| *mem.get(address).unwrap())
-        .with_address_range("All", 0..0xFFFF)
-        .with_write_function(|mem, address, value| mem[address] = value);
-    let mut mem = vec![0u8; u16::MAX as usize];
+    let mem = vec![0u8; u16::MAX as usize];
+    let gbm_mem = MemoryEditorBuilder::new(|mem , address| *mem.get(address).unwrap(), mem)
+        .with_write_function(|mem, address, value| mem[address] = value).build();
+    let mut dbg_app = DebugApp::new(gbm_mem, FlowController);
+    // let mut mem_view = egui_memory_editor::MemoryEditor::<Vec<u8>>::new(|mem, address| *mem.get(address).unwrap())
+    //     .with_address_range("All", 0..0xFFFF)
+    //     .with_write_function(|mem, address, value| mem[address] = value);
 
     'running: loop {
         gb_window
@@ -76,9 +82,7 @@ fn main() {
             dgb_wind
                 .start_frame()
                 .expect("Fail at the start for the debug window");
-            egui::containers::CentralPanel::default().show(dgb_wind.egui_ctx(), |ui| {
-                mem_view.draw_editor_contents(ui, &mut mem)
-            });
+            dbg_app.draw(dgb_wind.egui_ctx());
             dgb_wind
                 .end_frame()
                 .expect("Fail at the end for the debug window");

@@ -8,16 +8,16 @@ edition = "2018"
 
 [dependencies]
 sdl2 = { version = "0.34", features = ["bundled", "static-link"] }
-egui_memory_editor = "0.1.2"
 egui = { version = "0.13" }
 rfd = { version = "0.4" }
 gb-lcd = { path= "./gb-lcd" }
 gb-ppu = { path = "./gb-ppu" }
+gb-dbg = { path = "./gb-dbg" }
 
 [workspace]
 members = [
   "gb-roms",
   "gb-ppu",
   "gb-lcd",
-  "gb-dbg"
+  "gb-dbg",
 ]
