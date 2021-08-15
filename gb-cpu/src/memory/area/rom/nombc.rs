@@ -29,7 +29,7 @@ impl NoMbc {
 
 impl Default for NoMbc {
     fn default() -> Self {
-        NoMbc::new(vec![0 ; NOMBC_MAX_SIZE])
+        NoMbc::new(vec![0; NOMBC_MAX_SIZE])
     }
 }
 

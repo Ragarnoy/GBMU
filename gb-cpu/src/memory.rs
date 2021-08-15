@@ -1,8 +1,8 @@
 pub mod area;
 mod consts;
 
-use crate::error::Error;
 use crate::bus::Bus;
+use crate::error::Error;
 use area::rom::{Mbc, NoMbc};
 use area::{Area, Wram};
 
@@ -31,7 +31,7 @@ impl Bus<u16> for Memory {
             consts::WRAM_MIN..=consts::WRAM_MAX => {
                 self.wram.set(Area::Wram.relative(address), data);
                 Ok(())
-            },
+            }
             consts::ROM_MIN..=consts::ROM_MAX => {
                 self.wram.set(Area::Rom.relative(address), data);
                 Ok(())
@@ -56,7 +56,10 @@ impl Memory {
 
 impl Default for Memory {
     fn default() -> Self {
-        Memory::new(Mbc::NoMbc, vec![5])
+        Memory {
+            wram: Wram::default(),
+            rom: Box::new(NoMbc::default()),
+        }
     }
 }
 
