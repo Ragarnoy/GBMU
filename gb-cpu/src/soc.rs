@@ -9,6 +9,12 @@ pub struct SOC {
     memory: Memory,
 }
 
+impl Default for SOC {
+    fn default() -> Self {
+        SOC::new()
+    }
+}
+
 impl SOC {
     pub fn new() -> Self {
         SOC {
@@ -19,8 +25,9 @@ impl SOC {
     }
 
     pub fn run(&mut self) {
-        if let Ok(cycles) = self.cpu.step(&self.memory){
-            self.clock += cycles;
+        match self.cpu.step(&self.memory) {
+            Ok(cycles) => self.clock += cycles,
+            Err(_) => (),
         }
     }
 }
