@@ -50,6 +50,6 @@ package-linux-appimage: docker
 
 build_mac_app:
 	cargo build --release
-	./package.sh target/release/gbmu gbmu
+	./packaging/mac/package.sh target/release/gbmu gbmu
 
 .PHONY: requirement roms docker run-container package package-linux package-linux-appimage build_mac_app
