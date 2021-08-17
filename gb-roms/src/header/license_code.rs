@@ -29,7 +29,7 @@ pub enum NewLicenseCode {
     KemcoJapan,
     Konami,
     Kss,
-    LJN,
+    Ljn,
     Lozc,
     LucasArts,
     Malibu,
@@ -49,7 +49,7 @@ pub enum NewLicenseCode {
     Sci,
     Sculptured,
     Seta,
-    THQ,
+    Thq,
     Taito,
     Titus,
     TokumaShotenIntermedia,
@@ -102,7 +102,7 @@ impl TryFrom<&str> for NewLicenseCode {
             "34" | "54" | "A4" => Ok(NewLicenseCode::Konami),
             "20" => Ok(NewLicenseCode::Kss),
 
-            "56" => Ok(NewLicenseCode::LJN),
+            "56" => Ok(NewLicenseCode::Ljn),
             "83" => Ok(NewLicenseCode::Lozc),
             "64" => Ok(NewLicenseCode::LucasArts),
 
@@ -129,7 +129,7 @@ impl TryFrom<&str> for NewLicenseCode {
             "29" => Ok(NewLicenseCode::Seta),
 
             "37" => Ok(NewLicenseCode::Taito),
-            "78" => Ok(NewLicenseCode::THQ),
+            "78" => Ok(NewLicenseCode::Thq),
             "60" => Ok(NewLicenseCode::Titus),
             "86" => Ok(NewLicenseCode::TokumaShotenIntermedia),
             "87" => Ok(NewLicenseCode::TsukudaOriginal),
@@ -216,7 +216,7 @@ fn test_convert_new_license_code() {
         NewLicenseCode::try_from("55"),
         Ok(NewLicenseCode::HiTechEntertainment)
     );
-    assert_eq!(NewLicenseCode::try_from("56"), Ok(NewLicenseCode::LJN));
+    assert_eq!(NewLicenseCode::try_from("56"), Ok(NewLicenseCode::Ljn));
     assert_eq!(NewLicenseCode::try_from("57"), Ok(NewLicenseCode::Matchbox));
     assert_eq!(NewLicenseCode::try_from("58"), Ok(NewLicenseCode::Mattel));
     assert_eq!(
@@ -251,7 +251,7 @@ fn test_convert_new_license_code() {
         Ok(NewLicenseCode::Sculptured)
     );
     assert_eq!(NewLicenseCode::try_from("75"), Ok(NewLicenseCode::Sci));
-    assert_eq!(NewLicenseCode::try_from("78"), Ok(NewLicenseCode::THQ));
+    assert_eq!(NewLicenseCode::try_from("78"), Ok(NewLicenseCode::Thq));
     assert_eq!(NewLicenseCode::try_from("79"), Ok(NewLicenseCode::Accolade));
     assert_eq!(NewLicenseCode::try_from("80"), Ok(NewLicenseCode::Misawa));
     assert_eq!(NewLicenseCode::try_from("83"), Ok(NewLicenseCode::Lozc));
