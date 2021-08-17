@@ -12,7 +12,7 @@ pub struct DebuggerApp {
 
 impl App for DebuggerApp {
     fn update(&mut self, ctx: &CtxRef, frame: &mut Frame<'_>) {
-        frame.set_window_size(Vec2::new(800.0, 600.0));
+        frame.set_window_size(Vec2::new(1000.0, 600.0));
         self.debugger.draw(ctx);
     }
 

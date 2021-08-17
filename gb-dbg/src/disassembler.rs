@@ -15,7 +15,6 @@ impl Disassembler {
         ui.separator();
         ui.vertical(|ui| {
             ui.columns(3, |columns| {
-                columns[0].visuals_mut().code_bg_color = Color32::RED;
                 columns[0].label("Address");
                 columns[1].label("Instruction");
                 columns[2].label("Data");
