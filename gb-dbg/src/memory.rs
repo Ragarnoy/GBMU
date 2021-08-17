@@ -1,7 +1,7 @@
 use egui::{Ui, Label, Color32};
 use egui_memory_editor::option_data::MemoryEditorOptions;
 use egui_memory_editor::{MemoryEditor, ReadFunction, WriteFunction};
-use std::ops::Range;
+use std::ops::{Range, RangeBounds, RangeInclusive};
 
 pub struct GBMemoryEditor<T> {
     memory: T,
@@ -16,26 +16,26 @@ impl<T> GBMemoryEditor<T> {
     }
 }
 
-pub struct MemoryEditorBuilder<'d, T> {
+pub struct MemoryEditorBuilder<'name, T> {
     read_func: ReadFunction<T>,
     write_func: Option<WriteFunction<T>>,
-    address_ranges: [(&'d str, Range<usize>); 3],
+    address_ranges: Vec<(&'name str, Range<usize>)>,
     memory: T,
 }
 
-impl<T> MemoryEditorBuilder<'_, T> {
+impl<'name, T> MemoryEditorBuilder<'name, T> {
     pub fn new(read_func: ReadFunction<T>, memory: T) -> Self {
-        let arr: [(&str, Range<usize>); 3] = [
-            ("WRam", 0..0xAA),
-            ("VRam", 0xAA..0xBB),
-            ("Placeholder", 0xBB..0xCC),
-        ];
         Self {
             read_func,
             write_func: None,
-            address_ranges: arr,
+            address_ranges: Vec::with_capacity(6),
             memory,
         }
+    }
+
+    pub fn with_address_range(mut self, range_name: &'name str, range: Range<usize>) -> Self {
+        self.address_ranges.push((range_name, range));
+        self
     }
 
     pub fn with_write_function(mut self, write_func: WriteFunction<T>) -> Self {
@@ -47,11 +47,11 @@ impl<T> MemoryEditorBuilder<'_, T> {
         let mut mem_options = MemoryEditorOptions::default();
         mem_options.is_resizable_column = false;
         mem_options.is_options_collapsed = true;
-        let mem_edit = MemoryEditor::new(self.read_func)
-            .with_options(mem_options)
-            .with_address_range(self.address_ranges[0].0, self.address_ranges[0].1.clone())
-            .with_address_range(self.address_ranges[1].0, self.address_ranges[1].1.clone())
-            .with_address_range(self.address_ranges[2].0, self.address_ranges[2].1.clone());
+        let mut mem_edit = MemoryEditor::new(self.read_func)
+            .with_options(mem_options);
+        for (range_name, range) in self.address_ranges {
+            mem_edit = mem_edit.with_address_range(range_name, range);
+        }
 
         if self.write_func.is_some() {
             GBMemoryEditor {
