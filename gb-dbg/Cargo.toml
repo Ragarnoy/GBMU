@@ -8,3 +8,6 @@ edition = "2018"
 [dependencies]
 egui_memory_editor = { git = "https://github.com/Hirtol/egui_memory_editor" }
 egui = "0.13.1"
+
+[dev-dependencies]
+eframe = "0.13.1"
