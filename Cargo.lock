@@ -668,19 +668,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "00b0228411908ca8685dba7fc2cdd70ec9990a6e753e89b6ac91a84c40fbaf4b"
 
 [[package]]
+name = "gb-cpu"
+version = "0.1.0"
+dependencies = [
+ "rand",
+]
+
+[[package]]
 name = "gb-dbg"
 version = "0.1.0"
 dependencies = [
  "eframe",
  "egui",
  "egui_memory_editor",
-]
-
-[[package]]
-name = "gb-cpu"
-version = "0.1.0"
-dependencies = [
- "rand",
 ]
 
 [[package]]
@@ -1419,6 +1419,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3831453b3449ceb48b6d9c7ad7c96d5ea673e9b470a1dc578c2ce6521230884c"
 
 [[package]]
+name = "ppv-lite86"
+version = "0.2.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ac74c624d6b2d21f425f752262f42188365d7b8ff1aff74c82e45136510a4857"
+
+[[package]]
 name = "proc-macro-crate"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1436,12 +1442,6 @@ dependencies = [
  "thiserror",
  "toml",
 ]
-
-[[package]]
-name = "ppv-lite86"
-version = "0.2.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ac74c624d6b2d21f425f752262f42188365d7b8ff1aff74c82e45136510a4857"
 
 [[package]]
 name = "proc-macro-error"
