@@ -6,6 +6,7 @@ use gb_ppu::PPU;
 use gb_dbg::memory::MemoryEditorBuilder;
 use gb_dbg::app::Debugger;
 use gb_dbg::flow_control::FlowController;
+use gb_dbg::disassembler::Disassembler;
 
 fn main() {
     let (sdl_context, video_subsystem, mut event_pump) =
@@ -37,7 +38,7 @@ fn main() {
         .with_write_function(|mem, address, value| mem[address] = value)
         .with_address_range("VRam", 0..0xFF)
         .build();
-    let mut dbg_app = Debugger::new(gbm_mem, FlowController);
+    let mut dbg_app = Debugger::new(gbm_mem, FlowController, Disassembler);
 
     'running: loop {
         gb_window

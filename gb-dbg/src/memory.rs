@@ -1,7 +1,7 @@
 use egui::{Ui, Label, Color32};
 use egui_memory_editor::option_data::MemoryEditorOptions;
 use egui_memory_editor::{MemoryEditor, ReadFunction, WriteFunction};
-use std::ops::{Range, RangeBounds, RangeInclusive};
+use std::ops::Range;
 
 pub struct GBMemoryEditor<T> {
     memory: T,

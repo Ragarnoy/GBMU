@@ -3,7 +3,8 @@ use eframe::epi::*;
 use egui::Vec2;
 use gb_dbg::app::Debugger;
 use gb_dbg::flow_control::FlowController;
-use gb_dbg::memory::{GBMemoryEditor, MemoryEditorBuilder};
+use gb_dbg::memory::{MemoryEditorBuilder};
+use gb_dbg::disassembler::Disassembler;
 
 pub struct DebuggerApp {
     pub debugger: Debugger<Vec<u8>>,
@@ -12,7 +13,7 @@ pub struct DebuggerApp {
 impl App for DebuggerApp {
     fn update(&mut self, ctx: &CtxRef, frame: &mut Frame<'_>) {
         frame.set_window_size(Vec2::new(800.0, 600.0));
-        self.debugger.draw(&ctx);
+        self.debugger.draw(ctx);
     }
 
     fn name(&self) -> &str {
@@ -31,7 +32,7 @@ fn main() {
         .with_address_range("Ram", 0xFF..0xFFF)
         .build();
     let dgb_app = DebuggerApp {
-        debugger: Debugger::new(gbm_mem, FlowController),
+        debugger: Debugger::new(gbm_mem, FlowController, Disassembler),
     };
     eframe::run_native(Box::new(dgb_app), eframe::NativeOptions::default())
 }
