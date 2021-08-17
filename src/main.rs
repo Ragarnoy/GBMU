@@ -4,7 +4,7 @@ use sdl2::{event::Event, keyboard::Keycode};
 use gb_lcd::{render, window::GBWindow};
 use gb_ppu::PPU;
 use gb_dbg::memory::MemoryEditorBuilder;
-use gb_dbg::app::DebugApp;
+use gb_dbg::app::Debugger;
 use gb_dbg::flow_control::FlowController;
 
 fn main() {
@@ -34,11 +34,10 @@ fn main() {
     let mut debug_window = None;
     let mem = vec![0u8; u16::MAX as usize];
     let gbm_mem = MemoryEditorBuilder::new(|mem , address| *mem.get(address).unwrap(), mem)
-        .with_write_function(|mem, address, value| mem[address] = value).build();
-    let mut dbg_app = DebugApp::new(gbm_mem, FlowController);
-    // let mut mem_view = egui_memory_editor::MemoryEditor::<Vec<u8>>::new(|mem, address| *mem.get(address).unwrap())
-    //     .with_address_range("All", 0..0xFFFF)
-    //     .with_write_function(|mem, address, value| mem[address] = value);
+        .with_write_function(|mem, address, value| mem[address] = value)
+        .with_address_range("VRam", 0..0xFF)
+        .build();
+    let mut dbg_app = Debugger::new(gbm_mem, FlowController);
 
     'running: loop {
         gb_window
