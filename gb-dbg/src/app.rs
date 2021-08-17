@@ -2,12 +2,12 @@ use egui::{CtxRef};
 use crate::memory::GBMemoryEditor;
 use crate::flow_control::FlowController;
 
-pub struct DebugApp<T> {
+pub struct Debugger<T> {
     memory_editor: GBMemoryEditor<T>,
     flow_controller: FlowController,
 }
 
-impl<T> DebugApp<T> {
+impl<T> Debugger<T> {
 
     pub fn new(memory_editor: GBMemoryEditor<T>, flow_controller: FlowController) -> Self {
         Self {
