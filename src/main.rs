@@ -14,8 +14,8 @@ fn main() {
     let mut gb_window = GBWindow::new(
         "GBMU",
         (
-            render::SCREEN_WIDTH,
-            render::SCREEN_HEIGHT + render::MENU_BAR_SIZE as u32,
+            render::SCREEN_WIDTH as u32,
+            render::SCREEN_HEIGHT as u32 + render::MENU_BAR_SIZE as u32,
         ),
         true,
         &video_subsystem,
@@ -56,20 +56,19 @@ fn main() {
                 ui.set_height(render::MENU_BAR_SIZE);
                 if ui.button("Load").clicked() {
                     let files = FileDialog::new()
-                        .add_filter("rom", &["gb", "rom"])
+                        .add_filter("rom", &["gb", "gbc", "rom"])
                         .set_directory(
-                            std::env::current_dir().unwrap_or(std::path::PathBuf::from("/")),
+                            std::env::current_dir()
+                                .unwrap_or_else(|_| std::path::PathBuf::from("/")),
                         )
                         .pick_file();
                     println!("picked file: {:?}", files);
                 }
-                if ui.button("Debug").clicked() {
-                    if debug_window.is_none() {
-                        debug_window = Some(
-                            GBWindow::new("GBMU Debug", (800, 600), false, &video_subsystem)
-                                .expect("Error while building debug window"),
-                        );
-                    }
+                if ui.button("Debug").clicked() && debug_window.is_none() {
+                    debug_window = Some(
+                        GBWindow::new("GBMU Debug", (800, 600), false, &video_subsystem)
+                            .expect("Error while building debug window"),
+                    );
                 }
             })
         });

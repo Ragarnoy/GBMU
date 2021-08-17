@@ -10,7 +10,7 @@ struct CliOpts {
     files: Vec<String>,
 }
 
-fn get_gb_header_from_file(name: &String) {
+fn get_gb_header_from_file(name: &str) {
     println!("current file: \"{}\"", name);
     let file = File::open(name).expect("cannot open file");
 
@@ -20,5 +20,5 @@ fn get_gb_header_from_file(name: &String) {
 
 fn main() {
     let opts: CliOpts = CliOpts::parse();
-    opts.files.iter().for_each(get_gb_header_from_file);
+    opts.files.iter().for_each(|s| get_gb_header_from_file(s));
 }

@@ -10,7 +10,7 @@ struct DisasOpt {
     files: Vec<String>,
 }
 
-fn disas_file(name: &String) {
+fn disas_file(name: &str) {
     println!("current file: \"{}\"", name);
     let file = File::open(name).expect("cannot open file");
 

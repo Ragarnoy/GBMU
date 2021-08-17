@@ -1,9 +1,9 @@
-mod cartridge_type;
+pub mod cartridge_type;
 mod destination_code;
 mod error;
 mod flag;
 mod license_code;
-mod size;
+pub mod size;
 
 use std::convert::{From, TryFrom, TryInto};
 
@@ -40,7 +40,7 @@ impl Header {
 
         f.seek(SeekFrom::Start(0x100))
             .expect("cannot seek file to header");
-        f.read(&mut chunk).expect("cannot read header");
+        f.read_exact(&mut chunk).expect("cannot read header");
         Header::from_chunk(chunk)
     }
 
