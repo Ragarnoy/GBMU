@@ -1,4 +1,4 @@
 pub mod address_bus;
-pub mod trait;
+pub mod r#trait;
 
 pub use address_bus::{AddressBus, Area, FileOperation};
