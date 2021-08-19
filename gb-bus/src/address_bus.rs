@@ -262,7 +262,7 @@ impl Address {
     /// Create an Address from an absolute adress and an offset
     ///
     /// ```
-    /// # use gb_cpu::address_bus::{Address, Area};
+    /// # use gb_bus::address_bus::{Address, Area};
     /// let pos = Address::from_offset(Area::Bios, 0x42, 0x10);
     ///
     /// assert_eq!(pos.absolute, 0x42);
