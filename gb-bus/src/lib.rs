@@ -7,7 +7,7 @@ pub use address::{Address, Area};
 pub use address_bus::{AddressBus, Error};
 pub use file_operation::FileOperation;
 
-trait Bus {
+pub trait Bus {
     /// read `N` into the bus where `N: u8 | u16`
     fn read<N>(address: u16) -> Result<N, Error>;
     /// write `N` into the bus where `N: u8 | u16`
