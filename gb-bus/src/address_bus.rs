@@ -35,7 +35,7 @@ pub struct AddressBus {
 }
 
 impl AddressBus {
-    pub fn write(&mut self, v: u8, addr: u16) -> Result<(), Error> {
+    pub fn write_byte(&mut self, addr: u16, v: u8) -> Result<(), Error> {
         match addr {
             0x0000..=0x00ff if self.bios.is_some() => {
                 let b = self.bios.as_mut().unwrap();
@@ -74,7 +74,7 @@ impl AddressBus {
         }
     }
 
-    pub fn read(&self, addr: u16) -> Result<u8, Error> {
+    pub fn read_byte(&self, addr: u16) -> Result<u8, Error> {
         match addr {
             0x0000..=0x00ff if self.bios.is_some() => {
                 let b = self.bios.as_ref().unwrap();
@@ -142,15 +142,15 @@ mod test_address_bus {
             ie_reg: Box::new(CharDevice(9)),
         };
 
-        assert_eq!(addr_bus.read(0x10), Ok(1));
-        assert_eq!(addr_bus.read(0x8042), Ok(2));
-        assert_eq!(addr_bus.read(0xa000), Ok(3));
-        assert_eq!(addr_bus.read(0xdfff), Ok(4));
-        assert_eq!(addr_bus.read(0xe000), Ok(5));
-        assert_eq!(addr_bus.read(0xfe00), Ok(6));
-        assert_eq!(addr_bus.read(0xff00), Ok(7));
-        assert_eq!(addr_bus.read(0xff80), Ok(8));
-        assert_eq!(addr_bus.read(0xffff), Ok(9));
+        assert_eq!(addr_bus.read_byte(0x10), Ok(1));
+        assert_eq!(addr_bus.read_byte(0x8042), Ok(2));
+        assert_eq!(addr_bus.read_byte(0xa000), Ok(3));
+        assert_eq!(addr_bus.read_byte(0xdfff), Ok(4));
+        assert_eq!(addr_bus.read_byte(0xe000), Ok(5));
+        assert_eq!(addr_bus.read_byte(0xfe00), Ok(6));
+        assert_eq!(addr_bus.read_byte(0xff00), Ok(7));
+        assert_eq!(addr_bus.read_byte(0xff80), Ok(8));
+        assert_eq!(addr_bus.read_byte(0xffff), Ok(9));
     }
 
     #[test]
@@ -168,44 +168,44 @@ mod test_address_bus {
             ie_reg: Box::new(CharDevice(9)),
         };
 
-        assert_eq!(addr_bus.write(0x30, 0x11), Ok(()));
-        assert_eq!(addr_bus.write(0x31, 0x8242), Ok(()));
-        assert_eq!(addr_bus.write(0x32, 0xa050), Ok(()));
-        assert_eq!(addr_bus.write(0x33, 0xdf8f), Ok(()));
-        assert_eq!(addr_bus.write(0x34, 0xe006), Ok(()));
-        assert_eq!(addr_bus.write(0x35, 0xfe80), Ok(()));
-        assert_eq!(addr_bus.write(0x36, 0xff70), Ok(()));
-        assert_eq!(addr_bus.write(0x37, 0xff8e), Ok(()));
-        assert_eq!(addr_bus.write(0x38, 0xffff), Ok(()));
+        assert_eq!(addr_bus.write_byte(0x30, 0x11), Ok(()));
+        assert_eq!(addr_bus.write_byte(0x31, 0x8242), Ok(()));
+        assert_eq!(addr_bus.write_byte(0x32, 0xa050), Ok(()));
+        assert_eq!(addr_bus.write_byte(0x33, 0xdf8f), Ok(()));
+        assert_eq!(addr_bus.write_byte(0x34, 0xe006), Ok(()));
+        assert_eq!(addr_bus.write_byte(0x35, 0xfe80), Ok(()));
+        assert_eq!(addr_bus.write_byte(0x36, 0xff70), Ok(()));
+        assert_eq!(addr_bus.write_byte(0x37, 0xff8e), Ok(()));
+        assert_eq!(addr_bus.write_byte(0x38, 0xffff), Ok(()));
 
-        assert_eq!(addr_bus.read(0x10), Ok(0x30));
-        assert_eq!(addr_bus.read(0x8042), Ok(0x31));
-        assert_eq!(addr_bus.read(0xa000), Ok(0x32));
-        assert_eq!(addr_bus.read(0xdfff), Ok(0x33));
-        assert_eq!(addr_bus.read(0xe000), Ok(0x34));
-        assert_eq!(addr_bus.read(0xfe00), Ok(0x35));
-        assert_eq!(addr_bus.read(0xff00), Ok(0x36));
-        assert_eq!(addr_bus.read(0xff80), Ok(0x37));
-        assert_eq!(addr_bus.read(0xffff), Ok(0x38));
+        assert_eq!(addr_bus.read_byte(0x10), Ok(0x30));
+        assert_eq!(addr_bus.read_byte(0x8042), Ok(0x31));
+        assert_eq!(addr_bus.read_byte(0xa000), Ok(0x32));
+        assert_eq!(addr_bus.read_byte(0xdfff), Ok(0x33));
+        assert_eq!(addr_bus.read_byte(0xe000), Ok(0x34));
+        assert_eq!(addr_bus.read_byte(0xfe00), Ok(0x35));
+        assert_eq!(addr_bus.read_byte(0xff00), Ok(0x36));
+        assert_eq!(addr_bus.read_byte(0xff80), Ok(0x37));
+        assert_eq!(addr_bus.read_byte(0xffff), Ok(0x38));
     }
 }
 
 impl crate::Bus<u8> for AddressBus {
-    fn read(_address: u16) -> Result<u8, Error> {
-        todo!();
+    fn read(&self, address: u16) -> Result<u8, Error> {
+        self.read_byte(address)
     }
 
-    fn write(_address: u16, _data: u8) -> Result<(), Error> {
-        todo!();
+    fn write(&mut self, address: u16, data: u8) -> Result<(), Error> {
+        self.write_byte(address, data)
     }
 }
 
 impl crate::Bus<u16> for AddressBus {
-    fn read(_address: u16) -> Result<u16, Error> {
+    fn read(&self, _address: u16) -> Result<u16, Error> {
         todo!();
     }
 
-    fn write(_address: u16, _data: u16) -> Result<(), Error> {
+    fn write(&mut self, _address: u16, _data: u16) -> Result<(), Error> {
         todo!();
     }
 }
