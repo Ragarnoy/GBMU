@@ -1,4 +1,4 @@
-use gb_cpu::address_bus::{Address, Error, FileOperation};
+use gb_bus::{Address, Error, FileOperation};
 use std::io::{self, ErrorKind, Read};
 
 pub const MAX_ROM_ONLY_SIZE: usize = 32_768;
