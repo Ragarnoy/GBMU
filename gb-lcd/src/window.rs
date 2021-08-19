@@ -8,6 +8,8 @@ use sdl2::{
 };
 use std::time::Instant;
 
+const RESOLUTION_DOT: f32 = 96.0;
+
 pub struct GBWindow {
     sdl_window: SdlWindow,
     gl_ctx: GLContext,
@@ -44,7 +46,7 @@ impl GBWindow {
         let egui_ctx = CtxRef::default();
 
         let native_pixels_per_point =
-            96f32 / video_sys.display_dpi(0).map_err(Error::GBWindowInit)?.0;
+            RESOLUTION_DOT / video_sys.display_dpi(0).map_err(Error::GBWindowInit)?.0;
 
         let egui_input_state = EguiInputState::new(egui::RawInput {
             screen_rect: Some(Rect::from_min_size(
@@ -154,5 +156,13 @@ impl GBWindow {
     #[cfg(feature = "debug")]
     pub fn set_debug(&mut self, debug: bool) {
         self.debug = debug;
+    }
+
+    pub fn dots_to_pixels(video_sys: &VideoSubsystem, dots: f32) -> Result<u32, Error> {
+        Ok(
+            (dots * RESOLUTION_DOT / video_sys.display_dpi(0).map_err(Error::GBWindowInit)?.0)
+                .round() as u32
+                + 3,
+        )
     }
 }

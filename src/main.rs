@@ -15,11 +15,13 @@ fn main() {
     let (sdl_context, video_subsystem, mut event_pump) =
         gb_lcd::init().expect("Error while initializing LCD");
 
+    let bar_pixels_size = GBWindow::dots_to_pixels(&video_subsystem, render::MENU_BAR_SIZE)
+        .expect("Error while computing bar size");
     let mut gb_window = GBWindow::new(
         "GBMU",
         (
             render::SCREEN_WIDTH as u32,
-            render::SCREEN_HEIGHT as u32 + render::MENU_BAR_SIZE as u32,
+            render::SCREEN_HEIGHT as u32 + bar_pixels_size,
         ),
         true,
         &video_subsystem,
@@ -32,7 +34,7 @@ fn main() {
         .set_minimum_size(width, height)
         .expect("Failed to configure main window");
 
-    let mut display = render::Render::new();
+    let mut display = render::RenderImage::with_bar_size(bar_pixels_size as f32);
     let mut ppu = PPU::new();
 
     let mut debug_window = None;
