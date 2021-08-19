@@ -1,4 +1,4 @@
-use crate::address_bus::{Address, Error};
+use crate::{Address, Error};
 
 /// FileOperation basic trait to implement for a RAM Emulator or other area.
 pub trait FileOperation {
