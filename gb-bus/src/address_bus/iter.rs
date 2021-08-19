@@ -1,4 +1,5 @@
 use crate::AddressBus;
+use crate::Bus;
 
 pub struct Iter<'a> {
     current_address: u16,

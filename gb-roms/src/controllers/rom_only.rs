@@ -40,7 +40,7 @@ impl FileOperation for RomOnlyController {
 
 #[test]
 fn test_romonly_impl() {
-    use gb_cpu::address_bus::Area;
+    use gb_bus::Area;
 
     let rom = RomOnlyController {
         rom: [42; MAX_ROM_ONLY_SIZE],

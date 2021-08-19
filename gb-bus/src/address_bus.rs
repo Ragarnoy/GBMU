@@ -168,15 +168,15 @@ mod test_address_bus {
             ie_reg: Box::new(CharDevice(9)),
         };
 
-        assert_eq!(addr_bus.write_byte(0x30, 0x11), Ok(()));
-        assert_eq!(addr_bus.write_byte(0x31, 0x8242), Ok(()));
-        assert_eq!(addr_bus.write_byte(0x32, 0xa050), Ok(()));
-        assert_eq!(addr_bus.write_byte(0x33, 0xdf8f), Ok(()));
-        assert_eq!(addr_bus.write_byte(0x34, 0xe006), Ok(()));
-        assert_eq!(addr_bus.write_byte(0x35, 0xfe80), Ok(()));
-        assert_eq!(addr_bus.write_byte(0x36, 0xff70), Ok(()));
-        assert_eq!(addr_bus.write_byte(0x37, 0xff8e), Ok(()));
-        assert_eq!(addr_bus.write_byte(0x38, 0xffff), Ok(()));
+        assert_eq!(addr_bus.write_byte(0x11, 0x30), Ok(()));
+        assert_eq!(addr_bus.write_byte(0x8242, 0x31), Ok(()));
+        assert_eq!(addr_bus.write_byte(0xa050, 0x32), Ok(()));
+        assert_eq!(addr_bus.write_byte(0xdf8f, 0x33), Ok(()));
+        assert_eq!(addr_bus.write_byte(0xe006, 0x34), Ok(()));
+        assert_eq!(addr_bus.write_byte(0xfe80, 0x35), Ok(()));
+        assert_eq!(addr_bus.write_byte(0xff70, 0x36), Ok(()));
+        assert_eq!(addr_bus.write_byte(0xff8e, 0x37), Ok(()));
+        assert_eq!(addr_bus.write_byte(0xffff, 0x38), Ok(()));
 
         assert_eq!(addr_bus.read_byte(0x10), Ok(0x30));
         assert_eq!(addr_bus.read_byte(0x8042), Ok(0x31));
