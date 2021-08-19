@@ -189,3 +189,23 @@ mod test_address_bus {
         assert_eq!(addr_bus.read(0xffff), Ok(0x38));
     }
 }
+
+impl crate::Bus<u8> for AddressBus {
+    fn read(_address: u16) -> Result<u8, Error> {
+        todo!();
+    }
+
+    fn write(_address: u16, _data: u8) -> Result<(), Error> {
+        todo!();
+    }
+}
+
+impl crate::Bus<u16> for AddressBus {
+    fn read(_address: u16) -> Result<u16, Error> {
+        todo!();
+    }
+
+    fn write(_address: u16, _data: u16) -> Result<(), Error> {
+        todo!();
+    }
+}
