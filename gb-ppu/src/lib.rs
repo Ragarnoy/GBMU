@@ -30,8 +30,10 @@ impl PPU {
             for i in 0..SCREEN_WIDTH {
                 if i == 0 || i == SCREEN_WIDTH - 1 || j == 0 || j == SCREEN_HEIGHT - 1 {
                     self.pixels[j][i] = [255, 0, 0];
-                } else {
+                } else if (i + j) % 2 == 0 {
                     self.pixels[j][i] = [0; 3];
+                } else {
+                    self.pixels[j][i] = [255; 3];
                 }
             }
         }
