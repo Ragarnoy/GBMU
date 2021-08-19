@@ -1,6 +1,4 @@
-pub mod operation;
-
-pub use operation::FileOperation;
+use crate::file_operation::FileOperation;
 
 /// AddressBus map specific range address to specific area like ROM/RAM.
 /// This Implementation of an AddressBus will be limited to 16-bit address
@@ -119,7 +117,8 @@ impl AddressBus {
 
 #[cfg(test)]
 mod test_address_bus {
-    use super::{operation::CharDevice, AddressBus};
+    use super::AddressBus;
+    use crate::generic::CharDevice;
 
     #[test]
     fn read() {

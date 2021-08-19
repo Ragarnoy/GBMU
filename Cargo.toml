@@ -23,5 +23,6 @@ members = [
   "gb-roms",
   "gb-ppu",
   "gb-lcd",
-  "gb-cpu"
+  "gb-cpu",
+  "gb-bus"
 ]
