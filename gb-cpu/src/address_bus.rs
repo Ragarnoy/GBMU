@@ -224,7 +224,7 @@ pub enum Error {
     SegmentationFault(Address),
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 /// Address contain the relative and absolute address
 pub struct Address {
     /// relative address into the current area of the address bus
@@ -236,7 +236,7 @@ pub struct Address {
     pub area: Area,
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Area {
     Bios,
     Rom,
