@@ -109,7 +109,6 @@ fn main() {
                 } => {
                     if gb_window.sdl_window().id() == window_id && scancode == Some(Scancode::Grave)
                     {
-                        println!("switch: {:?}", debug);
                         debug = !debug;
                         display.switch_draw_mode(debug);
                         gb_window.set_debug(debug);
