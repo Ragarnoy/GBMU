@@ -1,12 +1,12 @@
 use rfd::FileDialog;
 use sdl2::{event::Event, keyboard::Keycode};
 
+use gb_dbg::app::Debugger;
+use gb_dbg::disassembler::Disassembler;
+use gb_dbg::flow_control::FlowController;
+use gb_dbg::memory::MemoryEditorBuilder;
 use gb_lcd::{render, window::GBWindow};
 use gb_ppu::PPU;
-use gb_dbg::memory::MemoryEditorBuilder;
-use gb_dbg::app::Debugger;
-use gb_dbg::flow_control::FlowController;
-use gb_dbg::disassembler::Disassembler;
 
 fn main() {
     let (sdl_context, video_subsystem, mut event_pump) =

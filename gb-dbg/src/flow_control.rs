@@ -2,9 +2,7 @@ use egui::Ui;
 
 pub struct FlowController;
 
-
 impl FlowController {
-
     pub fn draw(&self, ui: &mut Ui) {
         ui.horizontal(|ui| {
             if ui.button("Step").clicked() {

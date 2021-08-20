@@ -1,17 +1,14 @@
-use egui::{Ui, Color32, Label};
+use egui::{Color32, Label, Ui};
 
 pub struct Disassembler;
 
-
 impl Disassembler {
-
     pub fn draw(&self, ui: &mut Ui) {
         ui.label(Label::new("Disassembler").text_color(Color32::WHITE));
-        egui::CollapsingHeader::new("🛠 Options").id_source(55)
+        egui::CollapsingHeader::new("🛠 Options")
+            .id_source(55)
             .default_open(false)
-            .show(ui, |ui| {
-                ui.label("Hello")
-            });
+            .show(ui, |ui| ui.label("Hello"));
         ui.separator();
         ui.vertical(|ui| {
             ui.columns(3, |columns| {

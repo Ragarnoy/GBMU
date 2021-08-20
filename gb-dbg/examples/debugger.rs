@@ -2,9 +2,9 @@ use eframe::egui::CtxRef;
 use eframe::epi::*;
 use egui::Vec2;
 use gb_dbg::app::Debugger;
-use gb_dbg::flow_control::FlowController;
-use gb_dbg::memory::{MemoryEditorBuilder};
 use gb_dbg::disassembler::Disassembler;
+use gb_dbg::flow_control::FlowController;
+use gb_dbg::memory::MemoryEditorBuilder;
 
 pub struct DebuggerApp {
     pub debugger: Debugger<Vec<u8>>,

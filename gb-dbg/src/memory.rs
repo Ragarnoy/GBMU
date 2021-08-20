@@ -1,4 +1,4 @@
-use egui::{Ui, Label, Color32};
+use egui::{Color32, Label, Ui};
 use egui_memory_editor::option_data::MemoryEditorOptions;
 use egui_memory_editor::{MemoryEditor, ReadFunction, WriteFunction};
 use std::ops::Range;
@@ -47,8 +47,7 @@ impl<'name, T> MemoryEditorBuilder<'name, T> {
         let mut mem_options = MemoryEditorOptions::default();
         mem_options.is_resizable_column = false;
         mem_options.is_options_collapsed = true;
-        let mut mem_edit = MemoryEditor::new(self.read_func)
-            .with_options(mem_options);
+        let mut mem_edit = MemoryEditor::new(self.read_func).with_options(mem_options);
         for (range_name, range) in self.address_ranges {
             mem_edit = mem_edit.with_address_range(range_name, range);
         }
