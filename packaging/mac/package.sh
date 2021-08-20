@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 APPNAME=${2:-$(basename "${1}" '.sh')};
-CONTENT="${APPNAME}.app/Contents";
+CONTENT="build/${APPNAME}.app/Contents";
 RESOURCES="${CONTENT}/Resources";
 MACOS="${CONTENT}/MacOS";
 SOURCE="packaging";
@@ -23,4 +23,4 @@ mkdir -p "${RESOURCES}";
 # sips -s format icns "${SOURCE}/logo.png" --out "${SOURCE_MAC}/logo.icns"
 cp "${SOURCE_MAC}/logo.icns" "${RESOURCES}/";
 
-echo "${PWD}/$APPNAME.app";
+echo "${PWD}/build/${APPNAME}.app";

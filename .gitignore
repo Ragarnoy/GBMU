@@ -22,7 +22,5 @@ roms/Pokemon - Jaune.gbc
 # Rust
 target
 
-build
-
-# mac app
-gbmu.app
+# packaged app
+build/
