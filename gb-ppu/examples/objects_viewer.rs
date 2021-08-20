@@ -30,12 +30,21 @@ pub fn main() {
         );
     let mut ppu = PPU::new();
     let dumps = [
-        ("mario", include_bytes!("memory dumps/Super_Mario_Land.dmp")),
+        (
+            "mario",
+            include_bytes!("memory dumps/vram/Super_Mario_Land.dmp"),
+            include_bytes!("memory dumps/oam/Super_Mario_Land.dmp"),
+        ),
         (
             "zelda",
-            include_bytes!("memory dumps/Legend_of_Zelda_link_Awaking.dmp"),
+            include_bytes!("memory dumps/vram/Legend_of_Zelda_link_Awaking.dmp"),
+            include_bytes!("memory dumps/oam/Legend_of_Zelda_link_Awaking.dmp"),
         ),
-        ("pokemon", include_bytes!("memory dumps/Pokemon_Bleue.dmp")),
+        (
+            "pokemon",
+            include_bytes!("memory dumps/vram/Pokemon_Bleue.dmp"),
+            include_bytes!("memory dumps/oam/Pokemon_Bleue.dmp"),
+        ),
     ];
     ppu.overwrite_vram(dumps[0].1);
     let mut image = ppu.objects_image();
@@ -49,9 +58,10 @@ pub fn main() {
             egui::menu::bar(ui, |ui| {
                 ui.set_height(render::MENU_BAR_SIZE);
                 egui::menu::menu(ui, "dump", |ui| {
-                    for (title, dump) in dumps {
+                    for (title, vram_dump, oam_dump) in dumps {
                         if ui.button(title).clicked() {
-                            ppu.overwrite_vram(dump);
+                            ppu.overwrite_vram(vram_dump);
+                            ppu.overwrite_oam(oam_dump);
                             image = ppu.objects_image();
                         }
                     }
