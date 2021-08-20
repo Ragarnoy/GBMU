@@ -161,8 +161,8 @@ impl GBWindow {
     pub fn dots_to_pixels(video_sys: &VideoSubsystem, dots: f32) -> Result<u32, Error> {
         Ok(
             (dots * RESOLUTION_DOT / video_sys.display_dpi(0).map_err(Error::GBWindowInit)?.0)
-                .round() as u32
-                + 3,
+                .ceil() as u32
+                + 4,
         )
     }
 }
