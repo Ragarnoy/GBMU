@@ -64,4 +64,4 @@ build:
     endif
 endif
 
-.PHONY: requirement roms docker run-container package package-linux package-linux-appimage build_mac_app
+.PHONY: requirement roms docker run-container package package-linux package-linux-appimage build
