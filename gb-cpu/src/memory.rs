@@ -1,3 +1,6 @@
+mod area;
+mod consts;
+
 use crate::bus::Bus;
 use crate::error::Error;
 use area::rom::{Mbc, NoMbc};
