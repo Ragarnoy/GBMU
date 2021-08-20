@@ -1,4 +1,4 @@
-use crate::memory::Vram;
+use crate::memory::{Oam, Vram};
 use crate::registers::Control;
 use crate::{
     TILEMAP_DIM, TILEMAP_TILE_COUNT, TILESHEET_HEIGHT, TILESHEET_TILE_COUNT, TILESHEET_WIDTH,
@@ -11,6 +11,7 @@ use gb_lcd::render::{RenderData, SCREEN_HEIGHT, SCREEN_WIDTH};
 /// This impl propably won't work once the cpu will need to access them.
 pub struct PPU {
     vram: Vram,
+    oam: Oam,
     control: Control,
     pixels: RenderData<SCREEN_WIDTH, SCREEN_HEIGHT>,
 }
@@ -19,6 +20,7 @@ impl PPU {
     pub fn new() -> Self {
         Self {
             vram: Vram::new(),
+            oam: Oam::new(),
             control: Control::new(),
             pixels: [[[255; 3]; SCREEN_WIDTH]; SCREEN_HEIGHT],
         }
