@@ -17,11 +17,14 @@ egui = { version = "0.13" }
 rfd = { version = "0.4" }
 gb-lcd = { path= "./gb-lcd" }
 gb-ppu = { path = "./gb-ppu" }
+gb-cpu = { path= "./gb-cpu" }
+gb-memory = { path = "./gb-memory" }
 
 [workspace]
 members = [
   "gb-roms",
   "gb-ppu",
   "gb-lcd",
-  "gb-cpu"
+  "gb-cpu",
+  "gb-memory"
 ]
