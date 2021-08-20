@@ -6,12 +6,12 @@ use modular_bitfield::{
 #[bitfield]
 #[derive(Clone, Copy, Debug)]
 struct Attributes {
-    pub bg_win_priority: B1,
-    pub y_flip: B1,
-    pub x_flip: B1,
-    pub palette_nb: B1,
-    pub tile_bank: B1,
     pub palette_cgb_nb: B3,
+    pub tile_bank: B1,
+    pub palette_nb: B1,
+    pub x_flip: B1,
+    pub y_flip: B1,
+    pub bg_win_priority: B1,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -35,6 +35,14 @@ impl Object {
 
     pub fn tile_index(&self) -> u8 {
         self.tile_index
+    }
+
+    pub fn y_flip(&self) -> u8 {
+        self.attributes.y_flip()
+    }
+
+    pub fn x_flip(&self) -> u8 {
+        self.attributes.x_flip()
     }
 }
 

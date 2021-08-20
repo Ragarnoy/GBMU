@@ -149,11 +149,14 @@ impl PPU {
                 .unwrap();
             for j in 0..8 {
                 for i in 0..8 {
-                    let x_rev = OBJECT_RENDER_WIDTH - 8 - x + i;
-                    match tile[j][i] {
-                        3 => image[y + j][x_rev] = [0; 3],
-                        2 => image[y + j][x_rev] = [85; 3],
-                        1 => image[y + j][x_rev] = [170; 3],
+                    let x_tile = OBJECT_RENDER_WIDTH - 8 - x + i;
+                    let y_tile = y + j;
+                    let x_pixel = if object.x_flip() != 0 { 7 - i } else { i };
+                    let y_pixel = if object.y_flip() != 0 { 7 - j } else { j };
+                    match tile[y_pixel][x_pixel] {
+                        3 => image[y_tile][x_tile] = [0; 3],
+                        2 => image[y_tile][x_tile] = [85; 3],
+                        1 => image[y_tile][x_tile] = [170; 3],
                         0 => {}
                         _ => {}
                     }
@@ -167,11 +170,14 @@ impl PPU {
                 let y = y + 8;
                 for j in 0..8 {
                     for i in 0..8 {
-                        let x_rev = OBJECT_RENDER_WIDTH - 8 - x + i;
-                        match tile[j][i] {
-                            3 => image[y + j][x_rev] = [0; 3],
-                            2 => image[y + j][x_rev] = [85; 3],
-                            1 => image[y + j][x_rev] = [170; 3],
+                        let x_tile = OBJECT_RENDER_WIDTH - 8 - x + i;
+                        let y_tile = y + j;
+                        let x_pixel = if object.x_flip() != 0 { 7 - i } else { i };
+                        let y_pixel = if object.y_flip() != 0 { 7 - j } else { j };
+                        match tile[y_pixel][x_pixel] {
+                            3 => image[y_tile][x_tile] = [0; 3],
+                            2 => image[y_tile][x_tile] = [85; 3],
+                            1 => image[y_tile][x_tile] = [170; 3],
                             0 => {}
                             _ => {}
                         }
