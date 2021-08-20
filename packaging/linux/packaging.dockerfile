@@ -21,4 +21,5 @@ COPY --chown=tester:tester assets/gbmu.desktop /home/tester/GBMU.AppDir/usr/shar
 COPY --chown=tester:tester assets/gbmu-512x512.png /home/tester/GBMU.AppDir/usr/share/icons/gbmu/512x512/gbmu.png
 COPY --chown=tester:tester assets/AppImageBuilder.yml /home/tester/
 
-RUN appimage-builder --skip-tests
+ENTRYPOINT appimage-builder
+CMD [ "--skip-tests" ]
