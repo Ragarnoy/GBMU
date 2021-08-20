@@ -19,7 +19,7 @@ WORKDIR /home/tester
 COPY --from=BUILDER --chown=tester:tester /app/target/release/gbmu /home/tester/GBMU.AppDir/usr/bin/gbmu
 COPY --chown=tester:tester assets/gbmu.desktop /home/tester/GBMU.AppDir/usr/share/applications/gbmu.desktop
 COPY --chown=tester:tester assets/gbmu-512x512.png /home/tester/GBMU.AppDir/usr/share/icons/gbmu/512x512/gbmu.png
-COPY --chown=tester:tester assets/AppImageBuilder.yml /home/tester/
+COPY --chown=tester:tester packaging/linux/appimage/AppImageBuilder.yml /home/tester/
 
 ENTRYPOINT appimage-builder
 CMD [ "--skip-tests" ]

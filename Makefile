@@ -34,9 +34,9 @@ $(ROMS_DIR)/%: roms.zip
 	unzip $< 'roms/*' -x '*/.DS_Store'
 	touch roms/*
 
-docker: Dockerfile packaging/linux/packaging.dockerfile
+docker: Dockerfile packaging/linux/appimage/Dockerfile
 	docker build -f Dockerfile -t gbmu:latest .
-	docker build -f packaging/linux/packaging.dockerfile -t gbmu-appimage:latest .
+	docker build -f packaging/linux/appimage/Dockerfile -t gbmu-appimage:latest .
 
 run-container: docker
 	docker run -it --net=host --env=DISPLAY --rm gbmu:latest
