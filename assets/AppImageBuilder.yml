@@ -5,13 +5,12 @@ AppDir:
   app_info:
     id: gbmu
     name: GBMU
-    icon: gbmu.png
+    icon: gbmu
     version: latest
     exec: usr/bin/gbmu
     exec_args: $@
   apt:
-    arch:
-      - amd64
+    arch: [amd64]
     allow_unauthenticated: true
     sources:
     - sourceline: deb http://archive.ubuntu.com/ubuntu/ bionic main restricted
