@@ -140,7 +140,40 @@ impl PPU {
             .oam
             .collect_all_objects()
             .expect("failed to collect objects for image");
-        for object in objects {}
+        for object in objects {
+            let x = object.x_pos().min(OBJECT_RENDER_WIDTH as u8 - 8) as usize;
+            let y = object.y_pos().min(OBJECT_RENDER_HEIGHT as u8 - 16) as usize;
+            let tile = self
+                .vram
+                .read_8x8_tile(object.tile_index() as usize)
+                .unwrap();
+            for j in 0..8 {
+                for i in 0..8 {
+                    let x_rev = OBJECT_RENDER_WIDTH - (x + 1) + i;
+                    match tile[j][i] {
+                        3 => image[y + j][x_rev] = [0; 3],
+                        2 => image[y + j][x_rev] = [85; 3],
+                        1 => image[y + j][x_rev] = [170; 3],
+                        0 => {}
+                        _ => {}
+                    }
+                }
+            }
+        }
+        // draw screen outline
+        for (y, column) in image.iter_mut().enumerate() {
+            for (x, pixel) in column.iter_mut().enumerate() {
+                if ((x == 7 || x == OBJECT_RENDER_WIDTH - 8)
+                    && y >= 15
+                    && y <= OBJECT_RENDER_HEIGHT - 16)
+                    || ((y == 15 || y == OBJECT_RENDER_HEIGHT - 16)
+                        && x >= 7
+                        && x <= OBJECT_RENDER_WIDTH - 8)
+                {
+                    *pixel = [!pixel[0], !pixel[1], !pixel[2]];
+                }
+            }
+        }
         image
     }
 }

@@ -47,6 +47,7 @@ pub fn main() {
         ),
     ];
     ppu.overwrite_vram(dumps[0].1);
+    ppu.overwrite_oam(dumps[0].2);
     let mut image = ppu.objects_image();
 
     'running: loop {

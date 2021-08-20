@@ -24,6 +24,18 @@ pub struct Object {
 
 impl Object {
     pub const SIZE: usize = 4;
+
+    pub fn y_pos(&self) -> u8 {
+        self.y_pos
+    }
+
+    pub fn x_pos(&self) -> u8 {
+        self.x_pos
+    }
+
+    pub fn tile_index(&self) -> u8 {
+        self.tile_index
+    }
 }
 
 impl From<[u8; Object::SIZE]> for Object {
