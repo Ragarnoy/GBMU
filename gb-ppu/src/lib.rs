@@ -1,5 +1,6 @@
 mod error;
 mod memory;
+mod object;
 mod ppu;
 mod registers;
 
