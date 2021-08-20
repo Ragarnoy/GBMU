@@ -4,7 +4,7 @@ use modular_bitfield::{
 };
 
 #[bitfield]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 struct Attributes {
     pub bg_win_priority: B1,
     pub y_flip: B1,
@@ -14,7 +14,7 @@ struct Attributes {
     pub palette_cgb_nb: B3,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct Object {
     y_pos: u8,
     x_pos: u8,

@@ -135,7 +135,7 @@ impl PPU {
     ///
     /// This function is used for debugging purpose.
     pub fn objects_image(&self) -> RenderData<OBJECT_RENDER_WIDTH, OBJECT_RENDER_HEIGHT> {
-        let mut image = [[[255; 3]; OBJECT_RENDER_HEIGHT]; OBJECT_RENDER_WIDTH];
+        let mut image = [[[255; 3]; OBJECT_RENDER_WIDTH]; OBJECT_RENDER_HEIGHT];
         let objects = self
             .oam
             .collect_all_objects()
@@ -149,13 +149,32 @@ impl PPU {
                 .unwrap();
             for j in 0..8 {
                 for i in 0..8 {
-                    let x_rev = OBJECT_RENDER_WIDTH - (x + 1) + i;
+                    let x_rev = OBJECT_RENDER_WIDTH - 8 - x + i;
                     match tile[j][i] {
                         3 => image[y + j][x_rev] = [0; 3],
                         2 => image[y + j][x_rev] = [85; 3],
                         1 => image[y + j][x_rev] = [170; 3],
                         0 => {}
                         _ => {}
+                    }
+                }
+            }
+            if self.control.obj_size() != 0 {
+                let tile = self
+                    .vram
+                    .read_8x8_tile(object.tile_index() as usize + 1)
+                    .unwrap();
+                let y = y + 8;
+                for j in 0..8 {
+                    for i in 0..8 {
+                        let x_rev = OBJECT_RENDER_WIDTH - 8 - x + i;
+                        match tile[j][i] {
+                            3 => image[y + j][x_rev] = [0; 3],
+                            2 => image[y + j][x_rev] = [85; 3],
+                            1 => image[y + j][x_rev] = [170; 3],
+                            0 => {}
+                            _ => {}
+                        }
                     }
                 }
             }
