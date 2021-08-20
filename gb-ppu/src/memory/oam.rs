@@ -39,6 +39,10 @@ impl Oam {
         }
         Ok(objects)
     }
+
+    pub fn overwrite(&mut self, data: &[u8; Self::SIZE]) {
+        self.data = *data;
+    }
 }
 
 impl Default for Oam {
