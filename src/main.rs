@@ -34,7 +34,7 @@ fn main() {
 
     let mut debug_window = None;
     let mem = vec![0u8; u16::MAX as usize];
-    let gbm_mem = MemoryEditorBuilder::new(|mem , address| *mem.get(address).unwrap(), mem)
+    let gbm_mem = MemoryEditorBuilder::new(|mem, address| *mem.get(address).unwrap(), mem)
         .with_write_function(|mem, address, value| mem[address] = value)
         .with_address_range("VRam", 0..0xFF)
         .build();
