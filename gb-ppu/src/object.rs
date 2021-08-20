@@ -4,6 +4,7 @@ use modular_bitfield::{
 };
 
 #[bitfield]
+#[derive(Clone, Copy)]
 struct Attributes {
     pub bg_win_priority: B1,
     pub y_flip: B1,
@@ -13,6 +14,7 @@ struct Attributes {
     pub palette_cgb_nb: B3,
 }
 
+#[derive(Clone, Copy)]
 pub struct Object {
     y_pos: u8,
     x_pos: u8,
@@ -20,8 +22,12 @@ pub struct Object {
     attributes: Attributes,
 }
 
-impl From<[u8; 4]> for Object {
-    fn from(bytes: [u8; 4]) -> Object {
+impl Object {
+    pub const SIZE: usize = 4;
+}
+
+impl From<[u8; Object::SIZE]> for Object {
+    fn from(bytes: [u8; Object::SIZE]) -> Object {
         Object {
             y_pos: bytes[0],
             x_pos: bytes[1],
