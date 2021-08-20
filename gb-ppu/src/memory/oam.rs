@@ -32,7 +32,7 @@ impl Oam {
         Ok(Object::from(bytes))
     }
 
-    pub fn collect_all_object(&self) -> PPUResult<[Object; Self::OBJECT_COUNT], usize> {
+    pub fn collect_all_objects(&self) -> PPUResult<[Object; Self::OBJECT_COUNT], usize> {
         let mut objects = [Object::from([0; Object::SIZE]); Self::OBJECT_COUNT];
         for (i, object) in objects.iter_mut().enumerate() {
             *object = self.read_object(i)?;

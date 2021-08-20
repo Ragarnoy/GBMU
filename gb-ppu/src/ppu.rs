@@ -1,7 +1,8 @@
 use crate::memory::{Oam, Vram};
 use crate::registers::Control;
 use crate::{
-    TILEMAP_DIM, TILEMAP_TILE_COUNT, TILESHEET_HEIGHT, TILESHEET_TILE_COUNT, TILESHEET_WIDTH,
+    OBJECT_RENDER_HEIGHT, OBJECT_RENDER_WIDTH, TILEMAP_DIM, TILEMAP_TILE_COUNT, TILESHEET_HEIGHT,
+    TILESHEET_TILE_COUNT, TILESHEET_WIDTH,
 };
 use gb_lcd::render::{RenderData, SCREEN_HEIGHT, SCREEN_WIDTH};
 
@@ -127,6 +128,19 @@ impl PPU {
                 y += 1;
             }
         }
+        image
+    }
+
+    /// Create an image of the currents objects.
+    ///
+    /// This function is used for debugging purpose.
+    pub fn objects_image(&self) -> RenderData<OBJECT_RENDER_WIDTH, OBJECT_RENDER_HEIGHT> {
+        let mut image = [[[255; 3]; OBJECT_RENDER_HEIGHT]; OBJECT_RENDER_WIDTH];
+        let objects = self
+            .oam
+            .collect_all_objects()
+            .expect("failed to collect objects for image");
+        for object in objects {}
         image
     }
 }
