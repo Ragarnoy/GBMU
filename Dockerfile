@@ -11,7 +11,14 @@ RUN rustup component add rustfmt clippy \
   && useradd tester -d /home/tester -m
 
 USER tester
-COPY --chown=tester:tester . /app/
+
+COPY --chown=tester:tester Cargo.toml Cargo.lock /app/
+COPY --chown=tester:tester gb-cpu/ /app/gb-cpu
+COPY --chown=tester:tester gb-lcd/ /app/gb-lcd/
+COPY --chown=tester:tester gb-ppu/ /app/gb-ppu/
+COPY --chown=tester:tester gb-roms/ /app/gb-roms/
+COPY --chown=tester:tester src/ /app/src/
+
 WORKDIR /app
 RUN cargo build --workspace && cargo build --workspace --examples
 
