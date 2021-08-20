@@ -35,7 +35,16 @@ $(ROMS_DIR)/%: roms.zip
 	touch roms/*
 
 docker:
-	docker build -t gbmu:latest .
+	docker build -f Dockerfile -t gbmu:latest .
+	docker build -f packaging/linux/packaging.dockerfile -t gbmu-appimage:latest .
+
+run-container: docker
 	docker run -it --net=host --env=DISPLAY --rm gbmu:latest
 
-.PHONY: requirement roms
+package:
+
+package-linux:
+
+package-linux-appimage:
+
+.PHONY: requirement roms docker run-container package package-linux package-linux-appimage
