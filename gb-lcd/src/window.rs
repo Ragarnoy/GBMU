@@ -18,7 +18,7 @@ pub struct GBWindow {
     egui_input_state: EguiInputState,
     pixels_per_point: f32,
     start_time: Instant,
-    #[cfg(feature = "debug")]
+    #[cfg(feature = "debug_render")]
     debug: bool,
 }
 
@@ -66,7 +66,7 @@ impl GBWindow {
             egui_input_state,
             pixels_per_point: native_pixels_per_point,
             start_time,
-            #[cfg(feature = "debug")]
+            #[cfg(feature = "debug_render")]
             debug: false,
         })
     }
@@ -95,7 +95,7 @@ impl GBWindow {
         unsafe {
             // Clear the screen to black
             gl::ClearColor(0.0, 0.0, 0.0, 1.0);
-            #[cfg(feature = "debug")]
+            #[cfg(feature = "debug_render")]
             if self.debug {
                 gl::ClearColor(1.0, 1.0, 1.0, 1.0);
             }
@@ -153,7 +153,7 @@ impl GBWindow {
         false
     }
 
-    #[cfg(feature = "debug")]
+    #[cfg(feature = "debug_render")]
     pub fn set_debug(&mut self, debug: bool) {
         self.debug = debug;
     }

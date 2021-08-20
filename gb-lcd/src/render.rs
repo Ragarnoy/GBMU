@@ -82,7 +82,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> RenderImage<WIDTH, HEIGHT> {
         }
     }
 
-    #[cfg(feature = "debug")]
+    #[cfg(feature = "debug_render")]
     pub fn switch_draw_mode(&self, lines: bool) {
         unsafe {
             gl::PolygonMode(gl::FRONT_AND_BACK, if lines { gl::LINE } else { gl::FILL });

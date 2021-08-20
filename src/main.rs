@@ -5,7 +5,7 @@ use gb_dbg::app::Debugger;
 use gb_dbg::disassembler::Disassembler;
 use gb_dbg::flow_control::FlowController;
 use gb_dbg::memory::MemoryEditorBuilder;
-#[cfg(feature = "debug")]
+#[cfg(feature = "debug_render")]
 use sdl2::keyboard::Scancode;
 
 use gb_lcd::{render, window::GBWindow};
@@ -45,7 +45,7 @@ fn main() {
         .build();
     let mut dbg_app = Debugger::new(gbm_mem, FlowController, Disassembler);
 
-    #[cfg(feature = "debug")]
+    #[cfg(feature = "debug_render")]
     let mut debug = false;
 
     'running: loop {
@@ -103,7 +103,7 @@ fn main() {
                     keycode: Some(Keycode::Escape),
                     ..
                 } => break 'running,
-                #[cfg(feature = "debug")]
+                #[cfg(feature = "debug_render")]
                 sdl2::event::Event::KeyDown {
                     window_id,
                     scancode,
