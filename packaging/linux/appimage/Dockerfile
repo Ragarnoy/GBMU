@@ -21,7 +21,8 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
   gtk-update-icon-cache \
   file \
   elfutils \
-  libgtk-3-0
+  libgtk-3-0 \
+  zip
 
 WORKDIR /opt
 ADD https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage /opt/appimagetool
@@ -39,13 +40,13 @@ COPY --chown=tester:tester assets/gbmu-512x512.png /home/tester/GBMU.AppDir/usr/
 COPY --chown=tester:tester assets/gbmu-512x512.png /home/tester/GBMU.AppDir/usr/share/pixmaps/gbmu.png
 COPY --chown=tester:tester assets/gbmu-512x512.png /home/tester/GBMU.AppDir/usr/share/icons/hicolor/512x512/gbmu.png
 
-COPY --chown=tester:tester assets/gbmu.metainfo.xml /home/tester/GBMU.AppDir/usr/share/metainfo/io.github.ragarnoy.GBMU.metainfo.xml
+COPY --chown=tester:tester assets/gbmu.metainfo.xml /home/tester/GBMU.AppDir/usr/share/metainfo/io.github.ragarnoy.GBMU.appdata.xml
 COPY --chown=tester:tester packaging/linux/appimage/AppImageBuilder.yml /home/tester/
 
 COPY --from=BUILDER --chown=tester:tester /app/target/release/gbmu /home/tester/GBMU.AppDir/usr/bin/gbmu
 
 RUN mkdir -p GBMU.AppDir/usr/share/applications \
-  && appstreamcli make-desktop-file GBMU.AppDir/usr/share/metainfo/io.github.ragarnoy.GBMU.metainfo.xml GBMU.AppDir/usr/share/applications/io.github.ragarnoy.GBMU.desktop
+  && appstreamcli make-desktop-file GBMU.AppDir/usr/share/metainfo/io.github.ragarnoy.GBMU.appdata.xml GBMU.AppDir/usr/share/applications/io.github.ragarnoy.GBMU.desktop
 
 ENTRYPOINT appimage-builder
 CMD [ "--skip-tests" ]
