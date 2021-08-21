@@ -11,12 +11,16 @@ edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+debug_render = ["gb-lcd/debug_render"]
+
 [dependencies]
 sdl2 = { version = "0.34", features = ["bundled", "static-link"] }
 egui = { version = "0.13" }
 rfd = { version = "0.4" }
 gb-lcd = { path= "./gb-lcd" }
 gb-ppu = { path = "./gb-ppu" }
+gb-dbg = { path = "./gb-dbg" }
 
 [workspace]
 members = [
@@ -24,5 +28,6 @@ members = [
   "gb-ppu",
   "gb-lcd",
   "gb-cpu",
+  "gb-dbg",
   "gb-bus"
 ]

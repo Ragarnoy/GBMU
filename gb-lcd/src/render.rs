@@ -82,6 +82,13 @@ impl<const WIDTH: usize, const HEIGHT: usize> RenderImage<WIDTH, HEIGHT> {
         }
     }
 
+    #[cfg(feature = "debug_render")]
+    pub fn switch_draw_mode(&self, lines: bool) {
+        unsafe {
+            gl::PolygonMode(gl::FRONT_AND_BACK, if lines { gl::LINE } else { gl::FILL });
+        }
+    }
+
     pub fn resize(&mut self, dim: (u32, u32)) {
         let dim = (dim.0 as f32, dim.1 as f32);
         let screen_ratio = WIDTH as f32 / HEIGHT as f32;

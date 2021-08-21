@@ -34,4 +34,19 @@ $(ROMS_DIR)/%: roms.zip
 	unzip $< 'roms/*' -x '*/.DS_Store'
 	touch roms/*
 
-.PHONY: requirement roms
+docker: Dockerfile packaging/linux/appimage/Dockerfile
+	docker build -f Dockerfile -t gbmu:latest .
+	docker build -f packaging/linux/appimage/Dockerfile -t gbmu-appimage:latest .
+
+run-container: docker
+	docker run -it --net=host --env=DISPLAY --rm gbmu:latest
+
+package: package-linux
+
+package-linux: package-linux-appimage
+
+package-linux-appimage: docker
+	mkdir -p build
+	docker run --rm -t -v $$(pwd)/build:/build --entrypoint=/bin/sh gbmu-appimage:latest -c "set -x && appimage-builder --skip-tests && zip -r GBMU.AppDir.zip GBMU.AppDir && cp -vR GBMU-latest-x86_64.AppImage GBMU.AppDir.zip /build/"
+
+.PHONY: requirement roms docker run-container package package-linux package-linux-appimage
