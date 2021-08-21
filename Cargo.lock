@@ -668,11 +668,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "00b0228411908ca8685dba7fc2cdd70ec9990a6e753e89b6ac91a84c40fbaf4b"
 
 [[package]]
-name = "gb-cpu"
+name = "gb-bus"
 version = "0.1.0"
 dependencies = [
  "rand",
 ]
+
+[[package]]
+name = "gb-cpu"
+version = "0.1.0"
 
 [[package]]
 name = "gb-dbg"
@@ -707,7 +711,7 @@ name = "gb-roms"
 version = "0.1.0"
 dependencies = [
  "clap",
- "gb-cpu",
+ "gb-bus",
  "modular-bitfield",
 ]
 

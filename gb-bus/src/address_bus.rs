@@ -1,6 +1,11 @@
-pub mod operation;
+pub mod error;
+pub mod iter;
 
-pub use operation::FileOperation;
+pub use error::Error;
+use iter::Iter;
+
+use crate::FileOperation;
+use crate::{Address, Area};
 
 /// AddressBus map specific range address to specific area like ROM/RAM.
 /// This Implementation of an AddressBus will be limited to 16-bit address
@@ -30,7 +35,7 @@ pub struct AddressBus {
 }
 
 impl AddressBus {
-    pub fn write(&mut self, v: u8, addr: u16) -> Result<(), Error> {
+    pub fn write_byte(&mut self, addr: u16, v: u8) -> Result<(), Error> {
         match addr {
             0x0000..=0x00ff if self.bios.is_some() => {
                 let b = self.bios.as_mut().unwrap();
@@ -69,7 +74,7 @@ impl AddressBus {
         }
     }
 
-    pub fn read(&self, addr: u16) -> Result<u8, Error> {
+    pub fn read_byte(&self, addr: u16) -> Result<u8, Error> {
         match addr {
             0x0000..=0x00ff if self.bios.is_some() => {
                 let b = self.bios.as_ref().unwrap();
@@ -119,7 +124,8 @@ impl AddressBus {
 
 #[cfg(test)]
 mod test_address_bus {
-    use super::{operation::CharDevice, AddressBus};
+    use super::AddressBus;
+    use crate::generic::CharDevice;
 
     #[test]
     fn read() {
@@ -136,15 +142,15 @@ mod test_address_bus {
             ie_reg: Box::new(CharDevice(9)),
         };
 
-        assert_eq!(addr_bus.read(0x10), Ok(1));
-        assert_eq!(addr_bus.read(0x8042), Ok(2));
-        assert_eq!(addr_bus.read(0xa000), Ok(3));
-        assert_eq!(addr_bus.read(0xdfff), Ok(4));
-        assert_eq!(addr_bus.read(0xe000), Ok(5));
-        assert_eq!(addr_bus.read(0xfe00), Ok(6));
-        assert_eq!(addr_bus.read(0xff00), Ok(7));
-        assert_eq!(addr_bus.read(0xff80), Ok(8));
-        assert_eq!(addr_bus.read(0xffff), Ok(9));
+        assert_eq!(addr_bus.read_byte(0x10), Ok(1));
+        assert_eq!(addr_bus.read_byte(0x8042), Ok(2));
+        assert_eq!(addr_bus.read_byte(0xa000), Ok(3));
+        assert_eq!(addr_bus.read_byte(0xdfff), Ok(4));
+        assert_eq!(addr_bus.read_byte(0xe000), Ok(5));
+        assert_eq!(addr_bus.read_byte(0xfe00), Ok(6));
+        assert_eq!(addr_bus.read_byte(0xff00), Ok(7));
+        assert_eq!(addr_bus.read_byte(0xff80), Ok(8));
+        assert_eq!(addr_bus.read_byte(0xffff), Ok(9));
     }
 
     #[test]
@@ -162,114 +168,50 @@ mod test_address_bus {
             ie_reg: Box::new(CharDevice(9)),
         };
 
-        assert_eq!(addr_bus.write(0x30, 0x11), Ok(()));
-        assert_eq!(addr_bus.write(0x31, 0x8242), Ok(()));
-        assert_eq!(addr_bus.write(0x32, 0xa050), Ok(()));
-        assert_eq!(addr_bus.write(0x33, 0xdf8f), Ok(()));
-        assert_eq!(addr_bus.write(0x34, 0xe006), Ok(()));
-        assert_eq!(addr_bus.write(0x35, 0xfe80), Ok(()));
-        assert_eq!(addr_bus.write(0x36, 0xff70), Ok(()));
-        assert_eq!(addr_bus.write(0x37, 0xff8e), Ok(()));
-        assert_eq!(addr_bus.write(0x38, 0xffff), Ok(()));
+        assert_eq!(addr_bus.write_byte(0x11, 0x30), Ok(()));
+        assert_eq!(addr_bus.write_byte(0x8242, 0x31), Ok(()));
+        assert_eq!(addr_bus.write_byte(0xa050, 0x32), Ok(()));
+        assert_eq!(addr_bus.write_byte(0xdf8f, 0x33), Ok(()));
+        assert_eq!(addr_bus.write_byte(0xe006, 0x34), Ok(()));
+        assert_eq!(addr_bus.write_byte(0xfe80, 0x35), Ok(()));
+        assert_eq!(addr_bus.write_byte(0xff70, 0x36), Ok(()));
+        assert_eq!(addr_bus.write_byte(0xff8e, 0x37), Ok(()));
+        assert_eq!(addr_bus.write_byte(0xffff, 0x38), Ok(()));
 
-        assert_eq!(addr_bus.read(0x10), Ok(0x30));
-        assert_eq!(addr_bus.read(0x8042), Ok(0x31));
-        assert_eq!(addr_bus.read(0xa000), Ok(0x32));
-        assert_eq!(addr_bus.read(0xdfff), Ok(0x33));
-        assert_eq!(addr_bus.read(0xe000), Ok(0x34));
-        assert_eq!(addr_bus.read(0xfe00), Ok(0x35));
-        assert_eq!(addr_bus.read(0xff00), Ok(0x36));
-        assert_eq!(addr_bus.read(0xff80), Ok(0x37));
-        assert_eq!(addr_bus.read(0xffff), Ok(0x38));
+        assert_eq!(addr_bus.read_byte(0x10), Ok(0x30));
+        assert_eq!(addr_bus.read_byte(0x8042), Ok(0x31));
+        assert_eq!(addr_bus.read_byte(0xa000), Ok(0x32));
+        assert_eq!(addr_bus.read_byte(0xdfff), Ok(0x33));
+        assert_eq!(addr_bus.read_byte(0xe000), Ok(0x34));
+        assert_eq!(addr_bus.read_byte(0xfe00), Ok(0x35));
+        assert_eq!(addr_bus.read_byte(0xff00), Ok(0x36));
+        assert_eq!(addr_bus.read_byte(0xff80), Ok(0x37));
+        assert_eq!(addr_bus.read_byte(0xffff), Ok(0x38));
     }
 }
 
-pub struct Iter<'a> {
-    current_address: u16,
-    stop: bool,
-    bus: &'a AddressBus,
-}
+impl crate::Bus<u8> for AddressBus {
+    fn read(&self, address: u16) -> Result<u8, Error> {
+        self.read_byte(address)
+    }
 
-impl<'a> Iter<'a> {
-    fn new(bus: &'a AddressBus) -> Self {
-        Self {
-            current_address: 0,
-            stop: false,
-            bus,
-        }
+    fn write(&mut self, address: u16, data: u8) -> Result<(), Error> {
+        self.write_byte(address, data)
     }
 }
 
-impl<'a> Iterator for Iter<'a> {
-    type Item = u8;
+impl crate::Bus<u16> for AddressBus {
+    fn read(&self, address: u16) -> Result<u16, Error> {
+        let lower = self.read_byte(address)?;
+        let upper = self.read_byte(address + 1)?;
 
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.stop {
-            let bit = self.bus.read(self.current_address).ok();
-            match self.current_address {
-                0xfea0..=0xfeff => self.current_address = 0xff00,
-                0xffff => self.stop = true,
-                _ => self.current_address += 1,
-            }
-            bit
-        } else {
-            None
-        }
-    }
-}
-
-#[derive(Debug, PartialEq, Eq)]
-pub enum Error {
-    BusError(Address),
-    SegmentationFault(Address),
-}
-
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
-/// Address contain the relative and absolute address
-pub struct Address {
-    /// relative address into the current area of the address bus
-    pub relative: u16,
-
-    /// absolute address used in the address bus
-    pub absolute: u16,
-
-    pub area: Area,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub enum Area {
-    Bios,
-    Rom,
-    Vram,
-    ExtRam,
-    Ram,
-    ERam,
-    Oam,
-    IoReg,
-    HighRam,
-    IEReg,
-    Unbound,
-}
-
-impl Address {
-    pub fn new(area: Area, relative_addr: u16, absolute_addr: u16) -> Self {
-        Self {
-            relative: relative_addr,
-            absolute: absolute_addr,
-            area,
-        }
+        Ok(u16::from_le_bytes([lower, upper]))
     }
 
-    /// Create an Address from an absolute adress and an offset
-    ///
-    /// ```
-    /// # use gb_cpu::address_bus::{Address, Area};
-    /// let pos = Address::from_offset(Area::Bios, 0x42, 0x10);
-    ///
-    /// assert_eq!(pos.absolute, 0x42);
-    /// assert_eq!(pos.relative, 0x32);
-    /// ```
-    pub fn from_offset(area: Area, addr: u16, offset: u16) -> Self {
-        Self::new(area, addr - offset, addr)
+    fn write(&mut self, address: u16, data: u16) -> Result<(), Error> {
+        let [lower, upper] = data.to_le_bytes();
+
+        self.write_byte(address, lower)?;
+        self.write_byte(address + 1, upper)
     }
 }

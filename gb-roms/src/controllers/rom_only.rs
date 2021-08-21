@@ -1,4 +1,4 @@
-use gb_cpu::address_bus::{Address, Error, FileOperation};
+use gb_bus::{Address, Error, FileOperation};
 use std::io::{self, ErrorKind, Read};
 
 pub const MAX_ROM_ONLY_SIZE: usize = 32_768;
@@ -40,7 +40,7 @@ impl FileOperation for RomOnlyController {
 
 #[test]
 fn test_romonly_impl() {
-    use gb_cpu::address_bus::Area;
+    use gb_bus::Area;
 
     let rom = RomOnlyController {
         rom: [42; MAX_ROM_ONLY_SIZE],

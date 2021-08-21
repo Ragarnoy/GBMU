@@ -1,5 +1,5 @@
 use crate::header::size::{RamSize, RomSize};
-use gb_cpu::address_bus::{Address, Area, Error, FileOperation};
+use gb_bus::{Address, Area, Error, FileOperation};
 use std::io::{self, Read};
 
 pub const MBC5_ROM_BANK_SIZE: usize = 0x4000;
