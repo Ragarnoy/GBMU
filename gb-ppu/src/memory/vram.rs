@@ -78,6 +78,22 @@ impl Vram {
         Ok(pixels)
     }
 
+    /// Read a line of 8 pixels values from a tile in the vram.
+    ///
+    /// ### Parameters
+    ///  - **tile_pos**: The position of the tile to get the line from.
+    ///  - **line**: The number of the line to return.
+    pub fn read_tile_line(&self, tile_pos: usize, line: usize) -> PPUResult<[u8; 8], usize> {
+        if line > 7 {
+            return Err(Error::OutOfBound {
+                value: line,
+                min_bound: 0,
+                max_bound: 7,
+            });
+        }
+        self.read_8_pixels((tile_pos * 8 + line) * 2)
+    }
+
     /// Return all the pixel values of a tile.
     ///
     /// This function is used for debugging purpose, the ppu does not select pixels tile by tile.
@@ -94,7 +110,7 @@ impl Vram {
             });
         }
         for (i, row) in tile.iter_mut().enumerate() {
-            *row = self.read_8_pixels((pos * 8 + i) * 2)?;
+            *row = self.read_tile_line(pos, i)?;
         }
         Ok(tile)
     }

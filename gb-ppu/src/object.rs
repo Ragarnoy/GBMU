@@ -85,11 +85,11 @@ impl Object {
                 max_bound: 8,
             });
         }
-        let tile = vram.read_8x8_tile(self.tile_index as usize).unwrap();
         let y = if self.y_flip() { 7 - line } else { line };
+        let tile_row = vram.read_tile_line(self.tile_index as usize, y).unwrap();
         for (i, pixel) in row.iter_mut().enumerate() {
             let x = if self.x_flip() { 7 - i } else { i };
-            let value = tile[y][x];
+            let value = tile_row[x];
             *pixel = value;
         }
         Ok(row)
@@ -114,14 +114,14 @@ impl Object {
         } else {
             self.tile_index as usize
         };
-        let tile = vram.read_8x8_tile(index).unwrap();
         if line > 7 {
             line -= 8
         }
         let y = if self.y_flip() { 7 - line } else { line };
+        let tile_line = vram.read_tile_line(index, y).unwrap();
         for (i, pixel) in row.iter_mut().enumerate() {
             let x = if self.x_flip() { 7 - i } else { i };
-            let value = tile[y][x];
+            let value = tile_line[x];
             *pixel = value;
         }
         Ok(row)
