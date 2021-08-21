@@ -47,6 +47,6 @@ package-linux: package-linux-appimage
 
 package-linux-appimage: docker
 	mkdir -p build
-	docker run --rm -t -v $$(pwd)/build:/build --entrypoint=/bin/sh gbmu-appimage:latest -c "set -x && appimage-builder --skip-tests && cp -v GBMU-latest-x86_64.AppImage /build/"
+	docker run --rm -t -v $$(pwd)/build:/build --entrypoint=/bin/sh gbmu-appimage:latest -c "set -x && appimage-builder --skip-tests && zip -r GBMU.AppDir.zip GBMU.AppDir && cp -vR GBMU-latest-x86_64.AppImage GBMU.AppDir.zip /build/"
 
 .PHONY: requirement roms docker run-container package package-linux package-linux-appimage
