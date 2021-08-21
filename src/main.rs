@@ -5,6 +5,9 @@ use gb_dbg::app::Debugger;
 use gb_dbg::disassembler::Disassembler;
 use gb_dbg::flow_control::FlowController;
 use gb_dbg::memory::MemoryEditorBuilder;
+#[cfg(feature = "debug_render")]
+use sdl2::keyboard::Scancode;
+
 use gb_lcd::{render, window::GBWindow};
 use gb_ppu::PPU;
 
@@ -12,11 +15,13 @@ fn main() {
     let (sdl_context, video_subsystem, mut event_pump) =
         gb_lcd::init().expect("Error while initializing LCD");
 
+    let bar_pixels_size = GBWindow::dots_to_pixels(&video_subsystem, render::MENU_BAR_SIZE)
+        .expect("Error while computing bar size");
     let mut gb_window = GBWindow::new(
         "GBMU",
         (
             render::SCREEN_WIDTH as u32,
-            render::SCREEN_HEIGHT as u32 + render::MENU_BAR_SIZE as u32,
+            render::SCREEN_HEIGHT as u32 + bar_pixels_size,
         ),
         true,
         &video_subsystem,
@@ -29,7 +34,7 @@ fn main() {
         .set_minimum_size(width, height)
         .expect("Failed to configure main window");
 
-    let mut display = render::Render::new();
+    let mut display = render::RenderImage::with_bar_size(bar_pixels_size as f32);
     let mut ppu = PPU::new();
 
     let mut debug_window = None;
@@ -39,6 +44,9 @@ fn main() {
         .with_address_range("VRam", 0..0xFF)
         .build();
     let mut dbg_app = Debugger::new(gbm_mem, FlowController, Disassembler);
+
+    #[cfg(feature = "debug_render")]
+    let mut debug = false;
 
     'running: loop {
         gb_window
@@ -95,6 +103,19 @@ fn main() {
                     keycode: Some(Keycode::Escape),
                     ..
                 } => break 'running,
+                #[cfg(feature = "debug_render")]
+                sdl2::event::Event::KeyDown {
+                    window_id,
+                    scancode,
+                    ..
+                } => {
+                    if gb_window.sdl_window().id() == window_id && scancode == Some(Scancode::Grave)
+                    {
+                        debug = !debug;
+                        display.switch_draw_mode(debug);
+                        gb_window.set_debug(debug);
+                    }
+                }
                 Event::Window {
                     win_event,
                     window_id,

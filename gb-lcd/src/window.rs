@@ -8,6 +8,8 @@ use sdl2::{
 };
 use std::time::Instant;
 
+const RESOLUTION_DOT: f32 = 96.0;
+
 pub struct GBWindow {
     sdl_window: SdlWindow,
     gl_ctx: GLContext,
@@ -16,6 +18,8 @@ pub struct GBWindow {
     egui_input_state: EguiInputState,
     pixels_per_point: f32,
     start_time: Instant,
+    #[cfg(feature = "debug_render")]
+    debug: bool,
 }
 
 impl GBWindow {
@@ -42,7 +46,7 @@ impl GBWindow {
         let egui_ctx = CtxRef::default();
 
         let native_pixels_per_point =
-            96f32 / video_sys.display_dpi(0).map_err(Error::GBWindowInit)?.0;
+            RESOLUTION_DOT / video_sys.display_dpi(0).map_err(Error::GBWindowInit)?.0;
 
         let egui_input_state = EguiInputState::new(egui::RawInput {
             screen_rect: Some(Rect::from_min_size(
@@ -62,6 +66,8 @@ impl GBWindow {
             egui_input_state,
             pixels_per_point: native_pixels_per_point,
             start_time,
+            #[cfg(feature = "debug_render")]
+            debug: false,
         })
     }
 
@@ -89,6 +95,10 @@ impl GBWindow {
         unsafe {
             // Clear the screen to black
             gl::ClearColor(0.0, 0.0, 0.0, 1.0);
+            #[cfg(feature = "debug_render")]
+            if self.debug {
+                gl::ClearColor(1.0, 1.0, 1.0, 1.0);
+            }
             gl::Clear(gl::COLOR_BUFFER_BIT);
         };
         Ok(())
@@ -141,5 +151,18 @@ impl GBWindow {
             }
         }
         false
+    }
+
+    #[cfg(feature = "debug_render")]
+    pub fn set_debug(&mut self, debug: bool) {
+        self.debug = debug;
+    }
+
+    pub fn dots_to_pixels(video_sys: &VideoSubsystem, dots: f32) -> Result<u32, Error> {
+        Ok(
+            (dots * RESOLUTION_DOT / video_sys.display_dpi(0).map_err(Error::GBWindowInit)?.0)
+                .ceil() as u32
+                + 4,
+        )
     }
 }
