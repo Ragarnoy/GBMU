@@ -26,7 +26,7 @@ pub fn main() {
     let mut display =
         render::RenderImage::<TILEMAP_DIM, TILEMAP_DIM>::with_bar_size(bar_pixels_size as f32);
     let mut ppu = PPU::new();
-    ppu.control_mut().set_bg_win_tiledata_area(true);
+    ppu.control_mut().set_bg_win_tiledata_area(false);
     let dumps = [
         (
             "mario",
@@ -43,8 +43,8 @@ pub fn main() {
     ];
     ppu.overwrite_vram(dumps[0].1);
     let mut display_window = false;
-    ppu.control_mut().set_win_tilemap_area(true);
-    ppu.control_mut().set_bg_tilemap_area(false);
+    ppu.control_mut().set_win_tilemap_area(false);
+    ppu.control_mut().set_bg_tilemap_area(true);
     let mut image = ppu.tilemap_image(display_window);
 
     'running: loop {
