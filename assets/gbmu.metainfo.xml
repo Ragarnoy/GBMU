@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.ragarnoy.GBMU</id>
+
+  <name>GBMU</name>
+  <summary>A Gameboy emulator written in RUST</summary>
+
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>CC-BY-1.0</project_license>
+
+  <description>
+    <p>
+      A Gameboy emulator written in RUST.
+      It can load cratridges from ROMONLY to MBC5.
+      Handle gameboy color
+    </p>
+  </description>
+
+  <launchable type="desktop-id">io.github.ragarnoy.GBMU.desktop</launchable>
+
+  <icon type="stock">gbmu</icon>
+
+  <categories>
+    <category>Game</category>
+    <category>ArcadeGame</category>
+    <category>X-Emulation</category>
+  </categories>
+
+  <provides>
+    <binary>gbmu</binary>
+  </provides>
+</component>

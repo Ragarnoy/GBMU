@@ -21,3 +21,5 @@ roms/Pokemon - Jaune.gbc
 
 # Rust
 target
+
+build
