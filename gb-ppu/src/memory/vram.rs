@@ -29,8 +29,8 @@ impl Vram {
     pub fn get_map_tile_index(
         &self,
         pos: usize,
-        map_area_bit: u8,
-        data_area_bit: u8,
+        map_area_bit: bool,
+        data_area_bit: bool,
     ) -> PPUResult<usize, usize> {
         if pos > TILEMAP_POSITION_MAX {
             return Err(Error::OutOfBound {
@@ -39,12 +39,12 @@ impl Vram {
                 max_bound: TILEMAP_POSITION_MAX,
             });
         }
-        let index = if map_area_bit == 0 {
+        let index = if map_area_bit {
             self.data[TILEMAP_START_0 + pos]
         } else {
             self.data[TILEMAP_START_1 + pos]
         };
-        if data_area_bit == 0 {
+        if data_area_bit {
             Ok(index as usize)
         } else {
             let index = index as i8;

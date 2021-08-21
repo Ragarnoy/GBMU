@@ -48,7 +48,7 @@ pub fn main() {
     ];
     ppu.overwrite_vram(dumps[0].1);
     ppu.overwrite_oam(dumps[0].2);
-    ppu.control_mut().set_obj_size(0);
+    ppu.control_mut().set_obj_size(false);
     let mut image = ppu.objects_image();
 
     'running: loop {
@@ -65,8 +65,8 @@ pub fn main() {
                             ppu.overwrite_vram(vram_dump);
                             ppu.overwrite_oam(oam_dump);
                             match title {
-                                "zelda" => ppu.control_mut().set_obj_size(1),
-                                _ => ppu.control_mut().set_obj_size(0),
+                                "zelda" => ppu.control_mut().set_obj_size(true),
+                                _ => ppu.control_mut().set_obj_size(false),
                             }
                             image = ppu.objects_image();
                         }

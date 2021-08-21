@@ -143,44 +143,20 @@ impl PPU {
         for object in objects {
             let x = object.x_pos().min(OBJECT_RENDER_WIDTH as u8 - 8) as usize;
             let y = object.y_pos().min(OBJECT_RENDER_HEIGHT as u8 - 16) as usize;
-            let tile = self
-                .vram
-                .read_8x8_tile(object.tile_index() as usize)
-                .unwrap();
-            for j in 0..8 {
-                for i in 0..8 {
-                    let x_tile = OBJECT_RENDER_WIDTH - 8 - x + i;
-                    let y_tile = y + j;
-                    let x_pixel = if object.x_flip() != 0 { 7 - i } else { i };
-                    let y_pixel = if object.y_flip() != 0 { 7 - j } else { j };
-                    match tile[y_pixel][x_pixel] {
-                        3 => image[y_tile][x_tile] = [0; 3],
-                        2 => image[y_tile][x_tile] = [85; 3],
-                        1 => image[y_tile][x_tile] = [170; 3],
+            let height = if self.control.obj_size() { 16 } else { 8 };
+            for j in 0..height {
+                let pixels_values = object
+                    .get_pixels_row(j, &self.vram, self.control.obj_size())
+                    .expect("invalid line passed");
+                let y_img = y + j;
+                for (i, pixel) in pixels_values.iter().enumerate() {
+                    let x_img = OBJECT_RENDER_WIDTH - 8 - x + i;
+                    match pixel {
+                        3 => image[y_img][x_img] = [0; 3],
+                        2 => image[y_img][x_img] = [85; 3],
+                        1 => image[y_img][x_img] = [170; 3],
                         0 => {}
                         _ => {}
-                    }
-                }
-            }
-            if self.control.obj_size() != 0 {
-                let tile = self
-                    .vram
-                    .read_8x8_tile(object.tile_index() as usize + 1)
-                    .unwrap();
-                let y = y + 8;
-                for j in 0..8 {
-                    for i in 0..8 {
-                        let x_tile = OBJECT_RENDER_WIDTH - 8 - x + i;
-                        let y_tile = y + j;
-                        let x_pixel = if object.x_flip() != 0 { 7 - i } else { i };
-                        let y_pixel = if object.y_flip() != 0 { 7 - j } else { j };
-                        match tile[y_pixel][x_pixel] {
-                            3 => image[y_tile][x_tile] = [0; 3],
-                            2 => image[y_tile][x_tile] = [85; 3],
-                            1 => image[y_tile][x_tile] = [170; 3],
-                            0 => {}
-                            _ => {}
-                        }
                     }
                 }
             }

@@ -1,3 +1,5 @@
+use crate::error::{Error, PPUResult};
+use crate::memory::Vram;
 use modular_bitfield::{
     bitfield,
     specifiers::{B1, B3},
@@ -23,6 +25,15 @@ pub struct Object {
 }
 
 impl Object {
+    pub fn new() -> Self {
+        Object {
+            y_pos: 0,
+            x_pos: 0,
+            tile_index: 0,
+            attributes: Attributes::new(),
+        }
+    }
+
     pub const SIZE: usize = 4;
 
     pub fn y_pos(&self) -> u8 {
@@ -33,16 +44,87 @@ impl Object {
         self.x_pos
     }
 
-    pub fn tile_index(&self) -> u8 {
-        self.tile_index
+    fn y_flip(&self) -> bool {
+        self.attributes.y_flip() != 0
     }
 
-    pub fn y_flip(&self) -> u8 {
-        self.attributes.y_flip()
+    fn x_flip(&self) -> bool {
+        self.attributes.x_flip() != 0
     }
 
-    pub fn x_flip(&self) -> u8 {
-        self.attributes.x_flip()
+    /// Read the row of 8 pixels values for this object.
+    ///
+    /// ### Parameters
+    ///  - **line**: The index of the row of pixel to return. Should be below 8 or 16 depending of the size_16 flag.
+    ///  - **vram**: A reference to the vram to read the pixel values from.
+    ///  - **size_16**: the bit 2 flag from Control indicating if the object is 8(*false*) or 16(*true*) pixels high.
+    pub fn get_pixels_row(
+        &self,
+        line: usize,
+        vram: &Vram,
+        size_16: bool,
+    ) -> PPUResult<[u8; 8], usize> {
+        if !size_16 {
+            self.get_pixels_row_8x8(line, vram)
+        } else {
+            self.get_pixels_row_8x16(line, vram)
+        }
+    }
+
+    /// Read the row of 8 pixels values for this object in 8x8 pixels mode.
+    ///
+    /// ### Parameters
+    ///  - **line**: The index of the row of pixel to return. Should be below 8.
+    ///  - **vram**: A reference to the vram to read the pixel values from.
+    fn get_pixels_row_8x8(&self, line: usize, vram: &Vram) -> PPUResult<[u8; 8], usize> {
+        let mut row = [0; 8];
+        if line > 8 {
+            return Err(Error::OutOfBound {
+                value: line,
+                min_bound: 0,
+                max_bound: 8,
+            });
+        }
+        let tile = vram.read_8x8_tile(self.tile_index as usize).unwrap();
+        let y = if self.y_flip() { 7 - line } else { line };
+        for (i, pixel) in row.iter_mut().enumerate() {
+            let x = if self.x_flip() { 7 - i } else { i };
+            let value = tile[y][x];
+            *pixel = value;
+        }
+        Ok(row)
+    }
+
+    /// Read the row of 8 pixels values for this object in 8x16 pixels mode.
+    ///
+    /// ### Parameters
+    ///  - **line**: The index of the row of pixel to return. Should be below 16.
+    ///  - **vram**: A reference to the vram to read the pixel values from.
+    fn get_pixels_row_8x16(&self, mut line: usize, vram: &Vram) -> PPUResult<[u8; 8], usize> {
+        let mut row = [0; 8];
+        if line > 15 {
+            return Err(Error::OutOfBound {
+                value: line,
+                min_bound: 0,
+                max_bound: 15,
+            });
+        }
+        let index = if line > 7 && !self.y_flip() || line < 8 && self.y_flip() {
+            self.tile_index as usize + 1
+        } else {
+            self.tile_index as usize
+        };
+        let tile = vram.read_8x8_tile(index).unwrap();
+        if line > 7 {
+            line -= 8
+        }
+        let y = if self.y_flip() { 7 - line } else { line };
+        for (i, pixel) in row.iter_mut().enumerate() {
+            let x = if self.x_flip() { 7 - i } else { i };
+            let value = tile[y][x];
+            *pixel = value;
+        }
+        Ok(row)
     }
 }
 
