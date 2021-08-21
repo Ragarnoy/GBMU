@@ -7,12 +7,11 @@ pub fn main() {
     let (sdl_context, video_subsystem, mut event_pump) =
         gb_lcd::init().expect("Error while initializing LCD");
 
+    let bar_pixels_size = GBWindow::dots_to_pixels(&video_subsystem, render::MENU_BAR_SIZE)
+        .expect("Error while computing bar size");
     let mut gb_window = GBWindow::new(
         "TileSheet",
-        (
-            TILEMAP_DIM as u32,
-            TILEMAP_DIM as u32 + render::MENU_BAR_SIZE as u32,
-        ),
+        (TILEMAP_DIM as u32, TILEMAP_DIM as u32 + bar_pixels_size),
         true,
         &video_subsystem,
     )
@@ -25,7 +24,7 @@ pub fn main() {
         .expect("Failed to configure main window");
 
     let mut display =
-        render::RenderImage::<TILEMAP_DIM, TILEMAP_DIM>::with_bar_size(render::MENU_BAR_SIZE);
+        render::RenderImage::<TILEMAP_DIM, TILEMAP_DIM>::with_bar_size(bar_pixels_size as f32);
     let mut ppu = PPU::new();
     ppu.control_mut().set_bg_win_tiledata_area(1);
     let dumps = [
