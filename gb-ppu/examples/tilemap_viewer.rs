@@ -10,7 +10,7 @@ pub fn main() {
     let bar_pixels_size = GBWindow::dots_to_pixels(&video_subsystem, render::MENU_BAR_SIZE)
         .expect("Error while computing bar size");
     let mut gb_window = GBWindow::new(
-        "TileSheet",
+        "Tilemap",
         (TILEMAP_DIM as u32, TILEMAP_DIM as u32 + bar_pixels_size),
         true,
         &video_subsystem,

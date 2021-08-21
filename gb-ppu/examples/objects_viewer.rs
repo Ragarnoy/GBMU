@@ -7,11 +7,13 @@ pub fn main() {
     let (sdl_context, video_subsystem, mut event_pump) =
         gb_lcd::init().expect("Error while initializing LCD");
 
+    let bar_pixels_size = GBWindow::dots_to_pixels(&video_subsystem, render::MENU_BAR_SIZE)
+        .expect("Error while computing bar size");
     let mut gb_window = GBWindow::new(
-        "TileSheet",
+        "Objects",
         (
             OBJECT_RENDER_WIDTH as u32,
-            OBJECT_RENDER_HEIGHT as u32 + render::MENU_BAR_SIZE as u32,
+            OBJECT_RENDER_HEIGHT as u32 + bar_pixels_size,
         ),
         true,
         &video_subsystem,
@@ -26,7 +28,7 @@ pub fn main() {
 
     let mut display =
         render::RenderImage::<OBJECT_RENDER_WIDTH, OBJECT_RENDER_HEIGHT>::with_bar_size(
-            render::MENU_BAR_SIZE,
+            bar_pixels_size as f32,
         );
     let mut ppu = PPU::new();
     let dumps = [
