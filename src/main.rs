@@ -1,6 +1,10 @@
 use rfd::FileDialog;
 use sdl2::{event::Event, keyboard::Keycode};
 
+use gb_dbg::app::Debugger;
+use gb_dbg::disassembler::Disassembler;
+use gb_dbg::flow_control::FlowController;
+use gb_dbg::memory::MemoryEditorBuilder;
 use gb_lcd::{render, window::GBWindow};
 use gb_ppu::PPU;
 
@@ -29,6 +33,12 @@ fn main() {
     let mut ppu = PPU::new();
 
     let mut debug_window = None;
+    let mem = vec![0u8; u16::MAX as usize];
+    let gbm_mem = MemoryEditorBuilder::new(|mem, address| *mem.get(address).unwrap(), mem)
+        .with_write_function(|mem, address, value| mem[address] = value)
+        .with_address_range("VRam", 0..0xFF)
+        .build();
+    let mut dbg_app = Debugger::new(gbm_mem, FlowController, Disassembler);
 
     'running: loop {
         gb_window
@@ -71,9 +81,7 @@ fn main() {
             dgb_wind
                 .start_frame()
                 .expect("Fail at the start for the debug window");
-            egui::containers::CentralPanel::default().show(dgb_wind.egui_ctx(), |ui| {
-                ui.label("hello Debug");
-            });
+            dbg_app.draw(dgb_wind.egui_ctx());
             dgb_wind
                 .end_frame()
                 .expect("Fail at the end for the debug window");
