@@ -201,11 +201,17 @@ impl crate::Bus<u8> for AddressBus {
 }
 
 impl crate::Bus<u16> for AddressBus {
-    fn read(&self, _address: u16) -> Result<u16, Error> {
-        todo!();
+    fn read(&self, address: u16) -> Result<u16, Error> {
+        let lower = self.read_byte(address)?;
+        let upper = self.read_byte(address + 1)?;
+
+        Ok(u16::from_le_bytes([lower, upper]))
     }
 
-    fn write(&mut self, _address: u16, _data: u16) -> Result<(), Error> {
-        todo!();
+    fn write(&mut self, address: u16, data: u16) -> Result<(), Error> {
+        let [lower, upper] = data.to_le_bytes();
+
+        self.write_byte(address, lower)?;
+        self.write_byte(address + 1, upper)
     }
 }
