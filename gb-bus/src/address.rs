@@ -47,3 +47,13 @@ impl Address {
         Self::new(area, addr - offset, addr)
     }
 }
+
+impl crate::file_operation::Address for Address {
+    fn get_address(&self) -> usize {
+        self.relative as usize
+    }
+
+    fn area_type(&self) -> Area {
+        self.area
+    }
+}
