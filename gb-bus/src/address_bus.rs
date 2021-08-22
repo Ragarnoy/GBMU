@@ -1,10 +1,8 @@
 pub mod iter;
 
-use crate::Error;
 use iter::Iter;
 
-use crate::address::{Address, Area};
-use crate::FileOperation;
+use crate::{address::Address, Area, Error, FileOperation};
 
 /// AddressBus map specific range address to specific area like ROM/RAM.
 /// This Implementation of an AddressBus will be limited to 16-bit address

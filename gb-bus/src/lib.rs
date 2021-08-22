@@ -1,11 +1,12 @@
 pub mod address;
 pub mod address_bus;
+pub mod area;
 pub mod error;
 pub mod file_operation;
 pub mod generic;
 
-pub use address::Area;
 pub use address_bus::AddressBus;
+pub use area::Area;
 pub use error::Error;
 pub use file_operation::{Address, FileOperation};
 
