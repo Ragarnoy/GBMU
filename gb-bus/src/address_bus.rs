@@ -136,6 +136,32 @@ impl AddressBus {
     }
 }
 
+impl crate::Bus<u8> for AddressBus {
+    fn read(&self, address: u16) -> Result<u8, Error> {
+        self.read_byte(address)
+    }
+
+    fn write(&mut self, address: u16, data: u8) -> Result<(), Error> {
+        self.write_byte(address, data)
+    }
+}
+
+impl crate::Bus<u16> for AddressBus {
+    fn read(&self, address: u16) -> Result<u16, Error> {
+        let lower = self.read_byte(address)?;
+        let upper = self.read_byte(address + 1)?;
+
+        Ok(u16::from_le_bytes([lower, upper]))
+    }
+
+    fn write(&mut self, address: u16, data: u16) -> Result<(), Error> {
+        let [lower, upper] = data.to_le_bytes();
+
+        self.write_byte(address, lower)?;
+        self.write_byte(address + 1, upper)
+    }
+}
+
 #[cfg(test)]
 mod test_address_bus {
     use super::AddressBus;
@@ -201,31 +227,5 @@ mod test_address_bus {
         assert_eq!(addr_bus.read_byte(0xff00), Ok(0x36));
         assert_eq!(addr_bus.read_byte(0xff80), Ok(0x37));
         assert_eq!(addr_bus.read_byte(0xffff), Ok(0x38));
-    }
-}
-
-impl crate::Bus<u8> for AddressBus {
-    fn read(&self, address: u16) -> Result<u8, Error> {
-        self.read_byte(address)
-    }
-
-    fn write(&mut self, address: u16, data: u8) -> Result<(), Error> {
-        self.write_byte(address, data)
-    }
-}
-
-impl crate::Bus<u16> for AddressBus {
-    fn read(&self, address: u16) -> Result<u16, Error> {
-        let lower = self.read_byte(address)?;
-        let upper = self.read_byte(address + 1)?;
-
-        Ok(u16::from_le_bytes([lower, upper]))
-    }
-
-    fn write(&mut self, address: u16, data: u16) -> Result<(), Error> {
-        let [lower, upper] = data.to_le_bytes();
-
-        self.write_byte(address, lower)?;
-        self.write_byte(address + 1, upper)
     }
 }
