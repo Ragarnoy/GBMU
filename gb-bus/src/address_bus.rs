@@ -85,11 +85,7 @@ impl AddressBus {
                 v,
                 Box::new(Address::from_offset(Area::IEReg, addr, IE_REG_START)),
             ),
-            _ => Err(Error::new_bus_error(Box::new(Address::from_offset(
-                Area::Unbound,
-                addr,
-                0,
-            )))),
+            _ => Err(Error::BusError(addr)),
         }
     }
 
@@ -139,11 +135,7 @@ impl AddressBus {
                 addr,
                 IE_REG_START,
             ))),
-            _ => Err(Error::new_bus_error(Box::new(Address::from_offset(
-                Area::Unbound,
-                addr,
-                0,
-            )))),
+            _ => Err(Error::BusError(addr)),
         }
     }
 
