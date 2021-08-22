@@ -1,7 +1,7 @@
-use crate::Address;
+use crate::file_operation::Address;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq)]
 pub enum Error {
-    BusError(Address),
-    SegmentationFault(Address),
+    BusError(Box<dyn Address>),
+    SegmentationFault(Box<dyn Address>),
 }
