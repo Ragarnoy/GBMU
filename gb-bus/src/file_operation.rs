@@ -26,7 +26,7 @@ impl PartialEq for dyn Address {
     }
 }
 
-impl std::convert::From<Box<dyn Address>> for u16 {
+impl From<Box<dyn Address>> for u16 {
     fn from(addr: Box<dyn Address>) -> Self {
         (addr.get_address() as u16) + u16::from(addr.area_type())
     }
