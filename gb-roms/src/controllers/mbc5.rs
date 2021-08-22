@@ -40,22 +40,23 @@ impl MBC5 {
         }
     }
 
-    fn write_rom(&mut self, v: u8, addr: Address) -> Result<(), Error> {
-        match addr.relative {
+    fn write_rom(&mut self, v: u8, addr: Box<dyn Address>) -> Result<(), Error> {
+        match addr.get_address() {
             0x0000..=0x1FFF => self.regs.set_ram_enabling_state(v),
             0x2000..=0x2FFF => self.regs.set_lower_rom_number(v),
             0x3000..=0x3FFF => self.regs.set_upper_rom_number(v),
             0x4000..=0x5FFF => self.regs.set_ram_number(v),
-            _ => return Err(Error::SegmentationFault(addr)),
+            _ => return Err(Error::new_segfault(addr)),
         }
         Ok(())
     }
 
-    fn read_rom(&self, addr: Address) -> Result<u8, Error> {
-        match addr.relative {
-            0x0000..=0x3FFF => Ok(self.rom_bank[0][addr.relative as usize]),
-            0x4000..=0x7FFF => Ok(self.get_selected_rom()[addr.relative as usize - 0x4000]),
-            _ => Err(Error::SegmentationFault(addr)),
+    fn read_rom(&self, addr: Box<dyn Address>) -> Result<u8, Error> {
+        let address = addr.get_address();
+        match address {
+            0x0000..=0x3FFF => Ok(self.rom_bank[0][address]),
+            0x4000..=0x7FFF => Ok(self.get_selected_rom()[address - 0x4000]),
+            _ => Err(Error::new_segfault(addr)),
         }
     }
 
@@ -63,21 +64,23 @@ impl MBC5 {
         &self.rom_bank[self.regs.rom_number as usize]
     }
 
-    fn write_ram(&mut self, v: u8, addr: Address) -> Result<(), Error> {
+    fn write_ram(&mut self, v: u8, addr: Box<dyn Address>) -> Result<(), Error> {
         if !self.regs.ram_enabled {
-            return Err(Error::SegmentationFault(addr));
+            return Err(Error::new_segfault(addr));
         }
         let ram = self.get_selected_ram_mut();
-        ram[addr.relative as usize] = v;
+        let address = addr.get_address();
+        ram[address] = v;
         Ok(())
     }
 
-    fn read_ram(&self, addr: Address) -> Result<u8, Error> {
+    fn read_ram(&self, addr: Box<dyn Address>) -> Result<u8, Error> {
         if !self.regs.ram_enabled {
-            return Err(Error::SegmentationFault(addr));
+            return Err(Error::new_segfault(addr));
         }
         let ram = self.get_selected_ram();
-        Ok(ram[addr.relative as usize])
+        let address = addr.get_address();
+        Ok(ram[address])
     }
 
     fn get_selected_ram_mut(&mut self) -> &mut [u8; MBC5_RAM_BANK_SIZE] {
@@ -90,26 +93,27 @@ impl MBC5 {
 }
 
 impl FileOperation for MBC5 {
-    fn read(&self, addr: Address) -> Result<u8, Error> {
-        match addr.area {
+    fn read(&self, addr: Box<dyn Address>) -> Result<u8, Error> {
+        match addr.area_type() {
             Area::Rom => self.read_rom(addr),
             Area::ExtRam => self.read_ram(addr),
-            _ => panic!("mbc5 should not be mapped to the area {:?}", addr.area),
+            _ => Err(Error::new_bus_error(addr)),
         }
     }
 
-    fn write(&mut self, v: u8, addr: Address) -> Result<(), Error> {
-        match addr.area {
+    fn write(&mut self, v: u8, addr: Box<dyn Address>) -> Result<(), Error> {
+        match addr.area_type() {
             Area::Rom => self.write_rom(v, addr),
             Area::ExtRam => self.write_ram(v, addr),
-            _ => panic!("mbc5 should not be mapped to the area {:?}", addr.area),
+            _ => Err(Error::new_bus_error(addr)),
         }
     }
 }
 
 #[cfg(test)]
 mod test_mbc5 {
-    use super::{Address, Area, RamSize, RomSize, MBC5};
+    use super::{RamSize, RomSize, MBC5};
+    use gb_bus::{address::Address, Area};
 
     #[test]
     fn basic() {
@@ -122,14 +126,14 @@ mod test_mbc5 {
 
         ctl.regs.set_lower_rom_number(4);
         assert_eq!(
-            ctl.read_rom(Address::from_offset(Area::Rom, 0x4042, 0)),
+            ctl.read_rom(Box::new(Address::from_offset(Area::Rom, 0x4042, 0))),
             Ok(42)
         );
         ctl.regs.set_ram_number(2);
         ctl.regs.set_ram_enabling_state(0xa);
 
-        let addr = Address::from_offset(Area::ExtRam, 0x42, 0);
-        assert_eq!(ctl.write_ram(42, addr), Ok(()));
+        let addr = Box::new(Address::from_offset(Area::ExtRam, 0x42, 0));
+        assert_eq!(ctl.write_ram(42, addr.clone()), Ok(()));
         assert_eq!(ctl.read_ram(addr), Ok(42));
     }
 }
