@@ -39,38 +39,42 @@ impl AddressBus {
         match addr {
             0x0000..=0x00ff if self.bios.is_some() => {
                 let b = self.bios.as_mut().unwrap();
-                b.write(v, Address::from_offset(Area::Bios, addr, 0))
+                b.write(v, Box::new(Address::from_offset(Area::Bios, addr, 0)))
             }
-            0x0000..=0x7fff => self.rom.write(v, Address::from_offset(Area::Rom, addr, 0)),
+            0x0000..=0x7fff => self
+                .rom
+                .write(v, Box::new(Address::from_offset(Area::Rom, addr, 0))),
             0x8000..=0x9fff => self
                 .vram
-                .write(v, Address::from_offset(Area::Vram, addr, 0x8000)),
-            0xa000..=0xbfff => self
-                .ext_ram
-                .write(v, Address::from_offset(Area::ExtRam, addr, 0xa000)),
+                .write(v, Box::new(Address::from_offset(Area::Vram, addr, 0x8000))),
+            0xa000..=0xbfff => self.ext_ram.write(
+                v,
+                Box::new(Address::from_offset(Area::ExtRam, addr, 0xa000)),
+            ),
             0xc000..=0xdfff => self
                 .ram
-                .write(v, Address::from_offset(Area::Ram, addr, 0xc000)),
+                .write(v, Box::new(Address::from_offset(Area::Ram, addr, 0xc000))),
             0xe000..=0xfdff => self
                 .eram
-                .write(v, Address::from_offset(Area::ERam, addr, 0xe000)),
+                .write(v, Box::new(Address::from_offset(Area::ERam, addr, 0xe000))),
             0xfe00..=0xfe9f => self
                 .oam
-                .write(v, Address::from_offset(Area::Oam, addr, 0xfe00)),
+                .write(v, Box::new(Address::from_offset(Area::Oam, addr, 0xfe00))),
             0xff00..=0xff7f => self
                 .io_reg
-                .write(v, Address::from_offset(Area::IoReg, addr, 0xff00)),
-            0xff80..=0xfffe => self
-                .hram
-                .write(v, Address::from_offset(Area::HighRam, addr, 0xff80)),
+                .write(v, Box::new(Address::from_offset(Area::IoReg, addr, 0xff00))),
+            0xff80..=0xfffe => self.hram.write(
+                v,
+                Box::new(Address::from_offset(Area::HighRam, addr, 0xff80)),
+            ),
             0xffff => self
                 .ie_reg
-                .write(v, Address::from_offset(Area::IEReg, addr, 0xffff)),
-            _ => Err(Error::BusError(Address::from_offset(
+                .write(v, Box::new(Address::from_offset(Area::IEReg, addr, 0xffff))),
+            _ => Err(Error::BusError(Box::new(Address::from_offset(
                 Area::Unbound,
                 addr,
                 0,
-            ))),
+            )))),
         }
     }
 
@@ -78,34 +82,47 @@ impl AddressBus {
         match addr {
             0x0000..=0x00ff if self.bios.is_some() => {
                 let b = self.bios.as_ref().unwrap();
-                b.read(Address::from_offset(Area::Bios, addr, 0))
+                b.read(Box::new(Address::from_offset(Area::Bios, addr, 0)))
             }
-            0x0000..=0x7fff => self.rom.read(Address::from_offset(Area::Rom, addr, 0)),
-            0x8000..=0x9fff => self
-                .vram
-                .read(Address::from_offset(Area::Vram, addr, 0x8000)),
-            0xa000..=0xbfff => self
-                .ext_ram
-                .read(Address::from_offset(Area::ExtRam, addr, 0xa000)),
-            0xc000..=0xdfff => self.ram.read(Address::from_offset(Area::Ram, addr, 0xc000)),
-            0xe000..=0xfdff => self
-                .eram
-                .read(Address::from_offset(Area::ERam, addr, 0xe000)),
-            0xfe00..=0xfe9f => self.oam.read(Address::from_offset(Area::Oam, addr, 0xfe00)),
-            0xff00..=0xff7f => self
-                .io_reg
-                .read(Address::from_offset(Area::IoReg, addr, 0xff00)),
-            0xff80..=0xfffe => self
-                .hram
-                .read(Address::from_offset(Area::HighRam, addr, 0xff80)),
+            0x0000..=0x7fff => self
+                .rom
+                .read(Box::new(Address::from_offset(Area::Rom, addr, 0))),
+            0x8000..=0x9fff => {
+                self.vram
+                    .read(Box::new(Address::from_offset(Area::Vram, addr, 0x8000)))
+            }
+            0xa000..=0xbfff => {
+                self.ext_ram
+                    .read(Box::new(Address::from_offset(Area::ExtRam, addr, 0xa000)))
+            }
+            0xc000..=0xdfff => {
+                self.ram
+                    .read(Box::new(Address::from_offset(Area::Ram, addr, 0xc000)))
+            }
+            0xe000..=0xfdff => {
+                self.eram
+                    .read(Box::new(Address::from_offset(Area::ERam, addr, 0xe000)))
+            }
+            0xfe00..=0xfe9f => {
+                self.oam
+                    .read(Box::new(Address::from_offset(Area::Oam, addr, 0xfe00)))
+            }
+            0xff00..=0xff7f => {
+                self.io_reg
+                    .read(Box::new(Address::from_offset(Area::IoReg, addr, 0xff00)))
+            }
+            0xff80..=0xfffe => {
+                self.hram
+                    .read(Box::new(Address::from_offset(Area::HighRam, addr, 0xff80)))
+            }
             0xffff => self
                 .ie_reg
-                .read(Address::from_offset(Area::IEReg, addr, 0xffff)),
-            _ => Err(Error::BusError(Address::from_offset(
+                .read(Box::new(Address::from_offset(Area::IEReg, addr, 0xffff))),
+            _ => Err(Error::BusError(Box::new(Address::from_offset(
                 Area::Unbound,
                 addr,
                 0,
-            ))),
+            )))),
         }
     }
 
