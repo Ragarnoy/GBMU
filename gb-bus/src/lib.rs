@@ -1,6 +1,7 @@
 pub mod address;
 pub mod address_bus;
 pub mod area;
+pub mod constant;
 pub mod error;
 pub mod file_operation;
 pub mod generic;
