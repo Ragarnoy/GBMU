@@ -1,7 +1,6 @@
-pub mod error;
 pub mod iter;
 
-pub use error::Error;
+use crate::Error;
 use iter::Iter;
 
 use crate::address::{Address, Area};
