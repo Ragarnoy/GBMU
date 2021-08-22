@@ -4,8 +4,8 @@ pub mod iter;
 pub use error::Error;
 use iter::Iter;
 
+use crate::address::{Address, Area};
 use crate::FileOperation;
-use crate::{Address, Area};
 
 /// AddressBus map specific range address to specific area like ROM/RAM.
 /// This Implementation of an AddressBus will be limited to 16-bit address
@@ -70,7 +70,7 @@ impl AddressBus {
             0xffff => self
                 .ie_reg
                 .write(v, Box::new(Address::from_offset(Area::IEReg, addr, 0xffff))),
-            _ => Err(Error::BusError(Box::new(Address::from_offset(
+            _ => Err(Error::new_bus_error(Box::new(Address::from_offset(
                 Area::Unbound,
                 addr,
                 0,
@@ -118,7 +118,7 @@ impl AddressBus {
             0xffff => self
                 .ie_reg
                 .read(Box::new(Address::from_offset(Area::IEReg, addr, 0xffff))),
-            _ => Err(Error::BusError(Box::new(Address::from_offset(
+            _ => Err(Error::new_bus_error(Box::new(Address::from_offset(
                 Area::Unbound,
                 addr,
                 0,

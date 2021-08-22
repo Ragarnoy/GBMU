@@ -5,7 +5,7 @@ use crate::Error;
 pub trait FileOperation {
     fn write(&mut self, v: u8, addr: Box<dyn Address>) -> Result<(), Error> {
         let _v = v;
-        Err(Error::SegmentationFault(addr))
+        Err(Error::SegmentationFault(addr.into()))
     }
 
     fn read(&self, addr: Box<dyn Address>) -> Result<u8, Error>;
@@ -28,5 +28,11 @@ impl PartialEq for dyn Address {
 impl std::fmt::Debug for dyn Address {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{:?}({})", self.area_type(), self.get_address())
+    }
+}
+
+impl std::convert::From<Box<dyn Address>> for u16 {
+    fn from(addr: Box<dyn Address>) -> Self {
+        addr.get_address() as u16
     }
 }

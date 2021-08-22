@@ -3,9 +3,9 @@ pub mod address_bus;
 pub mod file_operation;
 pub mod generic;
 
-pub use address::{Address, Area};
+pub use address::Area;
 pub use address_bus::{AddressBus, Error};
-pub use file_operation::FileOperation;
+pub use file_operation::{Address, FileOperation};
 
 pub trait Bus<N> {
     /// read `N` into the bus
