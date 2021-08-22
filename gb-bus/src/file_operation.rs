@@ -1,5 +1,6 @@
 use crate::Area;
 use crate::Error;
+use std::convert::From;
 
 /// FileOperation basic trait to implement for a RAM Emulator or other area.
 pub trait FileOperation {
@@ -25,14 +26,8 @@ impl PartialEq for dyn Address {
     }
 }
 
-impl std::fmt::Debug for dyn Address {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{:?}({})", self.area_type(), self.get_address())
-    }
-}
-
 impl std::convert::From<Box<dyn Address>> for u16 {
     fn from(addr: Box<dyn Address>) -> Self {
-        addr.get_address() as u16
+        (addr.get_address() as u16) + u16::from(addr.area_type())
     }
 }
