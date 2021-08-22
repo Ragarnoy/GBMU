@@ -1,0 +1,11 @@
+**/target
+**/.git
+.github
+**/Dockerfile
+**/*.dockerfile
+.dockerignore
+Makefile
+packaging.dockerfile
+Dockerfile
+target
+.git

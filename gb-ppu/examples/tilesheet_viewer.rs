@@ -7,11 +7,13 @@ pub fn main() {
     let (sdl_context, video_subsystem, mut event_pump) =
         gb_lcd::init().expect("Error while initializing LCD");
 
+    let bar_pixels_size = GBWindow::dots_to_pixels(&video_subsystem, render::MENU_BAR_SIZE)
+        .expect("Error while computing bar size");
     let mut gb_window = GBWindow::new(
         "TileSheet",
         (
             TILESHEET_WIDTH as u32,
-            TILESHEET_HEIGHT as u32 + render::MENU_BAR_SIZE as u32,
+            TILESHEET_HEIGHT as u32 + bar_pixels_size,
         ),
         true,
         &video_subsystem,
@@ -25,7 +27,7 @@ pub fn main() {
         .expect("Failed to configure main window");
 
     let mut display = render::RenderImage::<TILESHEET_WIDTH, TILESHEET_HEIGHT>::with_bar_size(
-        render::MENU_BAR_SIZE,
+        bar_pixels_size as f32,
     );
     let mut ppu = PPU::new();
     let dumps = [
