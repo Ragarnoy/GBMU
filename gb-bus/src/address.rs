@@ -1,3 +1,5 @@
+use crate::Area;
+
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 /// Address contain the relative and absolute address
 pub struct Address {
@@ -8,21 +10,6 @@ pub struct Address {
     pub absolute: u16,
 
     pub area: Area,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub enum Area {
-    Bios,
-    Rom,
-    Vram,
-    ExtRam,
-    Ram,
-    ERam,
-    Oam,
-    IoReg,
-    HighRam,
-    IEReg,
-    Unbound,
 }
 
 impl Address {
@@ -37,7 +24,7 @@ impl Address {
     /// Create an Address from an absolute adress and an offset
     ///
     /// ```
-    /// # use gb_bus::{Address, Area};
+    /// # use gb_bus::{address::Address, Area};
     /// let pos = Address::from_offset(Area::Bios, 0x42, 0x10);
     ///
     /// assert_eq!(pos.absolute, 0x42);
@@ -45,5 +32,15 @@ impl Address {
     /// ```
     pub fn from_offset(area: Area, addr: u16, offset: u16) -> Self {
         Self::new(area, addr - offset, addr)
+    }
+}
+
+impl crate::file_operation::Address for Address {
+    fn get_address(&self) -> usize {
+        self.relative as usize
+    }
+
+    fn area_type(&self) -> Area {
+        self.area
     }
 }

@@ -16,11 +16,11 @@ impl Default for RandomDevice {
 }
 
 impl FileOperation for RandomDevice {
-    fn read(&self, _addr: Address) -> Result<u8, Error> {
+    fn read(&self, _addr: Box<dyn Address>) -> Result<u8, Error> {
         Ok(self.gen.borrow_mut().gen::<u8>())
     }
 
-    fn write(&mut self, _v: u8, addr: Address) -> Result<(), Error> {
-        Err(Error::SegmentationFault(addr))
+    fn write(&mut self, _v: u8, addr: Box<dyn Address>) -> Result<(), Error> {
+        Err(Error::new_segfault(addr))
     }
 }

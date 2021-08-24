@@ -40,8 +40,8 @@ impl MBC1 {
         Ok(ctl)
     }
 
-    fn write_rom(&mut self, v: u8, addr: Address) -> Result<(), Error> {
-        match addr.relative {
+    fn write_rom(&mut self, v: u8, addr: Box<dyn Address>) -> Result<(), Error> {
+        match addr.get_address() {
             0x0000..=0x1fff => self.regs.ram_enabled = (v & 0xf) == 0xa,
             0x2000..=0x3fff => {
                 let index = v & 0x1f;
@@ -57,38 +57,41 @@ impl MBC1 {
                     BankingMode::Simple
                 }
             }
-            _ => return Err(Error::SegmentationFault(addr)),
+            _ => return Err(Error::new_segfault(addr)),
         }
         Ok(())
     }
 
-    fn read_rom(&self, addr: Address) -> Result<u8, Error> {
-        let root_bank = addr.relative < 0x3fff;
+    fn read_rom(&self, addr: Box<dyn Address>) -> Result<u8, Error> {
+        let address = addr.get_address();
+        let root_bank = address < 0x3fff;
         let rom = self.get_selected_rom(root_bank);
 
         if root_bank {
-            Ok(rom[addr.relative as usize])
+            Ok(rom[address])
         } else {
-            let addr = addr.relative - 0x4000;
-            Ok(rom[addr as usize])
+            let address = address - 0x4000;
+            Ok(rom[address])
         }
     }
 
-    fn write_ram(&mut self, v: u8, addr: Address) -> Result<(), Error> {
+    fn write_ram(&mut self, v: u8, addr: Box<dyn Address>) -> Result<(), Error> {
         if !self.regs.ram_enabled {
-            return Err(Error::SegmentationFault(addr));
+            return Err(Error::new_segfault(addr));
         }
         let ram = self.get_selected_ram_mut();
-        ram[addr.relative as usize] = v;
+        let address = addr.get_address();
+        ram[address] = v;
         Ok(())
     }
 
-    fn read_ram(&self, addr: Address) -> Result<u8, Error> {
+    fn read_ram(&self, addr: Box<dyn Address>) -> Result<u8, Error> {
         if !self.regs.ram_enabled {
-            return Err(Error::SegmentationFault(addr));
+            return Err(Error::new_segfault(addr));
         }
         let ram = self.get_selected_ram();
-        Ok(ram[addr.relative as usize])
+        let address = addr.get_address();
+        Ok(ram[address])
     }
 
     fn get_selected_rom(&self, root_bank: bool) -> &[u8; MBC1_ROM_SIZE] {
@@ -150,19 +153,19 @@ impl MBC1 {
 }
 
 impl FileOperation for MBC1 {
-    fn write(&mut self, v: u8, addr: Address) -> Result<(), Error> {
-        match addr.area {
+    fn write(&mut self, v: u8, addr: Box<dyn Address>) -> Result<(), Error> {
+        match addr.area_type() {
             Area::Rom => self.write_rom(v, addr),
             Area::Ram => self.write_ram(v, addr),
-            _ => Err(Error::BusError(addr)),
+            _ => Err(Error::new_bus_error(addr)),
         }
     }
 
-    fn read(&self, addr: Address) -> Result<u8, Error> {
-        match addr.area {
+    fn read(&self, addr: Box<dyn Address>) -> Result<u8, Error> {
+        match addr.area_type() {
             Area::Rom => self.read_rom(addr),
             Area::Ram => self.read_ram(addr),
-            _ => Err(Error::BusError(addr)),
+            _ => Err(Error::new_bus_error(addr)),
         }
     }
 }

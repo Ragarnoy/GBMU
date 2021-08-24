@@ -1,11 +1,15 @@
 pub mod address;
 pub mod address_bus;
+pub mod area;
+pub mod constant;
+pub mod error;
 pub mod file_operation;
 pub mod generic;
 
-pub use address::{Address, Area};
-pub use address_bus::{AddressBus, Error};
-pub use file_operation::FileOperation;
+pub use address_bus::AddressBus;
+pub use area::Area;
+pub use error::Error;
+pub use file_operation::{Address, FileOperation};
 
 pub trait Bus<N> {
     /// read `N` into the bus
