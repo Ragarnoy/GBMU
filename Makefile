@@ -67,4 +67,7 @@ package: package-mac
     endif
 endif
 
-.PHONY: requirement roms docker run-container package package-linux package-linux-appimage package-mac
+clean:
+	rm -rf build/
+
+.PHONY: requirement roms docker run-container package package-linux package-linux-appimage package-mac clean
