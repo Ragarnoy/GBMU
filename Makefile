@@ -40,28 +40,31 @@ docker: Dockerfile packaging/linux/appimage/Dockerfile
 run-container: docker
 	docker run -it --net=host --env=DISPLAY --rm gbmu:latest
 
-package: package-linux
-
 package-linux: package-linux-appimage
 
 package-linux-appimage: docker
 	mkdir -p build
 	docker run --rm -t -v $$(pwd)/build:/build --entrypoint=/bin/sh gbmu-appimage:latest -c "set -x && appimage-builder --skip-tests && zip -r GBMU.AppDir.zip GBMU.AppDir && cp -vR GBMU-latest-x86_64.AppImage GBMU.AppDir.zip /build/"
 
+ifneq ($(OS),Windows_NT)
+	UNAME_S := $(shell uname -s)
+	ifeq ($(UNAME_S),Darwin)
+package-mac:
+	cargo build --release
+	./packaging/mac/package.sh target/release/gbmu GBMU
+endif
+
 ifeq ($(OS),Windows_NT)
-build:
+package:
 	@echo "Build on windows not supported (yet ?)"
 else
     UNAME_S := $(shell uname -s)
     ifeq ($(UNAME_S),Linux)
-build:
-	@echo "Build on linux not supported (yet ?)"
+package: package-linux
     endif
     ifeq ($(UNAME_S),Darwin)
-build:
-	cargo build --release
-	./packaging/mac/package.sh target/release/gbmu gbmu
+package: package-mac
     endif
 endif
 
-.PHONY: requirement roms docker run-container package package-linux package-linux-appimage build
+.PHONY: requirement roms docker run-container package package-linux package-linux-appimage package-mac
