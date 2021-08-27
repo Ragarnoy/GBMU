@@ -1,4 +1,5 @@
 use crate::color::{Color, BLACK, DARK_GRAY, LIGHT_GRAY, WHITE};
+use crate::error::{Error, PPUResult};
 use modular_bitfield::{bitfield, specifiers::B2};
 
 #[bitfield]
@@ -24,12 +25,17 @@ impl Palette {
         }
     }
 
-    pub fn map_color(&self, index: u8) -> Color {
+    pub fn map_color(&self, index: u8) -> PPUResult<Color> {
         match index {
-            3 => COLOR_MAP[self.map.index_3() as usize],
-            2 => COLOR_MAP[self.map.index_2() as usize],
-            1 => COLOR_MAP[self.map.index_1() as usize],
-            _ => COLOR_MAP[self.map.index_0() as usize],
+            3 => Ok(COLOR_MAP[self.map.index_3() as usize]),
+            2 => Ok(COLOR_MAP[self.map.index_2() as usize]),
+            1 => Ok(COLOR_MAP[self.map.index_1() as usize]),
+            0 => Ok(COLOR_MAP[self.map.index_0() as usize]),
+            _ => Err(Error::OutOfBound {
+                value: index as usize,
+                min_bound: 0,
+                max_bound: 3,
+            }),
         }
     }
 }
