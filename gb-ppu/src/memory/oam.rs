@@ -33,6 +33,7 @@ impl Oam {
         Ok(Object::from(bytes))
     }
 
+    /// Return all the objects contained in memory.
     pub fn collect_all_objects(&self) -> PPUResult<[Object; Self::OBJECT_COUNT]> {
         let mut objects = [Object::new(); Self::OBJECT_COUNT];
         for (i, object) in objects.iter_mut().enumerate() {
@@ -41,6 +42,11 @@ impl Oam {
         Ok(objects)
     }
 
+    /// Return the first 10 obj on the x axis that overlap a line of the viewport.
+    ///
+    /// ### Parameters
+    ///  - **line**: the y coordinate of the line. 0 is the top of the viewport.
+    ///  - **size_16**: the bit 2 flag from Control indicating if objects are 8(*false*) or 16(*true*) pixels high.
     pub fn scan_line_object(&self, line: u8, size_16: bool) -> PPUResult<Vec<Object>> {
         let mut selected_obj = BTreeMap::new();
         let all_obj = self.collect_all_objects()?;
