@@ -40,6 +40,23 @@ impl Oam {
         Ok(objects)
     }
 
+    pub fn scan_line_object(&self, line: u8, size_16: bool) -> PPUResult<Vec<Object>> {
+        let mut selected_obj = Vec::with_capacity(10);
+        let all_obj = self.collect_all_objects()?;
+        let scanline = line + 16;
+        for obj in all_obj {
+            let top = obj.y_pos();
+            let bot = top + if size_16 { 15 } else { 7 };
+            if scanline >= top && scanline <= bot {
+                selected_obj.push(obj);
+                if selected_obj.len() == 10 {
+                    return Ok(selected_obj);
+                }
+            }
+        }
+        Ok(selected_obj)
+    }
+
     pub fn overwrite(&mut self, data: &[u8; Self::SIZE]) {
         self.data = *data;
     }
@@ -48,5 +65,47 @@ impl Oam {
 impl Default for Oam {
     fn default() -> Oam {
         Oam::new()
+    }
+}
+
+impl From<&[u8; Oam::SIZE]> for Oam {
+    fn from(bytes: &[u8; Oam::SIZE]) -> Oam {
+        Oam { data: *bytes }
+    }
+}
+
+impl From<&Oam> for [u8; Oam::SIZE] {
+    fn from(mem: &Oam) -> [u8; Oam::SIZE] {
+        mem.data
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn line_with_obj() {
+        let oam: Oam =
+            include_bytes!("../../examples/memory dumps/oam/Legend_of_Zelda_link_Awaking.dmp")
+                .into();
+        let line = 32;
+        let scanned_line = oam
+            .scan_line_object(line, true)
+            .expect("Should not contains objects out of memory");
+        assert_eq!(scanned_line.len(), 4);
+    }
+
+    #[test]
+    fn line_with_more_than_10() {
+        let oam: Oam = include_bytes!(
+            "../../examples/memory dumps/oam/[MODDED]-Legend_of_Zelda_link_Awaking.dmp"
+        )
+        .into();
+        let line = 30;
+        let scanned_line = oam
+            .scan_line_object(line, true)
+            .expect("Should not contains objects out of memory");
+        assert_eq!(scanned_line.len(), 10);
     }
 }
