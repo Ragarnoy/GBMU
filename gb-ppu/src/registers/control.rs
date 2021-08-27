@@ -1,6 +1,7 @@
 use modular_bitfield::{bitfield, specifiers::B1};
 
 #[bitfield]
+#[derive(Clone, Copy, Debug, Default)]
 struct ControlBits {
     pub bg_win_enable: B1,
     pub obj_enable: B1,
@@ -12,6 +13,7 @@ struct ControlBits {
     pub ppu_enable: B1,
 }
 
+#[derive(Default)]
 pub struct Control {
     bits: ControlBits,
 }
@@ -80,8 +82,26 @@ impl Control {
     }
 }
 
-impl Default for Control {
-    fn default() -> Control {
-        Control::new()
+impl From<u8> for ControlBits {
+    fn from(byte: u8) -> ControlBits {
+        ControlBits::from_bytes([byte])
+    }
+}
+
+impl From<u8> for Control {
+    fn from(byte: u8) -> Control {
+        Control { bits: byte.into() }
+    }
+}
+
+impl From<ControlBits> for u8 {
+    fn from(bits: ControlBits) -> u8 {
+        bits.into_bytes()[0]
+    }
+}
+
+impl From<Control> for u8 {
+    fn from(register: Control) -> u8 {
+        register.bits.into()
     }
 }

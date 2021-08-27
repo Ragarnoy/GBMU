@@ -6,17 +6,21 @@ use modular_bitfield::{
 };
 
 #[bitfield]
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Default)]
 struct Attributes {
+    #[skip]
     pub palette_cgb_nb: B3,
+    #[skip]
     pub tile_bank: B1,
+    #[skip]
     pub palette_nb: B1,
     pub x_flip: B1,
     pub y_flip: B1,
+    #[skip]
     pub bg_win_priority: B1,
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Default)]
 pub struct Object {
     y_pos: u8,
     x_pos: u8,
@@ -136,5 +140,16 @@ impl From<[u8; Object::SIZE]> for Object {
             tile_index: bytes[2],
             attributes: Attributes::from_bytes([bytes[3]]),
         }
+    }
+}
+
+impl From<Object> for [u8; Object::SIZE] {
+    fn from(obj: Object) -> [u8; Object::SIZE] {
+        [
+            obj.y_pos,
+            obj.x_pos,
+            obj.tile_index,
+            obj.attributes.into_bytes()[0],
+        ]
     }
 }
