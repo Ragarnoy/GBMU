@@ -19,12 +19,21 @@ ROMS := \
 	roms/Legend\ of\ Zelda,\ The\ -\ Oracle\ of\ Ages.gbc \
 	roms/Pokemon\ -\ Jaune.gbc \
 
+BIOS_LINK_ROOT := "https://gbdev.gg8.se/files/roms/bootroms"
+BIOS := \
+		roms/bios/dmg_boot.bin \
+		roms/bios/cgb_boot.bin \
+
 ROMS_DIR := roms
 
-requirement: roms
+requirement: roms bios
 
 roms: $(ROMS)
 
+bios: $(BIOS)
+
+roms/bios/%:
+	curl --create-dirs --output $@ $(addprefix $(BIOS_LINK_ROOT)/, $*)
 
 roms.zip:
 	wget $(ROMS_LINK) -O $@

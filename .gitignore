@@ -18,6 +18,8 @@ roms/Mystic_Quest.gb
 roms/Pokemon_Bleue.gb
 roms/Legend of Zelda, The - Oracle of Ages.gbc
 roms/Pokemon - Jaune.gbc
+roms/bios/cgb_boot.bin
+roms/bios/dmg_boot.bin
 
 # Rust
 target
