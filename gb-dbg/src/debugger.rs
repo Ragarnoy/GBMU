@@ -1,15 +1,20 @@
-use crate::disassembler::Disassembler;
-use crate::flow_control::FlowController;
-use crate::memory::GBMemoryEditor;
-use egui::{Color32, CtxRef, Label};
+pub mod disassembler;
+pub mod flow_control;
+pub mod memory;
 
-pub struct Debugger<T> {
+use egui::{Color32, CtxRef, Label};
+use crate::debugger::memory::GBMemoryEditor;
+use crate::debugger::flow_control::FlowController;
+use crate::debugger::disassembler::Disassembler;
+use crate::rw_interface::DebugRW;
+
+pub struct Debugger<T: DebugRW> {
     memory_editor: GBMemoryEditor<T>,
     flow_controller: FlowController,
     disassembler: Disassembler,
 }
 
-impl<T> Debugger<T> {
+impl<T: DebugRW> Debugger<T> {
     pub fn new(
         memory_editor: GBMemoryEditor<T>,
         flow_controller: FlowController,

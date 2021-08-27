@@ -1,4 +1,2 @@
-pub mod app;
-pub mod disassembler;
-pub mod flow_control;
-pub mod memory;
+pub mod debugger;
+pub mod rw_interface;

@@ -1,13 +1,42 @@
 use eframe::egui::CtxRef;
 use eframe::epi::*;
 use egui::Vec2;
-use gb_dbg::app::Debugger;
-use gb_dbg::disassembler::Disassembler;
-use gb_dbg::flow_control::FlowController;
-use gb_dbg::memory::MemoryEditorBuilder;
+use gb_dbg::debugger::disassembler::Disassembler;
+use gb_dbg::debugger::flow_control::FlowController;
+use gb_dbg::debugger::memory::MemoryEditorBuilder;
+use gb_dbg::debugger::Debugger;
+use gb_dbg::rw_interface::DebugRW;
 
 pub struct DebuggerApp {
-    pub debugger: Debugger<Vec<u8>>,
+    pub debugger: Debugger<Memory>,
+}
+
+pub struct Memory {
+    pub memory: Vec<u8>,
+}
+
+impl Default for Memory {
+    fn default() -> Self {
+        Self {
+            memory: vec![0xFFu8; u16::MAX as usize]
+        }
+    }
+}
+
+impl DebugRW for Memory {
+    type RegisterIter = todo!();
+
+    fn read(&self, index: usize) -> u8 {
+        *self.memory.get(index).unwrap()
+    }
+
+    fn write(&mut self, index: usize, value: u8) {
+        self.memory[index] = value
+    }
+
+    fn register_iter(&self) -> Self::RegisterIter {
+        todo!()
+    }
 }
 
 impl App for DebuggerApp {
@@ -22,8 +51,8 @@ impl App for DebuggerApp {
 }
 
 fn main() {
-    let mem = vec![0xFFu8; u16::MAX as usize];
-    let gbm_mem = MemoryEditorBuilder::new(|mem, address| *mem.get(address).unwrap(), mem)
+    let mem = Default::default();
+    let gbm_mem = MemoryEditorBuilder::new(mem)
         .with_write_function(|mem, address, value| {
             mem[address] = value;
             println!("Write!")

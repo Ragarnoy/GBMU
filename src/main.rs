@@ -1,7 +1,7 @@
 use rfd::FileDialog;
 use sdl2::{event::Event, keyboard::Keycode};
 
-use gb_dbg::app::Debugger;
+use gb_dbg::debugger::Debugger;
 use gb_dbg::disassembler::Disassembler;
 use gb_dbg::flow_control::FlowController;
 use gb_dbg::memory::MemoryEditorBuilder;
