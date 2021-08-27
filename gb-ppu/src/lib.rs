@@ -1,3 +1,4 @@
+mod color;
 mod error;
 mod memory;
 mod object;
