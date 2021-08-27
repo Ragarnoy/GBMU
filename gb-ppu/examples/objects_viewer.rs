@@ -1,7 +1,10 @@
 use sdl2::{event::Event, keyboard::Keycode};
 
 use gb_lcd::{render, window::GBWindow};
-use gb_ppu::{OBJECT_RENDER_HEIGHT, OBJECT_RENDER_WIDTH, PPU};
+use gb_ppu::{
+    OBJECT_LIST_RENDER_HEIGHT, OBJECT_LIST_RENDER_WIDTH, OBJECT_RENDER_HEIGHT, OBJECT_RENDER_WIDTH,
+    PPU,
+};
 
 pub fn main() {
     let (sdl_context, video_subsystem, mut event_pump) =
@@ -26,8 +29,12 @@ pub fn main() {
         .set_minimum_size(width, height)
         .expect("Failed to configure main window");
 
-    let mut display =
+    let mut view_display =
         render::RenderImage::<OBJECT_RENDER_WIDTH, OBJECT_RENDER_HEIGHT>::with_bar_size(
+            bar_pixels_size as f32,
+        );
+    let mut list_display =
+        render::RenderImage::<OBJECT_LIST_RENDER_WIDTH, OBJECT_LIST_RENDER_HEIGHT>::with_bar_size(
             bar_pixels_size as f32,
         );
     let mut ppu = PPU::new();
@@ -51,7 +58,9 @@ pub fn main() {
     ppu.overwrite_vram(dumps[0].1);
     ppu.overwrite_oam(dumps[0].2);
     ppu.control_mut().set_obj_size(false);
-    let mut image = ppu.objects_image();
+    let mut list_mode = false;
+    let mut view_image = ppu.objects_image();
+    let mut list_image = ppu.objects_list_image();
 
     'running: loop {
         gb_window
@@ -70,14 +79,28 @@ pub fn main() {
                                 "zelda" => ppu.control_mut().set_obj_size(true),
                                 _ => ppu.control_mut().set_obj_size(false),
                             }
-                            image = ppu.objects_image();
+                            view_image = ppu.objects_image();
+                            list_image = ppu.objects_list_image();
                         }
+                    }
+                });
+                egui::menu::menu(ui, "mode", |ui| {
+                    if ui.button("viewport").clicked() {
+                        list_mode = false;
+                    }
+                    if ui.button("list").clicked() {
+                        list_mode = true;
                     }
                 });
             })
         });
-        display.update_render(&image);
-        display.draw();
+        if !list_mode {
+            view_display.update_render(&view_image);
+            view_display.draw();
+        } else {
+            list_display.update_render(&list_image);
+            list_display.draw();
+        }
         gb_window
             .end_frame()
             .expect("Fail at the end for the main window");
@@ -99,7 +122,8 @@ pub fn main() {
                             gb_window
                                 .resize((width as u32, height as u32), &video_subsystem)
                                 .expect("Fail to resize example window");
-                            display.resize(gb_window.sdl_window().size());
+                            view_display.resize(gb_window.sdl_window().size());
+                            list_display.resize(gb_window.sdl_window().size());
                         }
                     }
                     sdl2::event::WindowEvent::Close => {
