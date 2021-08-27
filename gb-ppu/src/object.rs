@@ -62,12 +62,7 @@ impl Object {
     ///  - **line**: The index of the row of pixel to return. Should be below 8 or 16 depending of the size_16 flag.
     ///  - **vram**: A reference to the vram to read the pixel values from.
     ///  - **size_16**: the bit 2 flag from Control indicating if the object is 8(*false*) or 16(*true*) pixels high.
-    pub fn get_pixels_row(
-        &self,
-        line: usize,
-        vram: &Vram,
-        size_16: bool,
-    ) -> PPUResult<[u8; 8], usize> {
+    pub fn get_pixels_row(&self, line: usize, vram: &Vram, size_16: bool) -> PPUResult<[u8; 8]> {
         if !size_16 {
             self.get_pixels_row_8x8(line, vram)
         } else {
@@ -80,7 +75,7 @@ impl Object {
     /// ### Parameters
     ///  - **line**: The index of the row of pixel to return. Should be below 8.
     ///  - **vram**: A reference to the vram to read the pixel values from.
-    fn get_pixels_row_8x8(&self, line: usize, vram: &Vram) -> PPUResult<[u8; 8], usize> {
+    fn get_pixels_row_8x8(&self, line: usize, vram: &Vram) -> PPUResult<[u8; 8]> {
         let mut row = [0; 8];
         if line > 8 {
             return Err(Error::OutOfBound {
@@ -104,7 +99,7 @@ impl Object {
     /// ### Parameters
     ///  - **line**: The index of the row of pixel to return. Should be below 16.
     ///  - **vram**: A reference to the vram to read the pixel values from.
-    fn get_pixels_row_8x16(&self, mut line: usize, vram: &Vram) -> PPUResult<[u8; 8], usize> {
+    fn get_pixels_row_8x16(&self, mut line: usize, vram: &Vram) -> PPUResult<[u8; 8]> {
         let mut row = [0; 8];
         if line > 15 {
             return Err(Error::OutOfBound {

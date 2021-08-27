@@ -17,7 +17,7 @@ impl Oam {
         }
     }
 
-    fn read_object(&self, pos: usize) -> PPUResult<Object, usize> {
+    fn read_object(&self, pos: usize) -> PPUResult<Object> {
         if pos > Self::OBJECT_COUNT - 1 {
             return Err(Error::OutOfBound {
                 value: pos,
@@ -32,7 +32,7 @@ impl Oam {
         Ok(Object::from(bytes))
     }
 
-    pub fn collect_all_objects(&self) -> PPUResult<[Object; Self::OBJECT_COUNT], usize> {
+    pub fn collect_all_objects(&self) -> PPUResult<[Object; Self::OBJECT_COUNT]> {
         let mut objects = [Object::new(); Self::OBJECT_COUNT];
         for (i, object) in objects.iter_mut().enumerate() {
             *object = self.read_object(i)?;
