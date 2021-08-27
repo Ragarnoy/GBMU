@@ -24,4 +24,5 @@ roms/bios/dmg_boot.bin
 # Rust
 target
 
-build
+# packaged app
+build/
