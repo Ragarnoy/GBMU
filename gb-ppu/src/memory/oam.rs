@@ -1,5 +1,6 @@
 use crate::error::{Error, PPUResult};
 use crate::object::Object;
+use std::collections::BTreeMap;
 use std::convert::TryInto;
 
 /// Contains operations to collect objects from memory.
@@ -41,20 +42,17 @@ impl Oam {
     }
 
     pub fn scan_line_object(&self, line: u8, size_16: bool) -> PPUResult<Vec<Object>> {
-        let mut selected_obj = Vec::with_capacity(10);
+        let mut selected_obj = BTreeMap::new();
         let all_obj = self.collect_all_objects()?;
         let scanline = line + 16;
         for obj in all_obj {
             let top = obj.y_pos();
             let bot = top + if size_16 { 15 } else { 7 };
             if scanline >= top && scanline <= bot {
-                selected_obj.push(obj);
-                if selected_obj.len() == 10 {
-                    return Ok(selected_obj);
-                }
+                selected_obj.insert(obj.x_pos(), obj);
             }
         }
-        Ok(selected_obj)
+        Ok(selected_obj.values().take(10).copied().collect())
     }
 
     pub fn overwrite(&mut self, data: &[u8; Self::SIZE]) {
@@ -94,6 +92,18 @@ mod tests {
             .scan_line_object(line, true)
             .expect("Should not contains objects out of memory");
         assert_eq!(scanned_line.len(), 4);
+        assert!(
+            scanned_line[0].x_pos() <= scanned_line[1].x_pos(),
+            "not ordered"
+        );
+        assert!(
+            scanned_line[1].x_pos() <= scanned_line[2].x_pos(),
+            "not ordered"
+        );
+        assert!(
+            scanned_line[2].x_pos() <= scanned_line[3].x_pos(),
+            "not ordered"
+        );
     }
 
     #[test]
@@ -107,5 +117,11 @@ mod tests {
             .scan_line_object(line, true)
             .expect("Should not contains objects out of memory");
         assert_eq!(scanned_line.len(), 10);
+        let mut previous = 0x00;
+        for obj in scanned_line {
+            assert!(obj.x_pos() >= previous, "not ordered");
+            assert!(obj.x_pos() <= 0x0A, "did not removed last obj of line");
+            previous = obj.x_pos();
+        }
     }
 }
