@@ -1,4 +1,4 @@
-type RegisterMap = (u16, String);
+type RegisterMap = (String, u8);
 
 pub trait RW {
     fn read(&self, index: usize) -> u8;
