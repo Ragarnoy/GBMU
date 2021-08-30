@@ -10,16 +10,10 @@ pub trait Controller {
     /// Save the current controller into a Serializer file
     fn save<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: serde::Serializer,
-    {
-        serializer.serialize_u16(0xDead)
-    }
+        S: serde::Serializer;
 
     /// Load data from a Deserializer file
     fn load<'de, D>(&self, deserializer: D) -> Result<(), D::Error>
     where
-        D: serde::Deserializer<'de>,
-    {
-        Ok(())
-    }
+        D: serde::Deserializer<'de>;
 }
