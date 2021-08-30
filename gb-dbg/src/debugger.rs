@@ -9,6 +9,7 @@ use crate::debugger::flow_control::FlowController;
 use crate::debugger::memory::GBMemoryEditor;
 use egui::{Color32, CtxRef, Label};
 use crate::debugger::registers::RegisterEditor;
+use crate::debugger::registers::RegisterEditor;
 
 pub struct Debugger<T: RW> {
     memory_editor: GBMemoryEditor<T>,
