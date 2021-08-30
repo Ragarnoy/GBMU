@@ -1,5 +1,7 @@
+use super::Controller;
 use crate::header::size::{RamSize, RomSize};
 use gb_bus::{Address, Area, Error, FileOperation};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::io::{self, Read};
 
 pub const MBC5_ROM_BANK_SIZE: usize = 0x4000;
@@ -175,6 +177,20 @@ impl Default for MBC5Reg {
             rom_number: 1,
             ram_number: 0,
         }
+    }
+}
+
+impl Controller for MBC5 {
+    fn save<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+    }
+
+    fn load<'de, D>(&mut self, deserializer: D) -> Result<(), D::Error>
+    where
+        D: Deserializer<'de>,
+    {
     }
 }
 
