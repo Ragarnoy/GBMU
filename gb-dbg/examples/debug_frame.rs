@@ -1,11 +1,11 @@
 use eframe::egui::CtxRef;
 use eframe::epi::*;
 use egui::Vec2;
+use gb_dbg::dbg_interfaces::RW;
 use gb_dbg::debugger::disassembler::Disassembler;
 use gb_dbg::debugger::flow_control::FlowController;
 use gb_dbg::debugger::memory::MemoryEditorBuilder;
 use gb_dbg::debugger::Debugger;
-use gb_dbg::dbg_interfaces::RW;
 
 pub struct DebuggerApp {
     pub debugger: Debugger<Memory>,
@@ -18,7 +18,7 @@ pub struct Memory {
 impl Default for Memory {
     fn default() -> Self {
         Self {
-            memory: vec![0xFFu8; u16::MAX as usize]
+            memory: vec![0xFFu8; u16::MAX as usize],
         }
     }
 }
