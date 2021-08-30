@@ -1,9 +1,10 @@
-use egui::{Ui, Color32};
+use egui::{Ui, Color32, Vec2};
 use egui::Label;
 
 struct Register(char, u8);
 
 pub struct RegisterEditor {
+
     registers: Vec<Register>,
 }
 
@@ -15,6 +16,10 @@ impl Default for RegisterEditor {
                 Register('A', 0x01),
                 Register('B', 0x22),
                 Register('C', 0x0F),
+                Register('D', 0x0F),
+                Register('F', 0x0F),
+                Register('G', 0x0F),
+                Register('H', 0x0F),
             ],
         }
     }
@@ -29,13 +34,19 @@ impl RegisterEditor {
             .default_open(false)
             .show(ui, |ui| ui.label("Hello"));
         ui.separator();
-        ui.horizontal(|ui| {
-            ui.vertical(|ui| {
-                ui.columns(2, |columns| {
-                    columns[0].label("Name");
-                    columns[0].add(Label::new(self.registers.get(0).unwrap().0));
-                    columns[1].label("Value");
-                })
+        ui.vertical(|ui| {
+            egui::ScrollArea::from_max_height(100.0).show(ui, |ui| {
+                egui::Grid::new("Grid").striped(true).spacing(Vec2::new(3.0, 3.0)).show(ui, |ui| {
+                    ui.colored_label(Color32::WHITE, "Name");
+                    ui.colored_label(Color32::WHITE, "Value");
+                    ui.end_row();
+                    for row in &self.registers {
+                        ui.label(egui::Label::new(row.0));
+                        ui.label(egui::Label::new(format!("0x{:02X}", row.1)));
+                        ui.end_row();
+                    }
+                    ui.end_row();
+                });
             });
         });
     }
