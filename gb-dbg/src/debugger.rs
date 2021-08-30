@@ -1,12 +1,14 @@
 pub mod disassembler;
 pub mod flow_control;
 pub mod memory;
+pub mod registers;
 
 use egui::{Color32, CtxRef, Label};
 use crate::debugger::memory::GBMemoryEditor;
 use crate::debugger::flow_control::FlowController;
 use crate::debugger::disassembler::Disassembler;
 use crate::interfaces::RW;
+use crate::debugger::registers::RegisterEditor;
 
 pub struct Debugger<T: RW> {
     memory_editor: GBMemoryEditor<T>,
@@ -41,8 +43,7 @@ impl<T: RW> Debugger<T> {
                 });
             });
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.label(Label::new("Register Editors").text_color(Color32::WHITE));
-            ui.separator();
+            RegisterEditor::default().draw(ui);
         });
         egui::SidePanel::right("right_panel")
             .resizable(false)
