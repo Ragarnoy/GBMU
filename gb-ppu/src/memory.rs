@@ -1,3 +1,3 @@
 mod vram;
 
-pub use vram::{Vram, VRAM_SIZE};
+pub use vram::Vram;
