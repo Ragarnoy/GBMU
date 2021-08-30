@@ -4,7 +4,6 @@ use egui::Label;
 struct Register(char, u8);
 
 pub struct RegisterEditor {
-
     registers: Vec<Register>,
 }
 
