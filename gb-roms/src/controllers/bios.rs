@@ -1,5 +1,4 @@
 use gb_bus::{Address, Error, FileOperation};
-pub const BIOS_SIZE: usize = 256;
 
 pub enum BiosType {
     Dmg,
