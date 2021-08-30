@@ -30,6 +30,11 @@ impl<T: DebugRW> MemoryEditorBuilder<T> {
         }
     }
 
+    pub fn with_address_range(mut self, range_name: &str, range: Range<usize>) -> Self {
+        self.address_ranges.push((range_name.to_owned(), range));
+        self
+    }
+
     pub fn build(self) -> GBMemoryEditor<T> {
         let mut mem_options = MemoryEditorOptions::default();
         mem_options.is_resizable_column = false;
