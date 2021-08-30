@@ -6,15 +6,15 @@ use egui::{Color32, CtxRef, Label};
 use crate::debugger::memory::GBMemoryEditor;
 use crate::debugger::flow_control::FlowController;
 use crate::debugger::disassembler::Disassembler;
-use crate::rw_interface::DebugRW;
+use crate::interfaces::RW;
 
-pub struct Debugger<T: DebugRW> {
+pub struct Debugger<T: RW> {
     memory_editor: GBMemoryEditor<T>,
     flow_controller: FlowController,
     disassembler: Disassembler,
 }
 
-impl<T: DebugRW> Debugger<T> {
+impl<T: RW> Debugger<T> {
     pub fn new(
         memory_editor: GBMemoryEditor<T>,
         flow_controller: FlowController,

@@ -5,7 +5,7 @@ use gb_dbg::debugger::disassembler::Disassembler;
 use gb_dbg::debugger::flow_control::FlowController;
 use gb_dbg::debugger::memory::MemoryEditorBuilder;
 use gb_dbg::debugger::Debugger;
-use gb_dbg::rw_interface::DebugRW;
+use gb_dbg::interfaces::RW;
 
 pub struct DebuggerApp {
     pub debugger: Debugger<Memory>,
@@ -23,19 +23,13 @@ impl Default for Memory {
     }
 }
 
-impl DebugRW for Memory {
-    type RegisterIter = todo!();
-
+impl RW for Memory {
     fn read(&self, index: usize) -> u8 {
         *self.memory.get(index).unwrap()
     }
 
     fn write(&mut self, index: usize, value: u8) {
         self.memory[index] = value
-    }
-
-    fn register_iter(&self) -> Self::RegisterIter {
-        todo!()
     }
 }
 
@@ -53,10 +47,6 @@ impl App for DebuggerApp {
 fn main() {
     let mem = Default::default();
     let gbm_mem = MemoryEditorBuilder::new(mem)
-        .with_write_function(|mem, address, value| {
-            mem[address] = value;
-            println!("Write!")
-        })
         .with_address_range("VRam", 0..0xFF + 1)
         .with_address_range("Ram", 0xFF..0xFFF)
         .build();
