@@ -1,2 +1,2 @@
 pub mod debugger;
-pub mod interfaces;
+pub mod dbg_interfaces;

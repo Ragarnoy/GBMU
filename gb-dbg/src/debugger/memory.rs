@@ -1,4 +1,4 @@
-use crate::interfaces::RW;
+use crate::dbg_interfaces::RW;
 use egui::{Color32, Label, Ui};
 use egui_memory_editor::option_data::MemoryEditorOptions;
 use egui_memory_editor::MemoryEditor;

@@ -5,7 +5,7 @@ use gb_dbg::debugger::disassembler::Disassembler;
 use gb_dbg::debugger::flow_control::FlowController;
 use gb_dbg::debugger::memory::MemoryEditorBuilder;
 use gb_dbg::debugger::Debugger;
-use gb_dbg::interfaces::RW;
+use gb_dbg::dbg_interfaces::RW;
 
 pub struct DebuggerApp {
     pub debugger: Debugger<Memory>,
