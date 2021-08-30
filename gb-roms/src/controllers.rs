@@ -13,7 +13,7 @@ pub trait Controller {
         S: serde::Serializer;
 
     /// Load data from a Deserializer file
-    fn load<'de, D>(&self, deserializer: D) -> Result<(), D::Error>
+    fn load<'de, D>(&mut self, deserializer: D) -> Result<(), D::Error>
     where
         D: serde::Deserializer<'de>;
 }
