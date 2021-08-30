@@ -1,15 +1,37 @@
 use rfd::FileDialog;
-use sdl2::{event::Event, keyboard::Keycode};
-
-use gb_dbg::debugger::Debugger;
-use gb_dbg::disassembler::Disassembler;
-use gb_dbg::flow_control::FlowController;
-use gb_dbg::memory::MemoryEditorBuilder;
 #[cfg(feature = "debug_render")]
 use sdl2::keyboard::Scancode;
+use sdl2::{event::Event, keyboard::Keycode};
 
+use gb_dbg::debugger::disassembler::Disassembler;
+use gb_dbg::debugger::flow_control::FlowController;
+use gb_dbg::debugger::memory::MemoryEditorBuilder;
+use gb_dbg::debugger::Debugger;
+use gb_dbg::*;
 use gb_lcd::{render, window::GBWindow};
 use gb_ppu::PPU;
+
+pub struct Memory {
+    pub memory: Vec<u8>,
+}
+
+impl Default for Memory {
+    fn default() -> Self {
+        Self {
+            memory: vec![0xFFu8; u16::MAX as usize],
+        }
+    }
+}
+
+impl dbg_interfaces::RW for Memory {
+    fn read(&self, index: usize) -> u8 {
+        *self.memory.get(index).unwrap()
+    }
+
+    fn write(&mut self, index: usize, value: u8) {
+        self.memory[index] = value
+    }
+}
 
 fn main() {
     let (sdl_context, video_subsystem, mut event_pump) =
@@ -38,9 +60,8 @@ fn main() {
     let mut ppu = PPU::new();
 
     let mut debug_window = None;
-    let mem = vec![0u8; u16::MAX as usize];
-    let gbm_mem = MemoryEditorBuilder::new(|mem, address| *mem.get(address).unwrap(), mem)
-        .with_write_function(|mem, address, value| mem[address] = value)
+    let mem = Memory::default();
+    let gbm_mem = MemoryEditorBuilder::new(mem)
         .with_address_range("VRam", 0..0xFF)
         .build();
     let mut dbg_app = Debugger::new(gbm_mem, FlowController, Disassembler);
