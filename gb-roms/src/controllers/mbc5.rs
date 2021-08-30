@@ -1,7 +1,10 @@
 use super::Controller;
 use crate::header::size::{RamSize, RomSize};
 use gb_bus::{Address, Area, Error, FileOperation};
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::{
+    ser::{SerializeSeq, SerializeStruct},
+    Deserialize, Deserializer, Serialize, Serializer,
+};
 use std::io::{self, Read};
 
 pub const MBC5_ROM_BANK_SIZE: usize = 0x4000;
@@ -180,17 +183,60 @@ impl Default for MBC5Reg {
     }
 }
 
+#[derive(Deserialize, Serialize)]
+struct Mbc5RamData {
+    ram_banks: Vec<Vec<u8>>,
+}
+
+impl std::convert::From<Vec<[u8; MBC5_RAM_BANK_SIZE]>> for Mbc5RamData {
+    fn from(ram_banks: Vec<[u8; MBC5_RAM_BANK_SIZE]>) -> Self {
+        Self {
+            ram_banks: ram_banks
+                .iter()
+                .map(|bank| bank.iter().cloned().collect())
+                .collect(),
+        }
+    }
+}
+
 impl Controller for MBC5 {
     fn save<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
+        use std::convert::From;
+
+        let data = Mbc5RamData::from(self.ram_bank);
+        data.serialize(serializer)
     }
 
     fn load<'de, D>(&mut self, deserializer: D) -> Result<(), D::Error>
     where
         D: Deserializer<'de>,
     {
+        use serde::de::Error;
+        use std::convert::{TryFrom, TryInto};
+
+        let ram_data = Mbc5RamData::deserialize(deserializer)?;
+        if self.ram_bank.len() != ram_data.ram_banks.len() {
+            Err(Error::invalid_length(
+                ram_data.ram_banks.len(),
+                &format!("{} ram bank", self.ram_bank.len()).as_str(),
+            ))
+        } else {
+            self.ram_bank = ram_data
+                .ram_banks
+                .into_iter()
+                .map(|bank: Vec<u8>| <[u8; MBC5_RAM_BANK_SIZE]>::try_from(bank))
+                .collect::<Result<Vec<[u8; MBC5_RAM_BANK_SIZE]>, Vec<u8>>>()
+                .map_err(|faulty| {
+                    Error::invalid_length(
+                        faulty.len(),
+                        &format!("a ram bank of size {}", MBC5_RAM_BANK_SIZE).as_str(),
+                    )
+                })?;
+            Ok(())
+        }
     }
 }
 
