@@ -1,24 +1,21 @@
 use super::Controller;
 use crate::header::size::{RamSize, RomSize};
 use gb_bus::{Address, Area, Error, FileOperation};
-use serde::{
-    ser::{SerializeSeq, SerializeStruct},
-    Deserialize, Deserializer, Serialize, Serializer,
-};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::io::{self, Read};
 
-pub const MBC5_ROM_BANK_SIZE: usize = 0x4000;
-pub const MBC5_MAX_ROM_BANK: usize = 0x1FF;
-pub const MBC5_RAM_BANK_SIZE: usize = 0x2000;
-pub const MBC5_MAX_RAM_BANK: usize = 0x10;
-
 pub struct MBC5 {
-    rom_bank: Vec<[u8; MBC5_ROM_BANK_SIZE]>,
-    ram_bank: Vec<[u8; MBC5_RAM_BANK_SIZE]>,
+    rom_banks: Vec<[u8; MBC5::ROM_BANK_SIZE]>,
+    ram_banks: Vec<[u8; MBC5::RAM_BANK_SIZE]>,
     regs: MBC5Reg,
 }
 
 impl MBC5 {
+    pub const ROM_BANK_SIZE: usize = 0x4000;
+    pub const MAX_ROM_BANK: usize = 0x1FF;
+    pub const RAM_BANK_SIZE: usize = 0x2000;
+    pub const MAX_RAM_BANK: usize = 0x10;
+
     /// initialize the controller using a file as the rom
     pub fn from_file(
         mut file: impl Read,
@@ -27,7 +24,7 @@ impl MBC5 {
     ) -> Result<MBC5, io::Error> {
         let mut ctl = MBC5::empty(ram_size, rom_size);
 
-        for e in ctl.rom_bank.iter_mut() {
+        for e in ctl.rom_banks.iter_mut() {
             file.read_exact(e)?;
         }
         Ok(ctl)
@@ -39,8 +36,8 @@ impl MBC5 {
         let rom_bank = rom_size.get_bank_amounts();
 
         Self {
-            rom_bank: vec![[0_u8; MBC5_ROM_BANK_SIZE]; rom_bank],
-            ram_bank: vec![[0_u8; MBC5_RAM_BANK_SIZE]; ram_bank],
+            rom_banks: vec![[0_u8; MBC5::ROM_BANK_SIZE]; rom_bank],
+            ram_banks: vec![[0_u8; MBC5::RAM_BANK_SIZE]; ram_bank],
             regs: MBC5Reg::default(),
         }
     }
@@ -59,14 +56,14 @@ impl MBC5 {
     fn read_rom(&self, addr: Box<dyn Address>) -> Result<u8, Error> {
         let address = addr.get_address();
         match address {
-            0x0000..=0x3FFF => Ok(self.rom_bank[0][address]),
+            0x0000..=0x3FFF => Ok(self.rom_banks[0][address]),
             0x4000..=0x7FFF => Ok(self.get_selected_rom()[address - 0x4000]),
             _ => Err(Error::new_segfault(addr)),
         }
     }
 
-    fn get_selected_rom(&self) -> &[u8; MBC5_ROM_BANK_SIZE] {
-        &self.rom_bank[self.regs.rom_number as usize]
+    fn get_selected_rom(&self) -> &[u8; MBC5::ROM_BANK_SIZE] {
+        &self.rom_banks[self.regs.rom_number as usize]
     }
 
     fn write_ram(&mut self, v: u8, addr: Box<dyn Address>) -> Result<(), Error> {
@@ -88,12 +85,12 @@ impl MBC5 {
         Ok(ram[address])
     }
 
-    fn get_selected_ram_mut(&mut self) -> &mut [u8; MBC5_RAM_BANK_SIZE] {
-        &mut self.ram_bank[self.regs.ram_number as usize]
+    fn get_selected_ram_mut(&mut self) -> &mut [u8; MBC5::RAM_BANK_SIZE] {
+        &mut self.ram_banks[self.regs.ram_number as usize]
     }
 
-    fn get_selected_ram(&self) -> &[u8; MBC5_RAM_BANK_SIZE] {
-        &self.ram_bank[self.regs.ram_number as usize]
+    fn get_selected_ram(&self) -> &[u8; MBC5::RAM_BANK_SIZE] {
+        &self.ram_banks[self.regs.ram_number as usize]
     }
 }
 
@@ -124,10 +121,10 @@ mod test_mbc5 {
     fn basic() {
         let mut ctl = MBC5::empty(RamSize::KByte32, RomSize::KByte256);
 
-        assert_eq!(ctl.ram_bank.len(), RamSize::KByte32.get_bank_amounts());
-        assert_eq!(ctl.rom_bank.len(), RomSize::KByte256.get_bank_amounts());
+        assert_eq!(ctl.ram_banks.len(), RamSize::KByte32.get_bank_amounts());
+        assert_eq!(ctl.rom_banks.len(), RomSize::KByte256.get_bank_amounts());
 
-        ctl.rom_bank[4][0x42] = 42;
+        ctl.rom_banks[4][0x42] = 42;
 
         ctl.regs.set_lower_rom_number(4);
         assert_eq!(
@@ -188,8 +185,8 @@ struct Mbc5RamData {
     ram_banks: Vec<Vec<u8>>,
 }
 
-impl std::convert::From<Vec<[u8; MBC5_RAM_BANK_SIZE]>> for Mbc5RamData {
-    fn from(ram_banks: Vec<[u8; MBC5_RAM_BANK_SIZE]>) -> Self {
+impl std::convert::From<Vec<[u8; MBC5::RAM_BANK_SIZE]>> for Mbc5RamData {
+    fn from(ram_banks: Vec<[u8; MBC5::RAM_BANK_SIZE]>) -> Self {
         Self {
             ram_banks: ram_banks
                 .iter()
@@ -204,9 +201,7 @@ impl Controller for MBC5 {
     where
         S: Serializer,
     {
-        use std::convert::From;
-
-        let data = Mbc5RamData::from(self.ram_bank);
+        let data = Mbc5RamData::from(self.ram_banks.clone());
         data.serialize(serializer)
     }
 
@@ -215,24 +210,24 @@ impl Controller for MBC5 {
         D: Deserializer<'de>,
     {
         use serde::de::Error;
-        use std::convert::{TryFrom, TryInto};
+        use std::convert::TryFrom;
 
         let ram_data = Mbc5RamData::deserialize(deserializer)?;
-        if self.ram_bank.len() != ram_data.ram_banks.len() {
+        if self.ram_banks.len() != ram_data.ram_banks.len() {
             Err(Error::invalid_length(
                 ram_data.ram_banks.len(),
-                &format!("{} ram bank", self.ram_bank.len()).as_str(),
+                &format!("{} ram bank", self.ram_banks.len()).as_str(),
             ))
         } else {
-            self.ram_bank = ram_data
+            self.ram_banks = ram_data
                 .ram_banks
                 .into_iter()
-                .map(|bank: Vec<u8>| <[u8; MBC5_RAM_BANK_SIZE]>::try_from(bank))
-                .collect::<Result<Vec<[u8; MBC5_RAM_BANK_SIZE]>, Vec<u8>>>()
+                .map(|bank: Vec<u8>| <[u8; MBC5::RAM_BANK_SIZE]>::try_from(bank))
+                .collect::<Result<Vec<[u8; MBC5::RAM_BANK_SIZE]>, Vec<u8>>>()
                 .map_err(|faulty| {
                     Error::invalid_length(
                         faulty.len(),
-                        &format!("a ram bank of size {}", MBC5_RAM_BANK_SIZE).as_str(),
+                        &format!("a ram bank of size {}", MBC5::RAM_BANK_SIZE).as_str(),
                     )
                 })?;
             Ok(())
