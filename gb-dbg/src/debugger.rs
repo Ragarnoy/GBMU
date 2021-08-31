@@ -30,6 +30,7 @@ impl<T: RW> Debugger<T> {
     }
 
     pub fn draw(&mut self, ctx: &CtxRef) {
+        ctx.set_debug_on_hover(true);
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             self.flow_controller.draw(ui);
         });
@@ -42,19 +43,22 @@ impl<T: RW> Debugger<T> {
                     self.memory_editor.draw(ui);
                 });
             });
-        egui::CentralPanel::default().show(ctx, |ui| {
-            RegisterEditor::default().draw(ui);
-        });
         egui::SidePanel::right("right_panel")
             .resizable(false)
-            .min_width(150.0)
             .show(ctx, |ui| {
                 ui.label(Label::new("Breakpoints").text_color(Color32::WHITE));
+                egui::CollapsingHeader::new("🛠 Options")
+                    .id_source(55)
+                    .default_open(false)
+                    .show(ui, |ui| ui.label("Hello"));
                 ui.separator();
                 ui.columns(2, |columns| {
                     columns[0].label("");
                     columns[1].label("Address");
                 })
             });
+        egui::CentralPanel::default().show(ctx, |ui| {
+            RegisterEditor::default().draw(ui);
+        });
     }
 }
