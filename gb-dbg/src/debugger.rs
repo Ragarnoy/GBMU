@@ -30,12 +30,13 @@ impl<T: RW> Debugger<T> {
     }
 
     pub fn draw(&mut self, ctx: &CtxRef) {
-        ctx.set_debug_on_hover(true);
+        // ctx.set_debug_on_hover(true);
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             self.flow_controller.draw(ui);
         });
         egui::SidePanel::left("left_panel")
             .resizable(false)
+            .default_width(545.0)
             .show(ctx, |ui| {
                 ui.vertical(|ui| {
                     self.disassembler.draw(ui);
@@ -45,6 +46,7 @@ impl<T: RW> Debugger<T> {
             });
         egui::SidePanel::right("right_panel")
             .resizable(false)
+            .default_width(170.0)
             .show(ctx, |ui| {
                 ui.label(Label::new("Breakpoints").text_color(Color32::WHITE));
                 egui::CollapsingHeader::new("🛠 Options")
@@ -53,7 +55,7 @@ impl<T: RW> Debugger<T> {
                     .show(ui, |ui| ui.label("Hello"));
                 ui.separator();
                 ui.columns(2, |columns| {
-                    columns[0].label("");
+                    columns[0].label("Enable");
                     columns[1].label("Address");
                 })
             });
