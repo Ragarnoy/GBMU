@@ -16,9 +16,9 @@ pub trait RW {
 pub trait DebugRegister {
     type RegisterIter: Iterator<Item = RegisterMap>;
 
-    fn get<T: Into<u16>>(key: &str) -> T;
+    fn get<T: Into<u16>>(&self, key: &str) -> T;
 
-    fn set<T: Into<u16>>(_key: &str, _value: T) {
+    fn set<T: Into<u16>>(&mut self, _key: &str, _value: T) {
         // Default to Read-Only
     }
 
