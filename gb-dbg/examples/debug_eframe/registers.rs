@@ -1,5 +1,5 @@
-use gb_dbg::dbg_interfaces::{DebugRegister, RegisterMap, RegisterType};
 use anyhow::anyhow;
+use gb_dbg::dbg_interfaces::{DebugRegister, RegisterMap, RegisterType};
 
 pub struct Iter<'a> {
     count: u32,
@@ -35,9 +35,11 @@ pub struct Registers {
 }
 
 impl Registers {
-
     pub fn iter(&self) -> Iter {
-        Iter { count: 0, registers: self }
+        Iter {
+            count: 0,
+            registers: self,
+        }
     }
 }
 
@@ -52,10 +54,9 @@ impl<'a> DebugRegister for &'a Registers {
             "D" => Ok(RegisterType::U8(self.d)),
             "E" => Ok(RegisterType::U8(self.e)),
             "F" => Ok(RegisterType::U8(self.f)),
-            _ => Err(anyhow!("Not a valid register!"))
+            _ => Err(anyhow!("Not a valid register!")),
         }
     }
-
 
     fn register_iter(&self) -> Self::RegisterIter {
         self.iter()
