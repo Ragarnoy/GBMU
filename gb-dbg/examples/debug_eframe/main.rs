@@ -1,4 +1,5 @@
 mod memory;
+mod registers;
 
 use eframe::egui::CtxRef;
 use eframe::epi::*;
@@ -9,6 +10,7 @@ use gb_dbg::debugger::flow_control::FlowController;
 use gb_dbg::debugger::memory::MemoryEditorBuilder;
 use gb_dbg::debugger::Debugger;
 use crate::memory::Memory;
+use crate::registers::Registers;
 
 pub struct DebuggerApp {
     pub debugger: Debugger<Memory>,
@@ -41,6 +43,7 @@ fn main() {
         .with_address_range("VRam", 0..0xFF + 1)
         .with_address_range("Ram", 0xFF..0xFFF)
         .build();
+    let regs = Registers::default();
     let dgb_app = DebuggerApp {
         debugger: Debugger::new(gbm_mem, FlowController, Disassembler),
     };
