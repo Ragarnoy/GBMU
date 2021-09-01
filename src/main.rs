@@ -73,7 +73,7 @@ fn main() {
                                 .unwrap_or_else(|_| std::path::PathBuf::from("/")),
                         )
                         .pick_file();
-                    println!("picked file: {:?}", files);
+                    log::debug!("picked file: {:?}", files);
                 }
                 if ui.button("Debug").clicked() && debug_window.is_none() {
                     debug_window = Some(
@@ -114,6 +114,7 @@ fn main() {
                     if gb_window.sdl_window().id() == window_id && scancode == Some(Scancode::Grave)
                     {
                         debug = !debug;
+                        log::debug!("toggle debug ({})", debug);
                         display.switch_draw_mode(debug);
                         gb_window.set_debug(debug);
                     }
@@ -159,6 +160,7 @@ fn main() {
         }
         // std::thread::sleep(::std::time::Duration::new(0, 1_000_000_000u32 / 60));
     }
+    log::info!("quitting");
 }
 
 fn init_logger() {
