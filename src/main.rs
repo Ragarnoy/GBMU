@@ -163,6 +163,7 @@ fn main() {
     log::info!("quitting");
 }
 
+#[cfg(debug_assertions)]
 fn init_logger() {
     use log::LevelFilter;
     use simplelog::{ColorChoice, Config, TermLogger, TerminalMode};
@@ -174,4 +175,15 @@ fn init_logger() {
         ColorChoice::Auto,
     )
     .expect("cannot initialise logger");
+}
+
+#[cfg(not(debug_assertions))]
+fn init_logger() {
+    use log::LevelFilter;
+    use simplelog::{Config, WriteLogger};
+    use std::fs::File;
+
+    let file = File::create("/tmp/gbmu.log").expect("cannot open log file");
+    WriteLogger::init(LevelFilter::Warn, Config::default(), file)
+        .expect("cannot initialise logger");
 }
