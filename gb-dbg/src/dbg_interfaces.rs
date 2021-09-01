@@ -1,4 +1,6 @@
-type RegisterMap = (String, RegisterType);
+use anyhow::Result;
+
+pub type RegisterMap = (String, RegisterType);
 
 pub enum RegisterType {
     U8(u8),
@@ -16,11 +18,7 @@ pub trait RW {
 pub trait DebugRegister {
     type RegisterIter: Iterator<Item = RegisterMap>;
 
-    fn get<T: Into<u16>>(&self, key: &str) -> T;
-
-    fn set<T: Into<u16>>(&mut self, _key: &str, _value: T) {
-        // Default to Read-Only
-    }
+    fn get(&self, key: &str) -> Result<RegisterType>;
 
     fn register_iter(&self) -> Self::RegisterIter;
 }
