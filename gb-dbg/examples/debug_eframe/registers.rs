@@ -13,12 +13,12 @@ impl<'a> Iterator for Iter<'a> {
         self.count += 1;
 
         match self.count {
-            1 => Some(("A".to_owned(), RegisterType::U8(self.registers.a))),
-            2 => Some(("B".to_owned(), RegisterType::U8(self.registers.b))),
-            3 => Some(("C".to_owned(), RegisterType::U8(self.registers.c))),
-            4 => Some(("D".to_owned(), RegisterType::U8(self.registers.d))),
-            5 => Some(("E".to_owned(), RegisterType::U8(self.registers.e))),
-            6 => Some(("F".to_owned(), RegisterType::U8(self.registers.f))),
+            1 => Some(("A".to_owned(), RegisterType::from(self.registers.a))),
+            2 => Some(("B".to_owned(), RegisterType::from(self.registers.b))),
+            3 => Some(("C".to_owned(), RegisterType::from(self.registers.c))),
+            4 => Some(("D".to_owned(), RegisterType::from(self.registers.d))),
+            5 => Some(("E".to_owned(), RegisterType::from(self.registers.e))),
+            6 => Some(("F".to_owned(), RegisterType::from(self.registers.f))),
             _ => None,
         }
     }
@@ -48,12 +48,12 @@ impl<'a> DebugRegister for &'a Registers {
 
     fn get(&self, key: &str) -> anyhow::Result<RegisterType> {
         match key {
-            "A" => Ok(RegisterType::U8(self.a)),
-            "B" => Ok(RegisterType::U8(self.b)),
-            "C" => Ok(RegisterType::U8(self.c)),
-            "D" => Ok(RegisterType::U8(self.d)),
-            "E" => Ok(RegisterType::U8(self.e)),
-            "F" => Ok(RegisterType::U8(self.f)),
+            "A" => Ok(RegisterType::from(self.a)),
+            "B" => Ok(RegisterType::from(self.b)),
+            "C" => Ok(RegisterType::from(self.c)),
+            "D" => Ok(RegisterType::from(self.d)),
+            "E" => Ok(RegisterType::from(self.e)),
+            "F" => Ok(RegisterType::from(self.f)),
             _ => Err(anyhow!("Not a valid register!")),
         }
     }

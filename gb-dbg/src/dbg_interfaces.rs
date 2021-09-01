@@ -7,6 +7,18 @@ pub enum RegisterType {
     U16(u16),
 }
 
+impl From<u8> for RegisterType {
+    fn from(input: u8) -> Self {
+        Self::U8(input)
+    }
+}
+
+impl From<u16> for RegisterType {
+    fn from(input: u16) -> Self {
+        Self::U16(input)
+    }
+}
+
 pub trait RW {
     fn read(&self, index: usize) -> u8;
 
