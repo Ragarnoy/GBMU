@@ -188,10 +188,7 @@ struct Mbc5RamData {
 impl std::convert::From<Vec<[u8; MBC5::RAM_BANK_SIZE]>> for Mbc5RamData {
     fn from(ram_banks: Vec<[u8; MBC5::RAM_BANK_SIZE]>) -> Self {
         Self {
-            ram_banks: ram_banks
-                .iter()
-                .map(|bank| bank.iter().cloned().collect())
-                .collect(),
+            ram_banks: ram_banks.iter().map(|bank| bank.to_vec()).collect(),
         }
     }
 }
@@ -222,7 +219,7 @@ impl Controller for MBC5 {
             self.ram_banks = ram_data
                 .ram_banks
                 .into_iter()
-                .map(|bank: Vec<u8>| <[u8; MBC5::RAM_BANK_SIZE]>::try_from(bank))
+                .map(<[u8; MBC5::RAM_BANK_SIZE]>::try_from)
                 .collect::<Result<Vec<[u8; MBC5::RAM_BANK_SIZE]>, Vec<u8>>>()
                 .map_err(|faulty| {
                     Error::invalid_length(
