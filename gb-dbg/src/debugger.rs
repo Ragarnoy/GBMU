@@ -30,6 +30,7 @@ impl<T: RW> Debugger<T> {
     pub fn draw(&mut self, ctx: &CtxRef) {
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             self.flow_controller.draw(ui);
+            let a: u16 = 100u8.into();
         });
         egui::SidePanel::left("left_panel")
             .resizable(false)

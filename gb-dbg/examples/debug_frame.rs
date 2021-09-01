@@ -28,8 +28,8 @@ impl RW for Memory {
         *self.memory.get(index).unwrap()
     }
 
-    fn write(&mut self, index: usize, value: u8) {
-        self.memory[index] = value
+    fn write(&mut self, _index: usize, _value: u8) {
+        self.memory[_index] = _value
     }
 }
 

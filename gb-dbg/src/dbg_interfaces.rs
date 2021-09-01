@@ -1,13 +1,26 @@
-type RegisterMap = (String, u8);
+type RegisterMap = (String, RegisterType);
+
+pub enum RegisterType {
+    U8(u8),
+    U16(u16),
+}
 
 pub trait RW {
     fn read(&self, index: usize) -> u8;
 
-    fn write(&mut self, index: usize, value: u8);
+    fn write(&mut self, _index: usize, _value: u8) {
+        // Default to Read-Only
+    }
 }
 
-pub trait DebugRegister: RW {
+pub trait DebugRegister {
     type RegisterIter: Iterator<Item = RegisterMap>;
+
+    fn get<T: Into<u16>>(key: &str) -> T;
+
+    fn set<T: Into<u16>>(_key: &str, _value: T) {
+        // Default to Read-Only
+    }
 
     fn register_iter(&self) -> Self::RegisterIter;
 }
