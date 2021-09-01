@@ -12,6 +12,8 @@ use gb_lcd::{render, window::GBWindow};
 use gb_ppu::PPU;
 
 fn main() {
+    init_logger();
+
     let (sdl_context, video_subsystem, mut event_pump) =
         gb_lcd::init().expect("Error while initializing LCD");
 
@@ -157,4 +159,17 @@ fn main() {
         }
         // std::thread::sleep(::std::time::Duration::new(0, 1_000_000_000u32 / 60));
     }
+}
+
+fn init_logger() {
+    use log::LevelFilter;
+    use simplelog::{ColorChoice, Config, TermLogger, TerminalMode};
+
+    TermLogger::init(
+        LevelFilter::Debug,
+        Config::default(),
+        TerminalMode::Mixed,
+        ColorChoice::Auto,
+    )
+    .expect("cannot initialise logger");
 }
