@@ -19,6 +19,7 @@ COPY --chown=tester:tester gb-ppu/ /app/gb-ppu/
 COPY --chown=tester:tester gb-roms/ /app/gb-roms/
 COPY --chown=tester:tester gb-bus/ /app/gb-bus/
 COPY --chown=tester:tester gb-dbg/ /app/gb-dbg/
+COPY --chown=tester:tester gb-rtc/ /app/gb-rtc/
 COPY --chown=tester:tester src/ /app/src/
 
 WORKDIR /app
