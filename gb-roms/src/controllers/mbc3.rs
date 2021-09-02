@@ -1,10 +1,14 @@
 use crate::header::Header;
+use gb_bus::{Address, Area, Error, FileOperation};
 use std::cell::RefCell;
 use std::io::{self, Read};
 
+type RamBank = [u8; Mbc3::RAM_BANK_SIZE];
+type RomBank = [u8; Mbc3::ROM_BANK_SIZE];
+
 pub struct Mbc3 {
-    rom_banks: Vec<[u8; Mbc3::ROM_BANK_SIZE]>,
-    ram_banks: Vec<[u8; Mbc3::RAM_BANK_SIZE]>,
+    rom_banks: Vec<RomBank>,
+    ram_banks: Vec<RamBank>,
     regs: Mbc3Regs,
     clock_enabled: bool,
 }
@@ -41,20 +45,52 @@ impl Mbc3 {
             clock_enabled,
         }
     }
-}
 
-struct Mbc3Regs {
-    rom_bank: usize,
-    ram_bank: usize,
-    last_writed_bytes: RefCell<u8>,
-}
-
-impl Default for Mbc3Regs {
-    fn default() -> Self {
-        Self {
-            rom_bank: 0,
-            ram_bank: 0,
-            last_writed_bytes: RefCell::new(0),
+    fn read_rom(&self, addr: Box<dyn Address>) -> Result<u8, Error> {
+        let address = addr.get_address();
+        match address {
+            0x0000..=0x3FFF => Ok(self.rom_banks[0][address]),
+            0x4000..=0x7FFF => Ok(self.get_selected_rom_bank()[address]),
+            _ => Err(Error::new_segfault(addr)),
         }
     }
+
+    fn get_selected_rom_bank(&self) -> &RomBank {
+        &self.rom_banks[self.regs.rom_bank as usize]
+    }
+
+    fn write_rom(&mut self, v: u8, addr: Box<dyn Address>) -> Result<(), Error> {
+        let address = addr.get_address();
+        match address {
+            0x0000..=0x1FFF => self.regs.ram_enabled = (v & 0xF) == 0xA,
+            0x2000..=0x3FFF => self.regs.rom_bank = if v == 0 { 1 } else { v & 0xE },
+            0x4000..=0x5FFF => self.regs.ram_bank = v & 0xC,
+            0x6000..=0x7FFF => {
+                if self.regs.last_writed_byte == Some(0_u8) && v == 1 {
+                } else {
+                    self.regs.last_writed_byte = Some(v);
+                }
+            }
+            _ => return Err(Error::new_segfault(addr)),
+        }
+        Ok(())
+    }
+}
+
+#[derive(Default)]
+struct Mbc3Regs {
+    rom_bank: u8,
+    ram_bank: u8,
+    ram_enabled: bool,
+    rtc: RTCRegs,
+    last_writed_byte: Option<u8>,
+}
+
+#[derive(Default)]
+struct RTCRegs {
+    seconds: u8,
+    minutes: u8,
+    hours: u8,
+    lower_day_counter: u8,
+    upper_day_counter: u8,
 }
