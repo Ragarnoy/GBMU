@@ -3,27 +3,30 @@ pub mod flow_control;
 pub mod memory;
 pub mod registers;
 
-use crate::dbg_interfaces::RW;
+use crate::dbg_interfaces::{RW, DebugRegister};
 use crate::debugger::disassembler::Disassembler;
 use crate::debugger::flow_control::FlowController;
 use crate::debugger::memory::GBMemoryEditor;
 use egui::{Color32, CtxRef, Label};
 use crate::debugger::registers::RegisterEditor;
 
-pub struct Debugger<T: RW> {
+pub struct Debugger<T, R> {
     memory_editor: GBMemoryEditor<T>,
+    register_editor: RegisterEditor<R>,
     flow_controller: FlowController,
     disassembler: Disassembler,
 }
 
-impl<T: RW> Debugger<T> {
+impl<T: RW, R: DebugRegister> Debugger<T, R> {
     pub fn new(
         memory_editor: GBMemoryEditor<T>,
+        register_editor: RegisterEditor<R>,
         flow_controller: FlowController,
         disassembler: Disassembler,
     ) -> Self {
         Self {
             memory_editor,
+            register_editor,
             flow_controller,
             disassembler,
         }
@@ -60,7 +63,7 @@ impl<T: RW> Debugger<T> {
                 })
             });
         egui::CentralPanel::default().show(ctx, |ui| {
-            RegisterEditor::default().draw(ui);
+            self.register_editor.draw(ui);
         });
     }
 }
