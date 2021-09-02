@@ -11,9 +11,10 @@ use gb_dbg::debugger::disassembler::Disassembler;
 use gb_dbg::debugger::flow_control::FlowController;
 use gb_dbg::debugger::memory::MemoryEditorBuilder;
 use gb_dbg::debugger::Debugger;
+use gb_dbg::debugger::registers::RegisterEditorBuilder;
 
 pub struct DebuggerApp {
-    pub debugger: Debugger<Memory>,
+    pub debugger: Debugger<Memory, &'static Registers>,
 }
 
 impl RW for Memory {
@@ -43,9 +44,12 @@ fn main() {
         .with_address_range("VRam", 0..0xFF + 1)
         .with_address_range("Ram", 0xFF..0xFFF)
         .build();
-    let regs = Registers::default();
+    let rega = Registers::default();
+    let regb = Registers::default();
+    let regc = Registers::default();
+    let regs = RegisterEditorBuilder::default().with_cpu(&rega).with_ppu(&regb).with_io( &regc).build();
     let dgb_app = DebuggerApp {
-        debugger: Debugger::new(gbm_mem, FlowController, Disassembler),
+        debugger: Debugger::new(gbm_mem, regs, FlowController, Disassembler),
     };
     eframe::run_native(Box::new(dgb_app), eframe::NativeOptions::default())
 }
