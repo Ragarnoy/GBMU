@@ -16,6 +16,9 @@ impl Mbc3 {
     pub fn from_reader(mut reader: impl Read, header: Header) -> Result<Self, io::Error> {
         let mut ctl = Mbc3::empty(header);
 
+        for e in ctl.rom_banks.iter_mut() {
+            reader.read_exact(e)?;
+        }
         Ok(ctl)
     }
 
