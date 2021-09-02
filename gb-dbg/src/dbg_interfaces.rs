@@ -2,6 +2,15 @@ use anyhow::Result;
 
 pub type RegisterMap = (String, RegisterType);
 
+impl From<RegisterType> for u16 {
+    fn from(input: RegisterType) -> Self {
+        match input {
+            RegisterType::U8(x) => x as u16,
+            RegisterType::U16(x) => x,
+        }
+    }
+}
+
 pub enum RegisterType {
     U8(u8),
     U16(u16),
