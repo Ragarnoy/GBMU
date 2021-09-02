@@ -24,7 +24,6 @@ impl<'a> Iterator for Iter<'a> {
     }
 }
 
-#[derive(Default)]
 pub struct Registers {
     a: u8,
     b: u8,
@@ -34,8 +33,21 @@ pub struct Registers {
     f: u8,
 }
 
+impl Default for Registers {
+    fn default() -> Self {
+        Self {
+            a: 0xFF,
+            b: 0x1F,
+            c: 0x22,
+            d: 0x3F,
+            e: 4,
+            f: 8,
+        }
+    }
+}
+
 impl Registers {
-    pub fn iter(&self) -> Iter {
+    pub fn iter(&self) -> Iter<'_> {
         Iter {
             count: 0,
             registers: self,
