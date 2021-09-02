@@ -8,6 +8,7 @@ edition = "2018"
 [dependencies]
 egui_memory_editor = { git = "https://github.com/Ragarnoy/egui_memory_editor" }
 egui = "0.14.2"
+anyhow = "1.0.43"
 
 [dev-dependencies]
 eframe = "0.14.0"

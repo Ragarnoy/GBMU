@@ -1,8 +1,22 @@
-type RegisterMap = (String, RegisterType);
+use anyhow::Result;
+
+pub type RegisterMap = (String, RegisterType);
 
 pub enum RegisterType {
     U8(u8),
     U16(u16),
+}
+
+impl From<u8> for RegisterType {
+    fn from(input: u8) -> Self {
+        Self::U8(input)
+    }
+}
+
+impl From<u16> for RegisterType {
+    fn from(input: u16) -> Self {
+        Self::U16(input)
+    }
 }
 
 pub trait RW {
@@ -16,11 +30,7 @@ pub trait RW {
 pub trait DebugRegister {
     type RegisterIter: Iterator<Item = RegisterMap>;
 
-    fn get<T: Into<u16>>(key: &str) -> T;
-
-    fn set<T: Into<u16>>(_key: &str, _value: T) {
-        // Default to Read-Only
-    }
+    fn get(&self, key: &str) -> Result<RegisterType>;
 
     fn register_iter(&self) -> Self::RegisterIter;
 }
