@@ -1,6 +1,7 @@
 use crate::{ReadRtcRegisters, WriteRtcRegisters, DAY, HOUR, MINUTE};
 use std::{cell::RefCell, time::Instant};
 
+#[derive(PartialEq, Eq, Debug)]
 pub struct Naive {
     timestamp: u32,
     clock: Option<RefCell<Instant>>,
@@ -85,5 +86,37 @@ impl ReadRtcRegisters for Naive {
 
     fn control(&self) -> u8 {
         todo!()
+    }
+}
+
+#[cfg(test)]
+mod test_naive {
+    use super::Naive;
+    use crate::{constant::DAY, ReadRtcRegisters, WriteRtcRegisters};
+
+    #[test]
+    fn test_default_init() {
+        assert_eq!(
+            Naive::default(),
+            Naive {
+                timestamp: 0,
+                clock: None
+            }
+        );
+    }
+
+    #[test]
+    fn test_days_init() {
+        assert!(Naive::from_days_opt(511).is_some());
+        let date = Naive::from_days(25);
+        assert_eq!(date.days(), 25);
+        assert_eq!(date.lower_days(), 25);
+        assert_eq!(date.timestamp, 25 * DAY);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_overflow_days_init() {
+        Naive::from_days(512);
     }
 }
