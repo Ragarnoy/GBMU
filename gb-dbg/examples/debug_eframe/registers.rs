@@ -1,5 +1,5 @@
 use anyhow::anyhow;
-use gb_dbg::dbg_interfaces::{DebugRegister, RegisterMap, RegisterType};
+use gb_dbg::dbg_interfaces::{DebugRegister, RegisterMap, RegisterValue};
 
 pub struct Iter<'a> {
     count: u32,
@@ -13,12 +13,12 @@ impl<'a> Iterator for Iter<'a> {
         self.count += 1;
 
         match self.count {
-            1 => Some(("A".to_owned(), RegisterType::from(self.registers.a))),
-            2 => Some(("B".to_owned(), RegisterType::from(self.registers.b))),
-            3 => Some(("C".to_owned(), RegisterType::from(self.registers.c))),
-            4 => Some(("D".to_owned(), RegisterType::from(self.registers.d))),
-            5 => Some(("E".to_owned(), RegisterType::from(self.registers.e))),
-            6 => Some(("F".to_owned(), RegisterType::from(self.registers.f))),
+            1 => Some(("A".to_owned(), RegisterValue::from(self.registers.a))),
+            2 => Some(("B".to_owned(), RegisterValue::from(self.registers.b))),
+            3 => Some(("C".to_owned(), RegisterValue::from(self.registers.c))),
+            4 => Some(("D".to_owned(), RegisterValue::from(self.registers.d))),
+            5 => Some(("E".to_owned(), RegisterValue::from(self.registers.e))),
+            6 => Some(("F".to_owned(), RegisterValue::from(self.registers.f))),
             _ => None,
         }
     }
@@ -58,14 +58,14 @@ impl Registers {
 impl<'a> DebugRegister for &'a Registers {
     type RegisterIter = Iter<'a>;
 
-    fn get(&self, key: &str) -> anyhow::Result<RegisterType> {
+    fn get(&self, key: &str) -> anyhow::Result<RegisterValue> {
         match key {
-            "A" => Ok(RegisterType::from(self.a)),
-            "B" => Ok(RegisterType::from(self.b)),
-            "C" => Ok(RegisterType::from(self.c)),
-            "D" => Ok(RegisterType::from(self.d)),
-            "E" => Ok(RegisterType::from(self.e)),
-            "F" => Ok(RegisterType::from(self.f)),
+            "A" => Ok(RegisterValue::from(self.a)),
+            "B" => Ok(RegisterValue::from(self.b)),
+            "C" => Ok(RegisterValue::from(self.c)),
+            "D" => Ok(RegisterValue::from(self.d)),
+            "E" => Ok(RegisterValue::from(self.e)),
+            "F" => Ok(RegisterValue::from(self.f)),
             _ => Err(anyhow!("Not a valid register!")),
         }
     }
