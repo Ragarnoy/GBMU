@@ -1,5 +1,8 @@
 use crate::error::{Error, PPUResult};
 
+/// Represent the colors of pixels.
+///
+/// Can easily be converted into a RGB value (`[u8; 3]`) for the renderer.
 #[derive(Debug, Clone, Copy)]
 pub enum Color {
     White,
@@ -9,6 +12,10 @@ pub enum Color {
 }
 
 impl Color {
+    /// Translate a color value into a Color enum.
+    ///
+    /// ### Parameters
+    /// - **value**: the color value of a pixel from a palette.
     pub fn from_value(value: u8) -> PPUResult<Color> {
         match value {
             3 => Ok(Color::Black),
