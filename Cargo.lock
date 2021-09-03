@@ -717,6 +717,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "gb-rtc"
+version = "0.1.0"
+
+[[package]]
 name = "gbmu"
 version = "0.1.0"
 dependencies = [
