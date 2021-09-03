@@ -33,8 +33,16 @@ pub trait WriteRtcRegisters: Sized {
     fn set_minutes(&self, minutes: u8) -> Option<Self>;
     fn set_hours(&self, hours: u8) -> Option<Self>;
     fn set_lower_days(&self, days: u8) -> Option<Self>;
+
     /// Set the one bit used for the upper days
     fn set_upper_days(&self, upper_days: bool) -> Option<Self>;
     fn set_halted(&self, halted: bool) -> Option<Self>;
     fn set_day_counter_carry(&self, carry: bool) -> Option<Self>;
+
+    /// Set the control bitfields
+    ///
+    /// - Bit 0: Upper day counter
+    /// - Bit 6: Halt
+    /// - Bit 7: Day Counter Carry
+    fn set_control(&self, control: u8) -> Option<Self>;
 }
