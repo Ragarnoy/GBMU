@@ -65,7 +65,7 @@ impl ReadRtcRegisters for Naive {
     }
 
     fn days(&self) -> u16 {
-        (self.timestamp / DAY) as u16
+        (self.timestamp / DAY) as u16 & 0x1FF
     }
 
     fn lower_days(&self) -> u8 {
@@ -81,11 +81,19 @@ impl ReadRtcRegisters for Naive {
     }
 
     fn day_counter_carry(&self) -> bool {
-        todo!()
+        self.timestamp > (0x1FF * DAY)
     }
 
     fn control(&self) -> u8 {
         todo!()
+    }
+}
+
+impl std::ops::Add<std::time::Duration> for Naive {
+    type Output = Self;
+
+    fn add(self, rhs: std::time::Duration) -> Self::Output {
+        Self::new(self.timestamp + rhs.as_secs() as u32)
     }
 }
 
@@ -95,7 +103,7 @@ mod test_naive {
     use crate::{constant::DAY, ReadRtcRegisters, WriteRtcRegisters};
 
     #[test]
-    fn test_default_init() {
+    fn default_init() {
         assert_eq!(
             Naive::default(),
             Naive {
@@ -106,7 +114,7 @@ mod test_naive {
     }
 
     #[test]
-    fn test_days_init() {
+    fn days_init() {
         assert!(Naive::from_days_opt(511).is_some());
         let date = Naive::from_days(25);
         assert_eq!(date.days(), 25);
@@ -116,7 +124,44 @@ mod test_naive {
 
     #[test]
     #[should_panic]
-    fn test_overflow_days_init() {
+    fn overflow_days_init() {
         Naive::from_days(512);
+    }
+
+    #[test]
+    fn hours_minutes_seconds() {
+        let date = Naive::default().and_hms(5, 3, 2);
+
+        assert_eq!(date.seconds(), 2);
+        assert_eq!(date.minutes(), 3);
+        assert_eq!(date.hours(), 5);
+    }
+
+    #[test]
+    fn days() {
+        let date = Naive::from_days(356);
+
+        assert!(date.upper_days());
+        assert_eq!(date.lower_days(), (356 % 0x100) as u8);
+        assert_eq!(date.days(), 356);
+    }
+
+    #[test]
+    fn halted() {
+        let mut date = Naive::default();
+
+        assert!(date.halted());
+        date.clock = Some(std::cell::RefCell::new(std::time::Instant::now()));
+        assert!(!date.halted());
+    }
+
+    #[test]
+    fn day_counter_carry() {
+        let date = Naive::from_days(511);
+
+        assert!(!date.day_counter_carry());
+
+        let date = date + std::time::Duration::from_secs((2 * DAY) as u64);
+        assert!(date.day_counter_carry());
     }
 }
