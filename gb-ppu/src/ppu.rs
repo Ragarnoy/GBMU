@@ -44,6 +44,20 @@ impl PPU {
         &mut self.control
     }
 
+    pub fn bg_palette_mut(&mut self) -> &mut Palette {
+        &mut self.bg_palette
+    }
+    pub fn obj_palette_0_mut(&mut self) -> &mut Palette {
+        &mut self.obj_palette.0
+    }
+    pub fn obj_palette_1_mut(&mut self) -> &mut Palette {
+        &mut self.obj_palette.1
+    }
+
+    // pub fn control_mut(&mut self) -> &mut Control {
+    //     &mut self.control
+    // }
+
     pub fn compute(&mut self) {
         for j in 0..SCREEN_HEIGHT {
             for i in 0..SCREEN_WIDTH {
@@ -197,7 +211,7 @@ impl PPU {
                 let y_img = y + j;
                 for (i, (pixel_value, pixel_color)) in pixels_values.iter().enumerate() {
                     if *pixel_value != 0 {
-                        let x_img = OBJECT_RENDER_WIDTH - 8 - x + i;
+                        let x_img = OBJECT_LIST_RENDER_WIDTH - 8 - x + i;
                         image[y_img][x_img] = (*pixel_color).into();
                     }
                 }

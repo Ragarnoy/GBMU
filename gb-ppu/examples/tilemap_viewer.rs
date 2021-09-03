@@ -31,20 +31,28 @@ pub fn main() {
         (
             "mario",
             include_bytes!("memory dumps/vram/Super_Mario_Land.dmp"),
+            include_bytes!("memory dumps/io_registers/Super_Mario_Land.dmp"),
         ),
         (
             "zelda",
             include_bytes!("memory dumps/vram/Legend_of_Zelda_link_Awaking.dmp"),
+            include_bytes!("memory dumps/io_registers/Legend_of_Zelda_link_Awaking.dmp"),
         ),
         (
             "pokemon",
             include_bytes!("memory dumps/vram/Pokemon_Bleue.dmp"),
+            include_bytes!("memory dumps/io_registers/Pokemon_Bleue.dmp"),
         ),
     ];
     ppu.overwrite_vram(dumps[0].1);
     let mut display_window = false;
-    ppu.control_mut().set_win_tilemap_area(false);
-    ppu.control_mut().set_bg_tilemap_area(true);
+    *ppu.bg_palette_mut() = dumps[0].2[0x47].into();
+    ppu.control_mut()
+        .set_win_tilemap_area((dumps[0].2[0x40] & 0b0100_0000) != 0);
+    ppu.control_mut()
+        .set_bg_tilemap_area((dumps[0].2[0x40] & 0b0000_1000) != 0);
+    ppu.control_mut()
+        .set_bg_win_tiledata_area((dumps[0].2[0x40] & 0b0001_0000) != 0);
     let mut image = ppu.tilemap_image(display_window);
 
     'running: loop {
@@ -56,9 +64,16 @@ pub fn main() {
             egui::menu::bar(ui, |ui| {
                 ui.set_height(render::MENU_BAR_SIZE);
                 egui::menu::menu(ui, "dump", |ui| {
-                    for (title, dump) in dumps {
+                    for (title, vram, io_reg) in dumps {
                         if ui.button(title).clicked() {
-                            ppu.overwrite_vram(dump);
+                            ppu.overwrite_vram(vram);
+                            *ppu.bg_palette_mut() = io_reg[0x47].into();
+                            ppu.control_mut()
+                                .set_win_tilemap_area((io_reg[0x40] & 0b0100_0000) != 0);
+                            ppu.control_mut()
+                                .set_bg_tilemap_area((io_reg[0x40] & 0b0000_1000) != 0);
+                            ppu.control_mut()
+                                .set_bg_win_tiledata_area((io_reg[0x40] & 0b0001_0000) != 0);
                             image = ppu.tilemap_image(display_window);
                         }
                     }

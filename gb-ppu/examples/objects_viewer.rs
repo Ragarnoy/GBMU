@@ -43,21 +43,34 @@ pub fn main() {
             "mario",
             include_bytes!("memory dumps/vram/Super_Mario_Land.dmp"),
             include_bytes!("memory dumps/oam/Super_Mario_Land.dmp"),
+            include_bytes!("memory dumps/io_registers/Super_Mario_Land.dmp"),
         ),
         (
             "zelda",
             include_bytes!("memory dumps/vram/Legend_of_Zelda_link_Awaking.dmp"),
             include_bytes!("memory dumps/oam/Legend_of_Zelda_link_Awaking.dmp"),
+            include_bytes!("memory dumps/io_registers/Legend_of_Zelda_link_Awaking.dmp"),
         ),
         (
             "pokemon",
             include_bytes!("memory dumps/vram/Pokemon_Bleue.dmp"),
             include_bytes!("memory dumps/oam/Pokemon_Bleue.dmp"),
+            include_bytes!("memory dumps/io_registers/Pokemon_Bleue.dmp"),
         ),
     ];
     ppu.overwrite_vram(dumps[0].1);
     ppu.overwrite_oam(dumps[0].2);
-    ppu.control_mut().set_obj_size(false);
+    *ppu.bg_palette_mut() = dumps[0].3[0x47].into();
+    *ppu.obj_palette_0_mut() = dumps[0].3[0x48].into();
+    *ppu.obj_palette_1_mut() = dumps[0].3[0x49].into();
+    ppu.control_mut()
+        .set_win_tilemap_area((dumps[0].3[0x40] & 0b0100_0000) != 0);
+    ppu.control_mut()
+        .set_bg_tilemap_area((dumps[0].3[0x40] & 0b0000_1000) != 0);
+    ppu.control_mut()
+        .set_bg_win_tiledata_area((dumps[0].3[0x40] & 0b0001_0000) != 0);
+    ppu.control_mut()
+        .set_obj_size((dumps[0].3[0x40] & 0b0000_0100) != 0);
     let mut list_mode = false;
     let mut view_image = ppu.objects_image();
     let mut list_image = ppu.objects_list_image();
@@ -71,14 +84,21 @@ pub fn main() {
             egui::menu::bar(ui, |ui| {
                 ui.set_height(render::MENU_BAR_SIZE);
                 egui::menu::menu(ui, "dump", |ui| {
-                    for (title, vram_dump, oam_dump) in dumps {
+                    for (title, vram, oam, io_reg) in dumps {
                         if ui.button(title).clicked() {
-                            ppu.overwrite_vram(vram_dump);
-                            ppu.overwrite_oam(oam_dump);
-                            match title {
-                                "zelda" => ppu.control_mut().set_obj_size(true),
-                                _ => ppu.control_mut().set_obj_size(false),
-                            }
+                            ppu.overwrite_vram(vram);
+                            ppu.overwrite_oam(oam);
+                            *ppu.bg_palette_mut() = io_reg[0x47].into();
+                            *ppu.obj_palette_0_mut() = io_reg[0x48].into();
+                            *ppu.obj_palette_1_mut() = io_reg[0x49].into();
+                            ppu.control_mut()
+                                .set_win_tilemap_area((io_reg[0x40] & 0b0100_0000) != 0);
+                            ppu.control_mut()
+                                .set_bg_tilemap_area((io_reg[0x40] & 0b0000_1000) != 0);
+                            ppu.control_mut()
+                                .set_bg_win_tiledata_area((io_reg[0x40] & 0b0001_0000) != 0);
+                            ppu.control_mut()
+                                .set_obj_size((io_reg[0x40] & 0b0000_0100) != 0);
                             view_image = ppu.objects_image();
                             list_image = ppu.objects_list_image();
                         }
