@@ -1,31 +1,72 @@
-pub const VRAM_SIZE: usize = 0x2000;
-const TILEDATA_ADRESS_MAX: usize = 0x17FF;
-const TILEDATA_ADRESS_MIN: usize = 0x0000;
-
 use crate::error::{Error, PPUResult};
 
+pub const TILEDATA_ADRESS_MAX: usize = 0x17FF;
+pub const TILEMAP_POSITION_MAX: usize = 0x3FF;
+pub const TILEMAP_START_0: usize = 0x1800;
+pub const TILEMAP_START_1: usize = 0x1C00;
+pub const TILEDATA_START_1: usize = 0x1000 / 16;
+
+/// Contains operations to read more easily the differents values of the vram.
 pub struct Vram {
-    data: [u8; VRAM_SIZE as usize],
+    data: [u8; Vram::SIZE as usize],
 }
 
 impl Vram {
+    pub const SIZE: usize = 0x2000;
+
     pub fn new() -> Self {
         Vram {
-            data: [0x00; VRAM_SIZE as usize],
+            data: [0x00; Self::SIZE as usize],
         }
     }
 
-    pub fn read_8_pixels(&self, adr: usize) -> PPUResult<[u8; 8], usize> {
-        let mut pixels = [0; 8];
-        if adr > TILEDATA_ADRESS_MAX - 1 {
+    /// Return the index of a tile from the correct map area depending on the area_bits.
+    ///
+    /// ### Parameters
+    ///  - **pos**: the position of the index to retrieve in the tilemap.
+    ///  - **map_area_bit**: the control bit (bg_tilemap_area or win_tilemap_area) indicating in which block of the vram is stored the tilemap.
+    ///  - **data_area_bit**: the control bit (bg_win_tiledata_area) indicating in which block of the vram is stored the tilesheet for the background/window.
+    pub fn get_map_tile_index(
+        &self,
+        pos: usize,
+        map_area_bit: u8,
+        data_area_bit: u8,
+    ) -> PPUResult<usize, usize> {
+        if pos > TILEMAP_POSITION_MAX {
             return Err(Error::OutOfBound {
-                value: adr,
-                min_bound: TILEDATA_ADRESS_MIN,
+                value: pos,
+                min_bound: 0,
+                max_bound: TILEMAP_POSITION_MAX,
+            });
+        }
+        let index = if map_area_bit == 0 {
+            self.data[TILEMAP_START_0 + pos]
+        } else {
+            self.data[TILEMAP_START_1 + pos]
+        };
+        if data_area_bit == 0 {
+            Ok(index as usize)
+        } else {
+            let index = index as i8;
+            Ok((TILEDATA_START_1 as i32 + index as i32) as usize)
+        }
+    }
+
+    /// Read a row of 8 pixels values contained in a couple of byte in the vram.
+    ///
+    /// ### Parameters
+    ///  - **pos**: position of the couple of bytes to be interpreted as pixels values.
+    pub fn read_8_pixels(&self, pos: usize) -> PPUResult<[u8; 8], usize> {
+        let mut pixels = [0; 8];
+        if pos > TILEDATA_ADRESS_MAX - 1 {
+            return Err(Error::OutOfBound {
+                value: pos,
+                min_bound: 0,
                 max_bound: TILEDATA_ADRESS_MAX - 1,
             });
         }
-        let byte_a = self.data[adr];
-        let byte_b = self.data[adr + 1];
+        let byte_a = self.data[pos];
+        let byte_b = self.data[pos + 1];
         for (i, pixel) in pixels.iter_mut().enumerate() {
             let bit = 0b0000_0001 << i;
             *pixel = if i > 0 {
@@ -37,22 +78,28 @@ impl Vram {
         Ok(pixels)
     }
 
-    pub fn read_8x8_tile(&self, adr: usize) -> PPUResult<[[u8; 8]; 8], usize> {
+    /// Return all the pixel values of a tile.
+    ///
+    /// This function is used for debugging purpose, the ppu does not select pixels tile by tile.
+    ///
+    /// ### Parameters
+    ///  - **pos**: position of the first byte of the tile.
+    pub fn read_8x8_tile(&self, pos: usize) -> PPUResult<[[u8; 8]; 8], usize> {
         let mut tile = [[0; 8]; 8];
-        if adr * 8 * 2 > TILEDATA_ADRESS_MAX + 1 - 8 * 2 {
+        if pos * 8 * 2 > TILEDATA_ADRESS_MAX + 1 - 8 * 2 {
             return Err(Error::OutOfBound {
-                value: adr,
-                min_bound: TILEDATA_ADRESS_MIN,
+                value: pos,
+                min_bound: 0,
                 max_bound: TILEDATA_ADRESS_MAX / (8 * 2),
             });
         }
         for (i, row) in tile.iter_mut().enumerate() {
-            *row = self.read_8_pixels((adr * 8 + i) * 2)?;
+            *row = self.read_8_pixels((pos * 8 + i) * 2)?;
         }
         Ok(tile)
     }
 
-    pub fn overwrite(&mut self, data: &[u8; VRAM_SIZE as usize]) {
+    pub fn overwrite(&mut self, data: &[u8; Self::SIZE as usize]) {
         self.data = *data;
     }
 }

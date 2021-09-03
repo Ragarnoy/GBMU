@@ -1,7 +1,7 @@
 use sdl2::{event::Event, keyboard::Keycode};
 
 use gb_lcd::{render, window::GBWindow};
-use gb_ppu::{PPU, TILESHEET_HEIGHT, TILESHEET_WIDTH};
+use gb_ppu::{PPU, TILEMAP_DIM};
 
 pub fn main() {
     let (sdl_context, video_subsystem, mut event_pump) =
@@ -11,10 +11,7 @@ pub fn main() {
         .expect("Error while computing bar size");
     let mut gb_window = GBWindow::new(
         "TileSheet",
-        (
-            TILESHEET_WIDTH as u32,
-            TILESHEET_HEIGHT as u32 + bar_pixels_size,
-        ),
+        (TILEMAP_DIM as u32, TILEMAP_DIM as u32 + bar_pixels_size),
         true,
         &video_subsystem,
     )
@@ -26,10 +23,10 @@ pub fn main() {
         .set_minimum_size(width, height)
         .expect("Failed to configure main window");
 
-    let mut display = render::RenderImage::<TILESHEET_WIDTH, TILESHEET_HEIGHT>::with_bar_size(
-        bar_pixels_size as f32,
-    );
+    let mut display =
+        render::RenderImage::<TILEMAP_DIM, TILEMAP_DIM>::with_bar_size(bar_pixels_size as f32);
     let mut ppu = PPU::new();
+    ppu.control_mut().set_bg_win_tiledata_area(1);
     let dumps = [
         ("mario", include_bytes!("memory dumps/Super_Mario_Land.dmp")),
         (
@@ -39,7 +36,10 @@ pub fn main() {
         ("pokemon", include_bytes!("memory dumps/Pokemon_Bleue.dmp")),
     ];
     ppu.overwrite_vram(dumps[0].1);
-    let mut image = ppu.tilesheet_image();
+    let mut display_window = false;
+    ppu.control_mut().set_win_tilemap_area(1);
+    ppu.control_mut().set_bg_tilemap_area(0);
+    let mut image = ppu.tilemap_image(display_window);
 
     'running: loop {
         gb_window
@@ -53,8 +53,18 @@ pub fn main() {
                     for (title, dump) in dumps {
                         if ui.button(title).clicked() {
                             ppu.overwrite_vram(dump);
-                            image = ppu.tilesheet_image();
+                            image = ppu.tilemap_image(display_window);
                         }
+                    }
+                });
+                egui::menu::menu(ui, "bg/win", |ui| {
+                    if ui.button("background").clicked() {
+                        display_window = false;
+                        image = ppu.tilemap_image(display_window);
+                    }
+                    if ui.button("window").clicked() {
+                        display_window = true;
+                        image = ppu.tilemap_image(display_window);
                     }
                 });
             })
