@@ -41,3 +41,9 @@ impl From<Color> for [u8; 3] {
         }
     }
 }
+
+impl Default for Color {
+    fn default() -> Color {
+        Color::White
+    }
+}

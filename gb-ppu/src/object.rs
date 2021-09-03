@@ -1,5 +1,7 @@
+use crate::color::Color;
 use crate::error::{Error, PPUResult};
 use crate::memory::Vram;
+use crate::registers::Palette;
 use modular_bitfield::{
     bitfield,
     specifiers::{B1, B3},
@@ -12,7 +14,6 @@ struct Attributes {
     pub palette_cgb_nb: B3,
     #[skip]
     pub tile_bank: B1,
-    #[skip]
     pub palette_nb: B1,
     pub x_flip: B1,
     pub y_flip: B1,
@@ -62,11 +63,22 @@ impl Object {
     ///  - **line**: The index of the row of pixel to return. Should be below 8 or 16 depending of the size_16 flag.
     ///  - **vram**: A reference to the vram to read the pixel values from.
     ///  - **size_16**: the bit 2 flag from Control indicating if the object is 8(*false*) or 16(*true*) pixels high.
-    pub fn get_pixels_row(&self, line: usize, vram: &Vram, size_16: bool) -> PPUResult<[u8; 8]> {
-        if !size_16 {
-            self.get_pixels_row_8x8(line, vram)
+    pub fn get_pixels_row(
+        &self,
+        line: usize,
+        vram: &Vram,
+        size_16: bool,
+        palettes: &(Palette, Palette),
+    ) -> PPUResult<[(u8, Color); 8]> {
+        let palette = if self.attributes.palette_nb() == 0 {
+            &palettes.0
         } else {
-            self.get_pixels_row_8x16(line, vram)
+            &palettes.1
+        };
+        if !size_16 {
+            self.get_pixels_row_8x8(line, vram, palette)
+        } else {
+            self.get_pixels_row_8x16(line, vram, palette)
         }
     }
 
@@ -75,8 +87,13 @@ impl Object {
     /// ### Parameters
     ///  - **line**: The index of the row of pixel to return. Should be below 8.
     ///  - **vram**: A reference to the vram to read the pixel values from.
-    fn get_pixels_row_8x8(&self, line: usize, vram: &Vram) -> PPUResult<[u8; 8]> {
-        let mut row = [0; 8];
+    fn get_pixels_row_8x8(
+        &self,
+        line: usize,
+        vram: &Vram,
+        palette: &Palette,
+    ) -> PPUResult<[(u8, Color); 8]> {
+        let mut row = [(0, Color::default()); 8];
         if line > 8 {
             return Err(Error::OutOfBound {
                 value: line,
@@ -85,11 +102,12 @@ impl Object {
             });
         }
         let y = if self.y_flip() { 7 - line } else { line };
-        let tile_row = vram.read_tile_line(self.tile_index as usize, y).unwrap();
+        let tile_row = vram.read_tile_line(self.tile_index as usize, y)?;
         for (i, pixel) in row.iter_mut().enumerate() {
             let x = if self.x_flip() { 7 - i } else { i };
-            let value = tile_row[x];
-            *pixel = value;
+            let value = palette.get_value(tile_row[x])?;
+            let color = palette.get_color(tile_row[x])?;
+            *pixel = (value, color);
         }
         Ok(row)
     }
@@ -99,8 +117,13 @@ impl Object {
     /// ### Parameters
     ///  - **line**: The index of the row of pixel to return. Should be below 16.
     ///  - **vram**: A reference to the vram to read the pixel values from.
-    fn get_pixels_row_8x16(&self, mut line: usize, vram: &Vram) -> PPUResult<[u8; 8]> {
-        let mut row = [0; 8];
+    fn get_pixels_row_8x16(
+        &self,
+        mut line: usize,
+        vram: &Vram,
+        palette: &Palette,
+    ) -> PPUResult<[(u8, Color); 8]> {
+        let mut row = [(0, Color::default()); 8];
         if line > 15 {
             return Err(Error::OutOfBound {
                 value: line,
@@ -120,8 +143,9 @@ impl Object {
         let tile_line = vram.read_tile_line(index, y).unwrap();
         for (i, pixel) in row.iter_mut().enumerate() {
             let x = if self.x_flip() { 7 - i } else { i };
-            let value = tile_line[x];
-            *pixel = value;
+            let value = palette.get_value(tile_line[x])?;
+            let color = palette.get_color(tile_line[x])?;
+            *pixel = (value, color);
         }
         Ok(row)
     }
