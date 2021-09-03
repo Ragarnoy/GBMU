@@ -37,9 +37,7 @@ pub trait RW {
 }
 
 pub trait DebugRegister {
-    type RegisterIter: Iterator<Item = RegisterMap>;
-
     fn get(&self, key: &str) -> Result<RegisterValue>;
 
-    fn register_iter(&self) -> Self::RegisterIter;
+    fn registers(&self) -> Vec<RegisterMap>;
 }

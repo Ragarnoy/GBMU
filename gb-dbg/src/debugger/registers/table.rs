@@ -10,7 +10,7 @@ impl<T: DebugRegister> RegisterTable<T> {
 
     pub fn new(table: T) -> Self {
         let mut register_map: HashMap<String, u16> = HashMap::with_capacity(22);
-        for register in table.register_iter() {
+        for register in table.registers() {
             register_map.insert(register.0, register.1.into());
         }
         Self {

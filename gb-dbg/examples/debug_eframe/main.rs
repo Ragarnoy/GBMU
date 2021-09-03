@@ -14,7 +14,7 @@ use gb_dbg::debugger::Debugger;
 use gb_dbg::debugger::registers::RegisterEditorBuilder;
 
 pub struct DebuggerApp {
-    pub debugger: Debugger<Memory, &'static Registers>,
+    pub debugger: Debugger<Memory, Registers>,
 }
 
 impl RW for Memory {
@@ -47,7 +47,7 @@ fn main() {
     let rega = Registers::default();
     let regb = Registers::default();
     let regc = Registers::default();
-    let regs = RegisterEditorBuilder::default().with_cpu(&rega).with_ppu(&regb).with_io( &regc).build();
+    let regs = RegisterEditorBuilder::default().with_cpu(rega).with_ppu(regb).with_io( regc).build();
     let dgb_app = DebuggerApp {
         debugger: Debugger::new(gbm_mem, regs, FlowController, Disassembler),
     };
