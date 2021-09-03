@@ -1,3 +1,9 @@
+pub mod constant;
+pub mod naive;
+
+pub use constant::{DAY, HOUR, MINUTE};
+pub use naive::Naive;
+
 /// This trait allow to read the RTC registers
 pub trait ReadRtcRegisters {
     fn seconds(&self) -> u8;
