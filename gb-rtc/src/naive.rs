@@ -126,8 +126,10 @@ impl WriteRtcRegisters for Naive {
     }
 
     fn set_upper_days(&mut self, udays: bool) {
-        if udays {
-            self.timestamp |= 0x100 * DAY;
+        if udays && !self.upper_days() {
+            self.timestamp += 0x100 * DAY;
+        } else if !udays && self.upper_days() {
+            self.timestamp -= 0x100 * DAY;
         }
     }
 
@@ -272,5 +274,65 @@ mod test_ops {
         assert_eq!(date.timestamp, 24 * DAY);
         let date = date + Duration::from_secs((DAY + 26 * HOUR) as u64);
         assert_eq!(date.timestamp, 26 * DAY + 2 * HOUR);
+    }
+}
+
+#[cfg(test)]
+mod test_write_regs {
+    use super::Naive;
+    use crate::{constant::DAY, ReadRtcRegisters, WriteRtcRegisters};
+
+    #[test]
+    fn seconds() {
+        let mut date = Naive::default();
+
+        assert_eq!(date.seconds(), 0);
+        date.set_seconds(49);
+        assert_eq!(date.seconds(), 49);
+    }
+
+    #[test]
+    fn minutes() {
+        let mut date = Naive::default();
+
+        assert_eq!(date.minutes(), 0);
+        date.set_minutes(32);
+        assert_eq!(date.minutes(), 32);
+    }
+
+    #[test]
+    fn hours() {
+        let mut date = Naive::default();
+
+        assert_eq!(date.hours(), 0);
+        date.set_hours(18);
+        assert_eq!(date.hours(), 18);
+    }
+
+    #[test]
+    fn days() {
+        let mut date = Naive::default();
+
+        assert_eq!(date.days(), 0);
+        assert_eq!(date.lower_days(), 0);
+        assert_eq!(date.upper_days(), false);
+
+        date.set_lower_days(0x2f);
+
+        assert_eq!(date.days(), 0x2f);
+        assert_eq!(date.lower_days(), 0x2f);
+        assert_eq!(date.upper_days(), false);
+
+        date.set_upper_days(true);
+
+        assert_eq!(date.days(), 0x12f);
+        assert_eq!(date.lower_days(), 0x2f);
+        assert_eq!(date.upper_days(), true);
+
+        date.set_upper_days(false);
+
+        assert_eq!(date.days(), 0x2f);
+        assert_eq!(date.lower_days(), 0x2f);
+        assert_eq!(date.upper_days(), false);
     }
 }
