@@ -177,7 +177,7 @@ mod test_naive {
 
         let date = date + std::time::Duration::from_secs(DAY as u64);
         assert_eq!(date.control(), 0b100_0001);
-        let mut date = date + std::time::Duration::from_secs((256 * DAY) as u64);
+        let mut date = date + std::time::Duration::from_secs((0x200 * DAY) as u64);
         assert_eq!(date.control(), 0b1100_0001);
         date.clock = Some(std::cell::RefCell::new(std::time::Instant::now()));
         assert_eq!(date.control(), 0b1000_0001);
