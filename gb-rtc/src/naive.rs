@@ -107,14 +107,6 @@ impl std::ops::Add<u32> for Naive {
     }
 }
 
-impl std::ops::Sub<u32> for &Naive {
-    type Output = Naive;
-
-    fn sub(self, rhs: u32) -> Self::Output {
-        Self::Output::new(self.timestamp - rhs)
-    }
-}
-
 impl WriteRtcRegisters for Naive {
     fn set_seconds(&mut self, seconds: u8) {
         self.timestamp = self.timestamp - self.seconds() as u32 + (seconds % 60) as u32;
@@ -197,7 +189,7 @@ mod test_contructor {
 #[cfg(test)]
 mod test_read_regs {
     use super::Naive;
-    use crate::{constant::DAY, ReadRtcRegisters, WriteRtcRegisters};
+    use crate::{constant::DAY, ReadRtcRegisters};
 
     #[test]
     fn hours_minutes_seconds() {
@@ -246,7 +238,7 @@ mod test_read_regs {
 
         let date = date + std::time::Duration::from_secs(DAY as u64);
         assert_eq!(date.control(), 0b100_0001);
-        let mut date = date + std::time::Duration::from_secs((0x200 * DAY) as u64);
+        let mut date = date + (0x200 * DAY);
         assert_eq!(date.control(), 0b1100_0001);
         date.clock = Some(std::time::Instant::now());
         assert_eq!(date.control(), 0b1000_0001);
