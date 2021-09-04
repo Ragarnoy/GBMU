@@ -1,10 +1,10 @@
 use crate::{ReadRtcRegisters, WriteRtcRegisters, DAY, HOUR, MINUTE};
-use std::{cell::RefCell, time::Instant};
+use std::time::Instant;
 
 #[derive(PartialEq, Eq, Debug)]
 pub struct Naive {
     timestamp: u32,
-    clock: Option<RefCell<Instant>>,
+    clock: Option<Instant>,
 }
 
 impl Naive {
@@ -95,17 +95,80 @@ impl std::ops::Add<std::time::Duration> for Naive {
     type Output = Self;
 
     fn add(self, rhs: std::time::Duration) -> Self::Output {
-        Self::new(self.timestamp + rhs.as_secs() as u32)
+        self + rhs.as_secs() as u32
+    }
+}
+
+impl std::ops::Add<u32> for Naive {
+    type Output = Self;
+
+    fn add(self, rhs: u32) -> Self::Output {
+        Self::Output::new(self.timestamp + rhs)
+    }
+}
+
+impl std::ops::Sub<u32> for &Naive {
+    type Output = Naive;
+
+    fn sub(self, rhs: u32) -> Self::Output {
+        Self::Output::new(self.timestamp - rhs)
+    }
+}
+
+impl WriteRtcRegisters for Naive {
+    fn set_seconds(&mut self, seconds: u8) {
+        self.timestamp = self.timestamp - self.seconds() as u32 + (seconds % 60) as u32;
+    }
+
+    fn set_minutes(&mut self, minutes: u8) {
+        self.timestamp =
+            self.timestamp - self.minutes() as u32 * MINUTE + (minutes % 60) as u32 * MINUTE;
+    }
+
+    fn set_hours(&mut self, hours: u8) {
+        self.timestamp = self.timestamp - self.hours() as u32 * HOUR + (hours % 24) as u32 * HOUR;
+    }
+
+    fn set_lower_days(&mut self, ldays: u8) {
+        self.timestamp = self.timestamp - self.lower_days() as u32 * DAY + ldays as u32 * DAY;
+    }
+
+    fn set_upper_days(&mut self, udays: bool) {
+        if udays {
+            self.timestamp |= 0x100 * DAY;
+        }
+    }
+
+    fn set_halted(&mut self, halted: bool) {
+        if halted != self.halted() {
+            if halted {
+                self.clock = None;
+            } else {
+                self.clock = Some(Instant::now());
+            }
+        }
+    }
+
+    fn set_day_counter_carry(&mut self, carry: bool) {
+        if carry {
+            self.timestamp |= 0x200 * DAY;
+        }
+    }
+
+    fn set_control(&mut self, control: u8) {
+        self.set_upper_days((control & 1) == 1);
+        self.set_halted((control & 0b100_0000) == 0b100_0000);
+        self.set_day_counter_carry((control & 0b1000_0000) == 0b1000_0000);
     }
 }
 
 #[cfg(test)]
-mod test_naive {
+mod test_contructor {
     use super::Naive;
-    use crate::{constant::DAY, ReadRtcRegisters, WriteRtcRegisters};
+    use crate::{constant::DAY, ReadRtcRegisters};
 
     #[test]
-    fn default_init() {
+    fn default() {
         assert_eq!(
             Naive::default(),
             Naive {
@@ -116,7 +179,7 @@ mod test_naive {
     }
 
     #[test]
-    fn days_init() {
+    fn days() {
         assert!(Naive::from_days_opt(511).is_some());
         let date = Naive::from_days(25);
         assert_eq!(date.days(), 25);
@@ -126,9 +189,15 @@ mod test_naive {
 
     #[test]
     #[should_panic]
-    fn overflow_days_init() {
+    fn overflow_days() {
         Naive::from_days(512);
     }
+}
+
+#[cfg(test)]
+mod test_read_regs {
+    use super::Naive;
+    use crate::{constant::DAY, ReadRtcRegisters, WriteRtcRegisters};
 
     #[test]
     fn hours_minutes_seconds() {
@@ -153,7 +222,7 @@ mod test_naive {
         let mut date = Naive::default();
 
         assert!(date.halted());
-        date.clock = Some(std::cell::RefCell::new(std::time::Instant::now()));
+        date.clock = Some(std::time::Instant::now());
         assert!(!date.halted());
     }
 
@@ -172,14 +241,14 @@ mod test_naive {
         let mut date = Naive::from_days(0xFF);
 
         assert_eq!(date.control(), 0b100_0000);
-        date.clock = Some(std::cell::RefCell::new(std::time::Instant::now()));
+        date.clock = Some(std::time::Instant::now());
         assert_eq!(date.control(), 0);
 
         let date = date + std::time::Duration::from_secs(DAY as u64);
         assert_eq!(date.control(), 0b100_0001);
         let mut date = date + std::time::Duration::from_secs((0x200 * DAY) as u64);
         assert_eq!(date.control(), 0b1100_0001);
-        date.clock = Some(std::cell::RefCell::new(std::time::Instant::now()));
+        date.clock = Some(std::time::Instant::now());
         assert_eq!(date.control(), 0b1000_0001);
     }
 }

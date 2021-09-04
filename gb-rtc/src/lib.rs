@@ -35,20 +35,20 @@ pub trait ReadRtcRegisters {
 
 /// This trait allow to modify the RTC registers
 pub trait WriteRtcRegisters: Sized {
-    fn set_seconds(&self, seconds: u8) -> Option<Self>;
-    fn set_minutes(&self, minutes: u8) -> Option<Self>;
-    fn set_hours(&self, hours: u8) -> Option<Self>;
-    fn set_lower_days(&self, days: u8) -> Option<Self>;
+    fn set_seconds(&mut self, seconds: u8);
+    fn set_minutes(&mut self, minutes: u8);
+    fn set_hours(&mut self, hours: u8);
+    fn set_lower_days(&mut self, days: u8);
 
     /// Set the one bit used for the upper days
-    fn set_upper_days(&self, upper_days: bool) -> Option<Self>;
-    fn set_halted(&self, halted: bool) -> Option<Self>;
-    fn set_day_counter_carry(&self, carry: bool) -> Option<Self>;
+    fn set_upper_days(&mut self, upper_days: bool);
+    fn set_halted(&mut self, halted: bool);
+    fn set_day_counter_carry(&mut self, carry: bool);
 
     /// Set the control bitfields
     ///
     /// - Bit 0: Upper day counter
     /// - Bit 6: Halt
     /// - Bit 7: Day Counter Carry
-    fn set_control(&self, control: u8) -> Option<Self>;
+    fn set_control(&mut self, control: u8);
 }
