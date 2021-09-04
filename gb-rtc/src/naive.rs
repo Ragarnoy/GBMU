@@ -244,3 +244,33 @@ mod test_read_regs {
         assert_eq!(date.control(), 0b1000_0001);
     }
 }
+
+#[cfg(test)]
+mod test_ops {
+    use super::Naive;
+    use crate::constant::{DAY, HOUR};
+
+    #[test]
+    fn add_u32() {
+        let date = Naive::default();
+
+        assert_eq!(date.timestamp, 0);
+        let date = date + 24 * DAY;
+        assert_eq!(date.timestamp, 24 * DAY);
+        let date = date + (DAY + 26 * HOUR);
+        assert_eq!(date.timestamp, 26 * DAY + 2 * HOUR);
+    }
+
+    #[test]
+    fn add_duration() {
+        use std::time::Duration;
+
+        let date = Naive::default();
+
+        assert_eq!(date.timestamp, 0);
+        let date = date + Duration::from_secs(24 * DAY as u64);
+        assert_eq!(date.timestamp, 24 * DAY);
+        let date = date + Duration::from_secs((DAY + 26 * HOUR) as u64);
+        assert_eq!(date.timestamp, 26 * DAY + 2 * HOUR);
+    }
+}
