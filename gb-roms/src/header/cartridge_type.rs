@@ -72,6 +72,39 @@ impl TryFrom<u8> for CartridgeType {
     }
 }
 
+#[derive(PartialEq, Eq, Debug)]
+pub enum AutoSaveType {
+    Ram,
+    RamTimer,
+}
+
+impl CartridgeType {
+    /// return the type of auto save the cartridge type require
+    /// ```
+    /// # use gb_roms::header::{CartridgeType, AutoSaveType};
+    ///
+    /// assert_eq!(CartridgeType::Mbc1RamBattery.auto_save_type(), Some(AutoSaveType::Ram));
+    /// assert_eq!(CartridgeType::Mbc1.auto_save_type(), None);
+    /// assert_eq!(CartridgeType::Mbc3TimerBattery.auto_save_type(), Some(AutoSaveType::RamTimer));
+    /// ```
+    pub fn auto_save_type(&self) -> Option<AutoSaveType> {
+        use CartridgeType::*;
+
+        match self {
+            Mbc1RamBattery
+            | RomRamBattery1
+            | Mmm01RamBattery
+            | Mbc3RamBattery2
+            | Mbc5RamBattery
+            | Mbc5RumbleRamBattery
+            | Mbc7SensorRumbleRamBattery
+            | HuC1RamBattery => Some(AutoSaveType::Ram),
+            Mbc3TimerBattery | Mbc3TimerRamBattery2 => Some(AutoSaveType::RamTimer),
+            _ => None,
+        }
+    }
+}
+
 #[test]
 fn test_convert_cartridge_type() {
     assert_eq!(CartridgeType::try_from(0x00), Ok(CartridgeType::RomOnly));
