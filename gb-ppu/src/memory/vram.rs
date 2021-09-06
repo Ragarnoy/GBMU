@@ -29,9 +29,9 @@ impl Vram {
     pub fn get_map_tile_index(
         &self,
         pos: usize,
-        map_area_bit: u8,
-        data_area_bit: u8,
-    ) -> PPUResult<usize, usize> {
+        map_area_bit: bool,
+        data_area_bit: bool,
+    ) -> PPUResult<usize> {
         if pos > TILEMAP_POSITION_MAX {
             return Err(Error::OutOfBound {
                 value: pos,
@@ -39,12 +39,12 @@ impl Vram {
                 max_bound: TILEMAP_POSITION_MAX,
             });
         }
-        let index = if map_area_bit == 0 {
+        let index = if map_area_bit {
             self.data[TILEMAP_START_0 + pos]
         } else {
             self.data[TILEMAP_START_1 + pos]
         };
-        if data_area_bit == 0 {
+        if data_area_bit {
             Ok(index as usize)
         } else {
             let index = index as i8;
@@ -56,7 +56,7 @@ impl Vram {
     ///
     /// ### Parameters
     ///  - **pos**: position of the couple of bytes to be interpreted as pixels values.
-    pub fn read_8_pixels(&self, pos: usize) -> PPUResult<[u8; 8], usize> {
+    pub fn read_8_pixels(&self, pos: usize) -> PPUResult<[u8; 8]> {
         let mut pixels = [0; 8];
         if pos > TILEDATA_ADRESS_MAX - 1 {
             return Err(Error::OutOfBound {
@@ -78,13 +78,29 @@ impl Vram {
         Ok(pixels)
     }
 
+    /// Read a line of 8 pixels values from a tile in the vram.
+    ///
+    /// ### Parameters
+    ///  - **tile_pos**: The position of the tile to get the line from.
+    ///  - **line**: The number of the line to return.
+    pub fn read_tile_line(&self, tile_pos: usize, line: usize) -> PPUResult<[u8; 8]> {
+        if line > 7 {
+            return Err(Error::OutOfBound {
+                value: line,
+                min_bound: 0,
+                max_bound: 7,
+            });
+        }
+        self.read_8_pixels((tile_pos * 8 + line) * 2)
+    }
+
     /// Return all the pixel values of a tile.
     ///
     /// This function is used for debugging purpose, the ppu does not select pixels tile by tile.
     ///
     /// ### Parameters
     ///  - **pos**: position of the first byte of the tile.
-    pub fn read_8x8_tile(&self, pos: usize) -> PPUResult<[[u8; 8]; 8], usize> {
+    pub fn read_8x8_tile(&self, pos: usize) -> PPUResult<[[u8; 8]; 8]> {
         let mut tile = [[0; 8]; 8];
         if pos * 8 * 2 > TILEDATA_ADRESS_MAX + 1 - 8 * 2 {
             return Err(Error::OutOfBound {
@@ -94,7 +110,7 @@ impl Vram {
             });
         }
         for (i, row) in tile.iter_mut().enumerate() {
-            *row = self.read_8_pixels((pos * 8 + i) * 2)?;
+            *row = self.read_tile_line(pos, i)?;
         }
         Ok(tile)
     }

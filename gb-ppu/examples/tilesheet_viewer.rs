@@ -31,12 +31,18 @@ pub fn main() {
     );
     let mut ppu = PPU::new();
     let dumps = [
-        ("mario", include_bytes!("memory dumps/Super_Mario_Land.dmp")),
+        (
+            "mario",
+            include_bytes!("memory dumps/vram/Super_Mario_Land.dmp"),
+        ),
         (
             "zelda",
-            include_bytes!("memory dumps/Legend_of_Zelda_link_Awaking.dmp"),
+            include_bytes!("memory dumps/vram/Legend_of_Zelda_link_Awaking.dmp"),
         ),
-        ("pokemon", include_bytes!("memory dumps/Pokemon_Bleue.dmp")),
+        (
+            "pokemon",
+            include_bytes!("memory dumps/vram/Pokemon_Bleue.dmp"),
+        ),
     ];
     ppu.overwrite_vram(dumps[0].1);
     let mut image = ppu.tilesheet_image();
