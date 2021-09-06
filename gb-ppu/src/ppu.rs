@@ -89,13 +89,10 @@ impl PPU {
         let mut y = 0;
         for k in 0..TILESHEET_TILE_COUNT {
             let tile = self.vram.read_8x8_tile(k).unwrap();
-            for j in 0..8 {
-                for i in 0..8 {
-                    image[y * 8 + j][TILESHEET_WIDTH - (x + 1) * 8 + i] = self
-                        .bg_palette
-                        .get_color(tile[j][i])
-                        .unwrap_or_default()
-                        .into();
+            for (j, row) in tile.iter().enumerate() {
+                for (i, pixel) in row.iter().rev().enumerate() {
+                    image[y * 8 + j][x * 8 + i] =
+                        self.bg_palette.get_color(*pixel).unwrap_or_default().into();
                 }
             }
             x += 1;
@@ -128,13 +125,10 @@ impl PPU {
                 )
                 .unwrap();
             let tile = self.vram.read_8x8_tile(index).unwrap();
-            for j in 0..8 {
-                for i in 0..8 {
-                    image[y * 8 + j][TILEMAP_DIM - (x + 1) * 8 + i] = self
-                        .bg_palette
-                        .get_color(tile[j][i])
-                        .unwrap_or_default()
-                        .into();
+            for (j, row) in tile.iter().enumerate() {
+                for (i, pixel) in row.iter().rev().enumerate() {
+                    image[y * 8 + j][x * 8 + i] =
+                        self.bg_palette.get_color(*pixel).unwrap_or_default().into();
                 }
             }
             x += 1;
@@ -164,9 +158,9 @@ impl PPU {
                     .get_pixels_row(j, &self.vram, self.control.obj_size(), &self.obj_palette)
                     .expect("invalid line passed");
                 let y_img = y + j;
-                for (i, (pixel_value, pixel_color)) in pixels_values.iter().enumerate() {
+                for (i, (pixel_value, pixel_color)) in pixels_values.iter().rev().enumerate() {
                     if *pixel_value != 0 {
-                        let x_img = OBJECT_RENDER_WIDTH - 8 - x + i;
+                        let x_img = x + i;
                         image[y_img][x_img] = (*pixel_color).into();
                     }
                 }
@@ -209,9 +203,9 @@ impl PPU {
                     .get_pixels_row(j, &self.vram, self.control.obj_size(), &self.obj_palette)
                     .expect("invalid line passed");
                 let y_img = y + j;
-                for (i, (pixel_value, pixel_color)) in pixels_values.iter().enumerate() {
+                for (i, (pixel_value, pixel_color)) in pixels_values.iter().rev().enumerate() {
                     if *pixel_value != 0 {
-                        let x_img = OBJECT_LIST_RENDER_WIDTH - 8 - x + i;
+                        let x_img = x + i;
                         image[y_img][x_img] = (*pixel_color).into();
                     }
                 }
