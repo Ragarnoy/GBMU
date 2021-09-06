@@ -8,6 +8,7 @@ edition = "2018"
 
 [dependencies]
 gb-lcd = { path = "../gb-lcd" }
+gb-bus = { path = "../gb-bus" }
 modular-bitfield = { version = "0.11" }
 
 [dev-dependencies]

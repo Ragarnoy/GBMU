@@ -1,4 +1,4 @@
-use crate::memory::{Oam, Vram};
+use crate::memory::{Oam, PPUMem, Vram};
 use crate::registers::{Control, Palette};
 use crate::{
     OBJECT_LIST_PER_LINE, OBJECT_LIST_RENDER_HEIGHT, OBJECT_LIST_RENDER_WIDTH,
@@ -7,13 +7,16 @@ use crate::{
 };
 use gb_lcd::render::{RenderData, SCREEN_HEIGHT, SCREEN_WIDTH};
 
+use std::cell::RefCell;
+use std::rc::Rc;
+
 /// Pixel Process Unit: is in charge of selecting the pixel to be displayed on the lcd screen.
 ///
 /// Memory field (Vram, OAM) and registers owned by the ppu are simply exposed by public function when required for examples for now.
 /// This impl propably won't work once the cpu will need to access them.
 pub struct PPU {
-    vram: Vram,
-    oam: Oam,
+    vram: Rc<RefCell<Vram>>,
+    oam: Rc<RefCell<Oam>>,
     control: Control,
     bg_palette: Palette,
     obj_palette: (Palette, Palette),
@@ -23,13 +26,17 @@ pub struct PPU {
 impl PPU {
     pub fn new() -> Self {
         Self {
-            vram: Vram::new(),
-            oam: Oam::new(),
+            vram: Rc::new(RefCell::new(Vram::new())),
+            oam: Rc::new(RefCell::new(Oam::new())),
             control: Control::new(),
             bg_palette: Palette::new(),
             obj_palette: (Palette::new(), Palette::new()),
             pixels: [[[255; 3]; SCREEN_WIDTH]; SCREEN_HEIGHT],
         }
+    }
+
+    pub fn memory(&self) -> PPUMem {
+        PPUMem::new(Rc::clone(&self.vram), Rc::clone(&self.oam))
     }
 
     pub fn pixels(&self) -> &RenderData<SCREEN_WIDTH, SCREEN_HEIGHT> {
@@ -69,11 +76,11 @@ impl PPU {
     }
 
     pub fn overwrite_vram(&mut self, data: &[u8; Vram::SIZE as usize]) {
-        self.vram.overwrite(data);
+        self.vram.borrow_mut().overwrite(data);
     }
 
     pub fn overwrite_oam(&mut self, data: &[u8; Oam::SIZE as usize]) {
-        self.oam.overwrite(data);
+        self.oam.borrow_mut().overwrite(data);
     }
 
     /// Create an image of the current tilesheet.
@@ -83,8 +90,9 @@ impl PPU {
         let mut image = [[[255; 3]; TILESHEET_WIDTH]; TILESHEET_HEIGHT];
         let mut x = 0;
         let mut y = 0;
+        let vram = self.vram.borrow();
         for k in 0..TILESHEET_TILE_COUNT {
-            let tile = self.vram.read_8x8_tile(k).unwrap();
+            let tile = vram.read_8x8_tile(k).unwrap();
             for (j, row) in tile.iter().enumerate() {
                 for (i, pixel) in row.iter().rev().enumerate() {
                     image[y * 8 + j][x * 8 + i] =
@@ -107,9 +115,9 @@ impl PPU {
         let mut image = [[[255; 3]; TILEMAP_DIM]; TILEMAP_DIM];
         let mut x = 0;
         let mut y = 0;
+        let vram = self.vram.borrow();
         for k in 0..TILEMAP_TILE_COUNT {
-            let index = self
-                .vram
+            let index = vram
                 .get_map_tile_index(
                     k,
                     if !window {
@@ -120,7 +128,7 @@ impl PPU {
                     self.control.bg_win_tiledata_area(),
                 )
                 .unwrap();
-            let tile = self.vram.read_8x8_tile(index).unwrap();
+            let tile = vram.read_8x8_tile(index).unwrap();
             for (j, row) in tile.iter().enumerate() {
                 for (i, pixel) in row.iter().rev().enumerate() {
                     image[y * 8 + j][x * 8 + i] =
@@ -143,15 +151,17 @@ impl PPU {
         let mut image = [[[255; 3]; OBJECT_RENDER_WIDTH]; OBJECT_RENDER_HEIGHT];
         let objects = self
             .oam
+            .borrow()
             .collect_all_objects()
             .expect("failed to collect objects for image");
         let height = if self.control.obj_size() { 16 } else { 8 };
+        let vram = self.vram.borrow();
         for object in objects {
             let x = object.x_pos().min(OBJECT_RENDER_WIDTH as u8 - 8) as usize;
             let y = object.y_pos().min(OBJECT_RENDER_HEIGHT as u8 - 16) as usize;
             for j in 0..height {
                 let pixels_values = object
-                    .get_pixels_row(j, &self.vram, self.control.obj_size(), &self.obj_palette)
+                    .get_pixels_row(j, &vram, self.control.obj_size(), &self.obj_palette)
                     .expect("invalid line passed");
                 let y_img = y + j;
                 for (i, (pixel_value, pixel_color)) in pixels_values.iter().rev().enumerate() {
@@ -188,15 +198,17 @@ impl PPU {
         let mut image = [[[255; 3]; OBJECT_LIST_RENDER_WIDTH]; OBJECT_LIST_RENDER_HEIGHT];
         let objects = self
             .oam
+            .borrow()
             .collect_all_objects()
             .expect("failed to collect objects for image");
         let height = if self.control.obj_size() { 16 } else { 8 };
+        let vram = self.vram.borrow();
         for (r, object) in objects.iter().enumerate() {
             let x = (r % OBJECT_LIST_PER_LINE) * 8;
             let y = (r / OBJECT_LIST_PER_LINE) * 16;
             for j in 0..height {
                 let pixels_values = object
-                    .get_pixels_row(j, &self.vram, self.control.obj_size(), &self.obj_palette)
+                    .get_pixels_row(j, &vram, self.control.obj_size(), &self.obj_palette)
                     .expect("invalid line passed");
                 let y_img = y + j;
                 for (i, (pixel_value, pixel_color)) in pixels_values.iter().rev().enumerate() {
