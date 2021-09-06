@@ -1,7 +1,9 @@
-use crate::memory::Vram;
+use crate::memory::{Oam, Vram};
 use crate::registers::Control;
 use crate::{
-    TILEMAP_DIM, TILEMAP_TILE_COUNT, TILESHEET_HEIGHT, TILESHEET_TILE_COUNT, TILESHEET_WIDTH,
+    OBJECT_LIST_PER_LINE, OBJECT_LIST_RENDER_HEIGHT, OBJECT_LIST_RENDER_WIDTH,
+    OBJECT_RENDER_HEIGHT, OBJECT_RENDER_WIDTH, TILEMAP_DIM, TILEMAP_TILE_COUNT, TILESHEET_HEIGHT,
+    TILESHEET_TILE_COUNT, TILESHEET_WIDTH,
 };
 use gb_lcd::render::{RenderData, SCREEN_HEIGHT, SCREEN_WIDTH};
 
@@ -11,6 +13,7 @@ use gb_lcd::render::{RenderData, SCREEN_HEIGHT, SCREEN_WIDTH};
 /// This impl propably won't work once the cpu will need to access them.
 pub struct PPU {
     vram: Vram,
+    oam: Oam,
     control: Control,
     pixels: RenderData<SCREEN_WIDTH, SCREEN_HEIGHT>,
 }
@@ -19,6 +22,7 @@ impl PPU {
     pub fn new() -> Self {
         Self {
             vram: Vram::new(),
+            oam: Oam::new(),
             control: Control::new(),
             pixels: [[[255; 3]; SCREEN_WIDTH]; SCREEN_HEIGHT],
         }
@@ -52,6 +56,10 @@ impl PPU {
 
     pub fn overwrite_vram(&mut self, data: &[u8; Vram::SIZE as usize]) {
         self.vram.overwrite(data);
+    }
+
+    pub fn overwrite_oam(&mut self, data: &[u8; Oam::SIZE as usize]) {
+        self.oam.overwrite(data);
     }
 
     /// Create an image of the current tilesheet.
@@ -119,6 +127,88 @@ impl PPU {
             if x * 8 >= TILEMAP_DIM {
                 x = 0;
                 y += 1;
+            }
+        }
+        image
+    }
+
+    /// Create an image of the currents objects placed relatively to the viewport.
+    ///
+    /// This function is used for debugging purpose.
+    pub fn objects_image(&self) -> RenderData<OBJECT_RENDER_WIDTH, OBJECT_RENDER_HEIGHT> {
+        let mut image = [[[255; 3]; OBJECT_RENDER_WIDTH]; OBJECT_RENDER_HEIGHT];
+        let objects = self
+            .oam
+            .collect_all_objects()
+            .expect("failed to collect objects for image");
+        let height = if self.control.obj_size() { 16 } else { 8 };
+        for object in objects {
+            let x = object.x_pos().min(OBJECT_RENDER_WIDTH as u8 - 8) as usize;
+            let y = object.y_pos().min(OBJECT_RENDER_HEIGHT as u8 - 16) as usize;
+            for j in 0..height {
+                let pixels_values = object
+                    .get_pixels_row(j, &self.vram, self.control.obj_size())
+                    .expect("invalid line passed");
+                let y_img = y + j;
+                for (i, pixel) in pixels_values.iter().enumerate() {
+                    let x_img = OBJECT_RENDER_WIDTH - 8 - x + i;
+                    match pixel {
+                        3 => image[y_img][x_img] = [0; 3],
+                        2 => image[y_img][x_img] = [85; 3],
+                        1 => image[y_img][x_img] = [170; 3],
+                        0 => {}
+                        _ => {}
+                    }
+                }
+            }
+        }
+        // draw screen outline
+        for (y, column) in image.iter_mut().enumerate() {
+            for (x, pixel) in column.iter_mut().enumerate() {
+                if ((x == 7 || x == OBJECT_RENDER_WIDTH - 8)
+                    && y >= 15
+                    && y <= OBJECT_RENDER_HEIGHT - 16)
+                    || ((y == 15 || y == OBJECT_RENDER_HEIGHT - 16)
+                        && x >= 7
+                        && x <= OBJECT_RENDER_WIDTH - 8)
+                {
+                    *pixel = [!pixel[0], !pixel[1], !pixel[2]];
+                }
+            }
+        }
+        image
+    }
+
+    /// Create an image of the currents objects.
+    ///
+    /// This function is used for debugging purpose.
+    pub fn objects_list_image(
+        &self,
+    ) -> RenderData<OBJECT_LIST_RENDER_WIDTH, OBJECT_LIST_RENDER_HEIGHT> {
+        let mut image = [[[255; 3]; OBJECT_LIST_RENDER_WIDTH]; OBJECT_LIST_RENDER_HEIGHT];
+        let objects = self
+            .oam
+            .collect_all_objects()
+            .expect("failed to collect objects for image");
+        let height = if self.control.obj_size() { 16 } else { 8 };
+        for (r, object) in objects.iter().enumerate() {
+            let x = (r % OBJECT_LIST_PER_LINE) * 8;
+            let y = (r / OBJECT_LIST_PER_LINE) * 16;
+            for j in 0..height {
+                let pixels_values = object
+                    .get_pixels_row(j, &self.vram, self.control.obj_size())
+                    .expect("invalid line passed");
+                let y_img = y + j;
+                for (i, pixel) in pixels_values.iter().enumerate() {
+                    let x_img = OBJECT_LIST_RENDER_WIDTH - 8 - x + i;
+                    match pixel {
+                        3 => image[y_img][x_img] = [0; 3],
+                        2 => image[y_img][x_img] = [85; 3],
+                        1 => image[y_img][x_img] = [170; 3],
+                        0 => {}
+                        _ => {}
+                    }
+                }
             }
         }
         image

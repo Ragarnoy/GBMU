@@ -1,17 +1,41 @@
 use rfd::FileDialog;
-use sdl2::{event::Event, keyboard::Keycode};
-
-use gb_dbg::app::Debugger;
-use gb_dbg::disassembler::Disassembler;
-use gb_dbg::flow_control::FlowController;
-use gb_dbg::memory::MemoryEditorBuilder;
 #[cfg(feature = "debug_render")]
 use sdl2::keyboard::Scancode;
+use sdl2::{event::Event, keyboard::Keycode};
 
+use gb_dbg::debugger::disassembler::Disassembler;
+use gb_dbg::debugger::flow_control::FlowController;
+use gb_dbg::debugger::memory::MemoryEditorBuilder;
+use gb_dbg::debugger::Debugger;
+use gb_dbg::*;
 use gb_lcd::{render, window::GBWindow};
 use gb_ppu::PPU;
 
+pub struct Memory {
+    pub memory: Vec<u8>,
+}
+
+impl Default for Memory {
+    fn default() -> Self {
+        Self {
+            memory: vec![0xFFu8; u16::MAX as usize],
+        }
+    }
+}
+
+impl dbg_interfaces::RW for Memory {
+    fn read(&self, index: usize) -> u8 {
+        *self.memory.get(index).unwrap()
+    }
+
+    fn write(&mut self, _index: usize, _value: u8) {
+        self.memory[_index] = _value
+    }
+}
+
 fn main() {
+    init_logger();
+
     let (sdl_context, video_subsystem, mut event_pump) =
         gb_lcd::init().expect("Error while initializing LCD");
 
@@ -38,9 +62,8 @@ fn main() {
     let mut ppu = PPU::new();
 
     let mut debug_window = None;
-    let mem = vec![0u8; u16::MAX as usize];
-    let gbm_mem = MemoryEditorBuilder::new(|mem, address| *mem.get(address).unwrap(), mem)
-        .with_write_function(|mem, address, value| mem[address] = value)
+    let mem = Memory::default();
+    let gbm_mem = MemoryEditorBuilder::new(mem)
         .with_address_range("VRam", 0..0xFF)
         .build();
     let mut dbg_app = Debugger::new(gbm_mem, FlowController, Disassembler);
@@ -71,7 +94,7 @@ fn main() {
                                 .unwrap_or_else(|_| std::path::PathBuf::from("/")),
                         )
                         .pick_file();
-                    println!("picked file: {:?}", files);
+                    log::debug!("picked file: {:?}", files);
                 }
                 if ui.button("Debug").clicked() && debug_window.is_none() {
                     debug_window = Some(
@@ -112,6 +135,7 @@ fn main() {
                     if gb_window.sdl_window().id() == window_id && scancode == Some(Scancode::Grave)
                     {
                         debug = !debug;
+                        log::debug!("toggle debug ({})", debug);
                         display.switch_draw_mode(debug);
                         gb_window.set_debug(debug);
                     }
@@ -157,4 +181,53 @@ fn main() {
         }
         // std::thread::sleep(::std::time::Duration::new(0, 1_000_000_000u32 / 60));
     }
+    log::info!("quitting");
+}
+
+#[cfg(debug_assertions)]
+fn init_logger() {
+    use log::LevelFilter;
+    use simplelog::Config;
+
+    setup_terminal_logger(LevelFilter::Debug, Config::default());
+}
+
+#[cfg(not(debug_assertions))]
+fn init_logger() {
+    use log::LevelFilter;
+    use simplelog::{Config, WriteLogger};
+    use std::fs::File;
+
+    const LEVEL_FILTER: LevelFilter = LevelFilter::Warn;
+    const LOG_FILE: &'static str = "/tmp/gbmu.log";
+    let config: Config = Config::default();
+    let file_res = File::create(LOG_FILE);
+
+    if let Ok(file) = file_res {
+        let write_logger_res = WriteLogger::init(LEVEL_FILTER, config.clone(), file);
+        if write_logger_res.is_ok() {
+            return;
+        } else {
+            setup_terminal_logger(LEVEL_FILTER, config);
+            log::warn!(
+                "cannot setup write logger (because: {})",
+                write_logger_res.unwrap_err()
+            );
+        }
+    } else {
+        setup_terminal_logger(LEVEL_FILTER, config);
+        log::warn!(
+            "cannot setup logging to file {} (because: {})",
+            LOG_FILE,
+            file_res.unwrap_err()
+        );
+    }
+    log::warn!("fallback to terminal logger");
+}
+
+fn setup_terminal_logger(level: log::LevelFilter, config: simplelog::Config) {
+    use simplelog::{ColorChoice, TermLogger, TerminalMode};
+
+    TermLogger::init(level, config, TerminalMode::Mixed, ColorChoice::Auto)
+        .expect("cannot setup terminal logger")
 }

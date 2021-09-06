@@ -1,28 +1,30 @@
+use super::Controller;
 use crate::header::size::{RamSize, RomSize};
 use gb_bus::{Address, Area, Error, FileOperation};
+use serde::{Deserialize, Serialize};
 use std::io::{self, Read};
-
-pub const MBC1_ROM_SIZE: usize = 0x4000;
-pub const MBC1_MAX_ROM_BANK: usize = 0x80;
-pub const MBC1_RAM_SIZE: usize = 0x2000;
-pub const MBC1_MAX_RAM_BANK: usize = 0x4;
 
 pub struct MBC1 {
     configuration: Configuration,
-    rom_bank: Vec<[u8; MBC1_ROM_SIZE]>,
-    ram_bank: Vec<[u8; MBC1_RAM_SIZE]>,
+    rom_bank: Vec<[u8; MBC1::ROM_SIZE]>,
+    ram_bank: Vec<[u8; MBC1::RAM_SIZE]>,
     regs: MBC1Reg,
 }
 
 impl MBC1 {
+    pub const ROM_SIZE: usize = 0x4000;
+    pub const MAX_ROM_BANK: usize = 0x80;
+    pub const RAM_SIZE: usize = 0x2000;
+    pub const MAX_RAM_BANK: usize = 0x4;
+
     pub fn new(ram_size: RamSize, rom_size: RomSize) -> Self {
         let ram_bank = ram_size.get_bank_amounts();
         let rom_bank = rom_size.get_bank_amounts();
 
         Self {
             configuration: Configuration::from_sizes(ram_size, rom_size),
-            rom_bank: vec![[0_u8; MBC1_ROM_SIZE]; rom_bank],
-            ram_bank: vec![[0_u8; MBC1_RAM_SIZE]; ram_bank],
+            rom_bank: vec![[0_u8; MBC1::ROM_SIZE]; rom_bank],
+            ram_bank: vec![[0_u8; MBC1::RAM_SIZE]; ram_bank],
             regs: MBC1Reg::default(),
         }
     }
@@ -94,7 +96,7 @@ impl MBC1 {
         Ok(ram[address])
     }
 
-    fn get_selected_rom(&self, root_bank: bool) -> &[u8; MBC1_ROM_SIZE] {
+    fn get_selected_rom(&self, root_bank: bool) -> &[u8; MBC1::ROM_SIZE] {
         let index = if root_bank {
             self.get_main_rom_index()
         } else {
@@ -131,13 +133,13 @@ impl MBC1 {
         }
     }
 
-    fn get_selected_ram_mut(&mut self) -> &mut [u8; MBC1_RAM_SIZE] {
+    fn get_selected_ram_mut(&mut self) -> &mut [u8; MBC1::RAM_SIZE] {
         let index = self.get_ram_index();
 
         &mut self.ram_bank[index]
     }
 
-    fn get_selected_ram(&self) -> &[u8; MBC1_RAM_SIZE] {
+    fn get_selected_ram(&self) -> &[u8; MBC1::RAM_SIZE] {
         &self.ram_bank[self.get_ram_index()]
     }
 
@@ -167,6 +169,51 @@ impl FileOperation for MBC1 {
             Area::Ram => self.read_ram(addr),
             _ => Err(Error::new_bus_error(addr)),
         }
+    }
+}
+
+#[derive(serde::Serialize, serde::Deserialize)]
+struct Mbc1Data {
+    ram_banks: Vec<Vec<u8>>,
+}
+
+impl From<Vec<[u8; MBC1::RAM_SIZE]>> for Mbc1Data {
+    fn from(banks: Vec<[u8; MBC1::RAM_SIZE]>) -> Self {
+        Self {
+            ram_banks: banks.iter().map(|bank| bank.to_vec()).collect(),
+        }
+    }
+}
+
+impl Controller for MBC1 {
+    fn save<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let data = Mbc1Data::from(self.ram_bank.clone());
+        data.serialize(serializer)
+    }
+
+    fn load<'de, D>(&mut self, deserializer: D) -> Result<(), D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::de::Error;
+        use std::convert::TryFrom;
+
+        let data = Mbc1Data::deserialize(deserializer)?;
+        self.ram_bank = data
+            .ram_banks
+            .into_iter()
+            .map(<[u8; MBC1::RAM_SIZE]>::try_from)
+            .collect::<Result<Vec<[u8; MBC1::RAM_SIZE]>, Vec<u8>>>()
+            .map_err(|faulty| {
+                Error::invalid_length(
+                    faulty.len(),
+                    &format!("a ram bank size of size {}", MBC1::RAM_SIZE).as_str(),
+                )
+            })?;
+        Ok(())
     }
 }
 

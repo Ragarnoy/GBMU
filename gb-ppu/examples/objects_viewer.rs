@@ -1,7 +1,10 @@
 use sdl2::{event::Event, keyboard::Keycode};
 
 use gb_lcd::{render, window::GBWindow};
-use gb_ppu::{PPU, TILEMAP_DIM};
+use gb_ppu::{
+    OBJECT_LIST_RENDER_HEIGHT, OBJECT_LIST_RENDER_WIDTH, OBJECT_RENDER_HEIGHT, OBJECT_RENDER_WIDTH,
+    PPU,
+};
 
 pub fn main() {
     let (sdl_context, video_subsystem, mut event_pump) =
@@ -10,8 +13,11 @@ pub fn main() {
     let bar_pixels_size = GBWindow::dots_to_pixels(&video_subsystem, render::MENU_BAR_SIZE)
         .expect("Error while computing bar size");
     let mut gb_window = GBWindow::new(
-        "Tilemap",
-        (TILEMAP_DIM as u32, TILEMAP_DIM as u32 + bar_pixels_size),
+        "Objects",
+        (
+            OBJECT_RENDER_WIDTH as u32,
+            OBJECT_RENDER_HEIGHT as u32 + bar_pixels_size,
+        ),
         true,
         &video_subsystem,
     )
@@ -23,29 +29,38 @@ pub fn main() {
         .set_minimum_size(width, height)
         .expect("Failed to configure main window");
 
-    let mut display =
-        render::RenderImage::<TILEMAP_DIM, TILEMAP_DIM>::with_bar_size(bar_pixels_size as f32);
+    let mut view_display =
+        render::RenderImage::<OBJECT_RENDER_WIDTH, OBJECT_RENDER_HEIGHT>::with_bar_size(
+            bar_pixels_size as f32,
+        );
+    let mut list_display =
+        render::RenderImage::<OBJECT_LIST_RENDER_WIDTH, OBJECT_LIST_RENDER_HEIGHT>::with_bar_size(
+            bar_pixels_size as f32,
+        );
     let mut ppu = PPU::new();
-    ppu.control_mut().set_bg_win_tiledata_area(false);
     let dumps = [
         (
             "mario",
             include_bytes!("memory dumps/vram/Super_Mario_Land.dmp"),
+            include_bytes!("memory dumps/oam/Super_Mario_Land.dmp"),
         ),
         (
             "zelda",
             include_bytes!("memory dumps/vram/Legend_of_Zelda_link_Awaking.dmp"),
+            include_bytes!("memory dumps/oam/Legend_of_Zelda_link_Awaking.dmp"),
         ),
         (
             "pokemon",
             include_bytes!("memory dumps/vram/Pokemon_Bleue.dmp"),
+            include_bytes!("memory dumps/oam/Pokemon_Bleue.dmp"),
         ),
     ];
     ppu.overwrite_vram(dumps[0].1);
-    let mut display_window = false;
-    ppu.control_mut().set_win_tilemap_area(false);
-    ppu.control_mut().set_bg_tilemap_area(true);
-    let mut image = ppu.tilemap_image(display_window);
+    ppu.overwrite_oam(dumps[0].2);
+    ppu.control_mut().set_obj_size(false);
+    let mut list_mode = false;
+    let mut view_image = ppu.objects_image();
+    let mut list_image = ppu.objects_list_image();
 
     'running: loop {
         gb_window
@@ -56,27 +71,36 @@ pub fn main() {
             egui::menu::bar(ui, |ui| {
                 ui.set_height(render::MENU_BAR_SIZE);
                 egui::menu::menu(ui, "dump", |ui| {
-                    for (title, dump) in dumps {
+                    for (title, vram_dump, oam_dump) in dumps {
                         if ui.button(title).clicked() {
-                            ppu.overwrite_vram(dump);
-                            image = ppu.tilemap_image(display_window);
+                            ppu.overwrite_vram(vram_dump);
+                            ppu.overwrite_oam(oam_dump);
+                            match title {
+                                "zelda" => ppu.control_mut().set_obj_size(true),
+                                _ => ppu.control_mut().set_obj_size(false),
+                            }
+                            view_image = ppu.objects_image();
+                            list_image = ppu.objects_list_image();
                         }
                     }
                 });
-                egui::menu::menu(ui, "bg/win", |ui| {
-                    if ui.button("background").clicked() {
-                        display_window = false;
-                        image = ppu.tilemap_image(display_window);
+                egui::menu::menu(ui, "mode", |ui| {
+                    if ui.button("viewport").clicked() {
+                        list_mode = false;
                     }
-                    if ui.button("window").clicked() {
-                        display_window = true;
-                        image = ppu.tilemap_image(display_window);
+                    if ui.button("list").clicked() {
+                        list_mode = true;
                     }
                 });
             })
         });
-        display.update_render(&image);
-        display.draw();
+        if !list_mode {
+            view_display.update_render(&view_image);
+            view_display.draw();
+        } else {
+            list_display.update_render(&list_image);
+            list_display.draw();
+        }
         gb_window
             .end_frame()
             .expect("Fail at the end for the main window");
@@ -98,7 +122,8 @@ pub fn main() {
                             gb_window
                                 .resize((width as u32, height as u32), &video_subsystem)
                                 .expect("Fail to resize example window");
-                            display.resize(gb_window.sdl_window().size());
+                            view_display.resize(gb_window.sdl_window().size());
+                            list_display.resize(gb_window.sdl_window().size());
                         }
                     }
                     sdl2::event::WindowEvent::Close => {

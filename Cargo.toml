@@ -18,6 +18,8 @@ debug_render = ["gb-lcd/debug_render"]
 sdl2 = { version = "0.34", features = ["bundled", "static-link"] }
 egui = { version = "0.13" }
 rfd = { version = "0.4" }
+log = "0.4"
+simplelog = "0.10"
 gb-lcd = { path= "./gb-lcd" }
 gb-ppu = { path = "./gb-ppu" }
 gb-dbg = { path = "./gb-dbg" }

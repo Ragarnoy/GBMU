@@ -1,24 +1,18 @@
 use std::error::Error as STDError;
 use std::fmt::{self, Debug, Display};
 
-pub type PPUResult<T, E> = Result<T, Error<E>>;
+pub type PPUResult<T> = Result<T, Error>;
 
 #[derive(Debug)]
-pub enum Error<T>
-where
-    T: Display + Debug,
-{
+pub enum Error {
     OutOfBound {
-        value: T,
-        min_bound: T,
-        max_bound: T,
+        value: usize,
+        min_bound: usize,
+        max_bound: usize,
     },
 }
 
-impl<T> Display for Error<T>
-where
-    T: Display + Debug,
-{
+impl Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Error::OutOfBound {
@@ -34,4 +28,4 @@ where
     }
 }
 
-impl<T> STDError for Error<T> where T: Display + Debug {}
+impl STDError for Error {}
