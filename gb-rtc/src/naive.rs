@@ -1,4 +1,4 @@
-use crate::{ReadRtcRegisters, WriteRtcRegisters, DAY, HOUR, MINUTE};
+use crate::{ReadRtcRegisters, WriteRtcRegisters, constant::{DAY, HOUR, MINUTE, MAX_DAYS, MAX_DAYS_TIME}};
 use std::time::Instant;
 
 #[derive(PartialEq, Eq, Debug)]
@@ -20,7 +20,7 @@ impl Naive {
     }
 
     pub fn from_days_opt(days: u16) -> Option<Self> {
-        if days <= 0x1FF {
+        if days <= MAX_DAYS as u16{
             Some(Self {
                 timestamp: days as u32 * DAY,
                 clock: None,
@@ -144,7 +144,7 @@ impl WriteRtcRegisters for Naive {
     }
 
     fn set_day_counter_carry(&mut self, carry: bool) {
-        if carry {
+        if carry && self.timestamp <= {
             self.timestamp |= 0x200 * DAY;
         }
     }
@@ -348,5 +348,19 @@ mod test_write_regs {
     }
 
     #[test]
-    fn day_counter_carry() {}
+    fn day_counter_carry() {
+        let mut date = Naive::from_days(0x1FF);
+
+        assert_eq!(date.days(), 0x1FF);
+        assert_eq!(date.day_counter_carry(), false);
+
+        date.set_day_counter_carry(true);
+        assert_eq!(date.day_counter_carry(), true);
+
+        date.set_day_counter_carry(false);
+        assert_eq!(date.day_counter_carry(), false);
+
+        let date = date + 1 * DAY;
+        assert_eq!(date.day_counter_carry(), true);
+    }
 }
