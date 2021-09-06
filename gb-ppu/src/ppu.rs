@@ -12,7 +12,7 @@ use std::rc::Rc;
 
 /// Pixel Process Unit: is in charge of selecting the pixel to be displayed on the lcd screen.
 ///
-/// Memory field (Vram, OAM) and registers owned by the ppu are simply exposed by public function when required for examples for now.
+/// Registers owned by the ppu are simply exposed by public function when required for examples for now.
 /// This impl propably won't work once the cpu will need to access them.
 pub struct PPU {
     vram: Rc<RefCell<Vram>>,
@@ -33,6 +33,16 @@ impl PPU {
             obj_palette: (Palette::new(), Palette::new()),
             pixels: [[[255; 3]; SCREEN_WIDTH]; SCREEN_HEIGHT],
         }
+    }
+
+    #[cfg(test)]
+    pub fn vram(&self) -> &Rc<RefCell<Vram>> {
+        &self.vram
+    }
+
+    #[cfg(test)]
+    pub fn oam(&self) -> &Rc<RefCell<Oam>> {
+        &self.oam
     }
 
     pub fn memory(&self) -> PPUMem {

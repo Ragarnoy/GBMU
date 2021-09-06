@@ -76,3 +76,64 @@ impl FileOperation for PPUMem {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::PPU;
+
+    #[test]
+    fn blocked_vram_mut() {
+        let ppu = PPU::new();
+        let ppu_mem = ppu.memory();
+        {
+            let _lock = ppu.vram().borrow();
+            assert!(ppu_mem.vram.try_borrow_mut().is_err());
+        }
+        {
+            let _lock = ppu.vram().borrow_mut();
+            assert!(ppu_mem.vram.try_borrow_mut().is_err());
+        }
+    }
+
+    #[test]
+    fn blocked_vram() {
+        let ppu = PPU::new();
+        let ppu_mem = ppu.memory();
+        {
+            let _lock = ppu.vram().borrow();
+            assert!(ppu_mem.vram.try_borrow().is_ok());
+        }
+        {
+            let _lock = ppu.vram().borrow_mut();
+            assert!(ppu_mem.vram.try_borrow().is_err());
+        }
+    }
+
+    #[test]
+    fn blocked_oam_mut() {
+        let ppu = PPU::new();
+        let ppu_mem = ppu.memory();
+        {
+            let _lock = ppu.oam().borrow();
+            assert!(ppu_mem.oam.try_borrow_mut().is_err());
+        }
+        {
+            let _lock = ppu.oam().borrow_mut();
+            assert!(ppu_mem.oam.try_borrow_mut().is_err());
+        }
+    }
+
+    #[test]
+    fn blocked_oam() {
+        let ppu = PPU::new();
+        let ppu_mem = ppu.memory();
+        {
+            let _lock = ppu.oam().borrow();
+            assert!(ppu_mem.oam.try_borrow().is_ok());
+        }
+        {
+            let _lock = ppu.oam().borrow_mut();
+            assert!(ppu_mem.oam.try_borrow().is_err());
+        }
+    }
+}
