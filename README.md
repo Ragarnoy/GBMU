@@ -2,6 +2,10 @@
 
 Rust GameBoy Advanced Emulator
 
+## Documentation
+
+the documentation is available [here](#docs/Home.md)
+
 ## Dependencies
 
 ### For Linux
