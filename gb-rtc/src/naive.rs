@@ -346,4 +346,7 @@ mod test_write_regs {
         date.set_halted(true);
         assert_eq!(date.halted(), true);
     }
+
+    #[test]
+    fn day_counter_carry() {}
 }
