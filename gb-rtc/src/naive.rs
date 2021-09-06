@@ -335,4 +335,15 @@ mod test_write_regs {
         assert_eq!(date.lower_days(), 0x2f);
         assert_eq!(date.upper_days(), false);
     }
+
+    #[test]
+    fn halted() {
+        let mut date = Naive::default();
+
+        assert_eq!(date.halted(), true);
+        date.set_halted(false);
+        assert_eq!(date.halted(), false);
+        date.set_halted(true);
+        assert_eq!(date.halted(), true);
+    }
 }
