@@ -32,4 +32,22 @@ impl FileOperation for PPUMem {
             _ => Err(Error::SegmentationFault(addr.into())),
         }
     }
+
+    fn write(&mut self, v: u8, addr: Box<dyn Address>) -> Result<(), Error> {
+        match addr.area_type() {
+            Area::Vram => match self.vram.try_borrow_mut() {
+                Ok(mut vram) => vram
+                    .write(addr.get_address(), v)
+                    .ok_or_else(|| Error::SegmentationFault(addr.into())),
+                Err(_) => Err(Error::SegmentationFault(addr.into())),
+            },
+            Area::Oam => match self.oam.try_borrow_mut() {
+                Ok(mut oam) => oam
+                    .write(addr.get_address(), v)
+                    .ok_or_else(|| Error::SegmentationFault(addr.into())),
+                Err(_) => Err(Error::SegmentationFault(addr.into())),
+            },
+            _ => Err(Error::SegmentationFault(addr.into())),
+        }
+    }
 }

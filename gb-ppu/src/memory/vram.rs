@@ -21,8 +21,17 @@ impl Vram {
     }
 
     pub fn read(&self, addr: usize) -> Option<u8> {
-        if addr < Vram::SIZE {
+        if addr < Self::SIZE {
             Some(self.data[addr])
+        } else {
+            None
+        }
+    }
+
+    pub fn write(&mut self, addr: usize, value: u8) -> Option<()> {
+        if addr < Self::SIZE {
+            self.data[addr] = value;
+            Some(())
         } else {
             None
         }
