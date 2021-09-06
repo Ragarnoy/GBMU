@@ -35,11 +35,15 @@ jobs:
         path: |
           target
           ~/.cargo/registry
+          roms
         key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/Cargo.lock') }}
         restore-keys: |
           ${{ runner.os }}-build-${{ env.cache-name }}
           ${{ runner.os }}-build-
           ${{ runner.os }}-
+
+    - name: install asset requirement
+      run: make bios
 
     - name: Check code format
       run: cargo fmt --verbose -- --check
