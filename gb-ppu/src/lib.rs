@@ -5,6 +5,7 @@ mod object;
 mod ppu;
 mod registers;
 
+pub use memory::PPUMem;
 pub use ppu::PPU;
 
 pub const TILESHEET_WIDTH: usize = 128;

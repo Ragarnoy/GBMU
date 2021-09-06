@@ -1,4 +1,4 @@
-use crate::error::{Error, PPUResult};
+use crate::error::{PPUError, PPUResult};
 use crate::object::Object;
 use std::collections::BTreeMap;
 use std::convert::TryInto;
@@ -37,7 +37,7 @@ impl Oam {
 
     fn read_object(&self, pos: usize) -> PPUResult<Object> {
         if pos > Self::OBJECT_COUNT - 1 {
-            return Err(Error::OutOfBound {
+            return Err(PPUError::OutOfBound {
                 value: pos,
                 min_bound: 0,
                 max_bound: Self::OBJECT_COUNT - 1,

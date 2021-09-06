@@ -1,4 +1,5 @@
 use super::{Oam, Vram};
+use crate::error::{PPUError, PPUResult};
 use gb_bus::{Address, Area, Error, FileOperation};
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -11,6 +12,30 @@ pub struct PPUMem {
 impl PPUMem {
     pub fn new(vram: Rc<RefCell<Vram>>, oam: Rc<RefCell<Oam>>) -> Self {
         PPUMem { vram, oam }
+    }
+
+    pub fn overwrite_vram(&self, data: &[u8; Vram::SIZE]) -> PPUResult<()> {
+        match self.vram.try_borrow_mut() {
+            Ok(mut vram) => {
+                vram.overwrite(data);
+                Ok(())
+            }
+            Err(_) => Err(PPUError::MemoryUnavailable {
+                mem_name: String::from("vram"),
+            }),
+        }
+    }
+
+    pub fn overwrite_oam(&self, data: &[u8; Oam::SIZE]) -> PPUResult<()> {
+        match self.oam.try_borrow_mut() {
+            Ok(mut oam) => {
+                oam.overwrite(data);
+                Ok(())
+            }
+            Err(_) => Err(PPUError::MemoryUnavailable {
+                mem_name: String::from("oam"),
+            }),
+        }
     }
 }
 

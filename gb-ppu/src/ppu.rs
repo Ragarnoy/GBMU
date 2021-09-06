@@ -75,14 +75,6 @@ impl PPU {
         }
     }
 
-    pub fn overwrite_vram(&mut self, data: &[u8; Vram::SIZE as usize]) {
-        self.vram.borrow_mut().overwrite(data);
-    }
-
-    pub fn overwrite_oam(&mut self, data: &[u8; Oam::SIZE as usize]) {
-        self.oam.borrow_mut().overwrite(data);
-    }
-
     /// Create an image of the current tilesheet.
     ///
     /// This function is used for debugging purpose.

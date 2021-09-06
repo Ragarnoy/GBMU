@@ -1,4 +1,4 @@
-use crate::error::{Error, PPUResult};
+use crate::error::{PPUError, PPUResult};
 
 pub const TILEDATA_ADRESS_MAX: usize = 0x17FF;
 pub const TILEMAP_POSITION_MAX: usize = 0x3FF;
@@ -50,7 +50,7 @@ impl Vram {
         data_area_bit: bool,
     ) -> PPUResult<usize> {
         if pos > TILEMAP_POSITION_MAX {
-            return Err(Error::OutOfBound {
+            return Err(PPUError::OutOfBound {
                 value: pos,
                 min_bound: 0,
                 max_bound: TILEMAP_POSITION_MAX,
@@ -76,7 +76,7 @@ impl Vram {
     pub fn read_8_pixels(&self, pos: usize) -> PPUResult<[u8; 8]> {
         let mut pixels = [0; 8];
         if pos > TILEDATA_ADRESS_MAX - 1 {
-            return Err(Error::OutOfBound {
+            return Err(PPUError::OutOfBound {
                 value: pos,
                 min_bound: 0,
                 max_bound: TILEDATA_ADRESS_MAX - 1,
@@ -102,7 +102,7 @@ impl Vram {
     ///  - **line**: The number of the line to return.
     pub fn read_tile_line(&self, tile_pos: usize, line: usize) -> PPUResult<[u8; 8]> {
         if line > 7 {
-            return Err(Error::OutOfBound {
+            return Err(PPUError::OutOfBound {
                 value: line,
                 min_bound: 0,
                 max_bound: 7,
@@ -120,7 +120,7 @@ impl Vram {
     pub fn read_8x8_tile(&self, pos: usize) -> PPUResult<[[u8; 8]; 8]> {
         let mut tile = [[0; 8]; 8];
         if pos * 8 * 2 > TILEDATA_ADRESS_MAX + 1 - 8 * 2 {
-            return Err(Error::OutOfBound {
+            return Err(PPUError::OutOfBound {
                 value: pos,
                 min_bound: 0,
                 max_bound: TILEDATA_ADRESS_MAX / (8 * 2),
