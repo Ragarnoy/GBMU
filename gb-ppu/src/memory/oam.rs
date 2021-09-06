@@ -18,6 +18,14 @@ impl Oam {
         }
     }
 
+    pub fn read(&self, addr: usize) -> Option<u8> {
+        if addr < Oam::SIZE {
+            Some(self.data[addr])
+        } else {
+            None
+        }
+    }
+
     fn read_object(&self, pos: usize) -> PPUResult<Object> {
         if pos > Self::OBJECT_COUNT - 1 {
             return Err(Error::OutOfBound {

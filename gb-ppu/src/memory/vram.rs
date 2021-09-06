@@ -20,6 +20,14 @@ impl Vram {
         }
     }
 
+    pub fn read(&self, addr: usize) -> Option<u8> {
+        if addr < Vram::SIZE {
+            Some(self.data[addr])
+        } else {
+            None
+        }
+    }
+
     /// Return the index of a tile from the correct map area depending on the area_bits.
     ///
     /// ### Parameters
