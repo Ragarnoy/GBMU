@@ -50,10 +50,10 @@ This section discusses how we can emulate the RTC while the emulator is not runn
 The naive implementation when the emulator is not running would be:
 
 1. Before quitting:
-  - Save the current timestamp, along side the RTC register
+    - Save the current timestamp, along side the RTC register
 2. When loading the save:
-  - Get diff between the current timestamp and the save one: this will get the elapsed time while the *Gameboy* was off
-  - This *elapsed time* will offset the saved RTC registers
+    - Get diff between the current timestamp and the save one: this will get the elapsed time while the *Gameboy* was off
+    - This *elapsed time* will offset the saved RTC registers
 
 ### Implementation while the emulator is running
 
@@ -65,19 +65,21 @@ The naive implementation when the emulator is running would be:
 
 1. Have a `NaiveDate` that represent the `RTC regs`
 2. When the clock is ticking (`halt` is disabled):
-  1. Start an **Instant** (a non decreasing clock that is usefull to calculate a Duration).
-  2. When a RTC register is **READ**:
-    1. Calculate the elapsed time between the previous `Instant` and the current one
-    2. Use the elapsed time to update the `NaiveDate`
-    3. Retrieve the register the user want to read
-    4. Reset the initial Instant
-  3. When a RTC register is **Writted**:
-    1. Update the register in the `NaiveDate`
+    1. Start an **Instant** (a non decreasing clock that is usefull to calculate a Duration).
+    2. When a RTC register is **READ**:
+        1. Calculate the elapsed time between the previous `Instant` and the current one
+        2. Use the elapsed time to update the `NaiveDate`
+        3. Retrieve the register the user want to read
+        4. Reset the initial Instant
+    3. When a RTC register is **Writted**:
+        1. Update the register in the `NaiveDate`
 3. When the clock is not ticking (`halt` is enabled)
-  1. When a register is **READ**: return the expected register value
-  2. When a register is **Writted**: update the register with the new value
+    1. When a register is **READ**: return the expected register value
+    2. When a register is **Writted**: update the register with the new value
 
 ## Sources
 
 - [The Clock Counter Registers](https://gbdev.io/pandocs/MBC3.html#the-clock-counter-registers)
 - [The Day Counter](https://gbdev.io/pandocs/MBC3.html#the-day-counter)
+- [MBC3 RTC Fiddle](https://github.com/NieDzejkob/mbc3-fiddle)
+- [MBC3 RTC Test ROM](https://github.com/aaaaaa123456789/rtc3test)
