@@ -145,6 +145,12 @@ impl Vram {
     }
 }
 
+impl From<[u8; Vram::SIZE]> for Vram {
+    fn from(data: [u8; Vram::SIZE]) -> Vram {
+        Vram { data }
+    }
+}
+
 impl Default for Vram {
     fn default() -> Vram {
         Vram::new()

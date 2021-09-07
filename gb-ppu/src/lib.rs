@@ -4,6 +4,8 @@ mod memory;
 mod object;
 mod ppu;
 mod registers;
+#[cfg(test)]
+mod test_tools;
 
 pub use memory::PPUMem;
 pub use ppu::PPU;

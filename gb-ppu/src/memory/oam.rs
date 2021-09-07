@@ -97,14 +97,14 @@ impl Default for Oam {
     }
 }
 
-impl From<&[u8; Oam::SIZE]> for Oam {
-    fn from(bytes: &[u8; Oam::SIZE]) -> Oam {
-        Oam { data: *bytes }
+impl From<[u8; Oam::SIZE]> for Oam {
+    fn from(bytes: [u8; Oam::SIZE]) -> Oam {
+        Oam { data: bytes }
     }
 }
 
-impl From<&Oam> for [u8; Oam::SIZE] {
-    fn from(mem: &Oam) -> [u8; Oam::SIZE] {
+impl From<Oam> for [u8; Oam::SIZE] {
+    fn from(mem: Oam) -> [u8; Oam::SIZE] {
         mem.data
     }
 }
@@ -116,7 +116,7 @@ mod tests {
     #[test]
     fn line_with_obj() {
         let oam: Oam =
-            include_bytes!("../../examples/memory dumps/oam/Legend_of_Zelda_link_Awaking.dmp")
+            (*include_bytes!("../../examples/memory dumps/oam/Legend_of_Zelda_link_Awaking.dmp"))
                 .into();
         let line = 32;
         let scanned_line = oam
@@ -139,9 +139,9 @@ mod tests {
 
     #[test]
     fn line_with_more_than_10() {
-        let oam: Oam = include_bytes!(
+        let oam: Oam = (*include_bytes!(
             "../../examples/memory dumps/oam/[MODDED]-Legend_of_Zelda_link_Awaking.dmp"
-        )
+        ))
         .into();
         let line = 30;
         let scanned_line = oam

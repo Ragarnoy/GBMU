@@ -59,18 +59,22 @@ impl FileOperation for PPUMem {
     fn read(&self, addr: Box<dyn Address>) -> Result<u8, Error> {
         match addr.area_type() {
             Area::Vram => match self.vram.try_borrow() {
-                Ok(vram) => Ok(vram.read(addr.get_address()).unwrap_or_else(|err| {
+                Ok(vram) => vram
+                    .read(addr.get_address())
+                    .map_err(|_| Error::SegmentationFault(addr.into())),
+                Err(err) => {
                     log::error!("failed vram read: {}", err);
-                    UNDEFINED_VALUE
-                })),
-                Err(_) => Err(Error::SegmentationFault(addr.into())),
+                    Ok(UNDEFINED_VALUE)
+                }
             },
             Area::Oam => match self.oam.try_borrow() {
-                Ok(oam) => Ok(oam.read(addr.get_address()).unwrap_or_else(|err| {
+                Ok(oam) => oam
+                    .read(addr.get_address())
+                    .map_err(|_| Error::SegmentationFault(addr.into())),
+                Err(err) => {
                     log::error!("failed oam read: {}", err);
-                    UNDEFINED_VALUE
-                })),
-                Err(_) => Err(Error::SegmentationFault(addr.into())),
+                    Ok(UNDEFINED_VALUE)
+                }
             },
             _ => Err(Error::SegmentationFault(addr.into())),
         }
@@ -79,22 +83,22 @@ impl FileOperation for PPUMem {
     fn write(&mut self, v: u8, addr: Box<dyn Address>) -> Result<(), Error> {
         match addr.area_type() {
             Area::Vram => match self.vram.try_borrow_mut() {
-                Ok(mut vram) => {
-                    vram.write(addr.get_address(), v).unwrap_or_else(|err| {
-                        log::error!("failed vram write: {}", err);
-                    });
+                Ok(mut vram) => vram
+                    .write(addr.get_address(), v)
+                    .map_err(|_| Error::SegmentationFault(addr.into())),
+                Err(err) => {
+                    log::error!("failed vram write: {}", err);
                     Ok(())
                 }
-                Err(_) => Err(Error::SegmentationFault(addr.into())),
             },
             Area::Oam => match self.oam.try_borrow_mut() {
-                Ok(mut oam) => {
-                    oam.write(addr.get_address(), v).unwrap_or_else(|err| {
-                        log::error!("failed oam write: {}", err);
-                    });
+                Ok(mut oam) => oam
+                    .write(addr.get_address(), v)
+                    .map_err(|_| Error::SegmentationFault(addr.into())),
+                Err(err) => {
+                    log::error!("failed oam write: {}", err);
                     Ok(())
                 }
-                Err(_) => Err(Error::SegmentationFault(addr.into())),
             },
             _ => Err(Error::SegmentationFault(addr.into())),
         }
@@ -102,66 +106,75 @@ impl FileOperation for PPUMem {
 }
 
 #[cfg(test)]
-mod tests {
-    use crate::PPU;
+mod read {
+    use super::PPUMem;
+    use crate::memory::{Oam, Vram};
+    use crate::test_tools::TestAddress;
+    use gb_bus::FileOperation;
+    use std::cell::RefCell;
+    use std::rc::Rc;
 
     #[test]
-    fn blocked_vram_mut() {
-        let ppu = PPU::new();
-        let ppu_mem = ppu.memory();
-        {
-            let _lock = ppu.vram().borrow();
-            assert!(ppu_mem.vram.try_borrow_mut().is_err());
-        }
-        {
-            let _lock = ppu.vram().borrow_mut();
-            assert!(ppu_mem.vram.try_borrow_mut().is_err());
-        }
-        assert!(ppu_mem.vram.try_borrow_mut().is_ok());
+    fn vram() {
+        let vram = Rc::new(RefCell::new([0x42; Vram::SIZE].into()));
+        let oam = Rc::new(RefCell::new(Oam::default()));
+        let ppu_mem = PPUMem::new(vram, oam);
+
+        let res = ppu_mem
+            .read(Box::new(TestAddress::root_vram()))
+            .expect("Try reading value from vram");
+        assert_eq!(res, 0x42, "invalid value from vram");
     }
 
     #[test]
-    fn blocked_vram() {
-        let ppu = PPU::new();
-        let ppu_mem = ppu.memory();
-        {
-            let _lock = ppu.vram().borrow();
-            assert!(ppu_mem.vram.try_borrow().is_ok());
-        }
-        {
-            let _lock = ppu.vram().borrow_mut();
-            assert!(ppu_mem.vram.try_borrow().is_err());
-        }
-        assert!(ppu_mem.vram.try_borrow().is_ok());
+    fn oam() {
+        let vram = Rc::new(RefCell::new(Vram::default()));
+        let oam = Rc::new(RefCell::new([0x42; Oam::SIZE].into()));
+        let ppu_mem = PPUMem::new(vram, oam);
+
+        let res = ppu_mem
+            .read(Box::new(TestAddress::root_oam()))
+            .expect("Try reading value from vram");
+        assert_eq!(res, 0x42, "invalid value from vram");
+    }
+}
+
+#[cfg(test)]
+mod write {
+    use super::PPUMem;
+    use crate::memory::{Oam, Vram};
+    use crate::test_tools::TestAddress;
+    use gb_bus::FileOperation;
+    use std::cell::RefCell;
+    use std::rc::Rc;
+
+    #[test]
+    fn vram() {
+        let vram = Rc::new(RefCell::new(Vram::default()));
+        let oam = Rc::new(RefCell::new(Oam::default()));
+        let mut ppu_mem = PPUMem::new(vram, oam);
+
+        ppu_mem
+            .write(0x42, Box::new(TestAddress::root_vram()))
+            .expect("Try write value into vram");
+        let res = ppu_mem
+            .read(Box::new(TestAddress::root_vram()))
+            .expect("Try reading value from vram");
+        assert_eq!(res, 0x42, "invalid value from vram");
     }
 
     #[test]
-    fn blocked_oam_mut() {
-        let ppu = PPU::new();
-        let ppu_mem = ppu.memory();
-        {
-            let _lock = ppu.oam().borrow();
-            assert!(ppu_mem.oam.try_borrow_mut().is_err());
-        }
-        {
-            let _lock = ppu.oam().borrow_mut();
-            assert!(ppu_mem.oam.try_borrow_mut().is_err());
-        }
-        assert!(ppu_mem.oam.try_borrow_mut().is_ok());
-    }
+    fn oam() {
+        let vram = Rc::new(RefCell::new(Vram::default()));
+        let oam = Rc::new(RefCell::new(Oam::default()));
+        let mut ppu_mem = PPUMem::new(vram, oam);
 
-    #[test]
-    fn blocked_oam() {
-        let ppu = PPU::new();
-        let ppu_mem = ppu.memory();
-        {
-            let _lock = ppu.oam().borrow();
-            assert!(ppu_mem.oam.try_borrow().is_ok());
-        }
-        {
-            let _lock = ppu.oam().borrow_mut();
-            assert!(ppu_mem.oam.try_borrow().is_err());
-        }
-        assert!(ppu_mem.oam.try_borrow().is_ok());
+        ppu_mem
+            .write(0x42, Box::new(TestAddress::root_oam()))
+            .expect("Try write value into oam");
+        let res = ppu_mem
+            .read(Box::new(TestAddress::root_oam()))
+            .expect("Try reading value from oam");
+        assert_eq!(res, 0x42, "invalid value from oam");
     }
 }
