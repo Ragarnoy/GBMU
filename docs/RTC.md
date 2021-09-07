@@ -1,16 +1,16 @@
 # Real Time Clock
 
 The **Real Time Clock** (refered as RTC in this document) of certain Cartridge
-allow a Game to kept track of time even when the Gameboy is off.
+allows a Game to keep track of time even when the Gameboy is off.
 
-To do that the cartridge power an hardware RTC with its on-cartridge battery.
+To do that the cartridge powers an hardware RTC with its on-cartridge battery.
 
 ## RTC registers
 
 The RTC have the following registers.
-All of the register are contained in a `u8`.
+All of the registers are contained in a `u8`.
 
-The RTC regs all to keep track of the time up to `512 days 23 hours 59 minutes 59 seconds`
+The RTC regs keep track of the time up to `511 days 23 hours 59 minutes 59 seconds`
 
 | Name    | Description                               | Range Value |
 | ------- | ----------------------------------------- | ----------- |
@@ -33,17 +33,17 @@ The `RTC Control Regs` is a bitfields with the following field
 ## Implementation
 
 Each RTC implementation are per game,
-since it's an harware module that is on cartridge that need it,
+since it's a hardware module that is in the cartridge that needs it,
 and not on the GameBoy.
 
-For the implementation, we have to thing that is distincte:
+For the implementation, we have two thing that are distinct:
 
 - Simulating the RTC while the game is running (the software emulator is running)
 - Simulating the RTC while the game is off (the software emulator is not running or running another game)
 
 ### Implementation while the emulator is not running
 
-This section discuss how we can emulate the RTC while the emulator is not running or running another game.
+This section discusses how we can emulate the RTC while the emulator is not running or running another game.
 
 #### The naive implementation when the emulator is not running
 
@@ -57,7 +57,7 @@ The naive implementation when the emulator is not running would be:
 
 ### Implementation while the emulator is running
 
-This section discuss how we can emulate the RTC while the emulator is running the game that is need it.
+This section discusses how we can emulate the RTC while the emulator is running the game that is need it.
 
 #### The naive implementation when the emulator
 
