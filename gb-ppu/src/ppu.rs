@@ -10,7 +10,9 @@ use gb_lcd::render::{RenderData, SCREEN_HEIGHT, SCREEN_WIDTH};
 use std::cell::RefCell;
 use std::rc::Rc;
 
-/// Pixel Process Unit: is in charge of selecting the pixel to be displayed on the lcd screen.
+/// The Pixel Process Unit is in charge of selecting the pixel to be displayed on the lcd screen.
+///
+/// It owns the VRAM and the OAM, as well as a few registers.
 ///
 /// Registers owned by the ppu are simply exposed by public function when required for examples for now.
 /// This impl propably won't work once the cpu will need to access them.
@@ -45,6 +47,7 @@ impl PPU {
         &self.oam
     }
 
+    /// Build and return a [PPUMem] struct to access/modify the memory of this ppu instance.
     pub fn memory(&self) -> PPUMem {
         PPUMem::new(Rc::clone(&self.vram), Rc::clone(&self.oam))
     }

@@ -6,16 +6,25 @@ use std::rc::Rc;
 
 const UNDEFINED_VALUE: u8 = 0xFF;
 
+/// Allow external structures to read/write the memory of the ppu.
+///
+/// The read/write operation might be ignored if the ppu is currently using the concerned memory area.
 pub struct PPUMem {
     vram: Rc<RefCell<Vram>>,
     oam: Rc<RefCell<Oam>>,
 }
 
 impl PPUMem {
+    /// Build a [PPUMem] from references counters of Vram and Oam.
+    ///
+    /// This function is used by [PPU.memory()](crate::PPU::memory), you should not need to call this constructor it yourself.
     pub fn new(vram: Rc<RefCell<Vram>>, oam: Rc<RefCell<Oam>>) -> Self {
         PPUMem { vram, oam }
     }
 
+    /// Completely replace the vram of the ppu,if it is not currently using it.
+    ///
+    /// This function exist for debugging purpose.
     pub fn overwrite_vram(&self, data: &[u8; Vram::SIZE]) -> PPUResult<()> {
         match self.vram.try_borrow_mut() {
             Ok(mut vram) => {
@@ -29,6 +38,9 @@ impl PPUMem {
         }
     }
 
+    /// Completely replace the oam of the ppu,if it is not currently using it.
+    ///
+    /// This function exist for debugging purpose.
     pub fn overwrite_oam(&self, data: &[u8; Oam::SIZE]) -> PPUResult<()> {
         match self.oam.try_borrow_mut() {
             Ok(mut oam) => {
