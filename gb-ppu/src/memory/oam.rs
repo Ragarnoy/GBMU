@@ -18,20 +18,28 @@ impl Oam {
         }
     }
 
-    pub fn read(&self, addr: usize) -> Option<u8> {
+    pub fn read(&self, addr: usize) -> PPUResult<u8> {
         if addr < Self::SIZE {
-            Some(self.data[addr])
+            Ok(self.data[addr])
         } else {
-            None
+            Err(PPUError::OutOfBound {
+                value: addr,
+                min_bound: 0,
+                max_bound: Self::SIZE,
+            })
         }
     }
 
-    pub fn write(&mut self, addr: usize, value: u8) -> Option<()> {
+    pub fn write(&mut self, addr: usize, value: u8) -> PPUResult<()> {
         if addr < Self::SIZE {
             self.data[addr] = value;
-            Some(())
+            Ok(())
         } else {
-            None
+            Err(PPUError::OutOfBound {
+                value: addr,
+                min_bound: 0,
+                max_bound: Self::SIZE,
+            })
         }
     }
 

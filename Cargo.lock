@@ -793,6 +793,7 @@ dependencies = [
  "egui 0.13.1",
  "gb-bus",
  "gb-lcd",
+ "log",
  "modular-bitfield",
  "sdl2",
 ]
