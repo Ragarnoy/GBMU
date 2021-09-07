@@ -117,6 +117,7 @@ mod tests {
             let _lock = ppu.vram().borrow_mut();
             assert!(ppu_mem.vram.try_borrow_mut().is_err());
         }
+        assert!(ppu_mem.vram.try_borrow_mut().is_ok());
     }
 
     #[test]
@@ -131,6 +132,7 @@ mod tests {
             let _lock = ppu.vram().borrow_mut();
             assert!(ppu_mem.vram.try_borrow().is_err());
         }
+        assert!(ppu_mem.vram.try_borrow().is_ok());
     }
 
     #[test]
@@ -145,6 +147,7 @@ mod tests {
             let _lock = ppu.oam().borrow_mut();
             assert!(ppu_mem.oam.try_borrow_mut().is_err());
         }
+        assert!(ppu_mem.oam.try_borrow_mut().is_ok());
     }
 
     #[test]
@@ -159,5 +162,6 @@ mod tests {
             let _lock = ppu.oam().borrow_mut();
             assert!(ppu_mem.oam.try_borrow().is_err());
         }
+        assert!(ppu_mem.oam.try_borrow().is_ok());
     }
 }
