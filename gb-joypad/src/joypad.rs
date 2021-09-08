@@ -1,4 +1,4 @@
-use crate::InputType;
+use crate::{Config, InputType};
 use egui::{CtxRef, Ui};
 use sdl2::event::Event;
 use sdl2::keyboard::Scancode;
@@ -61,6 +61,28 @@ impl Joypad {
         }
     }
 
+    pub fn from_config(window_id: u32, conf: Config) -> Self {
+        Joypad {
+            window_id,
+            input_map: conf.mapping(),
+            input_states: HashMap::from_iter([
+                (InputType::Up, false),
+                (InputType::Down, false),
+                (InputType::Left, false),
+                (InputType::Right, false),
+                (InputType::Start, false),
+                (InputType::Select, false),
+                (InputType::B, false),
+                (InputType::A, false),
+            ]),
+            listening: None,
+        }
+    }
+
+    pub fn get_config(&self) -> Config {
+        Config::from_mapping(self.input_map.clone())
+    }
+
     fn set_input_map(&mut self, scancode: Scancode, input_type: InputType) {
         self.input_map.retain(|_, v| v != &input_type);
         self.input_map.insert(scancode, input_type);
@@ -121,7 +143,7 @@ impl Joypad {
                 .iter()
                 .find(|(_, map_val)| &i_type == map_val)
             {
-                Some((code, _)) => ui.label(format!("{:?}", code)),
+                Some((code, _)) => ui.label(code.name()),
                 None => ui.label("---"),
             };
         });
