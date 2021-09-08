@@ -717,7 +717,6 @@ dependencies = [
  "modular-bitfield",
  "sdl2",
  "serde",
- "serde_json",
 ]
 
 [[package]]
@@ -770,6 +769,7 @@ dependencies = [
  "log",
  "rfd",
  "sdl2",
+ "serde_json",
  "simplelog",
 ]
 

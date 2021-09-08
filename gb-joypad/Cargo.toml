@@ -8,5 +8,4 @@ sdl2 = { version = "0.34", features = ["bundled", "static-link"] }
 egui = { version = "0.13" }
 log = { version = "0.4" }
 serde = { version = "1.0", features = ["derive"] }
-serde_json = { version = "1.0" }
 modular-bitfield = { version = "0.11" }
