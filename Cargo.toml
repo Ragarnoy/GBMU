@@ -31,5 +31,6 @@ members = [
   "gb-lcd",
   "gb-cpu",
   "gb-dbg",
-  "gb-bus"
+  "gb-bus",
+  "gb-rtc"
 ]

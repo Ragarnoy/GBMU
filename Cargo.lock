@@ -202,6 +202,7 @@ dependencies = [
  "libc",
  "num-integer",
  "num-traits",
+ "serde",
  "time",
  "winapi",
 ]
@@ -734,6 +735,14 @@ dependencies = [
  "clap",
  "gb-bus",
  "modular-bitfield",
+ "serde",
+]
+
+[[package]]
+name = "gb-rtc"
+version = "0.1.0"
+dependencies = [
+ "chrono",
  "serde",
 ]
 
