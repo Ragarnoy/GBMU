@@ -1,0 +1,9 @@
+[package]
+name = "gb-joypad"
+version = "0.0.0"
+edition = "2018"
+
+[dependencies]
+sdl2 = { version = "0.34", features = ["bundled", "static-link"] }
+log = { version = "0.4" }
+modular-bitfield = { version = "0.11" }

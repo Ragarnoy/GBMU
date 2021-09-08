@@ -68,6 +68,8 @@ fn main() {
         .build();
     let mut dbg_app = Debugger::new(gbm_mem, FlowController, Disassembler);
 
+    let mut joypad = gb_joypad::Joypad::new(gb_window.sdl_window().id());
+
     #[cfg(feature = "debug_render")]
     let mut debug = false;
 
@@ -119,6 +121,8 @@ fn main() {
         }
 
         for event in event_pump.poll_iter() {
+            joypad.send_event(&event);
+            log::debug!("{:?}", joypad);
             match event {
                 Event::Quit { .. }
                 | Event::KeyDown {

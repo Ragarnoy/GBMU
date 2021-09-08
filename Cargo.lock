@@ -709,6 +709,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "gb-joypad"
+version = "0.0.0"
+dependencies = [
+ "log",
+ "modular-bitfield",
+ "sdl2",
+]
+
+[[package]]
 name = "gb-lcd"
 version = "0.1.0"
 dependencies = [
@@ -752,6 +761,7 @@ version = "0.1.0"
 dependencies = [
  "egui",
  "gb-dbg",
+ "gb-joypad",
  "gb-lcd",
  "gb-ppu",
  "log",

@@ -23,6 +23,7 @@ simplelog = "0.10"
 gb-lcd = { path= "./gb-lcd" }
 gb-ppu = { path = "./gb-ppu" }
 gb-dbg = { path = "./gb-dbg" }
+gb-joypad = { path = "./gb-joypad" }
 
 [workspace]
 members = [
@@ -32,5 +33,6 @@ members = [
   "gb-cpu",
   "gb-dbg",
   "gb-bus",
-  "gb-rtc"
+  "gb-rtc",
+  "gb-joypad"
 ]
