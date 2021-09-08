@@ -13,6 +13,15 @@ pub struct Joypad {
     listening: Option<InputType>,
 }
 
+const DEFAULT_UP: Scancode = Scancode::Up;
+const DEFAULT_DOWN: Scancode = Scancode::Down;
+const DEFAULT_LEFT: Scancode = Scancode::Left;
+const DEFAULT_RIGHT: Scancode = Scancode::Right;
+const DEFAULT_START: Scancode = Scancode::Return;
+const DEFAULT_SELECT: Scancode = Scancode::RShift;
+const DEFAULT_B: Scancode = Scancode::B;
+const DEFAULT_A: Scancode = Scancode::A;
+
 impl Joypad {
     const INPUT_LIST: [InputType; 8] = [
         InputType::Up,
@@ -29,14 +38,14 @@ impl Joypad {
         Joypad {
             window_id,
             input_map: HashMap::from_iter([
-                (Scancode::Up, InputType::Up),
-                (Scancode::Down, InputType::Down),
-                (Scancode::Left, InputType::Left),
-                (Scancode::Right, InputType::Right),
-                (Scancode::Return, InputType::Start),
-                (Scancode::RShift, InputType::Select),
-                (Scancode::B, InputType::B),
-                (Scancode::A, InputType::A),
+                (DEFAULT_UP, InputType::Up),
+                (DEFAULT_DOWN, InputType::Down),
+                (DEFAULT_LEFT, InputType::Left),
+                (DEFAULT_RIGHT, InputType::Right),
+                (DEFAULT_START, InputType::Start),
+                (DEFAULT_SELECT, InputType::Select),
+                (DEFAULT_B, InputType::B),
+                (DEFAULT_A, InputType::A),
             ]),
             input_states: HashMap::from_iter([
                 (InputType::Up, false),
@@ -80,6 +89,21 @@ impl Joypad {
                         ui.end_row();
                     }
                 });
+            ui.horizontal(|ui| {
+                if ui.button("reset   ⟲").clicked() {
+                    self.listening = None;
+                    self.input_map = HashMap::from_iter([
+                        (DEFAULT_UP, InputType::Up),
+                        (DEFAULT_DOWN, InputType::Down),
+                        (DEFAULT_LEFT, InputType::Left),
+                        (DEFAULT_RIGHT, InputType::Right),
+                        (DEFAULT_START, InputType::Start),
+                        (DEFAULT_SELECT, InputType::Select),
+                        (DEFAULT_B, InputType::B),
+                        (DEFAULT_A, InputType::A),
+                    ]);
+                }
+            })
         });
     }
 
