@@ -108,36 +108,41 @@ impl ReadFlagReg for Registers {
     }
 }
 
+const ZERO_MASK: u16 = 0b1000_0000;
+const SUBTRACTION_MASK: u16 = 0b100_0000;
+const HALF_CARRY_MASK: u16 = 0b10_0000;
+const CARRY_MASK: u16 = 0b1_0000;
+
 impl WriteFlagReg for Registers {
     fn set_zero(&mut self, value: bool) {
         if value {
-            self.af |= 0b1000_0000;
+            self.af |= ZERO_MASK;
         } else {
-            self.af &= !0b1000_0000;
+            self.af &= !ZERO_MASK;
         }
     }
 
     fn set_subtraction(&mut self, value: bool) {
         if value {
-            self.af |= 0b100_0000;
+            self.af |= SUBTRACTION_MASK;
         } else {
-            self.af &= !0b100_0000;
+            self.af &= !SUBTRACTION_MASK;
         }
     }
 
     fn set_half_carry(&mut self, value: bool) {
         if value {
-            self.af |= 0b10_0000;
+            self.af |= HALF_CARRY_MASK;
         } else {
-            self.af &= !0b10_0000;
+            self.af &= !HALF_CARRY_MASK;
         }
     }
 
     fn set_carry(&mut self, value: bool) {
         if value {
-            self.af |= 0b1_0000;
+            self.af |= CARRY_MASK;
         } else {
-            self.af &= !0b1_0000;
+            self.af &= !CARRY_MASK;
         }
     }
 
