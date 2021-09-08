@@ -69,17 +69,23 @@ impl Joypad {
     pub fn settings(&mut self, ctx: &CtxRef) {
         egui::CentralPanel::default().show(ctx, |ui| {
             egui::Grid::new("input grid")
-                .spacing([80.0, 8.0])
+                .spacing([20.0, 8.0])
+                .max_col_width(100.0)
+                .min_col_width(100.0)
                 .striped(true)
                 .show(ui, |ui| {
                     for i_type in Self::INPUT_LIST.iter() {
                         ui.label(format!("{:?}:", i_type));
                         if let Some(listened) = self.listening {
                             if &listened == i_type {
-                                ui.label("---");
-                                if ui.button("❌").clicked() {
-                                    self.listening = None;
-                                }
+                                ui.vertical_centered(|ui| {
+                                    ui.label("---");
+                                });
+                                ui.vertical_centered(|ui| {
+                                    if ui.button("❌").clicked() {
+                                        self.listening = None;
+                                    }
+                                });
                             } else {
                                 self.input_label(ui, i_type);
                             }
@@ -89,7 +95,8 @@ impl Joypad {
                         ui.end_row();
                     }
                 });
-            ui.horizontal(|ui| {
+            ui.vertical_centered(|ui| {
+                ui.separator();
                 if ui.button("reset   ⟲").clicked() {
                     self.listening = None;
                     self.input_map = HashMap::from_iter([
@@ -108,17 +115,21 @@ impl Joypad {
     }
 
     fn input_label(&mut self, ui: &mut Ui, i_type: &InputType) {
-        match self
-            .input_map
-            .iter()
-            .find(|(_, map_val)| &i_type == map_val)
-        {
-            Some((code, _)) => ui.label(format!("{:?}", code)),
-            None => ui.label("---"),
-        };
-        if ui.button("⚙").clicked() {
-            self.listening = Some(*i_type);
-        }
+        ui.vertical_centered(|ui| {
+            match self
+                .input_map
+                .iter()
+                .find(|(_, map_val)| &i_type == map_val)
+            {
+                Some((code, _)) => ui.label(format!("{:?}", code)),
+                None => ui.label("---"),
+            };
+        });
+        ui.vertical_centered(|ui| {
+            if ui.button("⚙").clicked() {
+                self.listening = Some(*i_type);
+            }
+        });
     }
 
     fn update_mapping(&mut self, scancode: &Option<Scancode>) {
