@@ -5,5 +5,6 @@ edition = "2018"
 
 [dependencies]
 sdl2 = { version = "0.34", features = ["bundled", "static-link"] }
+egui = { version = "0.13" }
 log = { version = "0.4" }
 modular-bitfield = { version = "0.11" }

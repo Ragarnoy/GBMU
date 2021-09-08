@@ -69,6 +69,7 @@ fn main() {
     let mut dbg_app = Debugger::new(gbm_mem, FlowController, Disassembler);
 
     let mut joypad = gb_joypad::Joypad::new(gb_window.sdl_window().id());
+    let mut input_window = None;
 
     #[cfg(feature = "debug_render")]
     let mut debug = false;
@@ -104,6 +105,12 @@ fn main() {
                             .expect("Error while building debug window"),
                     );
                 }
+                if ui.button("Input").clicked() && input_window.is_none() {
+                    input_window = Some(
+                        GBWindow::new("GBMU Input Settings", (800, 600), false, &video_subsystem)
+                            .expect("Error while building input window"),
+                    );
+                }
             })
         });
         gb_window
@@ -120,9 +127,18 @@ fn main() {
                 .expect("Fail at the end for the debug window");
         }
 
+        if let Some(ref mut input_wind) = input_window {
+            input_wind
+                .start_frame()
+                .expect("Fail at the start for the input window");
+            joypad.settings(input_wind.egui_ctx());
+            input_wind
+                .end_frame()
+                .expect("Fail at the end for the input window");
+        }
+
         for event in event_pump.poll_iter() {
             joypad.send_event(&event);
-            log::debug!("{:?}", joypad);
             match event {
                 Event::Quit { .. }
                 | Event::KeyDown {
@@ -161,6 +177,12 @@ fn main() {
                                     .resize((width as u32, height as u32), &video_subsystem)
                                     .expect("Fail to resize debug window");
                             }
+                        } else if let Some(ref mut input_wind) = input_window {
+                            if input_wind.sdl_window().id() == window_id {
+                                input_wind
+                                    .resize((width as u32, height as u32), &video_subsystem)
+                                    .expect("Fail to resize input window");
+                            }
                         }
                     }
                     sdl2::event::WindowEvent::Close => {
@@ -170,6 +192,10 @@ fn main() {
                             if dbg_wind.sdl_window().id() == window_id {
                                 debug_window = None;
                             }
+                        } else if let Some(ref mut input_wind) = input_window {
+                            if input_wind.sdl_window().id() == window_id {
+                                input_window = None;
+                            }
                         }
                     }
                     _ => {}
@@ -178,6 +204,9 @@ fn main() {
                     if !gb_window.send_event(&event, &sdl_context) {
                         if let Some(ref mut dbg_wind) = debug_window {
                             dbg_wind.send_event(&event, &sdl_context);
+                        }
+                        if let Some(ref mut input_wind) = input_window {
+                            input_wind.send_event(&event, &sdl_context);
                         }
                     }
                 }
