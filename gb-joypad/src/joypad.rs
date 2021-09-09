@@ -94,7 +94,10 @@ impl Joypad {
     /// Draw the ui to configure the inputs settings.
     pub fn settings(&mut self, ctx: &CtxRef) {
         egui::CentralPanel::default().show(ctx, |ui| {
-            egui::ScrollArea::auto_sized().show(ui, |ui| {
+            let height = ui.available_size().y;
+            // ui.vertical(|ui| {
+            egui::ScrollArea::from_max_height(height - 50.0).show(ui, |ui| {
+                ui.set_height(height - 60.0);
                 for i_type in Self::INPUT_LIST.iter() {
                     ui.horizontal(|ui| {
                         if let Some(listened) = self.listening {
@@ -104,8 +107,10 @@ impl Joypad {
                         }
                     });
                 }
-                ui.with_layout(Layout::centered_and_justified(Direction::TopDown), |ui| {
-                    ui.add(Separator::default().horizontal().spacing(8.0));
+            });
+            ui.vertical(|ui| {
+                ui.vertical_centered(|ui| {
+                    ui.add(Separator::default().horizontal().spacing(30.0));
                     if ui.button("reset   ⟲").clicked() {
                         self.listening = None;
                         self.input_map = HashMap::from_iter([
