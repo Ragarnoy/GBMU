@@ -2,6 +2,7 @@ use crate::interfaces::{
     Read8BitsReg, Read8BitsRegExt, ReadFlagReg, Write8BitsReg, Write8BitsRegExt, WriteFlagReg,
 };
 
+#[derive(Default)]
 pub struct Registers {
     /// Accumulator & Flags
     pub af: u16,
@@ -16,37 +17,37 @@ pub struct Registers {
 
 impl Read8BitsReg for Registers {
     fn a(&self) -> u8 {
-        self.af.to_be_bytes()[0]
+        self.af.to_be_bytes()[1]
     }
 
     fn b(&self) -> u8 {
-        self.bc.to_be_bytes()[0]
-    }
-
-    fn c(&self) -> u8 {
         self.bc.to_be_bytes()[1]
     }
 
-    fn d(&self) -> u8 {
-        self.de.to_be_bytes()[0]
+    fn c(&self) -> u8 {
+        self.bc.to_be_bytes()[0]
     }
 
-    fn e(&self) -> u8 {
+    fn d(&self) -> u8 {
         self.de.to_be_bytes()[1]
     }
 
+    fn e(&self) -> u8 {
+        self.de.to_be_bytes()[0]
+    }
+
     fn h(&self) -> u8 {
-        self.hl.to_be_bytes()[0]
+        self.hl.to_be_bytes()[1]
     }
 
     fn l(&self) -> u8 {
-        self.hl.to_be_bytes()[1]
+        self.hl.to_be_bytes()[0]
     }
 }
 
 impl Read8BitsRegExt for Registers {
     fn f(&self) -> u8 {
-        self.af.to_be_bytes()[1]
+        self.af.to_be_bytes()[0]
     }
 }
 
@@ -149,4 +150,98 @@ impl WriteFlagReg for Registers {
     fn raw(&mut self, value: u8) {
         self.set_f(value)
     }
+}
+
+#[cfg(test)]
+mod test_read {
+    use super::Registers;
+    use crate::interfaces::{Read8BitsReg, Read8BitsRegExt, ReadFlagReg};
+
+    #[test]
+    fn a() {
+        let regs = Registers {
+            af: u16::to_be(0xaaff),
+            ..Registers::default()
+        };
+
+        assert_eq!(regs.a(), 0xaa);
+    }
+
+    #[test]
+    fn b() {
+        let regs = Registers {
+            bc: u16::to_be(0xbbcc),
+            ..Registers::default()
+        };
+
+        assert_eq!(regs.b(), 0xbb);
+    }
+
+    #[test]
+    fn c() {
+        let regs = Registers {
+            bc: u16::to_be(0xbbcc),
+            ..Registers::default()
+        };
+
+        assert_eq!(regs.c(), 0xcc);
+    }
+
+    #[test]
+    fn d() {
+        let regs = Registers {
+            de: u16::to_be(0xddee),
+            ..Registers::default()
+        };
+
+        assert_eq!(regs.d(), 0xdd);
+    }
+
+    #[test]
+    fn e() {
+        let regs = Registers {
+            de: u16::to_be(0xddee),
+            ..Registers::default()
+        };
+
+        assert_eq!(regs.e(), 0xee);
+    }
+
+    #[test]
+    fn h() {
+        let regs = Registers {
+            hl: u16::to_be(0x8833),
+            ..Registers::default()
+        };
+
+        assert_eq!(regs.h(), 0x88);
+    }
+
+    #[test]
+    fn l() {
+        let regs = Registers {
+            hl: u16::to_be(0x8833),
+            ..Registers::default()
+        };
+
+        assert_eq!(regs.l(), 0x33);
+    }
+
+    #[test]
+    fn f() {
+        let regs = Registers {
+            af: u16::to_be(0xaaff),
+            ..Registers::default()
+        };
+
+        assert_eq!(regs.f(), 0xff);
+    }
+}
+
+#[cfg(test)]
+mod test_write {
+    use super::Registers;
+    use crate::interfaces::{
+        Read8BitsReg, Read8BitsRegExt, ReadFlagReg, Write8BitsReg, Write8BitsRegExt, WriteFlagReg,
+    };
 }
