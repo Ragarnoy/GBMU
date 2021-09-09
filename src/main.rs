@@ -117,7 +117,7 @@ fn main() {
                 }
                 if ui.button("Input").clicked() && input_window.is_none() {
                     input_window = Some(
-                        GBWindow::new("GBMU Input Settings", (315, 220), false, &video_subsystem)
+                        GBWindow::new("GBMU Input Settings", (315, 220), true, &video_subsystem)
                             .expect("Error while building input window"),
                     );
                 }

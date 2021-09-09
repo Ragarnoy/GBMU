@@ -1,5 +1,5 @@
 use crate::{Config, InputType};
-use egui::{CtxRef, Ui};
+use egui::{CtxRef, Direction, Layout, Separator, Ui};
 use sdl2::event::Event;
 use sdl2::keyboard::Scancode;
 use std::collections::HashMap;
@@ -94,67 +94,63 @@ impl Joypad {
     /// Draw the ui to configure the inputs settings.
     pub fn settings(&mut self, ctx: &CtxRef) {
         egui::CentralPanel::default().show(ctx, |ui| {
-            egui::Grid::new("input grid")
-                .spacing([20.0, 8.0])
-                .max_col_width(100.0)
-                .min_col_width(100.0)
-                .striped(true)
-                .show(ui, |ui| {
-                    for i_type in Self::INPUT_LIST.iter() {
-                        ui.label(format!("{:?}:", i_type));
+            egui::ScrollArea::auto_sized().show(ui, |ui| {
+                for i_type in Self::INPUT_LIST.iter() {
+                    ui.horizontal(|ui| {
                         if let Some(listened) = self.listening {
-                            if &listened == i_type {
-                                ui.vertical_centered(|ui| {
-                                    ui.label("---");
-                                });
-                                ui.vertical_centered(|ui| {
-                                    if ui.button("❌").clicked() {
-                                        self.listening = None;
-                                    }
-                                });
-                            } else {
-                                self.input_label(ui, i_type);
-                            }
+                            self.input_row(ui, i_type, &listened == i_type);
                         } else {
-                            self.input_label(ui, i_type);
+                            self.input_row(ui, i_type, false);
                         }
-                        ui.end_row();
+                    });
+                }
+                ui.with_layout(Layout::centered_and_justified(Direction::TopDown), |ui| {
+                    ui.add(Separator::default().horizontal().spacing(8.0));
+                    if ui.button("reset   ⟲").clicked() {
+                        self.listening = None;
+                        self.input_map = HashMap::from_iter([
+                            (DEFAULT_UP, InputType::Up),
+                            (DEFAULT_DOWN, InputType::Down),
+                            (DEFAULT_LEFT, InputType::Left),
+                            (DEFAULT_RIGHT, InputType::Right),
+                            (DEFAULT_START, InputType::Start),
+                            (DEFAULT_SELECT, InputType::Select),
+                            (DEFAULT_B, InputType::B),
+                            (DEFAULT_A, InputType::A),
+                        ]);
                     }
                 });
-            ui.vertical_centered(|ui| {
-                ui.separator();
-                if ui.button("reset   ⟲").clicked() {
-                    self.listening = None;
-                    self.input_map = HashMap::from_iter([
-                        (DEFAULT_UP, InputType::Up),
-                        (DEFAULT_DOWN, InputType::Down),
-                        (DEFAULT_LEFT, InputType::Left),
-                        (DEFAULT_RIGHT, InputType::Right),
-                        (DEFAULT_START, InputType::Start),
-                        (DEFAULT_SELECT, InputType::Select),
-                        (DEFAULT_B, InputType::B),
-                        (DEFAULT_A, InputType::A),
-                    ]);
-                }
-            })
+            });
         });
     }
 
-    fn input_label(&mut self, ui: &mut Ui, i_type: &InputType) {
-        ui.vertical_centered(|ui| {
-            match self
-                .input_map
-                .iter()
-                .find(|(_, map_val)| &i_type == map_val)
-            {
-                Some((code, _)) => ui.label(code.name()),
-                None => ui.label("---"),
-            };
-        });
-        ui.vertical_centered(|ui| {
-            if ui.button("⚙").clicked() {
-                self.listening = Some(*i_type);
-            }
+    fn input_row(&mut self, ui: &mut Ui, i_type: &InputType, force_empty: bool) {
+        ui.columns(3, |ui| {
+            ui[0].label(format!("{:?}:", i_type));
+            ui[1].with_layout(
+                Layout::centered_and_justified(Direction::LeftToRight),
+                |ui| {
+                    if force_empty {
+                        ui.label("---");
+                    } else {
+                        match self
+                            .input_map
+                            .iter()
+                            .find(|(_, map_val)| &i_type == map_val)
+                        {
+                            Some((code, _)) => ui.label(code.name()),
+                            None => ui.label("---"),
+                        };
+                    }
+                },
+            );
+            ui[2].with_layout(Layout::right_to_left(), |ui| {
+                if !force_empty && ui.button("⚙").clicked() {
+                    self.listening = Some(*i_type);
+                } else if force_empty && ui.button("❌").clicked() {
+                    self.listening = None;
+                }
+            });
         });
     }
 
