@@ -1,5 +1,5 @@
 use crate::Address;
-use std::convert::From;
+use std::convert::Into;
 
 #[derive(Debug, PartialEq)]
 pub enum Error {
@@ -8,11 +8,11 @@ pub enum Error {
 }
 
 impl Error {
-    pub fn new_bus_error(addr: Box<dyn Address>) -> Self {
-        Self::BusError(u16::from(addr))
+    pub fn new_bus_error<A: Into<u16>>(addr: Box<dyn Address<A>>) -> Self {
+        Self::BusError(addr.into())
     }
 
-    pub fn new_segfault(addr: Box<dyn Address>) -> Self {
-        Self::SegmentationFault(u16::from(addr))
+    pub fn new_segfault<A: Into<u16>>(addr: Box<dyn Address<A>>) -> Self {
+        Self::SegmentationFault(addr.into())
     }
 }

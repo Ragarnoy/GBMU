@@ -1,19 +1,17 @@
-use crate::Area;
-
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 /// Address contain the relative and absolute address
-pub struct Address {
+pub struct Address<A> {
     /// relative address into the current area of the address bus
     pub relative: u16,
 
     /// absolute address used in the address bus
     pub absolute: u16,
 
-    pub area: Area,
+    pub area: A,
 }
 
-impl Address {
-    pub fn new(area: Area, relative_addr: u16, absolute_addr: u16) -> Self {
+impl<A> Address<A> {
+    pub fn new(area: A, relative_addr: u16, absolute_addr: u16) -> Self {
         Self {
             relative: relative_addr,
             absolute: absolute_addr,
@@ -30,17 +28,17 @@ impl Address {
     /// assert_eq!(pos.absolute, 0x42);
     /// assert_eq!(pos.relative, 0x32);
     /// ```
-    pub fn from_offset(area: Area, addr: u16, offset: u16) -> Self {
+    pub fn from_offset(area: A, addr: u16, offset: u16) -> Self {
         Self::new(area, addr - offset, addr)
     }
 }
 
-impl crate::file_operation::Address for Address {
+impl<A: Copy + Clone> crate::file_operation::Address<A> for Address<A> {
     fn get_address(&self) -> usize {
         self.relative as usize
     }
 
-    fn area_type(&self) -> Area {
+    fn area_type(&self) -> A {
         self.area
     }
 }
