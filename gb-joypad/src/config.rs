@@ -9,6 +9,9 @@ use std::collections::HashMap;
 use std::fmt;
 use std::marker::PhantomData;
 
+/// Store a joypad configuration.
+///
+/// Since it implement Serialise and Deserialize, it can be used to quickly save/load a joypad configuration into/from a file.
 pub struct Config {
     mapping: HashMap<Scancode, InputType>,
 }

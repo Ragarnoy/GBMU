@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use std::iter::FromIterator;
 
 #[derive(Debug)]
+/// Translate events from keyboard input inputs for the gameboy.
 pub struct Joypad {
     window_id: u32,
     input_map: HashMap<Scancode, InputType>,
@@ -88,6 +89,7 @@ impl Joypad {
         self.input_map.insert(scancode, input_type);
     }
 
+    /// Draw the ui to configure the inputs settings.
     pub fn settings(&mut self, ctx: &CtxRef) {
         egui::CentralPanel::default().show(ctx, |ui| {
             egui::Grid::new("input grid")
@@ -178,6 +180,7 @@ impl Joypad {
         }
     }
 
+    /// Every event from the sdl2 should be sent to the joypad so it can keeps its inputs state updated.
     pub fn send_event(&mut self, event: &Event) {
         match event {
             Event::KeyDown {
