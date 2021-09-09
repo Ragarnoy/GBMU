@@ -28,7 +28,7 @@ pub trait Write8BitsRegExt: Write8BitsReg {
 
 pub trait ReadFlagReg {
     fn zero(&self) -> bool;
-    fn substraction(&self) -> bool;
+    fn subtraction(&self) -> bool;
     fn half_carry(&self) -> bool;
     fn carry(&self) -> bool;
     fn raw(&self) -> u8;
@@ -41,4 +41,3 @@ pub trait WriteFlagReg {
     fn set_carry(&mut self, value: bool);
     fn raw(&mut self, value: u8);
 }
-
