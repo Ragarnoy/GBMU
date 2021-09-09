@@ -3,10 +3,7 @@ use rfd::FileDialog;
 use sdl2::keyboard::Scancode;
 use sdl2::{event::Event, keyboard::Keycode};
 
-use gb_dbg::debugger::disassembler::Disassembler;
-use gb_dbg::debugger::flow_control::FlowController;
 use gb_dbg::debugger::memory::MemoryEditorBuilder;
-use gb_dbg::debugger::Debugger;
 use gb_dbg::*;
 use gb_lcd::{render, window::GBWindow};
 use gb_ppu::PPU;
@@ -61,10 +58,11 @@ fn main() {
 
     let mut debug_window = None;
     let mem = Memory::default();
-    let gbm_mem = MemoryEditorBuilder::new(mem)
+    let _gbm_mem = MemoryEditorBuilder::new(mem)
         .with_address_range("VRam", 0..0xFF)
         .build();
-    let mut dbg_app = Debugger::new(gbm_mem, FlowController, Disassembler);
+    // Regression for now
+    // let mut dbg_app = Debugger::new(gbm_mem, FlowController, Disassembler);
 
     #[cfg(feature = "debug_render")]
     let mut debug = false;
@@ -110,7 +108,8 @@ fn main() {
             dgb_wind
                 .start_frame()
                 .expect("Fail at the start for the debug window");
-            dbg_app.draw(dgb_wind.egui_ctx());
+            // dbg_app.draw(dgb_wind.egui_ctx());
+            // Regression for now
             dgb_wind
                 .end_frame()
                 .expect("Fail at the end for the debug window");
