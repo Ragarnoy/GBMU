@@ -92,7 +92,7 @@ impl ReadFlagReg for Registers {
         self.f() >> 7 == 0b1
     }
 
-    fn substraction(&self) -> bool {
+    fn subtraction(&self) -> bool {
         (self.f() >> 6 & 1) == 1
     }
 
@@ -117,33 +117,33 @@ const CARRY_MASK: u16 = 0b1_0000;
 impl WriteFlagReg for Registers {
     fn set_zero(&mut self, value: bool) {
         if value {
-            self.af |= ZERO_MASK;
+            self.af |= ZERO_MASK << 8;
         } else {
-            self.af &= !ZERO_MASK;
+            self.af &= !ZERO_MASK << 8;
         }
     }
 
     fn set_subtraction(&mut self, value: bool) {
         if value {
-            self.af |= SUBTRACTION_MASK;
+            self.af |= SUBTRACTION_MASK << 8;
         } else {
-            self.af &= !SUBTRACTION_MASK;
+            self.af &= !SUBTRACTION_MASK << 8;
         }
     }
 
     fn set_half_carry(&mut self, value: bool) {
         if value {
-            self.af |= HALF_CARRY_MASK;
+            self.af |= HALF_CARRY_MASK << 8;
         } else {
-            self.af &= !HALF_CARRY_MASK;
+            self.af &= !HALF_CARRY_MASK << 8;
         }
     }
 
     fn set_carry(&mut self, value: bool) {
         if value {
-            self.af |= CARRY_MASK;
+            self.af |= CARRY_MASK << 8;
         } else {
-            self.af &= !CARRY_MASK;
+            self.af &= !CARRY_MASK << 8;
         }
     }
 
@@ -264,14 +264,78 @@ mod test_write {
     }
 }
 
-#[cfg(test)]
-mod test_read_flag {
-    use super::Registers;
-    use crate::interfaces::ReadFlagReg;
+#[test]
+fn test_read_flag() {
+    let mut regs = Registers::default();
+    regs.set_f((ZERO_MASK | SUBTRACTION_MASK | HALF_CARRY_MASK | CARRY_MASK) as u8);
+
+    assert!(regs.zero(), "ZERO flag should be set");
+    assert!(regs.subtraction(), "SUBTRACTION flag should be set");
+    assert!(regs.half_carry(), "HALF_CARRY flag should be set");
+    assert!(regs.carry(), "CARRY flag should be set");
+
+    regs.set_f(0);
+
+    assert!(!regs.zero());
+    assert!(!regs.subtraction());
+    assert!(!regs.half_carry());
+    assert!(!regs.carry());
 }
 
 #[cfg(test)]
 mod test_write_flag {
     use super::Registers;
     use crate::interfaces::{ReadFlagReg, WriteFlagReg};
+
+    #[test]
+    fn zero() {
+        let mut regs = Registers::default();
+
+        assert!(!regs.zero());
+
+        regs.set_zero(true);
+        assert_eq!(regs.zero(), true);
+
+        regs.set_zero(false);
+        assert_eq!(regs.zero(), false);
+    }
+
+    #[test]
+    fn subtraction() {
+        let mut regs = Registers::default();
+
+        assert!(!regs.subtraction());
+
+        regs.set_subtraction(true);
+        assert_eq!(regs.subtraction(), true);
+
+        regs.set_subtraction(false);
+        assert_eq!(regs.subtraction(), false);
+    }
+
+    #[test]
+    fn half_carry() {
+        let mut regs = Registers::default();
+
+        assert!(!regs.half_carry());
+
+        regs.set_half_carry(true);
+        assert_eq!(regs.half_carry(), true);
+
+        regs.set_half_carry(false);
+        assert_eq!(regs.half_carry(), false);
+    }
+
+    #[test]
+    fn carry() {
+        let mut regs = Registers::default();
+
+        assert!(!regs.carry());
+
+        regs.set_carry(true);
+        assert_eq!(regs.carry(), true);
+
+        regs.set_carry(false);
+        assert_eq!(regs.carry(), false);
+    }
 }
