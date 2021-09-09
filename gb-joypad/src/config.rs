@@ -13,17 +13,7 @@ use std::marker::PhantomData;
 ///
 /// Since it implement Serialise and Deserialize, it can be used to quickly save/load a joypad configuration into/from a file.
 pub struct Config {
-    mapping: HashMap<Scancode, InputType>,
-}
-
-impl Config {
-    pub fn from_mapping(mapping: HashMap<Scancode, InputType>) -> Self {
-        Config { mapping }
-    }
-
-    pub fn mapping(self) -> HashMap<Scancode, InputType> {
-        self.mapping
-    }
+    pub mapping: HashMap<Scancode, InputType>,
 }
 
 impl Serialize for Config {

@@ -65,7 +65,7 @@ impl Joypad {
     pub fn from_config(window_id: u32, conf: Config) -> Self {
         Joypad {
             window_id,
-            input_map: conf.mapping(),
+            input_map: conf.mapping,
             input_states: HashMap::from_iter([
                 (InputType::Up, false),
                 (InputType::Down, false),
@@ -81,7 +81,9 @@ impl Joypad {
     }
 
     pub fn get_config(&self) -> Config {
-        Config::from_mapping(self.input_map.clone())
+        Config {
+            mapping: self.input_map.clone(),
+        }
     }
 
     fn set_input_map(&mut self, scancode: Scancode, input_type: InputType) {
