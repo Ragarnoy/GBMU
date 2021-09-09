@@ -40,9 +40,9 @@ impl Vram {
             });
         }
         let index = if map_area_bit {
-            self.data[TILEMAP_START_0 + pos]
-        } else {
             self.data[TILEMAP_START_1 + pos]
+        } else {
+            self.data[TILEMAP_START_0 + pos]
         };
         if data_area_bit {
             Ok(index as usize)

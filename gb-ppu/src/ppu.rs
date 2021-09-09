@@ -1,5 +1,5 @@
 use crate::memory::{Oam, Vram};
-use crate::registers::Control;
+use crate::registers::{Control, Palette};
 use crate::{
     OBJECT_LIST_PER_LINE, OBJECT_LIST_RENDER_HEIGHT, OBJECT_LIST_RENDER_WIDTH,
     OBJECT_RENDER_HEIGHT, OBJECT_RENDER_WIDTH, TILEMAP_DIM, TILEMAP_TILE_COUNT, TILESHEET_HEIGHT,
@@ -15,6 +15,8 @@ pub struct PPU {
     vram: Vram,
     oam: Oam,
     control: Control,
+    bg_palette: Palette,
+    obj_palette: (Palette, Palette),
     pixels: RenderData<SCREEN_WIDTH, SCREEN_HEIGHT>,
 }
 
@@ -24,6 +26,8 @@ impl PPU {
             vram: Vram::new(),
             oam: Oam::new(),
             control: Control::new(),
+            bg_palette: Palette::new(),
+            obj_palette: (Palette::new(), Palette::new()),
             pixels: [[[255; 3]; SCREEN_WIDTH]; SCREEN_HEIGHT],
         }
     }
@@ -38,6 +42,16 @@ impl PPU {
 
     pub fn control_mut(&mut self) -> &mut Control {
         &mut self.control
+    }
+
+    pub fn bg_palette_mut(&mut self) -> &mut Palette {
+        &mut self.bg_palette
+    }
+    pub fn obj_palette_0_mut(&mut self) -> &mut Palette {
+        &mut self.obj_palette.0
+    }
+    pub fn obj_palette_1_mut(&mut self) -> &mut Palette {
+        &mut self.obj_palette.1
     }
 
     pub fn compute(&mut self) {
@@ -71,15 +85,10 @@ impl PPU {
         let mut y = 0;
         for k in 0..TILESHEET_TILE_COUNT {
             let tile = self.vram.read_8x8_tile(k).unwrap();
-            for j in 0..8 {
-                for i in 0..8 {
-                    image[y * 8 + j][TILESHEET_WIDTH - (x + 1) * 8 + i] = match tile[j][i] {
-                        3 => [0; 3],
-                        2 => [85; 3],
-                        1 => [170; 3],
-                        0 => [255; 3],
-                        _ => [255; 3],
-                    }
+            for (j, row) in tile.iter().enumerate() {
+                for (i, pixel) in row.iter().rev().enumerate() {
+                    image[y * 8 + j][x * 8 + i] =
+                        self.bg_palette.get_color(*pixel).unwrap_or_default().into();
                 }
             }
             x += 1;
@@ -112,15 +121,10 @@ impl PPU {
                 )
                 .unwrap();
             let tile = self.vram.read_8x8_tile(index).unwrap();
-            for j in 0..8 {
-                for i in 0..8 {
-                    image[y * 8 + j][TILEMAP_DIM - (x + 1) * 8 + i] = match tile[j][i] {
-                        3 => [0; 3],
-                        2 => [85; 3],
-                        1 => [170; 3],
-                        0 => [255; 3],
-                        _ => [255; 3],
-                    }
+            for (j, row) in tile.iter().enumerate() {
+                for (i, pixel) in row.iter().rev().enumerate() {
+                    image[y * 8 + j][x * 8 + i] =
+                        self.bg_palette.get_color(*pixel).unwrap_or_default().into();
                 }
             }
             x += 1;
@@ -147,17 +151,13 @@ impl PPU {
             let y = object.y_pos().min(OBJECT_RENDER_HEIGHT as u8 - 16) as usize;
             for j in 0..height {
                 let pixels_values = object
-                    .get_pixels_row(j, &self.vram, self.control.obj_size())
+                    .get_pixels_row(j, &self.vram, self.control.obj_size(), &self.obj_palette)
                     .expect("invalid line passed");
                 let y_img = y + j;
-                for (i, pixel) in pixels_values.iter().enumerate() {
-                    let x_img = OBJECT_RENDER_WIDTH - 8 - x + i;
-                    match pixel {
-                        3 => image[y_img][x_img] = [0; 3],
-                        2 => image[y_img][x_img] = [85; 3],
-                        1 => image[y_img][x_img] = [170; 3],
-                        0 => {}
-                        _ => {}
+                for (i, (pixel_value, pixel_color)) in pixels_values.iter().rev().enumerate() {
+                    if *pixel_value != 0 {
+                        let x_img = x + i;
+                        image[y_img][x_img] = (*pixel_color).into();
                     }
                 }
             }
@@ -196,17 +196,13 @@ impl PPU {
             let y = (r / OBJECT_LIST_PER_LINE) * 16;
             for j in 0..height {
                 let pixels_values = object
-                    .get_pixels_row(j, &self.vram, self.control.obj_size())
+                    .get_pixels_row(j, &self.vram, self.control.obj_size(), &self.obj_palette)
                     .expect("invalid line passed");
                 let y_img = y + j;
-                for (i, pixel) in pixels_values.iter().enumerate() {
-                    let x_img = OBJECT_LIST_RENDER_WIDTH - 8 - x + i;
-                    match pixel {
-                        3 => image[y_img][x_img] = [0; 3],
-                        2 => image[y_img][x_img] = [85; 3],
-                        1 => image[y_img][x_img] = [170; 3],
-                        0 => {}
-                        _ => {}
+                for (i, (pixel_value, pixel_color)) in pixels_values.iter().rev().enumerate() {
+                    if *pixel_value != 0 {
+                        let x_img = x + i;
+                        image[y_img][x_img] = (*pixel_color).into();
                     }
                 }
             }
