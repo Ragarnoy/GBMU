@@ -11,8 +11,15 @@ pub struct RegisterEditor<T> {
     io: RegisterTable<T>,
 }
 
-impl<T> RegisterEditor<T> {
-    pub fn draw(&self, ui: &mut Ui) {
+impl<T: DebugRegister> RegisterEditor<T> {
+    fn update_table(&mut self) {
+        self.cpu.update_table();
+        self.ppu.update_table();
+        self.io.update_table();
+    }
+
+    pub fn draw(&mut self, ui: &mut Ui) {
+        self.update_table();
         ui.label(Label::new("Register Editors").text_color(Color32::WHITE));
         CollapsingHeader::new("🛠 Options")
             .id_source("Register_Options")
