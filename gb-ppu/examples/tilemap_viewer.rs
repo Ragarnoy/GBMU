@@ -3,6 +3,15 @@ use sdl2::{event::Event, keyboard::Keycode};
 use gb_lcd::{render, window::GBWindow};
 use gb_ppu::{PPU, TILEMAP_DIM};
 
+fn overwrite_memory(ppu: &mut PPU, dump: (&str, &[u8; 8192], &[u8; 160], &[u8; 112])) {
+    ppu.overwrite_vram(dump.1);
+    ppu.overwrite_oam(dump.2);
+    *ppu.bg_palette_mut() = dump.3[0x47].into();
+    *ppu.obj_palette_0_mut() = dump.3[0x48].into();
+    *ppu.obj_palette_1_mut() = dump.3[0x49].into();
+    *ppu.control_mut() = dump.3[0x40].into();
+}
+
 pub fn main() {
     let (sdl_context, video_subsystem, mut event_pump) =
         gb_lcd::init().expect("Error while initializing LCD");
@@ -31,28 +40,24 @@ pub fn main() {
         (
             "mario",
             include_bytes!("memory dumps/vram/Super_Mario_Land.dmp"),
+            include_bytes!("memory dumps/oam/Super_Mario_Land.dmp"),
             include_bytes!("memory dumps/io_registers/Super_Mario_Land.dmp"),
         ),
         (
             "zelda",
             include_bytes!("memory dumps/vram/Legend_of_Zelda_link_Awaking.dmp"),
+            include_bytes!("memory dumps/oam/Legend_of_Zelda_link_Awaking.dmp"),
             include_bytes!("memory dumps/io_registers/Legend_of_Zelda_link_Awaking.dmp"),
         ),
         (
             "pokemon",
             include_bytes!("memory dumps/vram/Pokemon_Bleue.dmp"),
+            include_bytes!("memory dumps/oam/Pokemon_Bleue.dmp"),
             include_bytes!("memory dumps/io_registers/Pokemon_Bleue.dmp"),
         ),
     ];
-    ppu.overwrite_vram(dumps[0].1);
+    overwrite_memory(&mut ppu, dumps[0]);
     let mut display_window = false;
-    *ppu.bg_palette_mut() = dumps[0].2[0x47].into();
-    ppu.control_mut()
-        .set_win_tilemap_area((dumps[0].2[0x40] & 0b0100_0000) != 0);
-    ppu.control_mut()
-        .set_bg_tilemap_area((dumps[0].2[0x40] & 0b0000_1000) != 0);
-    ppu.control_mut()
-        .set_bg_win_tiledata_area((dumps[0].2[0x40] & 0b0001_0000) != 0);
     let mut image = ppu.tilemap_image(display_window);
 
     'running: loop {
@@ -64,16 +69,9 @@ pub fn main() {
             egui::menu::bar(ui, |ui| {
                 ui.set_height(render::MENU_BAR_SIZE);
                 egui::menu::menu(ui, "dump", |ui| {
-                    for (title, vram, io_reg) in dumps {
+                    for (title, vram, oam, io_reg) in dumps {
                         if ui.button(title).clicked() {
-                            ppu.overwrite_vram(vram);
-                            *ppu.bg_palette_mut() = io_reg[0x47].into();
-                            ppu.control_mut()
-                                .set_win_tilemap_area((io_reg[0x40] & 0b0100_0000) != 0);
-                            ppu.control_mut()
-                                .set_bg_tilemap_area((io_reg[0x40] & 0b0000_1000) != 0);
-                            ppu.control_mut()
-                                .set_bg_win_tiledata_area((io_reg[0x40] & 0b0001_0000) != 0);
+                            overwrite_memory(&mut ppu, (title, vram, oam, io_reg));
                             image = ppu.tilemap_image(display_window);
                         }
                     }

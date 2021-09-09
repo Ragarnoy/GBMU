@@ -6,6 +6,15 @@ use gb_ppu::{
     PPU,
 };
 
+fn overwrite_memory(ppu: &mut PPU, dump: (&str, &[u8; 8192], &[u8; 160], &[u8; 112])) {
+    ppu.overwrite_vram(dump.1);
+    ppu.overwrite_oam(dump.2);
+    *ppu.bg_palette_mut() = dump.3[0x47].into();
+    *ppu.obj_palette_0_mut() = dump.3[0x48].into();
+    *ppu.obj_palette_1_mut() = dump.3[0x49].into();
+    *ppu.control_mut() = dump.3[0x40].into();
+}
+
 pub fn main() {
     let (sdl_context, video_subsystem, mut event_pump) =
         gb_lcd::init().expect("Error while initializing LCD");
@@ -58,19 +67,7 @@ pub fn main() {
             include_bytes!("memory dumps/io_registers/Pokemon_Bleue.dmp"),
         ),
     ];
-    ppu.overwrite_vram(dumps[0].1);
-    ppu.overwrite_oam(dumps[0].2);
-    *ppu.bg_palette_mut() = dumps[0].3[0x47].into();
-    *ppu.obj_palette_0_mut() = dumps[0].3[0x48].into();
-    *ppu.obj_palette_1_mut() = dumps[0].3[0x49].into();
-    ppu.control_mut()
-        .set_win_tilemap_area((dumps[0].3[0x40] & 0b0100_0000) != 0);
-    ppu.control_mut()
-        .set_bg_tilemap_area((dumps[0].3[0x40] & 0b0000_1000) != 0);
-    ppu.control_mut()
-        .set_bg_win_tiledata_area((dumps[0].3[0x40] & 0b0001_0000) != 0);
-    ppu.control_mut()
-        .set_obj_size((dumps[0].3[0x40] & 0b0000_0100) != 0);
+    overwrite_memory(&mut ppu, dumps[0]);
     let mut list_mode = false;
     let mut view_image = ppu.objects_image();
     let mut list_image = ppu.objects_list_image();
@@ -86,19 +83,7 @@ pub fn main() {
                 egui::menu::menu(ui, "dump", |ui| {
                     for (title, vram, oam, io_reg) in dumps {
                         if ui.button(title).clicked() {
-                            ppu.overwrite_vram(vram);
-                            ppu.overwrite_oam(oam);
-                            *ppu.bg_palette_mut() = io_reg[0x47].into();
-                            *ppu.obj_palette_0_mut() = io_reg[0x48].into();
-                            *ppu.obj_palette_1_mut() = io_reg[0x49].into();
-                            ppu.control_mut()
-                                .set_win_tilemap_area((io_reg[0x40] & 0b0100_0000) != 0);
-                            ppu.control_mut()
-                                .set_bg_tilemap_area((io_reg[0x40] & 0b0000_1000) != 0);
-                            ppu.control_mut()
-                                .set_bg_win_tiledata_area((io_reg[0x40] & 0b0001_0000) != 0);
-                            ppu.control_mut()
-                                .set_obj_size((io_reg[0x40] & 0b0000_0100) != 0);
+                            overwrite_memory(&mut ppu, (title, vram, oam, io_reg));
                             view_image = ppu.objects_image();
                             list_image = ppu.objects_list_image();
                         }
