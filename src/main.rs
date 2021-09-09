@@ -1,3 +1,5 @@
+mod settings;
+
 use rfd::FileDialog;
 #[cfg(feature = "debug_render")]
 use sdl2::keyboard::Scancode;
@@ -10,8 +12,6 @@ use gb_dbg::debugger::Debugger;
 use gb_dbg::*;
 use gb_lcd::{render, window::GBWindow};
 use gb_ppu::PPU;
-
-use std::io::Write;
 
 pub struct Memory {
     pub memory: Vec<u8>,
@@ -70,16 +70,15 @@ fn main() {
         .build();
     let mut dbg_app = Debugger::new(gbm_mem, FlowController, Disassembler);
 
-    let mut joypad: gb_joypad::Joypad;
-    if let Ok(content) = std::fs::read_to_string("./inputs.json") {
-        if let Ok(input_conf) = serde_json::from_str::<gb_joypad::Config>(&content) {
-            joypad = gb_joypad::Joypad::from_config(gb_window.sdl_window().id(), input_conf);
-        } else {
-            joypad = gb_joypad::Joypad::new(gb_window.sdl_window().id());
+    let mut joypad = match settings::load() {
+        Some(conf) => gb_joypad::Joypad::from_config(gb_window.sdl_window().id(), conf),
+        None => {
+            log::warn!("No settings found, using default input configuration");
+            let tmp = gb_joypad::Joypad::new(gb_window.sdl_window().id());
+            settings::save(tmp.get_config());
+            tmp
         }
-    } else {
-        joypad = gb_joypad::Joypad::new(gb_window.sdl_window().id());
-    }
+    };
     let mut input_window = None;
 
     #[cfg(feature = "debug_render")]
@@ -205,15 +204,7 @@ fn main() {
                             }
                         } else if let Some(ref mut input_wind) = input_window {
                             if input_wind.sdl_window().id() == window_id {
-                                if let Ok(mut setting_file) = std::fs::File::create("./inputs.json")
-                                {
-                                    let input_conf = serde_json::json!(joypad.get_config());
-                                    if write!(setting_file, "{}", input_conf.to_string()).is_err() {
-                                        log::warn!("Failed to save inputs settings");
-                                    }
-                                } else {
-                                    log::warn!("Failed to save inputs settings");
-                                }
+                                settings::save(joypad.get_config());
                                 input_window = None;
                             }
                         }
