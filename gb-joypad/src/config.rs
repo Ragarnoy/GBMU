@@ -52,9 +52,9 @@ impl<'de> Visitor<'de> for ConfigVisitor {
         let mut conf = Config {
             mapping: HashMap::with_capacity(8),
         };
-        while let Some((value, key)) = access.next_entry()? {
+        while let Some((value, key)) = access.next_entry::<_, String>()? {
             conf.mapping.insert(
-                Scancode::from_name(key)
+                Scancode::from_name(&key)
                     .ok_or_else(|| M::Error::custom(format!("Unrecognised key name: {}", key)))?,
                 value,
             );
