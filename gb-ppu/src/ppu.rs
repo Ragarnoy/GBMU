@@ -54,10 +54,6 @@ impl PPU {
         &mut self.obj_palette.1
     }
 
-    // pub fn control_mut(&mut self) -> &mut Control {
-    //     &mut self.control
-    // }
-
     pub fn compute(&mut self) {
         for j in 0..SCREEN_HEIGHT {
             for i in 0..SCREEN_WIDTH {
