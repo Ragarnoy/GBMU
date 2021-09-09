@@ -1,6 +1,6 @@
+use crate::registers;
 use anyhow::anyhow;
 use gb_dbg::dbg_interfaces::{DebugRegister, RegisterMap, RegisterValue};
-use crate::registers;
 
 pub struct Iter<'a> {
     count: u32,

@@ -1,9 +1,9 @@
 mod table;
 
-use egui::Label;
-use egui::{Color32, Ui, Vec2, CollapsingHeader};
-use crate::debugger::registers::table::RegisterTable;
 use crate::dbg_interfaces::DebugRegister;
+use crate::debugger::registers::table::RegisterTable;
+use egui::Label;
+use egui::{CollapsingHeader, Color32, Ui, Vec2};
 
 pub struct RegisterEditor<T> {
     cpu: RegisterTable<T>,
@@ -76,13 +76,12 @@ impl<T> Default for RegisterEditorBuilder<T> {
         Self {
             cpu: None,
             ppu: None,
-            io: None
+            io: None,
         }
     }
 }
 
 impl<T: DebugRegister> RegisterEditorBuilder<T> {
-
     pub fn with_cpu(mut self, cpu: T) -> Self {
         self.cpu = Some(RegisterTable::new(cpu));
         self

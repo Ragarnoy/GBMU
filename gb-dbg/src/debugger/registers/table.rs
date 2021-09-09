@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use crate::dbg_interfaces::DebugRegister;
+use std::collections::HashMap;
 
 pub struct RegisterTable<T> {
     holder: T,
@@ -7,7 +7,6 @@ pub struct RegisterTable<T> {
 }
 
 impl<T: DebugRegister> RegisterTable<T> {
-
     pub fn new(table: T) -> Self {
         let mut register_map: HashMap<String, u16> = HashMap::with_capacity(22);
         for register in table.registers() {

@@ -10,8 +10,8 @@ use gb_dbg::dbg_interfaces::RW;
 use gb_dbg::debugger::disassembler::Disassembler;
 use gb_dbg::debugger::flow_control::FlowController;
 use gb_dbg::debugger::memory::MemoryEditorBuilder;
-use gb_dbg::debugger::Debugger;
 use gb_dbg::debugger::registers::RegisterEditorBuilder;
+use gb_dbg::debugger::Debugger;
 
 pub struct DebuggerApp {
     pub debugger: Debugger<Memory, Registers>,
@@ -47,7 +47,11 @@ fn main() {
     let rega = Registers::default();
     let regb = Registers::default();
     let regc = Registers::default();
-    let regs = RegisterEditorBuilder::default().with_cpu(rega).with_ppu(regb).with_io( regc).build();
+    let regs = RegisterEditorBuilder::default()
+        .with_cpu(rega)
+        .with_ppu(regb)
+        .with_io(regc)
+        .build();
     let dgb_app = DebuggerApp {
         debugger: Debugger::new(gbm_mem, regs, FlowController, Disassembler),
     };

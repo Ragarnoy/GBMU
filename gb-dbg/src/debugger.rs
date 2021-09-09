@@ -3,12 +3,12 @@ pub mod flow_control;
 pub mod memory;
 pub mod registers;
 
-use crate::dbg_interfaces::{RW, DebugRegister};
+use crate::dbg_interfaces::{DebugRegister, RW};
 use crate::debugger::disassembler::Disassembler;
 use crate::debugger::flow_control::FlowController;
 use crate::debugger::memory::GBMemoryEditor;
-use egui::{Color32, CtxRef, Label};
 use crate::debugger::registers::RegisterEditor;
+use egui::{Color32, CtxRef, Label};
 
 pub struct Debugger<T, R> {
     memory_editor: GBMemoryEditor<T>,
