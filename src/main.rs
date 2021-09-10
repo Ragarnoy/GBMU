@@ -117,8 +117,18 @@ fn main() {
                 }
                 if ui.button("Input").clicked() && input_window.is_none() {
                     input_window = Some(
-                        GBWindow::new("GBMU Input Settings", (350, 250), true, &video_subsystem)
-                            .expect("Error while building input window"),
+                        GBWindow::new(
+                            "GBMU Input Settings",
+                            (
+                                GBWindow::dots_to_pixels(&video_subsystem, 250.0)
+                                    .expect("error while computing widow size"),
+                                GBWindow::dots_to_pixels(&video_subsystem, 250.0)
+                                    .expect("error while computing widow size"),
+                            ),
+                            false,
+                            &video_subsystem,
+                        )
+                        .expect("Error while building input window"),
                     );
                 }
             })
