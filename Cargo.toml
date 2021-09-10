@@ -26,6 +26,7 @@ gb-dbg = { path = "./gb-dbg" }
 
 [workspace]
 members = [
+  "gb-clock",
   "gb-roms",
   "gb-ppu",
   "gb-lcd",
