@@ -4,6 +4,7 @@ version = "0.0.0"
 edition = "2018"
 
 [dependencies]
+gb-bus = { path = "../gb-bus" }
 log = { version = "0.4" }
 
 [dev-dependencies]

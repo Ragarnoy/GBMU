@@ -698,6 +698,7 @@ dependencies = [
 name = "gb-clock"
 version = "0.0.0"
 dependencies = [
+ "gb-bus",
  "log",
  "simplelog",
 ]
