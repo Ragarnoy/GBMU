@@ -11,3 +11,10 @@ pub trait Ticker<B: Bus<u8> + Bus<u16>> {
     /// The behavior called T times per clock cycle.
     fn tick(&mut self, adr_bus: &mut B);
 }
+
+/// Execute X cycle depending of [Tick] type of the implementation of [Ticker]
+pub fn cycle<B: Bus<u8> + Bus<u16>>(ticker: &mut dyn Ticker<B>, adr_bus: &mut B) {
+    for _ in 0..ticker.cycle_count().into() {
+        ticker.tick(adr_bus);
+    }
+}

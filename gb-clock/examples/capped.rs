@@ -76,9 +76,8 @@ fn main() {
         let mut frames = 0;
         cpu.tick_count = 0;
         ppu.tick_count = 0;
-        let mut process_unit: Vec<&mut dyn Ticker<_>> = vec![&mut cpu, &mut ppu];
         while Instant::now() < t_stop {
-            clock.frame(&mut bus, None, &mut process_unit);
+            clock.frame(&mut bus, None, &mut cpu, &mut ppu);
             frames += 1;
         }
         log::info!(

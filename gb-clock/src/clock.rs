@@ -1,4 +1,4 @@
-use crate::{Debuger, Ticker};
+use crate::{ticker::cycle, Debuger, Ticker};
 use gb_bus::Bus;
 use std::marker::PhantomData;
 
@@ -14,12 +14,9 @@ impl<B: Bus<u8> + Bus<u16>> Clock<B> {
     pub const CYCLES_PER_FRAME: usize = 17556;
 
     /// A single clock cycle, during which each [Ticker] will tick 1 or 4 times depending on their [Tick](crate::Tick) type.
-    pub fn cycle(&mut self, adr_bus: &mut B, process_units: &mut Vec<&mut dyn Ticker<B>>) {
-        for ticker in process_units {
-            for _ in 0..ticker.cycle_count().into() {
-                ticker.tick(adr_bus);
-            }
-        }
+    pub fn cycle(&mut self, adr_bus: &mut B, cpu: &mut dyn Ticker<B>, ppu: &mut dyn Ticker<B>) {
+        cycle(cpu, adr_bus);
+        cycle(ppu, adr_bus);
         self.curr_frame_cycle += 1;
     }
 
@@ -36,13 +33,14 @@ impl<B: Bus<u8> + Bus<u16>> Clock<B> {
         &mut self,
         adr_bus: &mut B,
         dbg: Option<&dyn Debuger<B>>,
-        process_units: &mut Vec<&mut dyn Ticker<B>>,
+        cpu: &mut dyn Ticker<B>,
+        ppu: &mut dyn Ticker<B>,
     ) {
         self.curr_frame_cycle %= Self::CYCLES_PER_FRAME;
         match dbg {
             Some(dbg) => {
                 while self.curr_frame_cycle < Self::CYCLES_PER_FRAME {
-                    self.cycle(adr_bus, process_units);
+                    self.cycle(adr_bus, cpu, ppu);
                     if dbg.breakpoints(adr_bus) {
                         return;
                     }
@@ -50,7 +48,7 @@ impl<B: Bus<u8> + Bus<u16>> Clock<B> {
             }
             None => {
                 while self.curr_frame_cycle < Self::CYCLES_PER_FRAME {
-                    self.cycle(adr_bus, process_units);
+                    self.cycle(adr_bus, cpu, ppu);
                 }
             }
         }
