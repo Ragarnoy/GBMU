@@ -67,7 +67,7 @@ fn main() {
     let mut ppu = FakePPU { tick_count: 0 };
     let mut bus = FakeBus::default();
     let mut clock = Clock::default();
-    let one_sec = Duration::from_millis(1_000);
+    let one_sec = Duration::from_secs(1);
 
     log::info!("start 5s count example");
 
