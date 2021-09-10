@@ -697,6 +697,10 @@ dependencies = [
 [[package]]
 name = "gb-clock"
 version = "0.0.0"
+dependencies = [
+ "log",
+ "simplelog",
+]
 
 [[package]]
 name = "gb-cpu"
