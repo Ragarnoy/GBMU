@@ -67,7 +67,6 @@ fn main() {
     let mut bus = FakeBus::default();
     let mut clock = Clock::default();
     let one_sec = Duration::from_millis(1_000);
-    let one_frame = Duration::from_nanos(16_750_419);
 
     log::info!("start 5s count example");
 
@@ -78,10 +77,8 @@ fn main() {
         ppu.tick_count = 0;
         let mut process_unit: Vec<&mut dyn Ticker<_>> = vec![&mut cpu, &mut ppu];
         while Instant::now() < t_stop {
-            let t_stop_frame = Instant::now() + one_frame;
-            clock.frame(&mut bus, &mut process_unit);
+            clock.frame(&mut bus, None, &mut process_unit);
             frames += 1;
-            while Instant::now() < t_stop_frame {}
         }
         log::info!(
             "loop {}:\t\t{} cpu ticks,\t\t{} ppu ticks",
