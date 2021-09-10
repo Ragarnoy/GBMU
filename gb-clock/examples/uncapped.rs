@@ -79,16 +79,10 @@ fn main() {
             clock.cycle(&mut bus, &mut process_unit);
         }
         log::info!(
-            "loop {}:\t{} cpu ticks,\t\t{} ppu ticks",
+            "loop {}:\t\t{} cpu ticks,\t\t{} ppu ticks",
             l,
             cpu.tick_count,
             ppu.tick_count
-        );
-        log::info!(
-            "loop {}:\t{:.1} cpu ticks/frame,\t{:.1} ppu ticks/frame",
-            l,
-            cpu.tick_count as f64 / 59.7,
-            ppu.tick_count as f64 / 59.7
         );
         assert_eq!(cpu.tick_count * 4, ppu.tick_count);
     }
