@@ -65,7 +65,7 @@ fn main() {
     let mut cpu = FakeCPU { tick_count: 0 };
     let mut ppu = FakePPU { tick_count: 0 };
     let mut bus = FakeBus::default();
-    let clock = Clock::default();
+    let mut clock = Clock::default();
     let one_sec = Duration::from_millis(1_000);
     let one_frame = Duration::from_nanos(16_750_419);
 
