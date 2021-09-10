@@ -16,6 +16,7 @@ impl Bus<u8> for FakeBus {
         Ok(())
     }
 }
+
 impl Bus<u16> for FakeBus {
     fn read(&self, _adr: u16) -> Result<u16, gb_bus::Error> {
         Ok(0xffff)
