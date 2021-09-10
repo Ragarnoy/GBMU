@@ -42,7 +42,7 @@ impl MBC5 {
         }
     }
 
-    fn write_rom(&mut self, v: u8, addr: Box<dyn Address>) -> Result<(), Error> {
+    fn write_rom(&mut self, v: u8, addr: Box<dyn Address<Area>>) -> Result<(), Error> {
         match addr.get_address() {
             0x0000..=0x1FFF => self.regs.set_ram_enabling_state(v),
             0x2000..=0x2FFF => self.regs.set_lower_rom_number(v),
@@ -53,7 +53,7 @@ impl MBC5 {
         Ok(())
     }
 
-    fn read_rom(&self, addr: Box<dyn Address>) -> Result<u8, Error> {
+    fn read_rom(&self, addr: Box<dyn Address<Area>>) -> Result<u8, Error> {
         let address = addr.get_address();
         match address {
             0x0000..=0x3FFF => Ok(self.rom_banks[0][address]),
@@ -66,7 +66,7 @@ impl MBC5 {
         &self.rom_banks[self.regs.rom_number as usize]
     }
 
-    fn write_ram(&mut self, v: u8, addr: Box<dyn Address>) -> Result<(), Error> {
+    fn write_ram(&mut self, v: u8, addr: Box<dyn Address<Area>>) -> Result<(), Error> {
         if !self.regs.ram_enabled {
             return Err(Error::new_segfault(addr));
         }
@@ -76,7 +76,7 @@ impl MBC5 {
         Ok(())
     }
 
-    fn read_ram(&self, addr: Box<dyn Address>) -> Result<u8, Error> {
+    fn read_ram(&self, addr: Box<dyn Address<Area>>) -> Result<u8, Error> {
         if !self.regs.ram_enabled {
             return Err(Error::new_segfault(addr));
         }
@@ -94,8 +94,8 @@ impl MBC5 {
     }
 }
 
-impl FileOperation for MBC5 {
-    fn read(&self, addr: Box<dyn Address>) -> Result<u8, Error> {
+impl FileOperation<Area> for MBC5 {
+    fn read(&self, addr: Box<dyn Address<Area>>) -> Result<u8, Error> {
         match addr.area_type() {
             Area::Rom => self.read_rom(addr),
             Area::ExtRam => self.read_ram(addr),
@@ -103,7 +103,7 @@ impl FileOperation for MBC5 {
         }
     }
 
-    fn write(&mut self, v: u8, addr: Box<dyn Address>) -> Result<(), Error> {
+    fn write(&mut self, v: u8, addr: Box<dyn Address<Area>>) -> Result<(), Error> {
         match addr.area_type() {
             Area::Rom => self.write_rom(v, addr),
             Area::ExtRam => self.write_ram(v, addr),
