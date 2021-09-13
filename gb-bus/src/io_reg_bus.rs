@@ -35,6 +35,11 @@ impl FileOperation<Area> for IORegBus {
             COMMUNICATION_START..=COMMUNICATION_END => self.communication.read(Box::new(
                 Address::from_offset(IORegArea::Communication, addr, COMMUNICATION_START),
             )),
+            DIV_TIMER_START..=DIV_TIMER_END => self.div_timer.read(Box::new(Address::from_offset(
+                IORegArea::DivTimer,
+                addr,
+                DIV_TIMER_START,
+            ))),
             _ => Err(Error::BusError(addr)),
         }
     }
@@ -56,6 +61,14 @@ impl FileOperation<Area> for IORegBus {
                     IORegArea::Communication,
                     addr,
                     COMMUNICATION_START,
+                )),
+            ),
+            DIV_TIMER_START..=DIV_TIMER_END => self.div_timer.write(
+                v,
+                Box::new(Address::from_offset(
+                    IORegArea::DivTimer,
+                    addr,
+                    DIV_TIMER_START,
                 )),
             ),
             _ => Err(Error::BusError(addr)),
