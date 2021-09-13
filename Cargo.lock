@@ -540,11 +540,11 @@ checksum = "9ea835d29036a4087793836fa931b08837ad5e957da9e23886b29586fb9b6650"
 
 [[package]]
 name = "eframe"
-version = "0.13.1"
+version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d3677cb27e360092b5078c5aaae1edf4b84d900b2e5ee61e93c71c4f2574e97a"
+checksum = "5aeeebd536f1a2737661be42819ed58a7aac69a4bf061610b373467f886574e6"
 dependencies = [
- "egui",
+ "egui 0.14.2",
  "egui_glium",
  "egui_web",
  "epi",
@@ -556,17 +556,26 @@ version = "0.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "77f9b394ccacc0cccb30f6de7371038a116931aa3186acd908b9ec61f405f15c"
 dependencies = [
- "epaint",
+ "epaint 0.13.0",
+]
+
+[[package]]
+name = "egui"
+version = "0.14.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b403f29d592b5c2267279bfdf2cd3fe3ba0e7a8738d03203a6f1536e8e9d26bd"
+dependencies = [
+ "epaint 0.14.0",
 ]
 
 [[package]]
 name = "egui_glium"
-version = "0.13.1"
+version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "da94629a664a360708c91495dbae0a55c0e05acec5e05fcc6c99beabd6036036"
+checksum = "972b1882ae98f7dd2f5dcbf5efeb35448c158a8f6ba80d6cc3b8073eae1fae4f"
 dependencies = [
  "copypasta",
- "egui",
+ "egui 0.14.2",
  "epi",
  "glium",
  "webbrowser",
@@ -575,9 +584,9 @@ dependencies = [
 [[package]]
 name = "egui_memory_editor"
 version = "0.1.3"
-source = "git+https://github.com/Hirtol/egui_memory_editor#818b1234d0f2448dc15bed9e922bd2279d4691a6"
+source = "git+https://github.com/Ragarnoy/egui_memory_editor#bd73dc70127e4b533e2747aa1229be42333cc23c"
 dependencies = [
- "egui",
+ "egui 0.14.2",
 ]
 
 [[package]]
@@ -586,18 +595,18 @@ version = "0.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04b985886645edf53cdefa632d6b3fce45452a545a28d9a6b87f303b322f384c"
 dependencies = [
- "egui",
+ "egui 0.13.1",
  "gl",
  "sdl2",
 ]
 
 [[package]]
 name = "egui_web"
-version = "0.13.0"
+version = "0.14.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ce8d91b33af1d26ba3f7b22819e7bfdcb596e2d3a382eacec2363960eacdf643"
+checksum = "a70a7eee03a31589660cbfefa5ac529b9740b008d94075c46fd29f80abfad9de"
 dependencies = [
- "egui",
+ "egui 0.14.2",
  "epi",
  "js-sys",
  "wasm-bindgen",
@@ -610,6 +619,12 @@ name = "emath"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "80eea7508c08a7b4e2a041adcdca6f400d8606622c6bb980ecbbdc5f1aff9a4c"
+
+[[package]]
+name = "emath"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cca5179aa9d15128cebb79bb56dda73a79cc66b402056ff19a992e54b365e15c"
 
 [[package]]
 name = "encoding_rs"
@@ -629,17 +644,30 @@ dependencies = [
  "ab_glyph",
  "ahash",
  "atomic_refcell",
- "emath",
+ "emath 0.13.0",
+ "ordered-float",
+]
+
+[[package]]
+name = "epaint"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "136e7d88da926182bcfdb8217137dd347dfe5dc03b8988eaba3ef8becf83394a"
+dependencies = [
+ "ab_glyph",
+ "ahash",
+ "atomic_refcell",
+ "emath 0.14.0",
  "ordered-float",
 ]
 
 [[package]]
 name = "epi"
-version = "0.13.0"
+version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4b04a4a240553fa9254d0569cf3aa22d9dbe77a66025e1f04b0785744629c9ec"
+checksum = "e3c033c9b4d921566a98b8831b63af5ba2a0ad7ffa62d22b897698f36c22a28a"
 dependencies = [
- "egui",
+ "egui 0.14.2",
 ]
 
 [[package]]
@@ -700,11 +728,11 @@ version = "0.1.0"
 
 [[package]]
 name = "gb-dbg"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "anyhow",
  "eframe",
- "egui",
+ "egui 0.14.2",
  "egui_memory_editor",
 ]
 
@@ -712,7 +740,7 @@ dependencies = [
 name = "gb-lcd"
 version = "0.1.0"
 dependencies = [
- "egui",
+ "egui 0.13.1",
  "egui_sdl2_gl",
  "gl",
  "sdl2",
@@ -722,7 +750,7 @@ dependencies = [
 name = "gb-ppu"
 version = "0.1.0"
 dependencies = [
- "egui",
+ "egui 0.13.1",
  "gb-lcd",
  "modular-bitfield",
  "sdl2",
@@ -750,7 +778,7 @@ dependencies = [
 name = "gbmu"
 version = "0.1.0"
 dependencies = [
- "egui",
+ "egui 0.13.1",
  "gb-dbg",
  "gb-lcd",
  "gb-ppu",
