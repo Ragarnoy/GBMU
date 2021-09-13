@@ -63,6 +63,11 @@ impl FileOperation<Area> for IORegBus {
                 addr,
                 BOOT_ROM_START,
             ))),
+            VRAM_DMA_START..=VRAM_DMA_END => self.vram_dma.read(Box::new(Address::from_offset(
+                IORegArea::VramDma,
+                addr,
+                VRAM_DMA_START,
+            ))),
             _ => Err(Error::BusError(addr)),
         }
     }
@@ -124,6 +129,14 @@ impl FileOperation<Area> for IORegBus {
                     IORegArea::BootRom,
                     addr,
                     BOOT_ROM_START,
+                )),
+            ),
+            VRAM_DMA_START..=VRAM_DMA_END => self.vram_dma.write(
+                v,
+                Box::new(Address::from_offset(
+                    IORegArea::VramDma,
+                    addr,
+                    VRAM_BANK_START,
                 )),
             ),
             _ => Err(Error::BusError(addr)),
