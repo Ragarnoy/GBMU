@@ -32,6 +32,9 @@ impl FileOperation<Area> for IORegBus {
                 addr,
                 COMMUNICATION_START,
             ))),
+            COMMUNICATION_START..=COMMUNICATION_END => self.communication.read(Box::new(
+                Address::from_offset(IORegArea::Communication, addr, COMMUNICATION_START),
+            )),
             _ => Err(Error::BusError(addr)),
         }
     }
@@ -39,10 +42,18 @@ impl FileOperation<Area> for IORegBus {
     fn write(&mut self, v: u8, address: Box<dyn PseudoAddress<Area>>) -> Result<(), Error> {
         let addr: u16 = address.into();
         match addr {
-            COMMUNICATION_START => self.controller.write(
+            CONTROLLER_START => self.controller.write(
                 v,
                 Box::new(Address::from_offset(
                     IORegArea::Controller,
+                    addr,
+                    CONTROLLER_START,
+                )),
+            ),
+            COMMUNICATION_START..=COMMUNICATION_END => self.communication.write(
+                v,
+                Box::new(Address::from_offset(
+                    IORegArea::Communication,
                     addr,
                     COMMUNICATION_START,
                 )),
