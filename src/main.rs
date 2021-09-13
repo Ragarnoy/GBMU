@@ -1,3 +1,5 @@
+mod settings;
+
 use rfd::FileDialog;
 #[cfg(feature = "debug_render")]
 use sdl2::keyboard::Scancode;
@@ -66,6 +68,17 @@ fn main() {
     // Regression for now
     // let mut dbg_app = Debugger::new(gbm_mem, FlowController, Disassembler);
 
+    let mut joypad = match settings::load() {
+        Some(conf) => gb_joypad::Joypad::from_config(gb_window.sdl_window().id(), conf),
+        None => {
+            log::warn!("No settings found, using default input configuration");
+            let tmp = gb_joypad::Joypad::new(gb_window.sdl_window().id());
+            settings::save(tmp.get_config());
+            tmp
+        }
+    };
+    let mut input_window = None;
+
     #[cfg(feature = "debug_render")]
     let mut debug = false;
 
@@ -100,6 +113,22 @@ fn main() {
                             .expect("Error while building debug window"),
                     );
                 }
+                if ui.button("Input").clicked() && input_window.is_none() {
+                    input_window = Some(
+                        GBWindow::new(
+                            "GBMU Input Settings",
+                            (
+                                GBWindow::dots_to_pixels(&video_subsystem, 250.0)
+                                    .expect("error while computing widow size"),
+                                GBWindow::dots_to_pixels(&video_subsystem, 250.0)
+                                    .expect("error while computing widow size"),
+                            ),
+                            false,
+                            &video_subsystem,
+                        )
+                        .expect("Error while building input window"),
+                    );
+                }
             })
         });
         gb_window
@@ -117,7 +146,18 @@ fn main() {
                 .expect("Fail at the end for the debug window");
         }
 
+        if let Some(ref mut input_wind) = input_window {
+            input_wind
+                .start_frame()
+                .expect("Fail at the start for the input window");
+            joypad.settings(input_wind.egui_ctx());
+            input_wind
+                .end_frame()
+                .expect("Fail at the end for the input window");
+        }
+
         for event in event_pump.poll_iter() {
+            joypad.send_event(&event);
             match event {
                 Event::Quit { .. }
                 | Event::KeyDown {
@@ -156,6 +196,12 @@ fn main() {
                                     .resize((width as u32, height as u32), &video_subsystem)
                                     .expect("Fail to resize debug window");
                             }
+                        } else if let Some(ref mut input_wind) = input_window {
+                            if input_wind.sdl_window().id() == window_id {
+                                input_wind
+                                    .resize((width as u32, height as u32), &video_subsystem)
+                                    .expect("Fail to resize input window");
+                            }
                         }
                     }
                     sdl2::event::WindowEvent::Close => {
@@ -165,6 +211,11 @@ fn main() {
                             if dbg_wind.sdl_window().id() == window_id {
                                 debug_window = None;
                             }
+                        } else if let Some(ref mut input_wind) = input_window {
+                            if input_wind.sdl_window().id() == window_id {
+                                settings::save(joypad.get_config());
+                                input_window = None;
+                            }
                         }
                     }
                     _ => {}
@@ -173,6 +224,9 @@ fn main() {
                     if !gb_window.send_event(&event, &sdl_context) {
                         if let Some(ref mut dbg_wind) = debug_window {
                             dbg_wind.send_event(&event, &sdl_context);
+                        }
+                        if let Some(ref mut input_wind) = input_window {
+                            input_wind.send_event(&event, &sdl_context);
                         }
                     }
                 }
