@@ -1,8 +1,10 @@
 use egui::{Color32, Label, Ui};
 
-pub struct Disassembler;
+pub struct DisassemblyEditor {
 
-impl Disassembler {
+}
+
+impl DisassemblyEditor {
     pub fn draw(&self, ui: &mut Ui) {
         ui.label(Label::new("Disassembler").text_color(Color32::WHITE));
         egui::CollapsingHeader::new("🛠 Options")

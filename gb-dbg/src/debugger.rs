@@ -4,7 +4,7 @@ pub mod memory;
 pub mod registers;
 
 use crate::dbg_interfaces::{DebugRegister, RW};
-use crate::debugger::disassembler::Disassembler;
+use crate::debugger::disassembler::DisassemblyEditor;
 use crate::debugger::flow_control::FlowController;
 use crate::debugger::memory::GBMemoryEditor;
 use crate::debugger::registers::RegisterEditor;
@@ -14,7 +14,7 @@ pub struct Debugger<T, R> {
     memory_editor: GBMemoryEditor<T>,
     register_editor: RegisterEditor<R>,
     flow_controller: FlowController,
-    disassembler: Disassembler,
+    disassembler: DisassemblyEditor,
 }
 
 impl<T: RW, R: DebugRegister> Debugger<T, R> {
@@ -22,7 +22,7 @@ impl<T: RW, R: DebugRegister> Debugger<T, R> {
         memory_editor: GBMemoryEditor<T>,
         register_editor: RegisterEditor<R>,
         flow_controller: FlowController,
-        disassembler: Disassembler,
+        disassembler: DisassemblyEditor,
     ) -> Self {
         Self {
             memory_editor,

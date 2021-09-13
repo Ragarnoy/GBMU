@@ -7,7 +7,7 @@ use eframe::egui::CtxRef;
 use eframe::epi::*;
 use egui::Vec2;
 use gb_dbg::dbg_interfaces::RW;
-use gb_dbg::debugger::disassembler::Disassembler;
+use gb_dbg::debugger::disassembler::DisassemblyEditor;
 use gb_dbg::debugger::flow_control::FlowController;
 use gb_dbg::debugger::memory::MemoryEditorBuilder;
 use gb_dbg::debugger::registers::RegisterEditorBuilder;
@@ -53,7 +53,7 @@ fn main() {
         .with_io(regc)
         .build();
     let dgb_app = DebuggerApp {
-        debugger: Debugger::new(gbm_mem, regs, FlowController, Disassembler),
+        debugger: Debugger::new(gbm_mem, regs, FlowController, DisassemblyEditor),
     };
     eframe::run_native(Box::new(dgb_app), eframe::NativeOptions::default())
 }
