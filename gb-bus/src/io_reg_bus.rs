@@ -40,6 +40,11 @@ impl FileOperation<Area> for IORegBus {
                 addr,
                 DIV_TIMER_START,
             ))),
+            SOUND_START..=SOUND_END => self.sound.read(Box::new(Address::from_offset(
+                IORegArea::Sound,
+                addr,
+                SOUND_START,
+            ))),
             _ => Err(Error::BusError(addr)),
         }
     }
@@ -70,6 +75,10 @@ impl FileOperation<Area> for IORegBus {
                     addr,
                     DIV_TIMER_START,
                 )),
+            ),
+            SOUND_START..=SOUND_END => self.sound.write(
+                v,
+                Box::new(Address::from_offset(IORegArea::Sound, addr, SOUND_START)),
             ),
             _ => Err(Error::BusError(addr)),
         }
