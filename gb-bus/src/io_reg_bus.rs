@@ -45,6 +45,9 @@ impl FileOperation<Area> for IORegBus {
                 addr,
                 SOUND_START,
             ))),
+            WAVEFORM_RAM_START..=WAVEFORM_RAM_END => self.waveform_ram.read(Box::new(
+                Address::from_offset(IORegArea::WaveformRam, addr, WAVEFORM_RAM_START),
+            )),
             _ => Err(Error::BusError(addr)),
         }
     }
@@ -79,6 +82,14 @@ impl FileOperation<Area> for IORegBus {
             SOUND_START..=SOUND_END => self.sound.write(
                 v,
                 Box::new(Address::from_offset(IORegArea::Sound, addr, SOUND_START)),
+            ),
+            WAVEFORM_RAM_START..=WAVEFORM_RAM_END => self.waveform_ram.write(
+                v,
+                Box::new(Address::from_offset(
+                    IORegArea::WaveformRam,
+                    addr,
+                    WAVEFORM_RAM_START,
+                )),
             ),
             _ => Err(Error::BusError(addr)),
         }
