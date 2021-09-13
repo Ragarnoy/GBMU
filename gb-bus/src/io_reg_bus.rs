@@ -53,6 +53,11 @@ impl FileOperation<Area> for IORegBus {
                 addr,
                 LCD_START,
             ))),
+            VRAM_BANK_START => self.vram_bank.read(Box::new(Address::from_offset(
+                IORegArea::VRamBank,
+                addr,
+                VRAM_BANK_START,
+            ))),
             _ => Err(Error::BusError(addr)),
         }
     }
@@ -99,6 +104,14 @@ impl FileOperation<Area> for IORegBus {
             LCD_START..=LCD_END => self.lcd.write(
                 v,
                 Box::new(Address::from_offset(IORegArea::Lcd, addr, LCD_START)),
+            ),
+            VRAM_BANK_START => self.vram_bank.write(
+                v,
+                Box::new(Address::from_offset(
+                    IORegArea::VRamBank,
+                    addr,
+                    VRAM_BANK_START,
+                )),
             ),
             _ => Err(Error::BusError(addr)),
         }
