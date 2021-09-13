@@ -42,7 +42,7 @@ impl MBC1 {
         Ok(ctl)
     }
 
-    fn write_rom(&mut self, v: u8, addr: Box<dyn Address>) -> Result<(), Error> {
+    fn write_rom(&mut self, v: u8, addr: Box<dyn Address<Area>>) -> Result<(), Error> {
         match addr.get_address() {
             0x0000..=0x1fff => self.regs.ram_enabled = (v & 0xf) == 0xa,
             0x2000..=0x3fff => {
@@ -64,7 +64,7 @@ impl MBC1 {
         Ok(())
     }
 
-    fn read_rom(&self, addr: Box<dyn Address>) -> Result<u8, Error> {
+    fn read_rom(&self, addr: Box<dyn Address<Area>>) -> Result<u8, Error> {
         let address = addr.get_address();
         let root_bank = address < 0x3fff;
         let rom = self.get_selected_rom(root_bank);
@@ -77,7 +77,7 @@ impl MBC1 {
         }
     }
 
-    fn write_ram(&mut self, v: u8, addr: Box<dyn Address>) -> Result<(), Error> {
+    fn write_ram(&mut self, v: u8, addr: Box<dyn Address<Area>>) -> Result<(), Error> {
         if !self.regs.ram_enabled {
             return Err(Error::new_segfault(addr));
         }
@@ -87,7 +87,7 @@ impl MBC1 {
         Ok(())
     }
 
-    fn read_ram(&self, addr: Box<dyn Address>) -> Result<u8, Error> {
+    fn read_ram(&self, addr: Box<dyn Address<Area>>) -> Result<u8, Error> {
         if !self.regs.ram_enabled {
             return Err(Error::new_segfault(addr));
         }
@@ -154,8 +154,8 @@ impl MBC1 {
     }
 }
 
-impl FileOperation for MBC1 {
-    fn write(&mut self, v: u8, addr: Box<dyn Address>) -> Result<(), Error> {
+impl FileOperation<Area> for MBC1 {
+    fn write(&mut self, v: u8, addr: Box<dyn Address<Area>>) -> Result<(), Error> {
         match addr.area_type() {
             Area::Rom => self.write_rom(v, addr),
             Area::Ram => self.write_ram(v, addr),
@@ -163,7 +163,7 @@ impl FileOperation for MBC1 {
         }
     }
 
-    fn read(&self, addr: Box<dyn Address>) -> Result<u8, Error> {
+    fn read(&self, addr: Box<dyn Address<Area>>) -> Result<u8, Error> {
         match addr.area_type() {
             Area::Rom => self.read_rom(addr),
             Area::Ram => self.read_ram(addr),
