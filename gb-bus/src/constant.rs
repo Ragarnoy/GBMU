@@ -1,5 +1,3 @@
-pub struct Zone(u16, u16);
-
 pub const BIOS_START: u16 = 0x0000;
 pub const BIOS_STOP: u16 = 0x00ff;
 pub const ROM_START: u16 = 0x0000;
