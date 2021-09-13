@@ -68,6 +68,9 @@ impl FileOperation<Area> for IORegBus {
                 addr,
                 VRAM_DMA_START,
             ))),
+            BG_OBJ_PALETTES_START..=BG_OBJ_PALETTES_END => self.bg_obj_palettes.read(Box::new(
+                Address::from_offset(IORegArea::BgObjPalettes, addr, BG_OBJ_PALETTES_START),
+            )),
             _ => Err(Error::BusError(addr)),
         }
     }
@@ -137,6 +140,14 @@ impl FileOperation<Area> for IORegBus {
                     IORegArea::VramDma,
                     addr,
                     VRAM_BANK_START,
+                )),
+            ),
+            BG_OBJ_PALETTES_START..=BG_OBJ_PALETTES_END => self.bg_obj_palettes.write(
+                v,
+                Box::new(Address::from_offset(
+                    IORegArea::BgObjPalettes,
+                    addr,
+                    BG_OBJ_PALETTES_START,
                 )),
             ),
             _ => Err(Error::BusError(addr)),
