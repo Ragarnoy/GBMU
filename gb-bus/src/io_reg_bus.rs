@@ -48,6 +48,11 @@ impl FileOperation<Area> for IORegBus {
             WAVEFORM_RAM_START..=WAVEFORM_RAM_END => self.waveform_ram.read(Box::new(
                 Address::from_offset(IORegArea::WaveformRam, addr, WAVEFORM_RAM_START),
             )),
+            LCD_START..=LCD_END => self.lcd.read(Box::new(Address::from_offset(
+                IORegArea::Lcd,
+                addr,
+                LCD_START,
+            ))),
             _ => Err(Error::BusError(addr)),
         }
     }
@@ -90,6 +95,10 @@ impl FileOperation<Area> for IORegBus {
                     addr,
                     WAVEFORM_RAM_START,
                 )),
+            ),
+            LCD_START..=LCD_END => self.lcd.write(
+                v,
+                Box::new(Address::from_offset(IORegArea::Lcd, addr, LCD_START)),
             ),
             _ => Err(Error::BusError(addr)),
         }
