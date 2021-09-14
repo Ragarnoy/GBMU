@@ -1,10 +1,11 @@
 use crate::registers::Registers;
-use gb_bus::AddressBus;
+use gb_bus::{AddressBus, Bus};
 use gb_clock::Ticker;
 use gb_roms::{Opcode, OpcodeGenerator};
 
+#[derive(Default)]
 pub struct Cpu {
-    _registers: Registers,
+    registers: Registers,
 }
 
 impl Cpu {
@@ -31,12 +32,12 @@ impl Ticker<AddressBus> for Cpu {
 }
 
 struct CpuIterator<'a> {
-    cpu: &'a Cpu,
-    addr_bus: &'a AddressBus,
+    cpu: &'a mut Cpu,
+    addr_bus: &'a mut AddressBus,
 }
 
 impl<'a> CpuIterator<'a> {
-    fn new(cpu: &'a Cpu, addr_bus: &'a AddressBus) -> Self {
+    fn new(cpu: &'a mut Cpu, addr_bus: &'a mut AddressBus) -> Self {
         CpuIterator { cpu, addr_bus }
     }
 }
@@ -45,6 +46,15 @@ impl<'a> Iterator for CpuIterator<'a> {
     type Item = u8;
 
     fn next(&mut self) -> Option<Self::Item> {
-        Some(42)
+        let pc = self.cpu.registers.pc;
+        let res: Result<u8, gb_bus::Error> = self.addr_bus.read(pc);
+        self.cpu.registers.pc += 1;
+        res.map_or_else(
+            |e| {
+                log::warn!("address bus error: {:?}", e);
+                None
+            },
+            |byte| Some(byte),
+        )
     }
 }
