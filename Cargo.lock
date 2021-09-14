@@ -740,6 +740,12 @@ dependencies = [
 [[package]]
 name = "gb-cpu"
 version = "0.1.0"
+dependencies = [
+ "gb-bus",
+ "gb-clock",
+ "gb-roms",
+ "log",
+]
 
 [[package]]
 name = "gb-dbg"
@@ -755,7 +761,7 @@ dependencies = [
 name = "gb-joypad"
 version = "0.0.0"
 dependencies = [
- "egui",
+ "egui 0.13.1",
  "log",
  "modular-bitfield",
  "sdl2",
