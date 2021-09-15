@@ -9,7 +9,11 @@ pub struct Cpu {
 }
 
 impl Cpu {
-    fn execute_opcode(&mut self, opc: Opcode, addr_bus: &mut AddressBus) {}
+    fn execute_opcode(&mut self, opc: Opcode, _addr_bus: &mut AddressBus) {
+        match opc {
+            _ => log::error!("Unhandled opcode: {:?}", opc),
+        }
+    }
 }
 
 impl Ticker<AddressBus> for Cpu {
