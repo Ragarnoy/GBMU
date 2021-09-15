@@ -18,7 +18,7 @@ macro_rules! register_special {
     };
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Register {
     Bits8(Register8Bits),
     Bits16(Register16Bits),
@@ -55,7 +55,7 @@ impl From<RegisterSpecial> for Register {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Register8Bits {
     /// Accumulator 8-bits register
     A,
@@ -95,7 +95,7 @@ fn test_register8bits_display() {
     assert_eq!(Register8Bits::L.to_string(), "L");
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum RegisterSpecial {
     /// Program Counter 16-bits register
     PC,
@@ -119,7 +119,7 @@ fn test_register_special_display() {
     assert_eq!(RegisterSpecial::SP.to_string(), "SP");
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Register16Bits {
     AF,
     BC,
@@ -146,7 +146,7 @@ fn test_register16bits_display() {
     assert_eq!(Register16Bits::HL.to_string(), "HL");
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum RegisterFlag {
     /// Zero flag
     /// This flag is set when :

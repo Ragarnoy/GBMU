@@ -1,7 +1,7 @@
 use super::register::{Register, Register16Bits, Register8Bits};
 use std::fmt;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Opcode {
     /// jump to addr
     /// Timing:
@@ -424,7 +424,7 @@ fn test_display_opcode() {
     );
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Store {
     /// Register Id
     Register(Register),
@@ -484,7 +484,7 @@ fn test_store_display() {
     assert_eq!(Store::Indirect16(0x3a).to_string(), "(3a)");
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Value {
     Register(Register),
     IndirectReg16(Register16Bits),
