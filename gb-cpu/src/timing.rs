@@ -6,8 +6,6 @@ pub trait Timing {
 
 impl Timing for Opcode {
     fn timing(&self) -> usize {
-        match self {
-            _ => unimplemented!("timing missing for {:?}", self),
-        }
+        unimplemented!("timing missing for {:?}", self);
     }
 }

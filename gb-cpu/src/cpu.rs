@@ -53,7 +53,7 @@ impl Ticker<AddressBus> for Cpu {
     fn tick(&mut self, addr_bus: &mut AddressBus) {
         if let Some(action) = self.current_action.as_mut() {
             if action.timeout_exec == 0 {
-                let opc = action.opcode.clone();
+                let opc = action.opcode;
                 self.execute_opcode(opc, addr_bus);
                 self.current_action = None;
             } else {
