@@ -10,9 +10,7 @@ pub struct Cpu {
 
 impl Cpu {
     fn execute_opcode(&mut self, opc: Opcode, _addr_bus: &mut AddressBus) {
-        match opc {
-            _ => log::error!("Unhandled opcode: {:?}", opc),
-        }
+        log::error!("Unhandled opcode: {:?}", opc);
     }
 }
 
@@ -58,7 +56,7 @@ impl<'a> Iterator for CpuIterator<'a> {
                 log::warn!("address bus error: {:?}", e);
                 None
             },
-            |byte| Some(byte),
+            Some,
         )
     }
 }
