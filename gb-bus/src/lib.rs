@@ -6,6 +6,7 @@ pub mod error;
 pub mod file_operation;
 pub mod generic;
 pub mod io_reg_area;
+mod io_reg_bus;
 pub mod io_reg_constant;
 
 pub use address_bus::AddressBus;
