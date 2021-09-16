@@ -12,6 +12,8 @@ Each `action` take some cycle to execute.
 | internal | internal computation | 0/1              |
 | write    | write data           | 1                |
 
+PS: `internal` action may take no time on branch decision (example: jump on condition) when the decision is not true
+
 ## Examples
 
 ### LD B,u8
