@@ -1,6 +1,9 @@
 use crate::registers::Registers;
 use gb_bus::Bus;
 
+mod list;
+mod toolkit;
+
 /// Microcode action, their role is to execute one step of an Opcode
 /// Each Actions take at most 1 `M-Cycle`
 pub type Action<B: Bus<u8>> =
