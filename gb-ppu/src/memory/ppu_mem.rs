@@ -1,6 +1,6 @@
 use super::{Oam, Vram};
 use crate::error::{PPUError, PPUResult};
-use gb_bus::{Address, Area, Error, FileOperation};
+use gb_bus::{Address, Area, Error, FileOperation, IORegArea};
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -102,6 +102,30 @@ impl FileOperation<Area> for PPUMem {
                     Ok(())
                 }
             },
+            _ => Err(Error::SegmentationFault(addr.into())),
+        }
+    }
+}
+
+impl FileOperation<IORegArea> for PPUMem {
+    fn read(&self, addr: Box<dyn Address<IORegArea>>) -> Result<u8, Error> {
+        log::warn!("Unimplemented ppu registers read");
+        match addr.area_type() {
+            IORegArea::Lcd => Ok(UNDEFINED_VALUE),
+            IORegArea::VRamBank => Ok(UNDEFINED_VALUE),
+            IORegArea::VramDma => Ok(UNDEFINED_VALUE),
+            IORegArea::BgObjPalettes => Ok(UNDEFINED_VALUE),
+            _ => Err(Error::SegmentationFault(addr.into())),
+        }
+    }
+
+    fn write(&mut self, _v: u8, addr: Box<dyn Address<IORegArea>>) -> Result<(), Error> {
+        log::warn!("Unimplemented ppu registers write");
+        match addr.area_type() {
+            IORegArea::Lcd => Ok(()),
+            IORegArea::VRamBank => Ok(()),
+            IORegArea::VramDma => Ok(()),
+            IORegArea::BgObjPalettes => Ok(()),
             _ => Err(Error::SegmentationFault(addr.into())),
         }
     }
