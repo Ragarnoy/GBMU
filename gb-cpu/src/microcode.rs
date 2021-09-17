@@ -1,7 +1,7 @@
 use crate::registers::Registers;
 use gb_bus::Bus;
 
-mod list;
+pub mod list;
 mod toolkit;
 
 /// Microcode action, their role is to execute one step of an Opcode
