@@ -24,3 +24,5 @@ const OBJECT_LIST_PER_LINE: usize = 8;
 pub const OBJECT_LIST_RENDER_WIDTH: usize = OBJECT_LIST_PER_LINE * 8;
 pub const OBJECT_LIST_RENDER_HEIGHT: usize =
     (memory::Oam::OBJECT_COUNT / OBJECT_LIST_PER_LINE) * 16;
+
+const UNDEFINED_VALUE: u8 = 0xFF;
