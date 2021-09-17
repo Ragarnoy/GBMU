@@ -100,4 +100,37 @@ pub enum Opcode {
     LdL8 = 0x2e,
     /// `CPL`: flip all bits of `A`, 1m
     Cpl = 0x2f,
+
+    /// `JR NC, i8`: relative jump to `i8` when `Carry` is not set, 2-3m
+    JrNC8 = 0x30,
+    /// `LD SP, u16`: load `u16` into `SP`, 3m
+    LdSP16 = 0x31,
+    /// `LDD (HL), A`: load `A` into `HL` then decrement `HL`, 2m
+    LddHLA = 0x32,
+    /// `INC SP`: increment `SP`, 2m
+    IncSP = 0x33,
+    /// `INC (HL)`: increment `(HL)`, 3m
+    IncHLind = 0x34,
+    /// `DEC (HL)`: decrement `(HL)`, 3m
+    DecHLind = 0x35,
+    /// `LD (HL), u8`: load `u8` into `(HL)`, 3m
+    LdHL8ind = 0x36,
+    /// `SCF`: set `Carry`, 1m
+    Scf = 0x37,
+    /// `JR C, i8`: relative jump to `i8` when `Carry`, 2-3m
+    JrC8 = 0x38,
+    /// `ADD HL, SP`: add `SP` to `HL`, 2m
+    AddHLSP = 0x39,
+    /// `LDD A, (HL)`: load `(HL)` into `A` then decrement `HL`, 2m
+    LddAHL = 0x3a,
+    /// `DEC SP`: decrement `SP`, 2m
+    DecSP = 0x3b,
+    /// `INC A`: increment `A`, 1m
+    IncA = 0x3c,
+    /// `DEC A`: decrement `A`, 1m
+    DecA = 0x3d,
+    /// `LD A, u8`: load `u8` into `A`, 2m
+    LdA8 = 0x3e,
+    /// `CCF`: toggle `Carry`, 1m
+    Ccf = 0x3f,
 }
