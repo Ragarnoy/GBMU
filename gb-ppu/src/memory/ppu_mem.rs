@@ -17,7 +17,7 @@ pub struct PPUMem {
 impl PPUMem {
     /// Build a [PPUMem] from references counters of Vram and Oam.
     ///
-    /// This function is used by [PPU.memory()](crate::PPU::memory), you should not need to call this constructor it yourself.
+    /// This function is used by [PPU.memory()](crate::PPU::memory), you should not need to call this constructor yourself.
     pub fn new(vram: Rc<RefCell<Vram>>, oam: Rc<RefCell<Oam>>) -> Self {
         PPUMem { vram, oam }
     }
@@ -56,6 +56,7 @@ impl PPUMem {
 }
 
 impl FileOperation<Area> for PPUMem {
+    /// Read a value from memory. If the concerned memory area is currently locked an undefined value is returned.
     fn read(&self, addr: Box<dyn Address<Area>>) -> Result<u8, Error> {
         match addr.area_type() {
             Area::Vram => match self.vram.try_borrow() {
@@ -80,6 +81,7 @@ impl FileOperation<Area> for PPUMem {
         }
     }
 
+    /// Write value into memory. If the concerned memory area is currently locked, nothing is done.
     fn write(&mut self, v: u8, addr: Box<dyn Address<Area>>) -> Result<(), Error> {
         match addr.area_type() {
             Area::Vram => match self.vram.try_borrow_mut() {
