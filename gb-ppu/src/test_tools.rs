@@ -25,7 +25,7 @@ impl TestAddress {
     }
 }
 
-impl Address for TestAddress {
+impl Address<Area> for TestAddress {
     fn get_address(&self) -> usize {
         self.relative as usize
     }

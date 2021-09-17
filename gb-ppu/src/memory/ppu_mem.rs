@@ -55,8 +55,8 @@ impl PPUMem {
     }
 }
 
-impl FileOperation for PPUMem {
-    fn read(&self, addr: Box<dyn Address>) -> Result<u8, Error> {
+impl FileOperation<Area> for PPUMem {
+    fn read(&self, addr: Box<dyn Address<Area>>) -> Result<u8, Error> {
         match addr.area_type() {
             Area::Vram => match self.vram.try_borrow() {
                 Ok(vram) => vram
@@ -80,7 +80,7 @@ impl FileOperation for PPUMem {
         }
     }
 
-    fn write(&mut self, v: u8, addr: Box<dyn Address>) -> Result<(), Error> {
+    fn write(&mut self, v: u8, addr: Box<dyn Address<Area>>) -> Result<(), Error> {
         match addr.area_type() {
             Area::Vram => match self.vram.try_borrow_mut() {
                 Ok(mut vram) => vram
