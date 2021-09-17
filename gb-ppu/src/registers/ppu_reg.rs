@@ -1,4 +1,4 @@
-use super::{Control, Register, RegisterArray, Scrolling, Stat};
+use super::{Control, PalettesMono, Register, RegisterArray, Scrolling, Stat};
 use crate::UNDEFINED_VALUE;
 use gb_bus::{Address, Error, FileOperation, IORegArea};
 use std::cell::RefCell;
@@ -8,6 +8,7 @@ pub struct PPURegisters {
     control: Rc<RefCell<Control>>,
     stat: Rc<RefCell<Stat>>,
     scrolling: Rc<RefCell<Scrolling>>,
+    pal_mono: Rc<RefCell<PalettesMono>>,
 }
 
 fn read_register_value(register: &Rc<RefCell<impl Register>>) -> u8 {
@@ -63,6 +64,7 @@ impl FileOperation<IORegArea> for PPURegisters {
                 0x00 => Ok(read_register_value(&self.control)),
                 0x01 => Ok(read_register_value(&self.stat)),
                 pos @ 0x02..=0x05 => Ok(read_register_value_at(&self.scrolling, pos - 0x02)),
+                pos @ 0x07..=0x09 => Ok(read_register_value_at(&self.pal_mono, pos - 0x07)),
                 _ => Ok(UNDEFINED_VALUE),
             },
             IORegArea::VRamBank => Ok(UNDEFINED_VALUE),
@@ -80,6 +82,7 @@ impl FileOperation<IORegArea> for PPURegisters {
                     0x00 => write_register_value(&self.control, v),
                     0x01 => write_register_value(&self.stat, v),
                     pos @ 0x02..=0x05 => write_register_value_at(&self.scrolling, pos - 0x02, v),
+                    pos @ 0x07..=0x09 => write_register_value_at(&self.pal_mono, pos - 0x07, v),
                     _ => {}
                 };
                 Ok(())

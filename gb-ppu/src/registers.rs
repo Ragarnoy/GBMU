@@ -1,11 +1,13 @@
 mod control;
 mod palette;
+mod palettes_mono;
 mod ppu_reg;
 mod scrolling;
 mod stat;
 
 pub use control::Control;
 pub use palette::Palette;
+pub use palettes_mono::PalettesMono;
 pub use ppu_reg::PPURegisters;
 pub use scrolling::Scrolling;
 pub use stat::Stat;
