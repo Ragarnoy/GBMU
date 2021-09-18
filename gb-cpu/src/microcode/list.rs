@@ -133,4 +133,136 @@ pub enum Opcode {
     LdA8 = 0x3e,
     /// `CCF`: toggle `Carry`, 1m
     Ccf = 0x3f,
+
+    /// `LD B, B`: load `B` into `B`, 1m
+    LdBB = 0x40,
+    /// `LD B, C`: load `C` into `B`, 1m
+    LdBC = 0x41,
+    /// `LD B, D`: load `D` into `B`, 1m
+    LdBD = 0x42,
+    /// `LD B, E`: load `E` into `B`, 1m
+    LdBE = 0x43,
+    /// `LD B, H`: load `H` into `B`, 1m
+    LdBH = 0x44,
+    /// `LD B, L`: load `L` into `B`, 1m
+    LdBL = 0x45,
+    /// `LD B, (HL)`: load `(HL)` into `B`, 2m
+    LdBHL = 0x46,
+    /// `LD B, A`: load `A` into `B`, 1m
+    LdBA = 0x47,
+    /// `LD C, B`: load `B` into `C`, 1m
+    LdCB = 0x48,
+    /// `LD C, C`: load `C` into `C`, 1m
+    LdCC = 0x49,
+    /// `LD C, D`: load `D` into `C`, 1m
+    LdCD = 0x4a,
+    /// `LD C, E`: load `E` into `C`, 1m
+    LdCE = 0x4b,
+    /// `LD C, H`: load `H` into `C`, 1m
+    LdCH = 0x4c,
+    /// `LD C, L`: load `L` into `C`, 1m
+    LdCL = 0x4d,
+    /// `LD C, (HL)`: load `(HL)` into `C`, 2m
+    LdCHL = 0x4e,
+    /// `LD C, A`: load `A` into `C`, 1m
+    LdCA = 0x4f,
+
+    /// `LD D, B`: load `B` into `D`, 1m
+    LdDB = 0x50,
+    /// `LD D, C`: load `C` into `D`, 1m
+    LdDC = 0x51,
+    /// `LD D, D`: load `D` into `D`, 1m
+    LdDD = 0x52,
+    /// `LD D, E`: load `E` into `D`, 1m
+    LdDE = 0x53,
+    /// `LD D, H`: load `H` into `D`, 1m
+    LdDH = 0x54,
+    /// `LD D, L`: load `L` into `D`, 1m
+    LdDL = 0x55,
+    /// `LD D, (HL)`: load `(HL)` into `D`, 2m
+    LdDHL = 0x56,
+    /// `LD D, A`: load `A` into `D`, 1m
+    LdDA = 0x57,
+    /// `LD E, B`: load `B` into `E`, 1m
+    LdEB = 0x58,
+    /// `LD E, C`: load `C` into `E`, 1m
+    LdEC = 0x59,
+    /// `LD E, D`: load `D` into `E`, 1m
+    LdED = 0x5a,
+    /// `LD E, E`: load `E` into `E`, 1m
+    LdEE = 0x5b,
+    /// `LD E, H`: load `H` into `E`, 1m
+    LdEH = 0x5c,
+    /// `LD E, L`: load `L` into `E`, 1m
+    LdEL = 0x5d,
+    /// `LD E, (HL)`: load `(HL)` into `E`, 2m
+    LdEHL = 0x5e,
+    /// `LD E, A`: load `A` into `E`, 1m
+    LdEA = 0x5f,
+
+    /// `LD H, B`: load `B` into `H`, 1m
+    LdHB = 0x60,
+    /// `LD H, C`: load `C` into `H`, 1m
+    LdHC = 0x61,
+    /// `LD H, D`: load `D` into `H`, 1m
+    LdHD = 0x62,
+    /// `LD H, E`: load `E` into `H`, 1m
+    LdHE = 0x63,
+    /// `LD H, H`: load `H` into `H`, 1m
+    LdHH = 0x64,
+    /// `LD H, L`: load `L` into `H`, 1m
+    LdHL = 0x65,
+    /// `LD H, (HL)`: load `(HL)` into `H`, 2m
+    LdHHL = 0x66,
+    /// `LD H, A`: load `A` into `H`, 1m
+    LdHA = 0x67,
+    /// `LD L, B`: load `B` into `L`, 1m
+    LdLB = 0x68,
+    /// `LD L, C`: load `C` into `L`, 1m
+    LdLC = 0x69,
+    /// `LD L, D`: load `D` into `L`, 1m
+    LdLD = 0x6a,
+    /// `LD L, E`: load `E` into `L`, 1m
+    LdLE = 0x6b,
+    /// `LD L, H`: load `H` into `L`, 1m
+    LdLH = 0x6c,
+    /// `LD L, L`: load `L` into `L`, 1m
+    LdLL = 0x6d,
+    /// `LD L, (HL)`: load `(HL)` into `L`, 2m
+    LdLHL = 0x6e,
+    /// `LD L, A`: load `A` into `L`, 1m
+    LdLA = 0x6f,
+
+    /// `LD (HL), B`: load `B` into `(HL)`, 2m
+    LdHLB = 0x70,
+    /// `LD (HL), C`: load `C` into `(HL)`, 2m
+    LdHLC = 0x71,
+    /// `LD (HL), D`: load `D` into `(HL)`, 2m
+    LdHLD = 0x72,
+    /// `LD (HL), E`: load `E` into `(HL)`, 2m
+    LdHLE = 0x73,
+    /// `LD (HL), H`: load `H` into `(HL)`, 2m
+    LdHLH = 0x74,
+    /// `LD (HL), L`: load `L` into `(HL)`, 2m
+    LdHLL = 0x75,
+    /// `HALT`: power down the cpu until an interrupt occurs, 1m
+    Halt = 0x76,
+    /// `LD (HL), A`: load `A` into `(HL)`, 2m
+    LdHLA = 0x77,
+    /// `LD A, B`: load `B` into `A`, 1m
+    LdAB = 0x78,
+    /// `LD A, C`: load `C` into `A`, 1m
+    LdAC = 0x79,
+    /// `LD A, D`: load `D` into `A`, 1m
+    LdAD = 0x7a,
+    /// `LD A, E`: load `E` into `A`, 1m
+    LdAE = 0x7b,
+    /// `LD A, H`: load `H` into `A`, 1m
+    LdAH = 0x7c,
+    /// `LD A, L`: load `L` into `A`, 1m
+    LdAL = 0x7d,
+    /// `LD A, (HL)`: load `(HL)` into `A`, 2m
+    LdAHL = 0x7e,
+    /// `LD A, A`: load `A` into `A`, 1m
+    LdAA = 0x7f,
 }
