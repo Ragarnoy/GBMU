@@ -68,7 +68,7 @@ pub enum Opcode {
     /// `RRA`: rotate `A` right, 1m
     Rra = 0x1f,
 
-    /// `JR NZ,i8`: relative jump to `i8` when `Zero` is not set, 2-3m
+    /// `JR NZ, i8`: relative jump to `i8` when `Zero` is not set, 2-3m
     JrNZ8 = 0x20,
     /// `LD HL, u16`: load `u16` into `HL`, 3m
     LdHL16 = 0x21,
@@ -397,4 +397,111 @@ pub enum Opcode {
     CpAHL = 0xbe,
     /// `CP A, A`: compare A with A, 1m
     CpAA = 0xbf,
+
+    /// `RET NZ`: Pop two bytes from stack & jump to that address if `Zero` is not set. 2-5m
+    RetNz = 0xc0,
+    /// `POP BC`: Pop two bytes off the stack into `BC`. 3m
+    PopBc = 0xc1,
+    /// `JP NZ, u16`: Absolute jump to `u16` if `NZ` is set. 3-4m
+    JpNz = 0xc2,
+    /// `JP u16`: Absolute jump to `u16`. 4m
+    Jp = 0xc3,
+    /// `CALL NZ, u16`: When `NZ` is set: Push the address of the next instruction then jump to `u16`. 3-6m
+    CallNz = 0xc4,
+    /// `PUSH BC`: push `BC` into the stack. 4m
+    PushBc = 0xc5,
+    /// `ADD A, u8`: add `u8` to `A`. 2m
+    AddA8 = 0xc6,
+    /// `RST 00`: push current address onto the stack the jump to `0x00`. 4m
+    Rst00H = 0xc7,
+    /// `RET Z`: Pop two bytes from stack & jump to that address if `Zero` is set. 2-5m
+    RetZ = 0xc8,
+    /// `RET`: Pop two bytes from the stack the jump to that address. 4m
+    Ret = 0xc9,
+    /// `JP Z, u16`: Absolute jump to `u16` if `Z` is set. 3-4m
+    JpZ16 = 0xca,
+    /// Opcode with CB prefix see `microcode::opcode_cb::OpcodeCB`
+    PrefixCb = 0xcb,
+    /// `CALL Z, u16`: When `Z` is set: Push the address of the next instruction then jump to `u16`. 3-6m
+    CallZ16 = 0xcc,
+    /// `CALL u16`: push address of the next instruction onto the stack then jump to `u16`. 6m
+    Call16 = 0xcd,
+    /// `ADC A, u8`: add `u8 + Carry` to `A`. 2m
+    AdcA8 = 0xce,
+    /// `RST 08`: push current address onto the stack the jump to `0x08`. 4m
+    Rst08H = 0xcf,
+    /// `RET NC`: Pop two bytes from stack & jump to that address if `Carry` is not set. 2-5m
+    RetNc = 0xd0,
+    /// `POP DE`: Pop two bytes off the stack into `DE`. 3m
+    PopDe = 0xd1,
+    /// `JP NC, u16`: Absolute jump to `u16` if `NC` is set. 3-4m
+    JpNc16 = 0xd2,
+    /// `CALL NC, u16`: When `NC` is set: Push the address of the next instruction then jump to `u16`. 3-6m
+    CallNc16 = 0xd4,
+    /// `PUSH DE`: push `DE` into the stack. 4m
+    PushDe = 0xd5,
+    /// `SUB A, u8`: sub `u8` to `A`. 2m
+    SubA8 = 0xd6,
+    /// `RST 10`: push current address onto the stack the jump to `0x10`. 4m
+    Rst10H = 0xd7,
+    /// `RET C`: Pop two bytes from stack & jump to that address if `Carry` is set. 2-5m
+    RetC = 0xd8,
+    /// `RETI`: Pop two bytes from the stack then jump to that address and the enable interrupts. 4m
+    Reti = 0xd9,
+    /// `JP C, u16`: Absolute jump to `u16` if `C` is set. 3-4m
+    JpC16 = 0xda,
+    /// `CALL C, u16`: When `C` is set: Push the address of the next instruction then jump to `u16`. 3-6m
+    CallC16 = 0xdc,
+    /// `SBC A, u8`: sub `u8 + Carry` to `A`. 2m
+    SbcA8 = 0xde,
+    /// `RST 18`: push current address onto the stack the jump to `0x18`. 4m
+    Rst18H = 0xdf,
+    /// `LDH (u8), A`: load `A` into `(0xFF00 + u8)`. 3m
+    Ldh8A = 0xe0,
+    /// `POP HL`: Pop two bytes off the stack into `HL`. 3m
+    PopHl = 0xe1,
+    /// `LDH (C), A`: load `A` into `(0xFF00 + C). 2m
+    LdhCA = 0xe2,
+    /// `PUSH HL`: push `HL` into the stack. 4m
+    PushHl = 0xe5,
+    /// `AND A, u8`: logical `A = u8 & A`. 2m
+    AndA8 = 0xe6,
+    /// `RST 20`: push current address onto the stack the jump to `0x20`. 4m
+    Rst20H = 0xe7,
+    /// `ADD SP, i8`: add `i8` to `SP`. 4m
+    AddSp8 = 0xe8,
+    /// `JP HL`: Absolute jump to `HL`. 1m
+    JpHl = 0xe9,
+    /// `LD (u16),A`: load `A` into `(u16)`. 4m
+    Ld16A = 0xea,
+    /// `XOR A, u8`: logical `A = u8 ^ A`. 2m
+    XorA8 = 0xee,
+    /// `RST 28`: push current address onto the stack the jump to `0x28`. 4m
+    Rst28H = 0xef,
+    /// `LDH A,(u8)`: load `(u8)` into `A`. 3m
+    LdhA8 = 0xf0,
+    /// `POP AF`: Pop two bytes off the stack into `AF`. 3m
+    PopAf = 0xf1,
+    /// `LDH A,(C)`: load `(0xFF00 + C)` into `A`. 2m
+    LdhAC = 0xf2,
+    /// `DI`: Disable interrups after the end of the next instruction. 1m
+    Di = 0xf3,
+    /// `PUSH AF`: push `AF` into the stack. 4m
+    PushAf = 0xf5,
+    /// `OR A, u8`: logical `A = u8 | A`. 2m
+    OrA8 = 0xf6,
+    /// `RST 30`: push current address onto the stack the jump to `0x30`. 4m
+    Rst30H = 0xf7,
+    /// `LDHL SP, i8`: put `SP + i8` into `HL`. 3m
+    LdhlSp8 = 0xf8,
+    /// `LD SP, HL`: load `HL` inot `SP`. 2m
+    LdSpHl = 0xf9,
+    /// `LD A,(u16)`: load `(u16)` into `A`. 4m
+    LdA16 = 0xfa,
+    /// `EI`: Enable interrups after the end of the next instruction. 1m
+    Ei = 0xfb,
+    /// `CP A, u8`: Compare `A` to `u8`. 2m
+    CpA8 = 0xfe,
+    /// `RST 38`: push current address onto the stack the jump to `0x38`. 4m
+    Rst38H = 0xff,
 }
