@@ -8,11 +8,11 @@ pub fn read<B: Bus<u8>>(regs: &mut Registers, bus: &mut B, cache: &mut Vec<u8>) 
     let res = bus.read(*pc).map_or_else(
         |e| {
             log::error!("bus read error: {:?}", e);
-            Continuum::Err;
+            Continuum::Err
         },
         |value| {
             cache.push(value);
-            Continuum::Ok;
+            Continuum::Ok
         },
     );
     *pc += 1;
