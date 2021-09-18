@@ -6,7 +6,7 @@ pub enum Opcode {
     /// `LD BC, u16`: load `u16` into `BC`, 3m
     LdBC16 = 0x01,
     /// `LD (BC), A`: load `A` into `(BC)`, 2m
-    LdBCAInd = 0x02,
+    LdBCA = 0x02,
     /// `INC BC`: increment `BC`, 2m
     IncBC = 0x03,
     /// `INC B`: increment `B`, 1m
@@ -18,7 +18,7 @@ pub enum Opcode {
     /// `RLCA`: rotate `A` left, 1m
     RlcA = 0x07,
     /// `LD (u16), SP`: load `SP` into `(u16)`, 5m
-    Ld16SPInd = 0x08,
+    Ld16SP = 0x08,
     /// `ADD HL, BC`: add `BC` to `HL`, 2m
     AddHLBC = 0x09,
     /// `LD A, (BC)`: load `(BC)` into `A`, 2m
@@ -114,7 +114,7 @@ pub enum Opcode {
     /// `DEC (HL)`: decrement `(HL)`, 3m
     DecHLind = 0x35,
     /// `LD (HL), u8`: load `u8` into `(HL)`, 3m
-    LdHL8ind = 0x36,
+    LdHL8 = 0x36,
     /// `SCF`: set `Carry`, 1m
     Scf = 0x37,
     /// `JR C, i8`: relative jump to `i8` when `Carry`, 2-3m
