@@ -265,4 +265,136 @@ pub enum Opcode {
     LdAHL = 0x7e,
     /// `LD A, A`: load `A` into `A`, 1m
     LdAA = 0x7f,
+
+    /// `ADD A, B`: add `B` to `A`, 1m
+    AddAB = 0x80,
+    /// `ADD A, C`: add `C` to `A`, 1m
+    AddAC = 0x81,
+    /// `ADD A, D`: add `D` to `A`, 1m
+    AddAD = 0x82,
+    /// `ADD A, E`: add `E` to `A`, 1m
+    AddAE = 0x83,
+    /// `ADD A, H`: add `H` to `A`, 1m
+    AddAH = 0x84,
+    /// `ADD A, L`: add `L` to `A`, 1m
+    AddAL = 0x85,
+    /// `ADD A, (HL)`: add `(HL)` to `A`, 2m
+    AddAHL = 0x86,
+    /// `ADD A, A`: add `A` to `A`, 1m
+    AddAA = 0x87,
+    /// `ADC A, B`: add `B + Carry` to `A`, 1m
+    AdcAB = 0x88,
+    /// `ADC A, C`: add `C + Carry` to `A`, 1m
+    AdcAC = 0x89,
+    /// `ADC A, D`: add `D + Carry` to `A`, 1m
+    AdcAD = 0x8a,
+    /// `ADC A, E`: add `E + Carry` to `A`, 1m
+    AdcAE = 0x8b,
+    /// `ADC A, H`: add `H + Carry` to `A`, 1m
+    AdcAH = 0x8c,
+    /// `ADC A, L`: add `L + Carry` to `A`, 1m
+    AdcAL = 0x8d,
+    /// `ADC A, (HL)`: add `(HL) + Carry` to `A`, 2m
+    AdcAHL = 0x8e,
+    /// `ADC A, A`: add `A + Carry` to `A`, 1m
+    AdcAA = 0x8f,
+
+    /// `SUB A, B`: sub `B` to `A`, 1m
+    SubAB = 0x90,
+    /// `SUB A, C`: sub `C` to `A`, 1m
+    SubAC = 0x91,
+    /// `SUB A, D`: sub `D` to `A`, 1m
+    SubAD = 0x92,
+    /// `SUB A, E`: sub `E` to `A`, 1m
+    SubAE = 0x93,
+    /// `SUB A, H`: sub `H` to `A`, 1m
+    SubAH = 0x94,
+    /// `SUB A, L`: sub `L` to `A`, 1m
+    SubAL = 0x95,
+    /// `SUB A, (HL)`: sub `(HL)` to `A`, 2m
+    SubAHL = 0x96,
+    /// `SUB A, A`: sub `A` to `A`, 1m
+    SubAA = 0x97,
+    /// `SBC A, B`: sub `B + Carry` to `A`, 1m
+    SbcAB = 0x98,
+    /// `SBC A, C`: sub `C + Carry` to `A`, 1m
+    SbcAC = 0x99,
+    /// `SBC A, D`: sub `D + Carry` to `A`, 1m
+    SbcAD = 0x9a,
+    /// `SBC A, E`: sub `E + Carry` to `A`, 1m
+    SbcAE = 0x9b,
+    /// `SBC A, H`: sub `H + Carry` to `A`, 1m
+    SbcAH = 0x9c,
+    /// `SBC A, L`: sub `L + Carry` to `A`, 1m
+    SbcAL = 0x9d,
+    /// `SBC A, (HL)`: sub `(HL) + Carry` to `A`, 2m
+    SbcAHL = 0x9e,
+    /// `SBC A, A`: sub `A + Carry` to `A`, 1m
+    SbcAA = 0x9f,
+
+    /// `AND A, B`: logic `A = B & A`, 1m
+    AndAB = 0xa0,
+    /// `AND A, C`: logic `A = C & A`, 1m
+    AndAC = 0xa1,
+    /// `AND A, D`: logic `A = D & A`, 1m
+    AndAD = 0xa2,
+    /// `AND A, E`: logic `A = E & A`, 1m
+    AndAE = 0xa3,
+    /// `AND A, H`: logic `A = H & A`, 1m
+    AndAH = 0xa4,
+    /// `AND A, L`: logic `A = L & A`, 1m
+    AndAL = 0xa5,
+    /// `AND A, (HL)`: logical `A = (HL) & A`, 2m
+    AndAHL = 0xa6,
+    /// `AND A, A`: logic `A = A & A`, 1m
+    AndAA = 0xa7,
+    /// `XOR A, B`: logic `A = B ^ A`, 1m
+    XorAB = 0xa8,
+    /// `XOR A, C`: logic `A = C ^ A`, 1m
+    XorAC = 0xa9,
+    /// `XOR A, D`: logic `A = D ^ A`, 1m
+    XorAD = 0xaa,
+    /// `XOR A, E`: logic `A = E ^ A`, 1m
+    XorAE = 0xab,
+    /// `XOR A, H`: logic `A = H ^ A`, 1m
+    XorAH = 0xac,
+    /// `XOR A, L`: logic `A = L ^ A`, 1m
+    XorAL = 0xad,
+    /// `XOR A, (HL)`: logical `A = (HL) ^ A`, 2m
+    XorAHL = 0xae,
+    /// `XOR A, A`: logic `A = A ^ A`, 1m
+    XorAA = 0xaf,
+
+    /// `OR A, B`: logic `A = B | A`, 1m
+    OrAB = 0xb0,
+    /// `OR A, C`: logic `A = C | A`, 1m
+    OrAC = 0xb1,
+    /// `OR A, D`: logic `A = D | A`, 1m
+    OrAD = 0xb2,
+    /// `OR A, E`: logic `A = E | A`, 1m
+    OrAE = 0xb3,
+    /// `OR A, H`: logic `A = H | A`, 1m
+    OrAH = 0xb4,
+    /// `OR A, L`: logic `A = L | A`, 1m
+    OrAL = 0xb5,
+    /// `OR A, (HL)`: logical `A = (HL) | A`, 2m
+    OrAHL = 0xb6,
+    /// `OR A, A`: logic `A = A | A`, 1m
+    OrAA = 0xb7,
+    /// `CP A, B`: compare A with B, 1m
+    CpAB = 0xb8,
+    /// `CP A, C`: compare A with C, 1m
+    CpAC = 0xb9,
+    /// `CP A, D`: compare A with D, 1m
+    CpAD = 0xba,
+    /// `CP A, E`: compare A with E, 1m
+    CpAE = 0xbb,
+    /// `CP A, H`: compare A with H, 1m
+    CpAH = 0xbc,
+    /// `CP A, L`: compare A with L, 1m
+    CpAL = 0xbd,
+    /// `CP A, (HL)`: compare A with (HL), 2m
+    CpAHL = 0xbe,
+    /// `CP A, A`: compare A with A, 1m
+    CpAA = 0xbf,
 }
