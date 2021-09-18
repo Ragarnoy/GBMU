@@ -413,7 +413,7 @@ pub enum Opcode {
     /// `ADD A, u8`: add `u8` to `A`. 2m
     AddA8 = 0xc6,
     /// `RST 00`: push current address onto the stack the jump to `0x00`. 4m
-    Rst00H = 0xc7,
+    Rst00 = 0xc7,
     /// `RET Z`: Pop two bytes from stack & jump to that address if `Zero` is set. 2-5m
     RetZ = 0xc8,
     /// `RET`: Pop two bytes from the stack the jump to that address. 4m
@@ -429,7 +429,7 @@ pub enum Opcode {
     /// `ADC A, u8`: add `u8 + Carry` to `A`. 2m
     AdcA8 = 0xce,
     /// `RST 08`: push current address onto the stack the jump to `0x08`. 4m
-    Rst08H = 0xcf,
+    Rst08 = 0xcf,
     /// `RET NC`: Pop two bytes from stack & jump to that address if `Carry` is not set. 2-5m
     RetNc = 0xd0,
     /// `POP DE`: Pop two bytes off the stack into `DE`. 3m
@@ -443,7 +443,7 @@ pub enum Opcode {
     /// `SUB A, u8`: sub `u8` to `A`. 2m
     SubA8 = 0xd6,
     /// `RST 10`: push current address onto the stack the jump to `0x10`. 4m
-    Rst10H = 0xd7,
+    Rst10 = 0xd7,
     /// `RET C`: Pop two bytes from stack & jump to that address if `Carry` is set. 2-5m
     RetC = 0xd8,
     /// `RETI`: Pop two bytes from the stack then jump to that address and the enable interrupts. 4m
@@ -455,7 +455,7 @@ pub enum Opcode {
     /// `SBC A, u8`: sub `u8 + Carry` to `A`. 2m
     SbcA8 = 0xde,
     /// `RST 18`: push current address onto the stack the jump to `0x18`. 4m
-    Rst18H = 0xdf,
+    Rst18 = 0xdf,
     /// `LDH (u8), A`: load `A` into `(0xFF00 + u8)`. 3m
     Ldh8A = 0xe0,
     /// `POP HL`: Pop two bytes off the stack into `HL`. 3m
@@ -467,7 +467,7 @@ pub enum Opcode {
     /// `AND A, u8`: logical `A = u8 & A`. 2m
     AndA8 = 0xe6,
     /// `RST 20`: push current address onto the stack the jump to `0x20`. 4m
-    Rst20H = 0xe7,
+    Rst20 = 0xe7,
     /// `ADD SP, i8`: add `i8` to `SP`. 4m
     AddSp8 = 0xe8,
     /// `JP HL`: Absolute jump to `HL`. 1m
@@ -477,7 +477,7 @@ pub enum Opcode {
     /// `XOR A, u8`: logical `A = u8 ^ A`. 2m
     XorA8 = 0xee,
     /// `RST 28`: push current address onto the stack the jump to `0x28`. 4m
-    Rst28H = 0xef,
+    Rst28 = 0xef,
     /// `LDH A,(u8)`: load `(u8)` into `A`. 3m
     LdhA8 = 0xf0,
     /// `POP AF`: Pop two bytes off the stack into `AF`. 3m
@@ -491,7 +491,7 @@ pub enum Opcode {
     /// `OR A, u8`: logical `A = u8 | A`. 2m
     OrA8 = 0xf6,
     /// `RST 30`: push current address onto the stack the jump to `0x30`. 4m
-    Rst30H = 0xf7,
+    Rst30 = 0xf7,
     /// `LDHL SP, i8`: put `SP + i8` into `HL`. 3m
     LdhlSp8 = 0xf8,
     /// `LD SP, HL`: load `HL` inot `SP`. 2m
@@ -503,5 +503,5 @@ pub enum Opcode {
     /// `CP A, u8`: Compare `A` to `u8`. 2m
     CpA8 = 0xfe,
     /// `RST 38`: push current address onto the stack the jump to `0x38`. 4m
-    Rst38H = 0xff,
+    Rst38 = 0xff,
 }
