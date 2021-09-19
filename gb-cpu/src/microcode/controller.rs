@@ -24,8 +24,10 @@ pub struct MicrocodeController<B: Bus<u8>> {
     pub opcode: Option<OpcodeType>,
     /// Microcode actions, their role is to execute one step of an Opcode
     /// Each Actions take at most 1 `M-Cycle`
-    actions: Vec<fn(controller: &mut MicrocodeController<B>, state: &mut State<B>) -> Continuum>,
+    actions: Vec<ActionFn<B>>,
 }
+
+type ActionFn<B> = fn(controller: &mut MicrocodeController<B>, state: &mut State<B>) -> Continuum;
 
 pub struct State<'a, B: Bus<u8>> {
     bus: &'a mut B,
@@ -65,10 +67,7 @@ impl<B: Bus<u8>> MicrocodeController<B> {
         }
     }
 
-    pub fn push_action(
-        &mut self,
-        action: fn(ctl: &mut MicrocodeController<B>, state: &mut State<B>) -> Continuum,
-    ) {
+    pub fn push_action(&mut self, action: ActionFn<B>) {
         self.actions.push(action);
     }
 }
