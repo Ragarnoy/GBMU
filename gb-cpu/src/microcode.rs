@@ -3,7 +3,6 @@ mod fetch;
 mod fetch_cb;
 pub mod opcode;
 pub mod opcode_cb;
-mod toolkit;
 
 /// Continuum allow the action to control the flow of the microcode
 pub enum Continuum {
