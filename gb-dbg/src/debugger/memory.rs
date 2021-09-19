@@ -5,15 +5,14 @@ use egui_memory_editor::MemoryEditor;
 use std::ops::Range;
 
 pub struct GBMemoryEditor<T> {
-    memory: T,
     memory_editor: MemoryEditor<T>,
 }
 
 impl<T> GBMemoryEditor<T> {
-    pub fn draw(&mut self, ui: &mut Ui) {
+    pub fn draw(&mut self, ui: &mut Ui, memory: &mut T) {
         ui.label(Label::new("Memory Editor").text_color(Color32::WHITE));
         self.memory_editor
-            .draw_editor_contents(ui, &mut self.memory);
+            .draw_editor_contents(ui, memory);
     }
 }
 
@@ -46,10 +45,7 @@ impl<T: RW> MemoryEditorBuilder<T> {
         }
 
         GBMemoryEditor {
-            memory: self.memory,
-            memory_editor: mem_edit.with_write_function(|mut mem, address, value| {
-                <T as RW>::write(&mut mem, address, value)
-            }),
+            memory_editor: mem_edit,
         }
     }
 }
