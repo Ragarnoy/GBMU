@@ -7,14 +7,24 @@ pub enum OpcodeType {
     CBPrefixed(OpcodeCB),
 }
 
+impl From<Opcode> for OpcodeType {
+    fn from(opc: Opcode) -> Self {
+        OpcodeType::Unprefixed(opc)
+    }
+}
+
+impl From<OpcodeCB> for OpcodeType {
+    fn from(opc: OpcodeCB) -> Self {
+        OpcodeType::CBPrefixed(opc)
+    }
+}
+
 pub struct MicrocodeController<B: Bus<u8>> {
     /// current opcode
-    opcode: Option<OpcodeType>,
+    pub opcode: Option<OpcodeType>,
     /// Microcode actions, their role is to execute one step of an Opcode
     /// Each Actions take at most 1 `M-Cycle`
     actions: Vec<fn(controller: &mut MicrocodeController<B>, state: &mut State<B>) -> Continuum>,
-    /// byte cache
-    cache: Vec<u8>,
 }
 
 pub struct State<'a, B: Bus<u8>> {
@@ -38,7 +48,6 @@ impl<B: Bus<u8>> Default for MicrocodeController<B> {
         Self {
             opcode: None,
             actions: Vec::with_capacity(8),
-            cache: Vec::with_capacity(4),
         }
     }
 }
