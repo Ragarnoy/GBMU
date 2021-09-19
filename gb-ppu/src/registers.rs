@@ -4,6 +4,7 @@ mod palettes_mono;
 mod ppu_reg;
 mod scrolling;
 mod stat;
+mod window_pos;
 
 pub use control::Control;
 pub use palette::Palette;
@@ -11,6 +12,7 @@ pub use palettes_mono::PalettesMono;
 pub use ppu_reg::PPURegisters;
 pub use scrolling::Scrolling;
 pub use stat::Stat;
+pub use window_pos::WindowPos;
 
 trait Register: Copy + Into<u8> + From<u8> {
     const WRITE_BITS: u8 = 0b1111_1111;
