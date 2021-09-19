@@ -10,4 +10,5 @@ edition = "2018"
 gb-clock = { path = "../gb-clock" }
 gb-bus = { path = "../gb-bus" }
 gb-roms = { path = "../gb-roms" }
-log = "0.4.14"
+log = "0.4"
+num_enum = "0.5"

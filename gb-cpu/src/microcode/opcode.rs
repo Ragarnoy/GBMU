@@ -1,4 +1,6 @@
-#[derive(PartialEq, Eq, Clone, Copy)]
+use num_enum::TryFromPrimitive;
+
+#[derive(PartialEq, Eq, Clone, Copy, TryFromPrimitive)]
 #[repr(u8)]
 pub enum Opcode {
     /// `NOP`: do nothing, 1m

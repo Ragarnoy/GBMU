@@ -1,5 +1,7 @@
+use num_enum::TryFromPrimitive;
+
 /// Opcode with the CB prefix
-#[derive(PartialEq, Eq, Clone, Copy)]
+#[derive(PartialEq, Eq, Clone, Copy, TryFromPrimitive)]
 #[repr(u8)]
 pub enum OpcodeCB {
     /// `RLC B`: rotate `B` left, old 7 bit to `Carry`. 2m
