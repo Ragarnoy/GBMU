@@ -13,6 +13,26 @@ pub struct PPURegisters {
     window_pos: Rc<RefCell<WindowPos>>,
 }
 
+impl PPURegisters {
+    pub fn new(
+        control: Rc<RefCell<Control>>,
+        stat: Rc<RefCell<Stat>>,
+        scrolling: Rc<RefCell<Scrolling>>,
+        dma: Rc<RefCell<u8>>,
+        pal_mono: Rc<RefCell<PalettesMono>>,
+        window_pos: Rc<RefCell<WindowPos>>,
+    ) -> Self {
+        PPURegisters {
+            control,
+            stat,
+            scrolling,
+            dma,
+            pal_mono,
+            window_pos,
+        }
+    }
+}
+
 fn read_register_value(register: &Rc<RefCell<impl Register>>) -> u8 {
     match register.try_borrow() {
         Ok(register) => register.read(),

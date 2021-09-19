@@ -1,5 +1,5 @@
 use crate::memory::{Oam, PPUMem, Vram};
-use crate::registers::{Control, Palette};
+use crate::registers::{Control, PPURegisters, PalettesMono, Scrolling, Stat, WindowPos};
 use crate::{
     OBJECT_LIST_PER_LINE, OBJECT_LIST_RENDER_HEIGHT, OBJECT_LIST_RENDER_WIDTH,
     OBJECT_RENDER_HEIGHT, OBJECT_RENDER_WIDTH, TILEMAP_DIM, TILEMAP_TILE_COUNT, TILESHEET_HEIGHT,
@@ -19,9 +19,12 @@ use std::rc::Rc;
 pub struct PPU {
     vram: Rc<RefCell<Vram>>,
     oam: Rc<RefCell<Oam>>,
-    control: Control,
-    bg_palette: Palette,
-    obj_palette: (Palette, Palette),
+    control: Rc<RefCell<Control>>,
+    stat: Rc<RefCell<Stat>>,
+    scrolling: Rc<RefCell<Scrolling>>,
+    dma: Rc<RefCell<u8>>,
+    pal_mono: Rc<RefCell<PalettesMono>>,
+    window_pos: Rc<RefCell<WindowPos>>,
     pixels: RenderData<SCREEN_WIDTH, SCREEN_HEIGHT>,
 }
 
@@ -30,9 +33,12 @@ impl PPU {
         Self {
             vram: Rc::new(RefCell::new(Vram::new())),
             oam: Rc::new(RefCell::new(Oam::new())),
-            control: Control::new(),
-            bg_palette: Palette::new(),
-            obj_palette: (Palette::new(), Palette::new()),
+            control: Rc::new(RefCell::new(Control::new())),
+            stat: Rc::new(RefCell::new(Stat::new())),
+            scrolling: Rc::new(RefCell::new(Scrolling::new())),
+            dma: Rc::new(RefCell::new(0)),
+            pal_mono: Rc::new(RefCell::new(PalettesMono::new())),
+            window_pos: Rc::new(RefCell::new(WindowPos::new())),
             pixels: [[[255; 3]; SCREEN_WIDTH]; SCREEN_HEIGHT],
         }
     }
@@ -42,26 +48,20 @@ impl PPU {
         PPUMem::new(Rc::clone(&self.vram), Rc::clone(&self.oam))
     }
 
+    /// Build and return a [PPURegisters] struct to access/modify the registers of this ppu instance.
+    pub fn registers(&self) -> PPURegisters {
+        PPURegisters::new(
+            Rc::clone(&self.control),
+            Rc::clone(&self.stat),
+            Rc::clone(&self.scrolling),
+            Rc::clone(&self.dma),
+            Rc::clone(&self.pal_mono),
+            Rc::clone(&self.window_pos),
+        )
+    }
+
     pub fn pixels(&self) -> &RenderData<SCREEN_WIDTH, SCREEN_HEIGHT> {
         &self.pixels
-    }
-
-    pub fn control(&self) -> &Control {
-        &self.control
-    }
-
-    pub fn control_mut(&mut self) -> &mut Control {
-        &mut self.control
-    }
-
-    pub fn bg_palette_mut(&mut self) -> &mut Palette {
-        &mut self.bg_palette
-    }
-    pub fn obj_palette_0_mut(&mut self) -> &mut Palette {
-        &mut self.obj_palette.0
-    }
-    pub fn obj_palette_1_mut(&mut self) -> &mut Palette {
-        &mut self.obj_palette.1
     }
 
     pub fn compute(&mut self) {
@@ -86,12 +86,13 @@ impl PPU {
         let mut x = 0;
         let mut y = 0;
         let vram = self.vram.borrow();
+        let palette = self.pal_mono.borrow();
         for k in 0..TILESHEET_TILE_COUNT {
             let tile = vram.read_8x8_tile(k).unwrap();
             for (j, row) in tile.iter().enumerate() {
                 for (i, pixel) in row.iter().rev().enumerate() {
                     image[y * 8 + j][x * 8 + i] =
-                        self.bg_palette.get_color(*pixel).unwrap_or_default().into();
+                        palette.bg().get_color(*pixel).unwrap_or_default().into();
                 }
             }
             x += 1;
@@ -111,23 +112,25 @@ impl PPU {
         let mut x = 0;
         let mut y = 0;
         let vram = self.vram.borrow();
+        let control = self.control.borrow();
+        let palette = self.pal_mono.borrow();
         for k in 0..TILEMAP_TILE_COUNT {
             let index = vram
                 .get_map_tile_index(
                     k,
                     if !window {
-                        self.control.bg_tilemap_area()
+                        control.bg_tilemap_area()
                     } else {
-                        self.control.win_tilemap_area()
+                        control.win_tilemap_area()
                     },
-                    self.control.bg_win_tiledata_area(),
+                    control.bg_win_tiledata_area(),
                 )
                 .unwrap();
             let tile = vram.read_8x8_tile(index).unwrap();
             for (j, row) in tile.iter().enumerate() {
                 for (i, pixel) in row.iter().rev().enumerate() {
                     image[y * 8 + j][x * 8 + i] =
-                        self.bg_palette.get_color(*pixel).unwrap_or_default().into();
+                        palette.bg().get_color(*pixel).unwrap_or_default().into();
                 }
             }
             x += 1;
@@ -149,14 +152,16 @@ impl PPU {
             .borrow()
             .collect_all_objects()
             .expect("failed to collect objects for image");
-        let height = if self.control.obj_size() { 16 } else { 8 };
         let vram = self.vram.borrow();
+        let control = self.control.borrow();
+        let palette = self.pal_mono.borrow();
+        let height = if control.obj_size() { 16 } else { 8 };
         for object in objects {
             let x = object.x_pos().min(OBJECT_RENDER_WIDTH as u8 - 8) as usize;
             let y = object.y_pos().min(OBJECT_RENDER_HEIGHT as u8 - 16) as usize;
             for j in 0..height {
                 let pixels_values = object
-                    .get_pixels_row(j, &vram, self.control.obj_size(), &self.obj_palette)
+                    .get_pixels_row(j, &vram, control.obj_size(), palette.obj())
                     .expect("invalid line passed");
                 let y_img = y + j;
                 for (i, (pixel_value, pixel_color)) in pixels_values.iter().rev().enumerate() {
@@ -196,14 +201,16 @@ impl PPU {
             .borrow()
             .collect_all_objects()
             .expect("failed to collect objects for image");
-        let height = if self.control.obj_size() { 16 } else { 8 };
         let vram = self.vram.borrow();
+        let control = self.control.borrow();
+        let palette = self.pal_mono.borrow();
+        let height = if control.obj_size() { 16 } else { 8 };
         for (r, object) in objects.iter().enumerate() {
             let x = (r % OBJECT_LIST_PER_LINE) * 8;
             let y = (r / OBJECT_LIST_PER_LINE) * 16;
             for j in 0..height {
                 let pixels_values = object
-                    .get_pixels_row(j, &vram, self.control.obj_size(), &self.obj_palette)
+                    .get_pixels_row(j, &vram, control.obj_size(), palette.obj())
                     .expect("invalid line passed");
                 let y_img = y + j;
                 for (i, (pixel_value, pixel_color)) in pixels_values.iter().rev().enumerate() {

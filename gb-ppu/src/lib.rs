@@ -9,6 +9,7 @@ mod test_tools;
 
 pub use memory::PPUMem;
 pub use ppu::PPU;
+pub use registers::PPURegisters;
 
 pub const TILESHEET_WIDTH: usize = 128;
 pub const TILESHEET_HEIGHT: usize = 192;

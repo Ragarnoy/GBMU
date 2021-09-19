@@ -1,7 +1,7 @@
 mod control;
 mod palette;
 mod palettes_mono;
-mod ppu_reg;
+mod ppu_registers;
 mod scrolling;
 mod stat;
 mod window_pos;
@@ -9,7 +9,7 @@ mod window_pos;
 pub use control::Control;
 pub use palette::Palette;
 pub use palettes_mono::PalettesMono;
-pub use ppu_reg::PPURegisters;
+pub use ppu_registers::PPURegisters;
 pub use scrolling::Scrolling;
 pub use stat::Stat;
 pub use window_pos::WindowPos;
