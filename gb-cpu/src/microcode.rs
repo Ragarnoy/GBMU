@@ -19,7 +19,4 @@ pub enum ControlFlow {
     Break,
     /// Imediatly execute the next step during the same cycle
     Chain,
-    /// Stop evaluating the remaining Action of the current Opcode
-    /// **AND** don't consume a cycle for this Action
-    Break,
 }
