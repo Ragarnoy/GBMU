@@ -30,12 +30,12 @@ struct FakeCPU {
     pub tick_count: usize,
 }
 
-impl Ticker<FakeBus> for FakeCPU {
+impl Ticker for FakeCPU {
     fn cycle_count(&self) -> Tick {
         Tick::MCycle
     }
 
-    fn tick(&mut self, _adr_bus: &mut FakeBus) {
+    fn tick<FakeBus>(&mut self, _adr_bus: &mut FakeBus) {
         self.tick_count += 1;
     }
 }
@@ -44,12 +44,12 @@ struct FakePPU {
     pub tick_count: usize,
 }
 
-impl Ticker<FakeBus> for FakePPU {
+impl Ticker for FakePPU {
     fn cycle_count(&self) -> Tick {
         Tick::TCycle
     }
 
-    fn tick(&mut self, _adr_bus: &mut FakeBus) {
+    fn tick<FakeBus>(&mut self, _adr_bus: &mut FakeBus) {
         self.tick_count += 1;
     }
 }
