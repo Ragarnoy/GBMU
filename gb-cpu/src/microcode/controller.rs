@@ -44,7 +44,10 @@ impl<B: Bus<u8>> Default for MicrocodeController<B> {
 impl<B: Bus<u8>> MicrocodeController<B> {
     pub fn step(&mut self, regs: &mut Registers, bus: &mut B) {
         let mut state = State::new(regs, bus);
-        let action = self.actions.pop().unwrap_or(fetch);
+        let action = self.actions.pop().unwrap_or_else(|| {
+            self.cache.clear();
+            fetch
+        });
 
         let res = action(self, &mut state);
         match res {
