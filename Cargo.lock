@@ -755,7 +755,7 @@ dependencies = [
 name = "gb-joypad"
 version = "0.0.0"
 dependencies = [
- "egui",
+ "egui 0.13.1",
  "log",
  "modular-bitfield",
  "sdl2",
