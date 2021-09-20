@@ -17,16 +17,6 @@ pub struct DebuggerApp {
     pub debugger: Debugger<Memory, Registers>,
 }
 
-impl RW for Memory {
-    fn read(&self, index: usize) -> u8 {
-        *self.memory.get(index).unwrap()
-    }
-
-    fn write(&mut self, _index: usize, _value: u8) {
-        self.memory[_index] = _value
-    }
-}
-
 impl App for DebuggerApp {
     fn update(&mut self, ctx: &CtxRef, frame: &mut Frame<'_>) {
         frame.set_window_size(Vec2::new(1000.0, 600.0));
