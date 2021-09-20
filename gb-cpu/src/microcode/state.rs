@@ -3,7 +3,7 @@ use gb_bus::Bus;
 
 pub struct State<'a, B: Bus<u8>> {
     bus: &'a mut B,
-    regs: &'a mut Registers,
+    pub regs: &'a mut Registers,
 }
 
 impl<'a, B: Bus<u8>> State<'a, B> {
