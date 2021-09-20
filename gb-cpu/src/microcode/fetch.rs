@@ -14,11 +14,13 @@ pub fn fetch<B: Bus<u8>>(ctl: &mut MicrocodeController<B>, state: &mut State<B>)
             ControlFlow::Err
         },
         |opcode| {
-            ctl_ref.borrow_mut().opcode = Some(opcode.into());
+            let mut ctl = ctl_ref.borrow_mut();
+            ctl.opcode = Some(opcode.into());
             match opcode {
                 Opcode::Jp => ctl.push_actions(&[read, read, jump::jump]),
+                Opcode::JpHl => ctl.push_actions(&[jump::jump_hl]),
                 Opcode::Nop => {}
-                Opcode::PrefixCb => ctl_ref.borrow_mut().push_action(fetch_cb),
+                Opcode::PrefixCb => ctl.push_action(fetch_cb),
                 _ => todo!("unimplemented opcode {:?}", opcode),
             };
             ControlFlow::Ok
