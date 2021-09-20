@@ -1,4 +1,4 @@
-use crate::memory::{Oam, Vram};
+use crate::memory::{Oam, PPUMem, Vram};
 use crate::registers::{Control, Palette};
 use crate::{
     OBJECT_LIST_PER_LINE, OBJECT_LIST_RENDER_HEIGHT, OBJECT_LIST_RENDER_WIDTH,
@@ -7,13 +7,18 @@ use crate::{
 };
 use gb_lcd::render::{RenderData, SCREEN_HEIGHT, SCREEN_WIDTH};
 
-/// Pixel Process Unit: is in charge of selecting the pixel to be displayed on the lcd screen.
+use std::cell::RefCell;
+use std::rc::Rc;
+
+/// The Pixel Process Unit is in charge of selecting the pixel to be displayed on the lcd screen.
 ///
-/// Memory field (Vram, OAM) and registers owned by the ppu are simply exposed by public function when required for examples for now.
+/// It owns the VRAM and the OAM, as well as a few registers.
+///
+/// Registers owned by the ppu are simply exposed by public function when required for examples for now.
 /// This impl propably won't work once the cpu will need to access them.
 pub struct PPU {
-    vram: Vram,
-    oam: Oam,
+    vram: Rc<RefCell<Vram>>,
+    oam: Rc<RefCell<Oam>>,
     control: Control,
     bg_palette: Palette,
     obj_palette: (Palette, Palette),
@@ -23,13 +28,18 @@ pub struct PPU {
 impl PPU {
     pub fn new() -> Self {
         Self {
-            vram: Vram::new(),
-            oam: Oam::new(),
+            vram: Rc::new(RefCell::new(Vram::new())),
+            oam: Rc::new(RefCell::new(Oam::new())),
             control: Control::new(),
             bg_palette: Palette::new(),
             obj_palette: (Palette::new(), Palette::new()),
             pixels: [[[255; 3]; SCREEN_WIDTH]; SCREEN_HEIGHT],
         }
+    }
+
+    /// Build and return a [PPUMem] struct to access/modify the memory of this ppu instance.
+    pub fn memory(&self) -> PPUMem {
+        PPUMem::new(Rc::clone(&self.vram), Rc::clone(&self.oam))
     }
 
     pub fn pixels(&self) -> &RenderData<SCREEN_WIDTH, SCREEN_HEIGHT> {
@@ -68,14 +78,6 @@ impl PPU {
         }
     }
 
-    pub fn overwrite_vram(&mut self, data: &[u8; Vram::SIZE as usize]) {
-        self.vram.overwrite(data);
-    }
-
-    pub fn overwrite_oam(&mut self, data: &[u8; Oam::SIZE as usize]) {
-        self.oam.overwrite(data);
-    }
-
     /// Create an image of the current tilesheet.
     ///
     /// This function is used for debugging purpose.
@@ -83,8 +85,9 @@ impl PPU {
         let mut image = [[[255; 3]; TILESHEET_WIDTH]; TILESHEET_HEIGHT];
         let mut x = 0;
         let mut y = 0;
+        let vram = self.vram.borrow();
         for k in 0..TILESHEET_TILE_COUNT {
-            let tile = self.vram.read_8x8_tile(k).unwrap();
+            let tile = vram.read_8x8_tile(k).unwrap();
             for (j, row) in tile.iter().enumerate() {
                 for (i, pixel) in row.iter().rev().enumerate() {
                     image[y * 8 + j][x * 8 + i] =
@@ -107,9 +110,9 @@ impl PPU {
         let mut image = [[[255; 3]; TILEMAP_DIM]; TILEMAP_DIM];
         let mut x = 0;
         let mut y = 0;
+        let vram = self.vram.borrow();
         for k in 0..TILEMAP_TILE_COUNT {
-            let index = self
-                .vram
+            let index = vram
                 .get_map_tile_index(
                     k,
                     if !window {
@@ -120,7 +123,7 @@ impl PPU {
                     self.control.bg_win_tiledata_area(),
                 )
                 .unwrap();
-            let tile = self.vram.read_8x8_tile(index).unwrap();
+            let tile = vram.read_8x8_tile(index).unwrap();
             for (j, row) in tile.iter().enumerate() {
                 for (i, pixel) in row.iter().rev().enumerate() {
                     image[y * 8 + j][x * 8 + i] =
@@ -143,15 +146,17 @@ impl PPU {
         let mut image = [[[255; 3]; OBJECT_RENDER_WIDTH]; OBJECT_RENDER_HEIGHT];
         let objects = self
             .oam
+            .borrow()
             .collect_all_objects()
             .expect("failed to collect objects for image");
         let height = if self.control.obj_size() { 16 } else { 8 };
+        let vram = self.vram.borrow();
         for object in objects {
             let x = object.x_pos().min(OBJECT_RENDER_WIDTH as u8 - 8) as usize;
             let y = object.y_pos().min(OBJECT_RENDER_HEIGHT as u8 - 16) as usize;
             for j in 0..height {
                 let pixels_values = object
-                    .get_pixels_row(j, &self.vram, self.control.obj_size(), &self.obj_palette)
+                    .get_pixels_row(j, &vram, self.control.obj_size(), &self.obj_palette)
                     .expect("invalid line passed");
                 let y_img = y + j;
                 for (i, (pixel_value, pixel_color)) in pixels_values.iter().rev().enumerate() {
@@ -188,15 +193,17 @@ impl PPU {
         let mut image = [[[255; 3]; OBJECT_LIST_RENDER_WIDTH]; OBJECT_LIST_RENDER_HEIGHT];
         let objects = self
             .oam
+            .borrow()
             .collect_all_objects()
             .expect("failed to collect objects for image");
         let height = if self.control.obj_size() { 16 } else { 8 };
+        let vram = self.vram.borrow();
         for (r, object) in objects.iter().enumerate() {
             let x = (r % OBJECT_LIST_PER_LINE) * 8;
             let y = (r / OBJECT_LIST_PER_LINE) * 16;
             for j in 0..height {
                 let pixels_values = object
-                    .get_pixels_row(j, &self.vram, self.control.obj_size(), &self.obj_palette)
+                    .get_pixels_row(j, &vram, self.control.obj_size(), &self.obj_palette)
                     .expect("invalid line passed");
                 let y_img = y + j;
                 for (i, (pixel_value, pixel_color)) in pixels_values.iter().rev().enumerate() {
@@ -214,5 +221,95 @@ impl PPU {
 impl Default for PPU {
     fn default() -> PPU {
         PPU::new()
+    }
+}
+
+#[cfg(test)]
+mod vram {
+    use super::PPU;
+    use crate::test_tools::TestAddress;
+    use gb_bus::FileOperation;
+
+    #[test]
+    fn locking() {
+        let ppu = PPU::new();
+        let mut ppu_mem = ppu.memory();
+        {
+            let _lock = ppu.vram.borrow();
+            ppu_mem
+                .write(0x42, Box::new(TestAddress::root_vram()))
+                .expect("Try write value into borrowed vram");
+            let res = ppu_mem
+                .read(Box::new(TestAddress::root_vram()))
+                .expect("Try reading borrowed value from vram");
+            assert_eq!(res, 0x00, "invalid value from borrowed vram");
+        }
+    }
+
+    #[test]
+    fn locking_mut() {
+        let ppu = PPU::new();
+        let mut ppu_mem = ppu.memory();
+        {
+            {
+                let _lock = ppu.vram.borrow_mut();
+                ppu_mem
+                    .write(0x42, Box::new(TestAddress::root_vram()))
+                    .expect("Try write value into borrowed vram");
+                let res = ppu_mem
+                    .read(Box::new(TestAddress::root_vram()))
+                    .expect("Try reading mut borrowed value from vram");
+                assert_eq!(res, 0xFF, "invalid value from vram");
+            }
+            let res = ppu_mem
+                .read(Box::new(TestAddress::root_vram()))
+                .expect("Try reading mut borrowed value from vram");
+            assert_eq!(res, 0x00, "invalid value from vram");
+        }
+    }
+}
+
+#[cfg(test)]
+mod oam {
+    use super::PPU;
+    use crate::test_tools::TestAddress;
+    use gb_bus::FileOperation;
+
+    #[test]
+    fn locking() {
+        let ppu = PPU::new();
+        let mut ppu_mem = ppu.memory();
+        {
+            let _lock = ppu.oam.borrow();
+            ppu_mem
+                .write(0x42, Box::new(TestAddress::root_oam()))
+                .expect("Try write value into borrowed oam");
+            let res = ppu_mem
+                .read(Box::new(TestAddress::root_oam()))
+                .expect("Try reading borrowed value from oam");
+            assert_eq!(res, 0x00, "invalid value from borrowed oam");
+        }
+    }
+
+    #[test]
+    fn locking_mut() {
+        let ppu = PPU::new();
+        let mut ppu_mem = ppu.memory();
+        {
+            {
+                let _lock = ppu.oam.borrow_mut();
+                ppu_mem
+                    .write(0x42, Box::new(TestAddress::root_oam()))
+                    .expect("Try write value into borrowed oam");
+                let res = ppu_mem
+                    .read(Box::new(TestAddress::root_oam()))
+                    .expect("Try reading mut borrowed value from oam");
+                assert_eq!(res, 0xFF, "invalid value from oam");
+            }
+            let res = ppu_mem
+                .read(Box::new(TestAddress::root_oam()))
+                .expect("Try reading mut borrowed value from oam");
+            assert_eq!(res, 0x00, "invalid value from oam");
+        }
     }
 }

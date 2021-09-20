@@ -1,21 +1,24 @@
 use std::error::Error as STDError;
 use std::fmt::{self, Debug, Display};
 
-pub type PPUResult<T> = Result<T, Error>;
+pub type PPUResult<T> = Result<T, PPUError>;
 
 #[derive(Debug)]
-pub enum Error {
+pub enum PPUError {
     OutOfBound {
         value: usize,
         min_bound: usize,
         max_bound: usize,
     },
+    MemoryUnavailable {
+        mem_name: String,
+    },
 }
 
-impl Display for Error {
+impl Display for PPUError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Error::OutOfBound {
+            PPUError::OutOfBound {
                 value,
                 min_bound,
                 max_bound,
@@ -24,8 +27,11 @@ impl Display for Error {
                 "value '{}' out bound, expected between '{}' and '{}'",
                 value, min_bound, max_bound
             ),
+            PPUError::MemoryUnavailable { mem_name } => {
+                write!(f, "memory '{}' is unavailable", mem_name)
+            }
         }
     }
 }
 
-impl STDError for Error {}
+impl STDError for PPUError {}

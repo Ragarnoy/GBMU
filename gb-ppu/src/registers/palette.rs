@@ -1,5 +1,5 @@
 use crate::color::Color;
-use crate::error::{Error, PPUResult};
+use crate::error::{PPUError, PPUResult};
 use modular_bitfield::{bitfield, specifiers::B2};
 
 #[bitfield]
@@ -30,7 +30,7 @@ impl Palette {
             2 => Ok(self.map.index_2()),
             1 => Ok(self.map.index_1()),
             0 => Ok(self.map.index_0()),
-            _ => Err(Error::OutOfBound {
+            _ => Err(PPUError::OutOfBound {
                 value: index as usize,
                 min_bound: 0,
                 max_bound: 3,

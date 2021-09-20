@@ -1,4 +1,4 @@
-use crate::error::{Error, PPUResult};
+use crate::error::{PPUError, PPUResult};
 use crate::object::Object;
 use std::collections::BTreeMap;
 use std::convert::TryInto;
@@ -18,9 +18,34 @@ impl Oam {
         }
     }
 
+    pub fn read(&self, addr: usize) -> PPUResult<u8> {
+        if addr < Self::SIZE {
+            Ok(self.data[addr])
+        } else {
+            Err(PPUError::OutOfBound {
+                value: addr,
+                min_bound: 0,
+                max_bound: Self::SIZE,
+            })
+        }
+    }
+
+    pub fn write(&mut self, addr: usize, value: u8) -> PPUResult<()> {
+        if addr < Self::SIZE {
+            self.data[addr] = value;
+            Ok(())
+        } else {
+            Err(PPUError::OutOfBound {
+                value: addr,
+                min_bound: 0,
+                max_bound: Self::SIZE,
+            })
+        }
+    }
+
     fn read_object(&self, pos: usize) -> PPUResult<Object> {
         if pos > Self::OBJECT_COUNT - 1 {
-            return Err(Error::OutOfBound {
+            return Err(PPUError::OutOfBound {
                 value: pos,
                 min_bound: 0,
                 max_bound: Self::OBJECT_COUNT - 1,
@@ -72,14 +97,14 @@ impl Default for Oam {
     }
 }
 
-impl From<&[u8; Oam::SIZE]> for Oam {
-    fn from(bytes: &[u8; Oam::SIZE]) -> Oam {
-        Oam { data: *bytes }
+impl From<[u8; Oam::SIZE]> for Oam {
+    fn from(bytes: [u8; Oam::SIZE]) -> Oam {
+        Oam { data: bytes }
     }
 }
 
-impl From<&Oam> for [u8; Oam::SIZE] {
-    fn from(mem: &Oam) -> [u8; Oam::SIZE] {
+impl From<Oam> for [u8; Oam::SIZE] {
+    fn from(mem: Oam) -> [u8; Oam::SIZE] {
         mem.data
     }
 }
@@ -91,7 +116,7 @@ mod tests {
     #[test]
     fn line_with_obj() {
         let oam: Oam =
-            include_bytes!("../../examples/memory dumps/oam/Legend_of_Zelda_link_Awaking.dmp")
+            (*include_bytes!("../../examples/memory dumps/oam/Legend_of_Zelda_link_Awaking.dmp"))
                 .into();
         let line = 32;
         let scanned_line = oam
@@ -114,9 +139,9 @@ mod tests {
 
     #[test]
     fn line_with_more_than_10() {
-        let oam: Oam = include_bytes!(
+        let oam: Oam = (*include_bytes!(
             "../../examples/memory dumps/oam/[MODDED]-Legend_of_Zelda_link_Awaking.dmp"
-        )
+        ))
         .into();
         let line = 30;
         let scanned_line = oam
