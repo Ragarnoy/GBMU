@@ -14,6 +14,7 @@ pub fn fetch<B: Bus<u8>>(ctl: &mut MicrocodeController<B>, state: &mut State<B>)
         |opcode| {
             ctl_ref.borrow_mut().opcode = Some(opcode.into());
             match opcode {
+                Opcode::Jp => {}
                 Opcode::Nop => {}
                 Opcode::PrefixCb => ctl_ref.borrow_mut().push_action(fetch_cb),
                 _ => todo!("unimplemented opcode {:?}", opcode),

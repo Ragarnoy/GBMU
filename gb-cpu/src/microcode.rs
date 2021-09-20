@@ -3,6 +3,7 @@ mod fetch;
 mod fetch_cb;
 pub mod opcode;
 pub mod opcode_cb;
+mod read;
 mod state;
 
 pub(crate) use controller::MicrocodeController;
