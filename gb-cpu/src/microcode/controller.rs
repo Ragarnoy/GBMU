@@ -1,4 +1,4 @@
-use super::{fetch::fetch, opcode::Opcode, opcode_cb::OpcodeCB, Continuum, State};
+use super::{fetch::fetch, opcode::Opcode, opcode_cb::OpcodeCB, ControlFlow, State};
 use crate::registers::Registers;
 use gb_bus::Bus;
 
@@ -27,7 +27,7 @@ pub struct MicrocodeController<B: Bus<u8>> {
     actions: Vec<ActionFn<B>>,
 }
 
-type ActionFn<B> = fn(controller: &mut MicrocodeController<B>, state: &mut State<B>) -> Continuum;
+type ActionFn<B> = fn(controller: &mut MicrocodeController<B>, state: &mut State<B>) -> ControlFlow;
 
 impl<B: Bus<u8>> Default for MicrocodeController<B> {
     fn default() -> Self {
@@ -45,8 +45,8 @@ impl<B: Bus<u8>> MicrocodeController<B> {
 
         let res = action(self, &mut state);
         match res {
-            Continuum::Chain => self.step(regs, bus),
-            Continuum::Break => self.actions.clear(),
+            ControlFlow::Chain => self.step(regs, bus),
+            ControlFlow::Break => self.actions.clear(),
             _ => {}
         }
     }
