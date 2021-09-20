@@ -1,10 +1,10 @@
-use gb_dbg::dbg_interfaces::RW;
+use gb_dbg::dbg_interfaces::MemoryDebugOperations;
 
 pub struct Memory {
     pub memory: Vec<u8>,
 }
 
-impl RW for Memory {
+impl MemoryDebugOperations for Memory {
     fn read(&self, index: usize) -> u8 {
         *self.memory.get(index).unwrap()
     }

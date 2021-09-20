@@ -2,24 +2,26 @@ pub mod disassembler;
 pub mod flow_control;
 pub mod memory;
 pub mod registers;
+mod options;
 
-use crate::dbg_interfaces::{DebugRegister, RW};
+use crate::dbg_interfaces::{RegisterDebugOperations, MemoryDebugOperations};
 use crate::debugger::disassembler::Disassembler;
 use crate::debugger::flow_control::FlowController;
-use crate::debugger::memory::GBMemoryEditor;
+use crate::debugger::memory::MemoryViewer;
 use crate::debugger::registers::RegisterEditor;
 use egui::{Color32, CtxRef, Label};
+use crate::debugger::options::DebuggerOptions;
 
 pub struct Debugger<MEM, REG> {
-    memory_editor: GBMemoryEditor<MEM>,
+    memory_editor: MemoryViewer<MEM>,
     register_editor: RegisterEditor<REG>,
     flow_controller: FlowController,
     disassembler: Disassembler,
 }
 
-impl<MEM: RW, REG: DebugRegister> Debugger<MEM, REG> {
+impl<MEM: MemoryDebugOperations, REG: RegisterDebugOperations> Debugger<MEM, REG> {
     pub fn new(
-        memory_editor: GBMemoryEditor<MEM>,
+        memory_editor: MemoryViewer<MEM>,
         register_editor: RegisterEditor<REG>,
         flow_controller: FlowController,
         disassembler: Disassembler,
@@ -65,5 +67,30 @@ impl<MEM: RW, REG: DebugRegister> Debugger<MEM, REG> {
         egui::CentralPanel::default().show(ctx, |ui| {
             self.register_editor.draw(ui);
         });
+    }
+}
+
+pub struct DebuggerBuilder<MEM, REG> {
+    memory_interface: MEM,
+    register_interface: REG,
+    options: Option<DebuggerOptions>,
+}
+
+impl<MEM, REG> DebuggerBuilder<MEM, REG>
+where
+    MEM: MemoryDebugOperations,
+    REG: RegisterDebugOperations,
+{
+    pub fn new(memory_interface: MEM, register_interface: REG) -> Self<MEM, REG> {
+        Self {
+            memory_interface,
+            register_interface,
+            options: None,
+        }
+    }
+
+    pub fn with_options(mut self, options: DebuggerOptions) -> Self {
+        self.options = Some(options);
+        self
     }
 }

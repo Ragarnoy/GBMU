@@ -1,6 +1,6 @@
 use crate::registers;
 use anyhow::anyhow;
-use gb_dbg::dbg_interfaces::{DebugRegister, RegisterMap, RegisterValue};
+use gb_dbg::dbg_interfaces::{RegisterDebugOperations, RegisterMap, RegisterValue};
 
 pub struct Iter<'a> {
     count: u32,
@@ -69,8 +69,8 @@ impl From<&Registers> for Vec<RegisterMap> {
     }
 }
 
-impl DebugRegister for Registers {
-    fn get(&self, key: &str) -> anyhow::Result<RegisterValue> {
+impl RegisterDebugOperations for Registers {
+    fn cpu_get(&self, key: &str) -> anyhow::Result<RegisterValue> {
         match key {
             "A" => Ok(RegisterValue::from(self.a)),
             "B" => Ok(RegisterValue::from(self.b)),
@@ -82,7 +82,7 @@ impl DebugRegister for Registers {
         }
     }
 
-    fn registers(&self) -> Vec<RegisterMap> {
+    fn cpu_registers(&self) -> Vec<RegisterMap> {
         self.into()
     }
 }

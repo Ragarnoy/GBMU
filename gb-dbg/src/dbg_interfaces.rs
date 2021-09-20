@@ -28,16 +28,20 @@ impl From<u16> for RegisterValue {
     }
 }
 
-pub trait RW {
+pub trait MemoryDebugOperations {
     fn read(&self, index: usize) -> u8;
-
-    fn write(&mut self, _index: usize, _value: u8) {
-        // Default to Read-Only
-    }
 }
 
-pub trait DebugRegister {
-    fn get(&self, key: &str) -> Result<RegisterValue>;
+pub trait RegisterDebugOperations {
+    fn cpu_get(&self, key: &str) -> Result<RegisterValue>;
 
-    fn registers(&self) -> Vec<RegisterMap>;
+    fn ppu_get(&self, key: &str) -> Result<RegisterValue>;
+
+    fn io_get(&self, key: &str) -> Result<RegisterValue>;
+
+    fn cpu_registers(&self) -> Vec<RegisterMap>;
+
+    fn ppu_registers(&self) -> Vec<RegisterMap>;
+
+    fn io_registers(&self) -> Vec<RegisterMap>;
 }

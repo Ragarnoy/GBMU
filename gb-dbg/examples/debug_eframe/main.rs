@@ -6,7 +6,7 @@ use crate::registers::Registers;
 use eframe::egui::CtxRef;
 use eframe::epi::*;
 use egui::Vec2;
-use gb_dbg::dbg_interfaces::RW;
+use gb_dbg::dbg_interfaces::MemoryDebugOperations;
 use gb_dbg::debugger::disassembler::Disassembler;
 use gb_dbg::debugger::flow_control::FlowController;
 use gb_dbg::debugger::memory::MemoryEditorBuilder;

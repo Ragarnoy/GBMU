@@ -1,6 +1,6 @@
 mod table;
 
-use crate::dbg_interfaces::DebugRegister;
+use crate::dbg_interfaces::RegisterDebugOperations;
 use crate::debugger::registers::table::RegisterTable;
 use egui::Label;
 use egui::{CollapsingHeader, Color32, Ui, Vec2};
@@ -11,7 +11,7 @@ pub struct RegisterEditor<T> {
     io: RegisterTable<T>,
 }
 
-impl<T: DebugRegister> RegisterEditor<T> {
+impl<T: RegisterDebugOperations> RegisterEditor<T> {
     fn update_table(&mut self) {
         self.cpu.update_table();
         self.ppu.update_table();
@@ -88,19 +88,19 @@ impl<T> Default for RegisterEditorBuilder<T> {
     }
 }
 
-impl<T: DebugRegister> RegisterEditorBuilder<T> {
+impl<T: RegisterDebugOperations> RegisterEditorBuilder<T> {
     pub fn with_cpu(mut self, cpu: T) -> Self {
-        self.cpu = Some(RegisterTable::new(cpu));
+        self.cpu = Some(RegisterTable::new(cpu.cpu_registers()));
         self
     }
 
     pub fn with_ppu(mut self, ppu: T) -> Self {
-        self.ppu = Some(RegisterTable::new(ppu));
+        self.ppu = Some(RegisterTable::new(ppu.ppu_registers()));
         self
     }
 
     pub fn with_io(mut self, io: T) -> Self {
-        self.io = Some(RegisterTable::new(io));
+        self.io = Some(RegisterTable::new(io.io_registers()));
         self
     }
 
