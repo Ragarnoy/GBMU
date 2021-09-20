@@ -79,7 +79,7 @@ impl<B: Bus<u8>> MicrocodeController<B> {
         self.cache.push(byte)
     }
 
-    /// Pop the last push `byte` from the cache.
+    /// Pop the last pushed `byte` from the cache.
     pub fn pop(&mut self) -> u8 {
         self.cache.pop().expect("not enough value stored in cache")
     }
