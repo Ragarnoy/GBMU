@@ -10,17 +10,17 @@ use crate::debugger::memory::GBMemoryEditor;
 use crate::debugger::registers::RegisterEditor;
 use egui::{Color32, CtxRef, Label};
 
-pub struct Debugger<T, R> {
-    memory_editor: GBMemoryEditor<T>,
-    register_editor: RegisterEditor<R>,
+pub struct Debugger<MEM, REG> {
+    memory_editor: GBMemoryEditor<MEM>,
+    register_editor: RegisterEditor<REG>,
     flow_controller: FlowController,
     disassembler: Disassembler,
 }
 
-impl<T: RW, R: DebugRegister> Debugger<T, R> {
+impl<MEM: RW, REG: DebugRegister> Debugger<MEM, REG> {
     pub fn new(
-        memory_editor: GBMemoryEditor<T>,
-        register_editor: RegisterEditor<R>,
+        memory_editor: GBMemoryEditor<MEM>,
+        register_editor: RegisterEditor<REG>,
         flow_controller: FlowController,
         disassembler: Disassembler,
     ) -> Self {
