@@ -25,6 +25,8 @@ pub struct MicrocodeController<B: Bus<u8>> {
     /// Microcode actions, their role is to execute one step of an Opcode
     /// Each Actions take at most 1 `M-Cycle`
     actions: Vec<ActionFn<B>>,
+    /// Cache use for microcode action
+    cache: Vec<u8>,
 }
 
 type ActionFn<B> = fn(controller: &mut MicrocodeController<B>, state: &mut State<B>) -> ControlFlow;
@@ -34,6 +36,7 @@ impl<B: Bus<u8>> Default for MicrocodeController<B> {
         Self {
             opcode: None,
             actions: Vec::with_capacity(8),
+            cache: Vec::with_capacity(4),
         }
     }
 }
@@ -53,5 +56,13 @@ impl<B: Bus<u8>> MicrocodeController<B> {
 
     pub fn push_action(&mut self, action: ActionFn<B>) {
         self.actions.push(action);
+    }
+
+    pub fn push(&mut self, byte: u8) {
+        self.cache.push(byte)
+    }
+
+    pub fn pop(&mut self) -> u8 {
+        self.cache.pop().expect("not enough value stored in cache")
     }
 }
