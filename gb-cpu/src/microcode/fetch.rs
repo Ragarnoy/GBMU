@@ -1,5 +1,10 @@
 use super::{
-    fetch_cb::fetch_cb, jump, opcode::Opcode, read::read, ControlFlow, MicrocodeController, State,
+    condition::{carry, not_carry, not_zero, zero},
+    fetch_cb::fetch_cb,
+    jump,
+    opcode::Opcode,
+    read::read,
+    ControlFlow, MicrocodeController, State,
 };
 use gb_bus::Bus;
 use std::{cell::RefCell, convert::TryFrom, rc::Rc};
@@ -18,8 +23,14 @@ pub fn fetch<B: Bus<u8>>(ctl: &mut MicrocodeController<B>, state: &mut State<B>)
             ctl.opcode = Some(opcode.into());
             match opcode {
                 Opcode::Jp => ctl.push_actions(&[read, read, jump::jump]),
+                Opcode::JpZ => ctl.push_actions(&[read, read, zero, jump::jump]),
+                Opcode::JpNz => ctl.push_actions(&[read, read, not_zero, jump::jump]),
+                Opcode::JpC => ctl.push_actions(&[read, read, carry, jump::jump]),
+                Opcode::JpNc => ctl.push_actions(&[read, read, not_carry, jump::jump]),
                 Opcode::JpHl => ctl.push_actions(&[jump::jump_hl]),
+
                 Opcode::Nop => {}
+
                 Opcode::PrefixCb => ctl.push_action(fetch_cb),
                 _ => todo!("unimplemented opcode {:?}", opcode),
             };
