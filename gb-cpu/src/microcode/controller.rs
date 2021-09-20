@@ -41,7 +41,9 @@ impl<'a, B: Bus<u8>> State<'a, B> {
 
     /// Read the byte at the `Program Counter` then increment it
     pub fn read(&mut self) -> u8 {
-        self.bus.read(self.regs.pc).unwrap_or(0xff)
+        let res = self.bus.read(self.regs.pc).unwrap_or(0xff);
+        self.regs.pc += 1;
+        res
     }
 }
 
