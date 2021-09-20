@@ -3,6 +3,10 @@ mod fetch;
 mod fetch_cb;
 pub mod opcode;
 pub mod opcode_cb;
+mod state;
+
+pub(crate) use controller::MicrocodeController;
+pub(crate) use state::State;
 
 /// Continuum allow the action to control the flow of the microcode
 pub enum Continuum {

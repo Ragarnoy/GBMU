@@ -1,9 +1,4 @@
-use super::{
-    controller::{MicrocodeController, State},
-    fetch_cb::fetch_cb,
-    opcode::Opcode,
-    Continuum,
-};
+use super::{fetch_cb::fetch_cb, opcode::Opcode, Continuum, MicrocodeController, State};
 use gb_bus::Bus;
 use std::{cell::RefCell, convert::TryFrom, rc::Rc};
 

@@ -1,4 +1,4 @@
-use super::{fetch::fetch, opcode::Opcode, opcode_cb::OpcodeCB, Continuum};
+use super::{fetch::fetch, opcode::Opcode, opcode_cb::OpcodeCB, Continuum, State};
 use crate::registers::Registers;
 use gb_bus::Bus;
 
@@ -28,24 +28,6 @@ pub struct MicrocodeController<B: Bus<u8>> {
 }
 
 type ActionFn<B> = fn(controller: &mut MicrocodeController<B>, state: &mut State<B>) -> Continuum;
-
-pub struct State<'a, B: Bus<u8>> {
-    bus: &'a mut B,
-    regs: &'a mut Registers,
-}
-
-impl<'a, B: Bus<u8>> State<'a, B> {
-    pub fn new(regs: &'a mut Registers, bus: &'a mut B) -> Self {
-        Self { bus, regs }
-    }
-
-    /// Read the byte at the `Program Counter` then increment it
-    pub fn read(&mut self) -> u8 {
-        let res = self.bus.read(self.regs.pc).unwrap_or(0xff);
-        self.regs.pc += 1;
-        res
-    }
-}
 
 impl<B: Bus<u8>> Default for MicrocodeController<B> {
     fn default() -> Self {

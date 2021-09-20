@@ -1,8 +1,4 @@
-use super::{
-    controller::{MicrocodeController, State},
-    opcode_cb::OpcodeCB,
-    Continuum,
-};
+use super::{opcode_cb::OpcodeCB, Continuum, MicrocodeController, State};
 use gb_bus::Bus;
 use std::convert::TryFrom;
 
