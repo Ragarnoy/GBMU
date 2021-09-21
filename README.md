@@ -31,3 +31,19 @@ Building this project on MacOs requires `cmake`.
 ```sh
 brew install cmake
 ```
+
+## Building
+
+Before building, you need to install the `bios` files that here included in the package
+
+```sh
+make bios
+```
+
+PS: if you want to also download the ROMS `make requirement`
+
+After the `bios` files are installed, you can build using `cargo`
+
+```sh
+cargo build --workspace --examples
+```
