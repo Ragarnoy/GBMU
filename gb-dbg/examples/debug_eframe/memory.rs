@@ -8,10 +8,6 @@ impl MemoryDebugOperations for Memory {
     fn read(&self, index: usize) -> u8 {
         *self.memory.get(index).unwrap()
     }
-
-    fn write(&mut self, _index: usize, _value: u8) {
-        self.memory[_index] = _value
-    }
 }
 
 impl Default for Memory {

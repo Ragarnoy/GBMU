@@ -56,6 +56,7 @@ impl Registers {
     }
 }
 
+//TODO Temporary for now it looks like ass
 impl From<&Registers> for Vec<RegisterMap> {
     fn from(registers: &registers::Registers) -> Self {
         vec![
@@ -82,7 +83,23 @@ impl RegisterDebugOperations for Registers {
         }
     }
 
+    fn ppu_get(&self, key: &str) -> anyhow::Result<RegisterValue> {
+        self.cpu_get(key)
+    }
+
+    fn io_get(&self, key: &str) -> anyhow::Result<RegisterValue> {
+        self.cpu_get(key)
+    }
+
     fn cpu_registers(&self) -> Vec<RegisterMap> {
+        self.into()
+    }
+
+    fn ppu_registers(&self) -> Vec<RegisterMap> {
+        self.into()
+    }
+
+    fn io_registers(&self) -> Vec<RegisterMap> {
         self.into()
     }
 }

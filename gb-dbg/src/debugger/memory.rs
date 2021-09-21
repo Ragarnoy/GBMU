@@ -4,12 +4,12 @@ use egui_memory_editor::option_data::MemoryEditorOptions;
 use egui_memory_editor::MemoryEditor;
 use std::ops::Range;
 
-pub struct MemoryViewer<T> {
-    memory_editor: MemoryEditor<T>,
+pub struct MemoryViewer<MEM> {
+    memory_editor: MemoryEditor<MEM>,
 }
 
 impl<MEM: MemoryDebugOperations> MemoryViewer<MEM> {
-    pub fn new(address_ranges: Vec<(&'static str, Range<usize>)>) -> Self<MEM> {
+    pub fn new(address_ranges: Vec<(&'static str, Range<usize>)>) -> Self {
         let mut mem_options = MemoryEditorOptions::default();
         mem_options.is_resizable_column = false;
         mem_options.is_options_collapsed = true;

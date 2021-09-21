@@ -12,29 +12,15 @@ use crate::debugger::registers::RegisterEditor;
 use egui::{Color32, CtxRef, Label};
 use crate::debugger::options::DebuggerOptions;
 
-pub struct Debugger<MEM, REG> {
+pub struct Debugger<MEM> {
     memory_editor: MemoryViewer<MEM>,
-    register_editor: RegisterEditor<REG>,
+    register_editor: RegisterEditor,
     flow_controller: FlowController,
     disassembler: Disassembler,
 }
 
-impl<MEM: MemoryDebugOperations, REG: RegisterDebugOperations> Debugger<MEM, REG> {
-    pub fn new(
-        memory_editor: MemoryViewer<MEM>,
-        register_editor: RegisterEditor<REG>,
-        flow_controller: FlowController,
-        disassembler: Disassembler,
-    ) -> Self {
-        Self {
-            memory_editor,
-            register_editor,
-            flow_controller,
-            disassembler,
-        }
-    }
-
-    pub fn draw(&mut self, ctx: &CtxRef) {
+impl<MEM: MemoryDebugOperations> Debugger<MEM> {
+    pub fn draw<REG: RegisterDebugOperations>(&mut self, ctx: &CtxRef, mut memory: &mut MEM, registers: &REG) {
         // ctx.set_debug_on_hover(true);
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             self.flow_controller.draw(ui);
@@ -46,7 +32,7 @@ impl<MEM: MemoryDebugOperations, REG: RegisterDebugOperations> Debugger<MEM, REG
                 ui.vertical(|ui| {
                     self.disassembler.draw(ui);
                     ui.separator();
-                    self.memory_editor.draw(ui);
+                    self.memory_editor.draw(ui, &mut memory);
                 });
             });
         egui::SidePanel::right("right_panel")
@@ -65,26 +51,19 @@ impl<MEM: MemoryDebugOperations, REG: RegisterDebugOperations> Debugger<MEM, REG
                 })
             });
         egui::CentralPanel::default().show(ctx, |ui| {
-            self.register_editor.draw(ui);
+            self.register_editor.draw(ui, registers);
         });
     }
 }
 
-pub struct DebuggerBuilder<MEM, REG> {
-    memory_interface: MEM,
-    register_interface: REG,
+pub struct DebuggerBuilder {
     options: Option<DebuggerOptions>,
 }
 
-impl<MEM, REG> DebuggerBuilder<MEM, REG>
-where
-    MEM: MemoryDebugOperations,
-    REG: RegisterDebugOperations,
+impl DebuggerBuilder
 {
-    pub fn new(memory_interface: MEM, register_interface: REG) -> Self<MEM, REG> {
+    pub fn new() -> Self {
         Self {
-            memory_interface,
-            register_interface,
             options: None,
         }
     }
@@ -92,5 +71,14 @@ where
     pub fn with_options(mut self, options: DebuggerOptions) -> Self {
         self.options = Some(options);
         self
+    }
+
+    pub fn build<MEM: MemoryDebugOperations>(self) -> Debugger<MEM> {
+        Debugger {
+            memory_editor: MemoryViewer::new(self.options.unwrap_or(DebuggerOptions::default()).address_ranges),
+            register_editor: RegisterEditor,
+            flow_controller: FlowController,
+            disassembler: Disassembler,
+        }
     }
 }

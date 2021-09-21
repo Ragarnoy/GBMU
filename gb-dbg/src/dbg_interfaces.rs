@@ -11,6 +11,7 @@ impl From<RegisterValue> for u16 {
     }
 }
 
+#[derive(Clone, Copy)]
 pub enum RegisterValue {
     U8(u8),
     U16(u16),

@@ -1,7 +1,7 @@
 use std::ops::Range;
 
 pub struct DebuggerOptions {
-    address_ranges: Vec<(&'static str, Range<usize>)>,
+    pub address_ranges: Vec<(&'static str, Range<usize>)>,
 }
 
 impl Default for DebuggerOptions {
