@@ -1,4 +1,4 @@
-use crate::error::{Error, PPUResult};
+use crate::error::{PPUError, PPUResult};
 
 /// Represent the colors of pixels.
 ///
@@ -22,7 +22,7 @@ impl Color {
             2 => Ok(Color::DarkGray),
             1 => Ok(Color::LightGray),
             0 => Ok(Color::White),
-            _ => Err(Error::OutOfBound {
+            _ => Err(PPUError::OutOfBound {
                 value: value as usize,
                 min_bound: 0,
                 max_bound: 3,

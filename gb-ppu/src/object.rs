@@ -1,5 +1,5 @@
 use crate::color::Color;
-use crate::error::{Error, PPUResult};
+use crate::error::{PPUError, PPUResult};
 use crate::memory::Vram;
 use crate::registers::Palette;
 use modular_bitfield::{
@@ -95,7 +95,7 @@ impl Object {
     ) -> PPUResult<[(u8, Color); 8]> {
         let mut row = [(0, Color::default()); 8];
         if line > 8 {
-            return Err(Error::OutOfBound {
+            return Err(PPUError::OutOfBound {
                 value: line,
                 min_bound: 0,
                 max_bound: 8,
@@ -125,7 +125,7 @@ impl Object {
     ) -> PPUResult<[(u8, Color); 8]> {
         let mut row = [(0, Color::default()); 8];
         if line > 15 {
-            return Err(Error::OutOfBound {
+            return Err(PPUError::OutOfBound {
                 value: line,
                 min_bound: 0,
                 max_bound: 15,
