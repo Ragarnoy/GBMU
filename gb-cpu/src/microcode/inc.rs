@@ -9,7 +9,7 @@ pub fn inc_hl(ctl: &mut MicrocodeController, state: &mut State) -> ControlFlow {
     let (val, flag) = add_reg_flags(ctl.pop(), 1);
     flag.update_reg_flag(state.regs);
     ctl.push(val);
-    ControlFlow::Ok
+    ControlFlow::Chain
 }
 
 pub fn inc16(ctl: &mut MicrocodeController, state: &mut State) -> ControlFlow {
@@ -21,7 +21,7 @@ pub fn inc16(ctl: &mut MicrocodeController, state: &mut State) -> ControlFlow {
             Reg16::HL => state.regs.hl += 1,
             Reg16::SP => state.regs.sp += 1,
         }
-        ControlFlow::Chain
+        ControlFlow::Ok
     } else {
         panic!("call inc16 with something other than a reg16");
     }
@@ -47,7 +47,7 @@ pub fn inc8(ctl: &mut MicrocodeController, state: &mut State) -> ControlFlow {
             Reg8::H => inc_reg8!(state, set_h, h),
             Reg8::L => inc_reg8!(state, set_l, l),
         }
-        ControlFlow::Ok
+        ControlFlow::Chain
     } else {
         panic!("call inc8 with something other than a reg8");
     }
