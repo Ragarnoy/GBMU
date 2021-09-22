@@ -5,7 +5,8 @@ use super::{
     ident::{Reg16, Reg8},
     inc, jump,
     opcode::Opcode,
-    read::read,
+    read::{read, read_hl},
+    write::write_hl,
     ControlFlow, MicrocodeController, State,
 };
 use std::{cell::RefCell, convert::TryFrom, rc::Rc};
@@ -42,7 +43,7 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> ControlFlow {
                 Opcode::IncE => ctl.push_actions(&[inc::inc8]).set_dest(Reg8::E.into()),
                 Opcode::IncH => ctl.push_actions(&[inc::inc8]).set_dest(Reg8::H.into()),
                 Opcode::IncL => ctl.push_actions(&[inc::inc8]).set_dest(Reg8::L.into()),
-                Opcode::IncHLind => ctl.push_actions(&[inc::inc_hl]),
+                Opcode::IncHLind => ctl.push_actions(&[read_hl, inc::inc_hl, write_hl]),
 
                 Opcode::DecBC => ctl.push_actions(&[dec::dec16]).set_dest(Reg16::BC.into()),
                 Opcode::DecDE => ctl.push_actions(&[dec::dec16]).set_dest(Reg16::DE.into()),
@@ -56,7 +57,7 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> ControlFlow {
                 Opcode::DecE => ctl.push_actions(&[dec::dec8]).set_dest(Reg8::E.into()),
                 Opcode::DecH => ctl.push_actions(&[dec::dec8]).set_dest(Reg8::H.into()),
                 Opcode::DecL => ctl.push_actions(&[dec::dec8]).set_dest(Reg8::L.into()),
-                Opcode::DecHLind => ctl.push_actions(&[dec::dec_hl]),
+                Opcode::DecHLind => ctl.push_actions(&[read_hl, dec::dec_hl, write_hl]),
 
                 Opcode::Nop => &mut ctl,
 

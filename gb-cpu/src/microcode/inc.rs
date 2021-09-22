@@ -5,10 +5,10 @@ use super::{
 };
 use crate::interfaces::{Read8BitsReg, Write8BitsReg};
 
-pub fn inc_hl(_ctl: &mut MicrocodeController, state: &mut State) -> ControlFlow {
-    let (val, flag) = add_reg_flags(state.read_hl(), 1);
+pub fn inc_hl(ctl: &mut MicrocodeController, state: &mut State) -> ControlFlow {
+    let (val, flag) = add_reg_flags(ctl.pop(), 1);
     flag.update_reg_flag(state.regs);
-    state.write_hl(val);
+    ctl.push(val);
     ControlFlow::Ok
 }
 
@@ -21,7 +21,7 @@ pub fn inc16(ctl: &mut MicrocodeController, state: &mut State) -> ControlFlow {
             Reg16::HL => state.regs.hl += 1,
             Reg16::SP => state.regs.sp += 1,
         }
-        ControlFlow::Ok
+        ControlFlow::Chain
     } else {
         panic!("call inc16 with something other than a reg16");
     }
