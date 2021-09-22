@@ -1,15 +1,15 @@
-use crate::{Address, Error, FileOperation};
+use crate::{Address, Area, Error, FileOperation};
 
 /// A Char Device yield current setted byte
 pub struct CharDevice(pub u8);
 
-impl FileOperation for CharDevice {
-    fn write(&mut self, v: u8, _addr: Box<dyn Address>) -> Result<(), Error> {
+impl FileOperation<Area> for CharDevice {
+    fn write(&mut self, v: u8, _addr: Box<dyn Address<Area>>) -> Result<(), Error> {
         self.0 = v;
         Ok(())
     }
 
-    fn read(&self, _addr: Box<dyn Address>) -> Result<u8, Error> {
+    fn read(&self, _addr: Box<dyn Address<Area>>) -> Result<u8, Error> {
         Ok(self.0)
     }
 }
@@ -20,7 +20,7 @@ fn test_chardev_fileop() {
     use crate::Area;
 
     let dev = CharDevice(42);
-    let mut op: Box<dyn FileOperation> = Box::new(dev);
+    let mut op: Box<dyn FileOperation<Area>> = Box::new(dev);
 
     assert_eq!(
         op.read(Box::new(Address::from_offset(Area::Bios, 35, 24))),

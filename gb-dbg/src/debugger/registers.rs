@@ -1,25 +1,12 @@
-mod table;
+use crate::dbg_interfaces::{RegisterDebugOperations, RegisterMap};
 
-use crate::dbg_interfaces::DebugRegister;
-use crate::debugger::registers::table::RegisterTable;
 use egui::Label;
 use egui::{CollapsingHeader, Color32, Ui, Vec2};
 
-pub struct RegisterEditor<T> {
-    cpu: RegisterTable<T>,
-    ppu: RegisterTable<T>,
-    io: RegisterTable<T>,
-}
+pub struct RegisterEditor;
 
-impl<T: DebugRegister> RegisterEditor<T> {
-    fn update_table(&mut self) {
-        self.cpu.update_table();
-        self.ppu.update_table();
-        self.io.update_table();
-    }
-
-    pub fn draw(&mut self, ui: &mut Ui) {
-        self.update_table();
+impl RegisterEditor {
+    pub fn draw<REG: RegisterDebugOperations>(&mut self, ui: &mut Ui, register: &REG) {
         ui.label(Label::new("Register Editors").text_color(Color32::WHITE));
         CollapsingHeader::new("🛠 Options")
             .id_source("Register_Options")
@@ -30,15 +17,15 @@ impl<T: DebugRegister> RegisterEditor<T> {
         ui.separator();
         ui.horizontal_top(|ui| {
             ui.spacing_mut().item_spacing = Vec2::new(2.0, 2.0);
-            self.draw_register_table(&self.cpu, "CPU", ui);
-            self.draw_register_table(&self.ppu, "PPU", ui);
-            self.draw_register_table(&self.io, "IO", ui);
+            self.draw_register_table(register.cpu_registers(), "CPU", ui);
+            self.draw_register_table(register.ppu_registers(), "PPU", ui);
+            self.draw_register_table(register.io_registers(), "IO", ui);
         });
         ui.add_space(58.0);
         ui.separator();
     }
 
-    fn draw_register_table(&self, registers: &RegisterTable<T>, name: &str, ui: &mut Ui) {
+    fn draw_register_table(&self, registers: Vec<RegisterMap>, name: &str, ui: &mut Ui) {
         let layout = egui::Layout::top_down(egui::Align::LEFT);
         ui.allocate_ui_with_layout(Vec2::new(80.0, 150.0), layout, |ui| {
             ui.colored_label(Color32::WHITE, name);
@@ -54,11 +41,12 @@ impl<T: DebugRegister> RegisterEditor<T> {
                         .striped(true)
                         .spacing(Vec2::new(2.5, 2.5))
                         .show(ui, |ui| {
-                            for row in registers.registers.iter() {
-                                let format = if *row.1 > u8::MAX as u16 {
-                                    format!("0x{:04X}", row.1)
+                            for row in registers.iter() {
+                                let value: u16 = row.1.into();
+                                let format = if value > u8::MAX as u16 {
+                                    format!("0x{:04X}", value)
                                 } else {
-                                    format!("0x{:02X}", row.1)
+                                    format!("0x{:02X}", value)
                                 };
 
                                 ui.label(egui::Label::new(&row.0));
@@ -69,46 +57,5 @@ impl<T: DebugRegister> RegisterEditor<T> {
                         });
                 });
         });
-    }
-}
-
-pub struct RegisterEditorBuilder<T> {
-    cpu: Option<RegisterTable<T>>,
-    ppu: Option<RegisterTable<T>>,
-    io: Option<RegisterTable<T>>,
-}
-
-impl<T> Default for RegisterEditorBuilder<T> {
-    fn default() -> Self {
-        Self {
-            cpu: None,
-            ppu: None,
-            io: None,
-        }
-    }
-}
-
-impl<T: DebugRegister> RegisterEditorBuilder<T> {
-    pub fn with_cpu(mut self, cpu: T) -> Self {
-        self.cpu = Some(RegisterTable::new(cpu));
-        self
-    }
-
-    pub fn with_ppu(mut self, ppu: T) -> Self {
-        self.ppu = Some(RegisterTable::new(ppu));
-        self
-    }
-
-    pub fn with_io(mut self, io: T) -> Self {
-        self.io = Some(RegisterTable::new(io));
-        self
-    }
-
-    pub fn build(self) -> RegisterEditor<T> {
-        RegisterEditor {
-            cpu: self.cpu.unwrap(),
-            ppu: self.ppu.unwrap(),
-            io: self.io.unwrap(),
-        }
     }
 }

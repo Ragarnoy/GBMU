@@ -20,17 +20,21 @@ egui = { version = "0.13" }
 rfd = { version = "0.4" }
 log = "0.4"
 simplelog = "0.10"
+serde_yaml = { version = "0.8" }
 gb-lcd = { path= "./gb-lcd" }
 gb-ppu = { path = "./gb-ppu" }
 gb-dbg = { path = "./gb-dbg" }
+gb-joypad = { path = "./gb-joypad" }
 
 [workspace]
 members = [
+  "gb-clock",
   "gb-roms",
   "gb-ppu",
   "gb-lcd",
   "gb-cpu",
   "gb-dbg",
   "gb-bus",
-  "gb-rtc"
+  "gb-rtc",
+  "gb-joypad"
 ]

@@ -12,6 +12,9 @@
       <sourceFolder url="file://$MODULE_DIR$/gb-dbg/examples" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/gb-ppu/examples" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/gb-bus/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/gb-clock/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/gb-clock/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/gb-joypad/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/gb-rtc/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>

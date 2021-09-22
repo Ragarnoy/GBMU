@@ -1,4 +1,4 @@
-use gb_bus::{Address, Error, FileOperation};
+use gb_bus::{Address, Area, Error, FileOperation};
 use std::io::{self, ErrorKind, Read};
 
 pub const MAX_ROM_ONLY_SIZE: usize = 32_768;
@@ -28,8 +28,8 @@ impl RomOnlyController {
     }
 }
 
-impl FileOperation for RomOnlyController {
-    fn read(&self, addr: Box<dyn Address>) -> Result<u8, Error> {
+impl FileOperation<Area> for RomOnlyController {
+    fn read(&self, addr: Box<dyn Address<Area>>) -> Result<u8, Error> {
         let address = addr.get_address();
         if address < self.rom.len() {
             Ok(self.rom[address])

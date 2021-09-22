@@ -17,26 +17,26 @@ use crate::{
 pub struct AddressBus {
     /// Optional BIOS Rom
     /// Usually set at startup then removed
-    bios: Option<Box<dyn FileOperation>>,
+    bios: Option<Box<dyn FileOperation<Area>>>,
     /// Rom from the cartridge
-    rom: Box<dyn FileOperation>,
+    rom: Box<dyn FileOperation<Area>>,
     /// Video Ram
-    vram: Box<dyn FileOperation>,
+    vram: Box<dyn FileOperation<Area>>,
     /// Ram from the cartridge
-    ext_ram: Box<dyn FileOperation>,
+    ext_ram: Box<dyn FileOperation<Area>>,
     /// Internal gameboy ram
-    ram: Box<dyn FileOperation>,
+    ram: Box<dyn FileOperation<Area>>,
     /// Echo Ram area, usually a mirror of ram
-    eram: Box<dyn FileOperation>,
+    eram: Box<dyn FileOperation<Area>>,
     /// Sprite attribute table
-    oam: Box<dyn FileOperation>,
+    oam: Box<dyn FileOperation<Area>>,
     /// io registers table
-    io_reg: Box<dyn FileOperation>,
+    io_reg: Box<dyn FileOperation<Area>>,
     /// high ram
     /// allow for faster access in gameboy
-    hram: Box<dyn FileOperation>,
+    hram: Box<dyn FileOperation<Area>>,
     /// register to enable/disable all interrupts
-    ie_reg: Box<dyn FileOperation>,
+    ie_reg: Box<dyn FileOperation<Area>>,
 }
 
 impl AddressBus {
@@ -139,7 +139,7 @@ impl AddressBus {
         }
     }
 
-    pub fn set_bios(&mut self, bios: Box<dyn FileOperation>) {
+    pub fn set_bios(&mut self, bios: Box<dyn FileOperation<Area>>) {
         self.bios = Some(bios)
     }
 

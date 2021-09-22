@@ -83,6 +83,10 @@ impl GBWindow {
     pub fn egui_ctx(&self) -> &CtxRef {
         &self.egui_ctx
     }
+    #[allow(dead_code)]
+    pub fn egui_ctx_mut(&mut self) -> &mut CtxRef {
+        &mut self.egui_ctx
+    }
 
     pub fn start_frame(&mut self) -> Result<(), Error> {
         self.sdl_window
