@@ -6,10 +6,9 @@ use super::{
     read::read,
     ControlFlow, MicrocodeController, State,
 };
-use gb_bus::Bus;
 use std::{cell::RefCell, convert::TryFrom, rc::Rc};
 
-pub fn fetch<B: Bus<u8>>(ctl: &mut MicrocodeController<B>, state: &mut State<B>) -> ControlFlow {
+pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> ControlFlow {
     let ctl_ref = Rc::new(RefCell::new(ctl));
     let byte = state.read();
     Opcode::try_from(byte).map_or_else(

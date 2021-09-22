@@ -1,7 +1,6 @@
 use super::{ControlFlow, MicrocodeController, State};
-use gb_bus::Bus;
 
-pub fn read<B: Bus<u8>>(ctl: &mut MicrocodeController<B>, state: &mut State<B>) -> ControlFlow {
+pub fn read(ctl: &mut MicrocodeController, state: &mut State) -> ControlFlow {
     let byte = state.read();
     log::trace!("[microcode] byte read: {:#x}", byte);
     ctl.push(byte);

@@ -1,8 +1,7 @@
 use super::{ControlFlow, MicrocodeController, State};
 use crate::interfaces::ReadFlagReg;
-use gb_bus::Bus;
 
-pub fn carry<B: Bus<u8>>(_clt: &mut MicrocodeController<B>, state: &mut State<B>) -> ControlFlow {
+pub fn carry(_clt: &mut MicrocodeController, state: &mut State) -> ControlFlow {
     if state.regs.carry() {
         ControlFlow::Chain
     } else {
@@ -10,10 +9,7 @@ pub fn carry<B: Bus<u8>>(_clt: &mut MicrocodeController<B>, state: &mut State<B>
     }
 }
 
-pub fn not_carry<B: Bus<u8>>(
-    _clt: &mut MicrocodeController<B>,
-    state: &mut State<B>,
-) -> ControlFlow {
+pub fn not_carry(_clt: &mut MicrocodeController, state: &mut State) -> ControlFlow {
     if !state.regs.carry() {
         ControlFlow::Chain
     } else {
@@ -21,7 +17,7 @@ pub fn not_carry<B: Bus<u8>>(
     }
 }
 
-pub fn zero<B: Bus<u8>>(_clt: &mut MicrocodeController<B>, state: &mut State<B>) -> ControlFlow {
+pub fn zero(_clt: &mut MicrocodeController, state: &mut State) -> ControlFlow {
     if state.regs.zero() {
         ControlFlow::Chain
     } else {
@@ -29,10 +25,7 @@ pub fn zero<B: Bus<u8>>(_clt: &mut MicrocodeController<B>, state: &mut State<B>)
     }
 }
 
-pub fn not_zero<B: Bus<u8>>(
-    _clt: &mut MicrocodeController<B>,
-    state: &mut State<B>,
-) -> ControlFlow {
+pub fn not_zero(_clt: &mut MicrocodeController, state: &mut State) -> ControlFlow {
     if !state.regs.zero() {
         ControlFlow::Chain
     } else {
