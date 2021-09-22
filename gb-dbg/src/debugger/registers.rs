@@ -1,7 +1,5 @@
-mod table;
-
 use crate::dbg_interfaces::{RegisterDebugOperations, RegisterMap};
-use crate::debugger::registers::table::RegisterTable;
+
 use egui::Label;
 use egui::{CollapsingHeader, Color32, Ui, Vec2};
 

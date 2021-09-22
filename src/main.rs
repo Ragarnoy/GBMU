@@ -5,7 +5,6 @@ use rfd::FileDialog;
 use sdl2::keyboard::Scancode;
 use sdl2::{event::Event, keyboard::Keycode};
 
-use gb_dbg::debugger::memory::MemoryEditorBuilder;
 use gb_dbg::*;
 use gb_lcd::{render, window::GBWindow};
 use gb_ppu::PPU;
@@ -57,10 +56,6 @@ fn main() {
     let mut ppu = PPU::new();
 
     let mut debug_window = None;
-    let mem = Memory::default();
-    let _gbm_mem = MemoryEditorBuilder::new(mem)
-        .with_address_range("VRam", 0..0xFF)
-        .build();
     // Regression for now
     // let mut dbg_app = Debugger::new(gbm_mem, FlowController, Disassembler);
 

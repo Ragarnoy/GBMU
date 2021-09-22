@@ -61,6 +61,7 @@ impl<MEM: MemoryDebugOperations> Debugger<MEM> {
     }
 }
 
+#[derive(Default)]
 pub struct DebuggerBuilder {
     options: Option<DebuggerOptions>,
 }
@@ -79,7 +80,7 @@ impl DebuggerBuilder {
         Debugger {
             memory_editor: MemoryViewer::new(
                 self.options
-                    .unwrap_or(DebuggerOptions::default())
+                    .unwrap_or_default()
                     .address_ranges,
             ),
             register_editor: RegisterEditor,
