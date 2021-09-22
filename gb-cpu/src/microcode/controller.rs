@@ -40,6 +40,7 @@ impl Default for MicrocodeController {
             opcode: None,
             actions: Vec::with_capacity(8),
             cache: Vec::with_capacity(4),
+            target: None,
         }
     }
 }
@@ -99,7 +100,7 @@ impl MicrocodeController {
         self
     }
 
-    pub fn get_dest(&mut self) -> Option<Ident> {
-        self.target
+    pub fn get_dest(&mut self) -> Ident {
+        self.target.expect("no dest set")
     }
 }
