@@ -1,5 +1,6 @@
 use super::{
     condition::{carry, not_carry, not_zero, zero},
+    dec,
     fetch_cb::fetch_cb,
     ident::{Reg16, Reg8},
     inc, jump,
@@ -42,6 +43,20 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> ControlFlow {
                 Opcode::IncH => ctl.push_actions(&[inc::inc8]).set_dest(Reg8::H.into()),
                 Opcode::IncL => ctl.push_actions(&[inc::inc8]).set_dest(Reg8::L.into()),
                 Opcode::IncHLind => ctl.push_actions(&[inc::inc_hl]),
+
+                Opcode::DecBC => ctl.push_actions(&[dec::dec16]).set_dest(Reg16::BC.into()),
+                Opcode::DecDE => ctl.push_actions(&[dec::dec16]).set_dest(Reg16::DE.into()),
+                Opcode::DecHL => ctl.push_actions(&[dec::dec16]).set_dest(Reg16::HL.into()),
+                Opcode::DecSP => ctl.push_actions(&[dec::dec16]).set_dest(Reg16::SP.into()),
+
+                Opcode::DecA => ctl.push_actions(&[dec::dec8]).set_dest(Reg8::A.into()),
+                Opcode::DecB => ctl.push_actions(&[dec::dec8]).set_dest(Reg8::B.into()),
+                Opcode::DecC => ctl.push_actions(&[dec::dec8]).set_dest(Reg8::C.into()),
+                Opcode::DecD => ctl.push_actions(&[dec::dec8]).set_dest(Reg8::D.into()),
+                Opcode::DecE => ctl.push_actions(&[dec::dec8]).set_dest(Reg8::E.into()),
+                Opcode::DecH => ctl.push_actions(&[dec::dec8]).set_dest(Reg8::H.into()),
+                Opcode::DecL => ctl.push_actions(&[dec::dec8]).set_dest(Reg8::L.into()),
+                Opcode::DecHLind => ctl.push_actions(&[dec::dec_hl]),
 
                 Opcode::Nop => &mut ctl,
 
