@@ -14,7 +14,12 @@ impl<B: Bus<u8> + Bus<u16>> Clock<B> {
     pub const CYCLES_PER_FRAME: usize = 17556;
 
     /// A single clock cycle, during which each [Ticker] will tick 1 or 4 times depending on their [Tick](crate::Tick) type.
-    pub fn cycle(&mut self, adr_bus: &mut B, cpu: &mut dyn Ticker<B>, ppu: &mut dyn Ticker<B>) {
+    pub fn cycle<CPU: Ticker, PPU: Ticker>(
+        &mut self,
+        adr_bus: &mut B,
+        cpu: &mut CPU,
+        ppu: &mut PPU,
+    ) {
         cycle(cpu, adr_bus);
         cycle(ppu, adr_bus);
         self.curr_frame_cycle += 1;
@@ -29,12 +34,12 @@ impl<B: Bus<u8> + Bus<u16>> Clock<B> {
     /// Execute enough cycles to complete the current frame.
     ///
     /// if a [Debuger] is given, it will check breakpoints after each clock cycle and interrupt the execution if needed.
-    pub fn frame(
+    pub fn frame<CPU: Ticker, PPU: Ticker>(
         &mut self,
         adr_bus: &mut B,
         dbg: Option<&dyn Debuger<B>>,
-        cpu: &mut dyn Ticker<B>,
-        ppu: &mut dyn Ticker<B>,
+        cpu: &mut CPU,
+        ppu: &mut PPU,
     ) {
         self.curr_frame_cycle %= Self::CYCLES_PER_FRAME;
         match dbg {
