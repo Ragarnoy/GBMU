@@ -16,10 +16,10 @@ pub fn dec16(ctl: &mut MicrocodeController, state: &mut State) -> ControlFlow {
     if let Ident::Reg16(r16) = ctl.get_dest() {
         use ident::Reg16;
         match r16 {
-            Reg16::BC => state.regs.bc += 1,
-            Reg16::DE => state.regs.de += 1,
-            Reg16::HL => state.regs.hl += 1,
-            Reg16::SP => state.regs.sp += 1,
+            Reg16::BC => state.regs.bc -= 1,
+            Reg16::DE => state.regs.de -= 1,
+            Reg16::HL => state.regs.hl -= 1,
+            Reg16::SP => state.regs.sp -= 1,
         }
         ControlFlow::Ok
     } else {
