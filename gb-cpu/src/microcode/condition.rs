@@ -10,7 +10,10 @@ pub fn carry<B: Bus<u8>>(_clt: &mut MicrocodeController<B>, state: &mut State<B>
     }
 }
 
-pub fn not_carry<B: Bus<u8>>(_clt: &mut MicrocodeController<B>, state: &mut State<B>) -> ControlFlow {
+pub fn not_carry<B: Bus<u8>>(
+    _clt: &mut MicrocodeController<B>,
+    state: &mut State<B>,
+) -> ControlFlow {
     if !state.regs.carry() {
         ControlFlow::Chain
     } else {
@@ -26,7 +29,10 @@ pub fn zero<B: Bus<u8>>(_clt: &mut MicrocodeController<B>, state: &mut State<B>)
     }
 }
 
-pub fn not_zero<B: Bus<u8>>(_clt: &mut MicrocodeController<B>, state: &mut State<B>) -> ControlFlow {
+pub fn not_zero<B: Bus<u8>>(
+    _clt: &mut MicrocodeController<B>,
+    state: &mut State<B>,
+) -> ControlFlow {
     if !state.regs.zero() {
         ControlFlow::Chain
     } else {
