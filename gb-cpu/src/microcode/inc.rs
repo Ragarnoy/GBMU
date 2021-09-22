@@ -4,6 +4,13 @@ use super::{
 };
 use crate::interfaces::{Read8BitsReg, Write8BitsReg, WriteFlagReg};
 
+pub fn inc_hl(_ctl: &mut MicrocodeController, state: &mut State) -> ControlFlow {
+    let (val, flag) = add_reg_flags(state.read_hl(), 1);
+    flag.update_reg_flag(state.regs);
+    state.write_hl(val);
+    ControlFlow::Ok
+}
+
 pub fn inc16(ctl: &mut MicrocodeController, state: &mut State) -> ControlFlow {
     if let Ident::Reg16(r16) = ctl.get_dest() {
         use ident::Reg16;
