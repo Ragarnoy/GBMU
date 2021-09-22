@@ -2,6 +2,8 @@ mod condition;
 pub mod controller;
 mod fetch;
 mod fetch_cb;
+mod ident;
+mod inc;
 mod jump;
 pub mod opcode;
 pub mod opcode_cb;
