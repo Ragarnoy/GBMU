@@ -100,7 +100,7 @@ impl MicrocodeController {
         self
     }
 
-    pub fn get_dest(&mut self) -> Ident {
-        self.target.expect("no dest set")
+    pub fn get_dest(&mut self) -> &Ident {
+        self.target.as_ref().expect("no dest set")
     }
 }
