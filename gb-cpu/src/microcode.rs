@@ -11,6 +11,7 @@ pub mod opcode;
 pub mod opcode_cb;
 mod read;
 mod state;
+mod write;
 
 pub(crate) use controller::MicrocodeController;
 pub(crate) use state::State;
