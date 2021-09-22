@@ -1,8 +1,9 @@
 use super::{
+    flag::Flag,
     ident::{self, Ident},
     ControlFlow, MicrocodeController, State,
 };
-use crate::interfaces::{Read8BitsReg, Write8BitsReg, WriteFlagReg};
+use crate::interfaces::{Read8BitsReg, Write8BitsReg};
 
 pub fn inc_hl(_ctl: &mut MicrocodeController, state: &mut State) -> ControlFlow {
     let (val, flag) = add_reg_flags(state.read_hl(), 1);
@@ -52,77 +53,62 @@ pub fn inc8(ctl: &mut MicrocodeController, state: &mut State) -> ControlFlow {
     }
 }
 
-#[derive(Default, Debug, PartialEq, Eq)]
-struct Flag {
-    half_carry: Option<bool>,
-    carry: Option<bool>,
-    negative: Option<bool>,
-    zero: Option<bool>,
-}
-
-impl Flag {
-    pub fn new(
-        half_carry: Option<bool>,
-        carry: Option<bool>,
-        negative: Option<bool>,
-        zero: Option<bool>,
-    ) -> Self {
-        Self {
-            half_carry,
-            carry,
-            negative,
-            zero,
-        }
-    }
-
-    fn update_reg_flag<F: WriteFlagReg>(&self, flag: &mut F) {
-        if let Some(hcarry) = self.half_carry {
-            flag.set_half_carry(hcarry)
-        }
-        if let Some(carry) = self.carry {
-            flag.set_carry(carry)
-        }
-        if let Some(negative) = self.negative {
-            flag.set_subtraction(negative)
-        }
-        if let Some(zero) = self.zero {
-            flag.set_zero(zero)
-        }
-    }
-}
-
 /// Add `amount` to `value`.
 /// Return a Flag set of triggered flag.
 /// PS: the flag `carry` is not used here
 fn add_reg_flags(value: u8, amount: u8) -> (u8, Flag) {
     let (res, _) = value.overflowing_add(amount);
-    (
-        res,
-        Flag::new(
-            Some((value & 0xF) > (res & 0xF)),
-            None,
-            Some(false),
-            Some(res == 0),
-        ),
-    )
+    (res, Flag::from_values(value, res, false, None))
 }
 
 #[test]
 fn test_add_reg_flags() {
     assert_eq!(
         add_reg_flags(0xff, 1),
-        (0, Flag::new(Some(true), None, Some(false), Some(true)))
+        (
+            0,
+            Flag {
+                half_carry: Some(true),
+                carry: None,
+                negative: Some(false),
+                zero: Some(true)
+            }
+        )
     );
     assert_eq!(
         add_reg_flags(0xf, 1),
-        (0x10, Flag::new(Some(true), None, Some(false), Some(false)))
+        (
+            0x10,
+            Flag {
+                half_carry: Some(true),
+                carry: None,
+                negative: Some(false),
+                zero: Some(false)
+            }
+        )
     );
     assert_eq!(
         add_reg_flags(0x0, 1),
-        (1, Flag::new(Some(false), None, Some(false), Some(false)))
+        (
+            1,
+            Flag {
+                half_carry: Some(false),
+                carry: None,
+                negative: Some(false),
+                zero: Some(false)
+            }
+        )
     );
     assert_eq!(
         add_reg_flags(0, 0),
-        (0, Flag::new(Some(false), None, Some(false), Some(true)))
+        (
+            0,
+            Flag {
+                half_carry: Some(false),
+                carry: None,
+                negative: Some(false),
+                zero: Some(true)
+            }
+        )
     );
 }
