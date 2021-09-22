@@ -78,11 +78,7 @@ impl DebuggerBuilder {
 
     pub fn build<MEM: MemoryDebugOperations>(self) -> Debugger<MEM> {
         Debugger {
-            memory_editor: MemoryViewer::new(
-                self.options
-                    .unwrap_or_default()
-                    .address_ranges,
-            ),
+            memory_editor: MemoryViewer::new(self.options.unwrap_or_default().address_ranges),
             register_editor: RegisterEditor,
             flow_controller: FlowController,
             disassembler: Disassembler,
