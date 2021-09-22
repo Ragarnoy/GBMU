@@ -30,7 +30,7 @@ fn main() {
     let dgb_app = DebuggerApp {
         debugger: dbg,
         memory: Default::default(),
-        register: Default::default()
+        register: Default::default(),
     };
     eframe::run_native(Box::new(dgb_app), eframe::NativeOptions::default())
 }

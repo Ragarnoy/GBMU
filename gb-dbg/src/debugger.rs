@@ -1,16 +1,16 @@
 pub mod disassembler;
 pub mod flow_control;
 pub mod memory;
-pub mod registers;
 mod options;
+pub mod registers;
 
-use crate::dbg_interfaces::{RegisterDebugOperations, MemoryDebugOperations};
+use crate::dbg_interfaces::{MemoryDebugOperations, RegisterDebugOperations};
 use crate::debugger::disassembler::Disassembler;
 use crate::debugger::flow_control::FlowController;
 use crate::debugger::memory::MemoryViewer;
+use crate::debugger::options::DebuggerOptions;
 use crate::debugger::registers::RegisterEditor;
 use egui::{Color32, CtxRef, Label};
-use crate::debugger::options::DebuggerOptions;
 
 pub struct Debugger<MEM> {
     memory_editor: MemoryViewer<MEM>,
@@ -20,7 +20,12 @@ pub struct Debugger<MEM> {
 }
 
 impl<MEM: MemoryDebugOperations> Debugger<MEM> {
-    pub fn draw<REG: RegisterDebugOperations>(&mut self, ctx: &CtxRef, mut memory: &mut MEM, registers: &REG) {
+    pub fn draw<REG: RegisterDebugOperations>(
+        &mut self,
+        ctx: &CtxRef,
+        mut memory: &mut MEM,
+        registers: &REG,
+    ) {
         // ctx.set_debug_on_hover(true);
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             self.flow_controller.draw(ui);
@@ -60,12 +65,9 @@ pub struct DebuggerBuilder {
     options: Option<DebuggerOptions>,
 }
 
-impl DebuggerBuilder
-{
+impl DebuggerBuilder {
     pub fn new() -> Self {
-        Self {
-            options: None,
-        }
+        Self { options: None }
     }
 
     pub fn with_options(mut self, options: DebuggerOptions) -> Self {
@@ -75,7 +77,11 @@ impl DebuggerBuilder
 
     pub fn build<MEM: MemoryDebugOperations>(self) -> Debugger<MEM> {
         Debugger {
-            memory_editor: MemoryViewer::new(self.options.unwrap_or(DebuggerOptions::default()).address_ranges),
+            memory_editor: MemoryViewer::new(
+                self.options
+                    .unwrap_or(DebuggerOptions::default())
+                    .address_ranges,
+            ),
             register_editor: RegisterEditor,
             flow_controller: FlowController,
             disassembler: Disassembler,
