@@ -1,10 +1,8 @@
-use egui::{Color32, Label, Ui};
+use egui::{Color32, Label, Ui, Vec2};
 
-pub struct DisassemblyEditor {
+pub struct DisassemblyViewer;
 
-}
-
-impl DisassemblyEditor {
+impl DisassemblyViewer {
     pub fn draw(&self, ui: &mut Ui) {
         ui.label(Label::new("Disassembler").text_color(Color32::WHITE));
         egui::CollapsingHeader::new("🛠 Options")
@@ -13,12 +11,22 @@ impl DisassemblyEditor {
             .show(ui, |ui| ui.label("Hello"));
         ui.separator();
         ui.vertical(|ui| {
-            ui.columns(3, |columns| {
-                columns[0].label("Address");
-                columns[1].label("Instruction");
-                columns[2].label("Data");
-            })
+            egui::Grid::new("dissas_".to_owned())
+                .striped(true)
+                .spacing(Vec2::new(100.0, 2.5))
+                .show(ui, |ui| {
+                    ui.label(egui::Label::new("Address").text_color(Color32::WHITE));
+                    ui.label(egui::Label::new("Instruction").text_color(Color32::WHITE));
+                    ui.label(egui::Label::new("Data").text_color(Color32::WHITE));
+                    ui.end_row();
+                    for row in 0..8 {
+                        ui.label(egui::Label::new(format!("0x{:04X}", row + 400)));
+                        ui.label(egui::Label::new("add x and y"));
+                        ui.label(egui::Label::new("0x00000000"));
+                        ui.end_row();
+                    }
+                    ui.end_row();
+                });
         });
-        ui.add_space(200.0);
     }
 }
