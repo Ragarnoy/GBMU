@@ -28,6 +28,12 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                 Opcode::JpNc => ctl.push_actions(&[read, read, not_carry, jump::jump]),
                 Opcode::JpHl => ctl.push_actions(&[jump::jump_hl]),
 
+                Opcode::Jr => ctl.push_actions(&[read, jump::jump_relative]),
+                Opcode::JrZ => ctl.push_actions(&[read, zero, jump::jump_relative]),
+                Opcode::JrNz => ctl.push_actions(&[read, not_zero, jump::jump_relative]),
+                Opcode::JrC => ctl.push_actions(&[read, carry, jump::jump_relative]),
+                Opcode::JrNc => ctl.push_actions(&[read, not_carry, jump::jump_relative]),
+
                 Opcode::Nop => {}
 
                 Opcode::PrefixCb => ctl.push_action(fetch_cb),
