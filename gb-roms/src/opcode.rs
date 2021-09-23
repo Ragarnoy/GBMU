@@ -6,6 +6,7 @@ pub mod list;
 mod store;
 mod value;
 
+use condition::Condition::{Carry, NotCarry, NotZero, Zero};
 use error::Error;
 use list::Opcode;
 use modular_bitfield::{
@@ -587,31 +588,31 @@ where
             0xC3 => Ok(op!(Jump, self.get_nn().into())),
 
             // jp cc,nn
-            0xC2 => Ok(op!(JumpNZero, self.get_nn())),
-            0xCA => Ok(op!(JumpZero, self.get_nn())),
-            0xD2 => Ok(op!(JumpNCarry, self.get_nn())),
-            0xDA => Ok(op!(JumpCarry, self.get_nn())),
+            0xC2 => Ok(op!(JumpConditional, NotZero, self.get_nn())),
+            0xCA => Ok(op!(JumpConditional, Zero, self.get_nn())),
+            0xD2 => Ok(op!(JumpConditional, NotCarry, self.get_nn())),
+            0xDA => Ok(op!(JumpConditional, Carry, self.get_nn())),
 
             // jp (hl)
             0xE9 => Ok(op!(Jump, Value::IndirectReg16(Reg16::HL))),
 
             // jr d
-            0x18 => Ok(op!(JumpR, self.get_d())),
+            0x18 => Ok(op!(JumpRelative, self.get_d())),
 
             // jr cc,d
-            0x20 => Ok(op!(JumpRNZero, self.get_d())),
-            0x28 => Ok(op!(JumpRZero, self.get_d())),
-            0x30 => Ok(op!(JumpRNCarry, self.get_d())),
-            0x38 => Ok(op!(JumpRCarry, self.get_d())),
+            0x20 => Ok(op!(JumpRelativeConditional, NotZero, self.get_d())),
+            0x28 => Ok(op!(JumpRelativeConditional, Zero, self.get_d())),
+            0x30 => Ok(op!(JumpRelativeConditional, NotCarry, self.get_d())),
+            0x38 => Ok(op!(JumpRelativeConditional, Carry, self.get_d())),
 
             // call nn
             0xCD => Ok(op!(Call, self.get_nn())),
 
             // call cc, nn
-            0xC4 => Ok(op!(CallNZero, self.get_nn())),
-            0xCC => Ok(op!(CallZero, self.get_nn())),
-            0xD4 => Ok(op!(CallNCarry, self.get_nn())),
-            0xDC => Ok(op!(CallCarry, self.get_nn())),
+            0xC4 => Ok(op!(CallConditional, NotZero, self.get_nn())),
+            0xCC => Ok(op!(CallConditional, Zero, self.get_nn())),
+            0xD4 => Ok(op!(CallConditional, NotCarry, self.get_nn())),
+            0xDC => Ok(op!(CallConditional, Carry, self.get_nn())),
 
             // rst n
             0xC7 => Ok(op!(Restart, 0x00)),
@@ -627,10 +628,10 @@ where
             0xC9 => Ok(op!(Return)),
 
             // ret cc
-            0xC0 => Ok(op!(ReturnNZero)),
-            0xC8 => Ok(op!(ReturnZero)),
-            0xD0 => Ok(op!(ReturnNCarry)),
-            0xD8 => Ok(op!(ReturnCarry)),
+            0xC0 => Ok(op!(ReturnConditional, NotZero)),
+            0xC8 => Ok(op!(ReturnConditional, Zero)),
+            0xD0 => Ok(op!(ReturnConditional, NotCarry)),
+            0xD8 => Ok(op!(ReturnConditional, Carry)),
 
             // reti
             0xD9 => Ok(op!(ReturnI)),
@@ -649,8 +650,11 @@ macro_rules! op_gen {
 
 #[cfg(test)]
 mod test_decode {
-    use super::register::{self, Register, Register16Bits, Register8Bits};
-    use super::{Opcode, OpcodeGenerator, Reg16, Store, Value};
+    use super::{
+        condition::Condition::{Carry, NotCarry, NotZero, Zero},
+        register::{self, Register, Register16Bits, Register8Bits},
+        {Opcode, OpcodeGenerator, Reg16, Store, Value},
+    };
 
     #[test]
     fn test_jump() {
@@ -660,48 +664,63 @@ mod test_decode {
         );
         assert_eq!(
             op_gen![0xca, 0x55, 0x00].next(),
-            Some(Ok(op!(JumpZero, 0x55)))
+            Some(Ok(op!(JumpConditional, Zero, 0x55)))
         );
         assert_eq!(
             op_gen![0xc2, 0x55, 0x00].next(),
-            Some(Ok(op!(JumpNZero, 0x55)))
+            Some(Ok(op!(JumpConditional, NotZero, 0x55)))
         );
         assert_eq!(
             op_gen![0xda, 0x55, 0x00].next(),
-            Some(Ok(op!(JumpCarry, 0x55)))
+            Some(Ok(op!(JumpConditional, Carry, 0x55)))
         );
         assert_eq!(
             op_gen![0xd2, 0x55, 0x00].next(),
-            Some(Ok(op!(JumpNCarry, 0x55)))
+            Some(Ok(op!(JumpConditional, NotCarry, 0x55)))
         );
     }
 
     #[test]
     fn test_jump_relative() {
-        assert_eq!(op_gen![0x18, 0x42].next(), Some(Ok(op!(JumpR, 0x42))));
-        assert_eq!(op_gen![0x28, 0x42].next(), Some(Ok(op!(JumpRZero, 0x42))));
-        assert_eq!(op_gen![0x20, 0x42].next(), Some(Ok(op!(JumpRNZero, 0x42))));
-        assert_eq!(op_gen![0x38, 0x42].next(), Some(Ok(op!(JumpRCarry, 0x42))));
-        assert_eq!(op_gen![0x30, 0x42].next(), Some(Ok(op!(JumpRNCarry, 0x42))));
+        assert_eq!(
+            op_gen![0x18, 0x42].next(),
+            Some(Ok(op!(JumpRelative, 0x42)))
+        );
+        assert_eq!(
+            op_gen![0x28, 0x42].next(),
+            Some(Ok(op!(JumpRelativeConditional, Zero, 0x42)))
+        );
+        assert_eq!(
+            op_gen![0x20, 0x42].next(),
+            Some(Ok(op!(JumpRelativeConditional, NotZero, 0x42)))
+        );
+        assert_eq!(
+            op_gen![0x38, 0x42].next(),
+            Some(Ok(op!(JumpRelativeConditional, Carry, 0x42)))
+        );
+        assert_eq!(
+            op_gen![0x30, 0x42].next(),
+            Some(Ok(op!(JumpRelativeConditional, NotCarry, 0x42)))
+        );
         assert_eq!(
             op_gen![0x18, (-24_i8).to_le_bytes()[0]].next(),
-            Some(Ok(Opcode::JumpR(-24)))
+            Some(Ok(Opcode::JumpRelative(-24)))
         );
         assert_eq!(
             op_gen![0x20, (-24_i8).to_le_bytes()[0]].next(),
-            Some(Ok(Opcode::JumpRNZero(-24)))
+            Some(Ok(op!(JumpRelativeConditional, NotZero, -24)))
         );
         assert_eq!(
             op_gen![0x28, (-24_i8).to_le_bytes()[0]].next(),
-            Some(Ok(Opcode::JumpRZero(-24)))
+            Some(Ok(op!(JumpRelativeConditional, Zero, -24)))
         );
         assert_eq!(
             op_gen![0x30, (-24_i8).to_le_bytes()[0]].next(),
-            Some(Ok(Opcode::JumpRNCarry(-24)))
+            Some(Ok(op!(JumpRelativeConditional, NotCarry, -24)))
         );
         assert_eq!(
             op_gen![0x38, (-24_i8).to_le_bytes()[0]].next(),
-            Some(Ok(Opcode::JumpRCarry(-24)))
+            Some(Ok(op!(JumpRelativeConditional, Carry, -24)))
         );
     }
 
@@ -936,19 +955,19 @@ mod test_decode {
         );
         assert_eq!(
             op_gen![0xc4, 0x34, 0x12].next(),
-            Some(Ok(op!(CallNZero, 0x1234)))
+            Some(Ok(op!(CallConditional, NotZero, 0x1234)))
         );
         assert_eq!(
             op_gen![0xcc, 0x34, 0x12].next(),
-            Some(Ok(op!(CallZero, 0x1234)))
+            Some(Ok(op!(CallConditional, Zero, 0x1234)))
         );
         assert_eq!(
             op_gen![0xd4, 0x34, 0x12].next(),
-            Some(Ok(op!(CallNCarry, 0x1234)))
+            Some(Ok(op!(CallConditional, NotCarry, 0x1234)))
         );
         assert_eq!(
             op_gen![0xdc, 0x34, 0x12].next(),
-            Some(Ok(op!(CallCarry, 0x1234)))
+            Some(Ok(op!(CallConditional, Carry, 0x1234)))
         );
     }
 
@@ -960,10 +979,19 @@ mod test_decode {
     #[test]
     fn test_return() {
         assert_eq!(op_gen![0xc9].next(), Some(Ok(op!(Return))));
-        assert_eq!(op_gen![0xc0].next(), Some(Ok(op!(ReturnNZero))));
-        assert_eq!(op_gen![0xc8].next(), Some(Ok(op!(ReturnZero))));
-        assert_eq!(op_gen![0xd0].next(), Some(Ok(op!(ReturnNCarry))));
-        assert_eq!(op_gen![0xd8].next(), Some(Ok(op!(ReturnCarry))));
+        assert_eq!(
+            op_gen![0xc0].next(),
+            Some(Ok(op!(ReturnConditional, NotZero)))
+        );
+        assert_eq!(op_gen![0xc8].next(), Some(Ok(op!(ReturnConditional, Zero))));
+        assert_eq!(
+            op_gen![0xd0].next(),
+            Some(Ok(op!(ReturnConditional, NotCarry)))
+        );
+        assert_eq!(
+            op_gen![0xd8].next(),
+            Some(Ok(op!(ReturnConditional, Carry)))
+        );
         assert_eq!(op_gen![0xd9].next(), Some(Ok(op!(ReturnI))));
     }
 }

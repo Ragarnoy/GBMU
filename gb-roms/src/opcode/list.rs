@@ -1,4 +1,4 @@
-use super::{register::Register16Bits, store::Store, value::Value};
+use super::{condition::Condition, register::Register16Bits, store::Store, value::Value};
 use std::fmt;
 
 #[derive(Debug, PartialEq, Eq)]
@@ -9,32 +9,14 @@ pub enum Opcode {
     /// - *HL: 4
     Jump(Value),
 
-    /// jump to addr when zero flag is set
+    /// jump to addr when condition is meet
     /// Timing: 12
-    JumpZero(u16),
-
-    /// jump to addr when zero flag is not set
-    /// Timing: 12
-    JumpNZero(u16),
-
-    /// jump to addr when carry flag is set
-    /// Timing: 12
-    JumpCarry(u16),
-
-    /// jump to addr when carry flag is not set
-    /// Timing: 12
-    JumpNCarry(u16),
+    JumpConditional(Condition, u16),
 
     /// relative jump to PC + value
-    JumpR(i8),
-    /// relative jump to PC + value when flag Z is unset
-    JumpRNZero(i8),
-    /// relative jump to PC + value when flag Z is set
-    JumpRZero(i8),
-    /// relative jump to PC + value when flag C is unset
-    JumpRCarry(i8),
-    /// relative jump to PC + value when flag C is set
-    JumpRNCarry(i8),
+    JumpRelative(i8),
+    /// relative jump to PC + value when condition is meet
+    JumpRelativeConditional(Condition, i8),
 
     /// No operation
     /// Timing: 4
@@ -239,24 +221,9 @@ pub enum Opcode {
     Call(u16),
 
     /// Push addr of next instruction onto stack and then jump to address nn
-    /// when zero flag is set
+    /// when condition is meet
     /// Timing: 12
-    CallZero(u16),
-
-    /// Push addr of next instruction onto stack and then jump to address nn
-    /// when zero flag is not set
-    /// Timing: 12
-    CallNZero(u16),
-
-    /// Push addr of next instruction onto stack and then jump to address nn
-    /// when carry flag is set
-    /// Timing: 12
-    CallCarry(u16),
-
-    /// Push addr of next instruction onto stack and then jump to address nn
-    /// when carry flag is not set
-    /// Timing: 12
-    CallNCarry(u16),
+    CallConditional(Condition, u16),
 
     /// Push present addr onto stack
     /// Then jump to addr n
@@ -272,154 +239,138 @@ pub enum Opcode {
     /// Timing: 8
     ReturnI,
 
-    /// When zero flag is set
+    /// When condition is meet
     /// Pop u16 from stack & jump to that addr
     /// Timing: 8
-    ReturnZero,
-
-    /// When zero flag is not set
-    /// Pop u16 from stack & jump to that addr
-    /// Timing: 8
-    ReturnNZero,
-
-    /// When carry flag is set
-    /// Pop u16 from stack & jump to that addr
-    /// Timing: 8
-    ReturnCarry,
-
-    /// When carry flag is not set
-    /// Pop u16 from stack & jump to that addr
-    /// Timing: 8
-    ReturnNCarry,
+    ReturnConditional(Condition),
 }
 
 impl fmt::Display for Opcode {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Self::Jump(addr) => write!(f, "jp {}", addr),
-            Self::JumpZero(addr) => write!(f, "jpz {}", addr),
-            Self::JumpNZero(addr) => write!(f, "jpnz {}", addr),
-            Self::JumpCarry(addr) => write!(f, "jpc {}", addr),
-            Self::JumpNCarry(addr) => write!(f, "jpnc {}", addr),
+            Self::Jump(addr) => write!(f, "JP {}", addr),
+            Self::JumpConditional(cond, addr) => write!(f, "JP {}, {:x}", cond, addr),
 
-            Self::JumpR(value) => write!(f, "jr {:x}", value),
-            Self::JumpRNZero(value) => write!(f, "jrnz {:x}", value),
-            Self::JumpRZero(value) => write!(f, "jrz {:x}", value),
-            Self::JumpRNCarry(value) => write!(f, "jrnc {:x}", value),
-            Self::JumpRCarry(value) => write!(f, "jrc {:x}", value),
+            Self::JumpRelative(value) => write!(f, "JR {:x}", value),
+            Self::JumpRelativeConditional(cond, value) => write!(f, "JR {}, {:x}", cond, value),
+            Self::Nop => write!(f, "NOP"),
+            Self::Halt => write!(f, "HALT"),
+            Self::Stop => write!(f, "STOP"),
 
-            Self::Nop => write!(f, "nop"),
-            Self::Halt => write!(f, "halt"),
-            Self::Stop => write!(f, "stop"),
+            Self::Ld(from, to) => write!(f, "LD {}, {}", from, to),
+            Self::LddFrom(v) => write!(f, "LDD (HL), {}", v),
+            Self::LdiFrom(v) => write!(f, "LDI (HL), {}", v),
+            Self::LddInto(s) => write!(f, "LDD {}, (HL)", s),
+            Self::LdiInto(s) => write!(f, "LDI {}, (HL)", s),
+            Self::LdhFrom(v) => write!(f, "LDH A, (0xff00 + {:x})", v),
+            Self::LdhInto(s) => write!(f, "LDH (0xff00 + {:x}), A", s),
+            Self::Ldhl(addr) => write!(f, "LDHL SP, {:x}", addr),
 
-            Self::Ld(from, to) => write!(f, "ld {}, {}", from, to),
-            Self::LddFrom(v) => write!(f, "ldd (HL), {}", v),
-            Self::LdiFrom(v) => write!(f, "ldi (HL), {}", v),
-            Self::LddInto(s) => write!(f, "ldd {}, (HL)", s),
-            Self::LdiInto(s) => write!(f, "ldi {}, (HL)", s),
-            Self::LdhFrom(v) => write!(f, "ldh A, (0xff00 + {:x})", v),
-            Self::LdhInto(s) => write!(f, "ldh (0xff00 + {:x}), A", s),
-            Self::Ldhl(addr) => write!(f, "ldhl SP, {:x}", addr),
+            Self::Push(reg) => write!(f, "PUSH {}", reg),
+            Self::Pop(reg) => write!(f, "POP {}", reg),
 
-            Self::Push(reg) => write!(f, "push {}", reg),
-            Self::Pop(reg) => write!(f, "pop {}", reg),
+            Self::Add(s, v) => write!(f, "ADD {}, {}", s, v),
+            Self::Adc(v) => write!(f, "ADC A, {}", v),
+            Self::Sub(v) => write!(f, "SUB A, {}", v),
+            Self::Sbc(v) => write!(f, "SBC A, {}", v),
+            Self::And(v) => write!(f, "AND A, {}", v),
+            Self::Or(v) => write!(f, "OR A, {}", v),
+            Self::Xor(v) => write!(f, "XOR A, {}", v),
+            Self::Cp(v) => write!(f, "CP A, {}", v),
 
-            Self::Add(s, v) => write!(f, "add {}, {}", s, v),
-            Self::Adc(v) => write!(f, "adc A, {}", v),
-            Self::Sub(v) => write!(f, "sub A, {}", v),
-            Self::Sbc(v) => write!(f, "sbc A, {}", v),
-            Self::And(v) => write!(f, "and A, {}", v),
-            Self::Or(v) => write!(f, "or A, {}", v),
-            Self::Xor(v) => write!(f, "xor A, {}", v),
-            Self::Cp(v) => write!(f, "cp A, {}", v),
+            Self::Inc(s) => write!(f, "INC {}", s),
+            Self::Dec(s) => write!(f, "DEC {}", s),
 
-            Self::Inc(s) => write!(f, "inc {}", s),
-            Self::Dec(s) => write!(f, "dec {}", s),
+            Self::Swap(s) => write!(f, "SWAP {}", s),
 
-            Self::Swap(s) => write!(f, "swap {}", s),
+            Self::Daa => write!(f, "DAA"),
+            Self::Cpl => write!(f, "CPL"),
+            Self::Ccf => write!(f, "CCF"),
+            Self::Scf => write!(f, "SCF"),
 
-            Self::Daa => write!(f, "daa"),
-            Self::Cpl => write!(f, "cpl"),
-            Self::Ccf => write!(f, "ccf"),
-            Self::Scf => write!(f, "scf"),
+            Self::Di => write!(f, "DI"),
+            Self::Ei => write!(f, "EI"),
 
-            Self::Di => write!(f, "di"),
-            Self::Ei => write!(f, "ei"),
+            Self::Rlca => write!(f, "RLCA"),
+            Self::Rla => write!(f, "RLA"),
 
-            Self::Rlca => write!(f, "rlca"),
-            Self::Rla => write!(f, "rla"),
+            Self::Rrca => write!(f, "RRCA"),
+            Self::Rra => write!(f, "RRA"),
 
-            Self::Rrca => write!(f, "rrca"),
-            Self::Rra => write!(f, "rra"),
+            Self::Rlc(n) => write!(f, "RLC {}", n),
+            Self::Rl(n) => write!(f, "RL {}", n),
+            Self::Rrc(n) => write!(f, "RRC {}", n),
+            Self::Rr(n) => write!(f, "RR {}", n),
 
-            Self::Rlc(n) => write!(f, "rlc {}", n),
-            Self::Rl(n) => write!(f, "rl {}", n),
-            Self::Rrc(n) => write!(f, "rrc {}", n),
-            Self::Rr(n) => write!(f, "rr {}", n),
+            Self::Sla(n) => write!(f, "SLA {}", n),
+            Self::Sra(n) => write!(f, "SRA {}", n),
+            Self::Srl(n) => write!(f, "SRL {}", n),
 
-            Self::Sla(n) => write!(f, "sla {}", n),
-            Self::Sra(n) => write!(f, "sra {}", n),
-            Self::Srl(n) => write!(f, "srl {}", n),
+            Self::Bit(b, r) => write!(f, "BIT {}, {}", b, r),
+            Self::Set(b, r) => write!(f, "SET {}, {}", b, r),
+            Self::Res(b, r) => write!(f, "RES {}, {}", b, r),
 
-            Self::Bit(b, r) => write!(f, "bit {}, {}", b, r),
-            Self::Set(b, r) => write!(f, "set {}, {}", b, r),
-            Self::Res(b, r) => write!(f, "res {}, {}", b, r),
+            Self::Call(addr) => write!(f, "CALL {:x}", addr),
+            Self::CallConditional(cond, addr) => write!(f, "CALL {}, {:x}", cond, addr),
 
-            Self::Call(addr) => write!(f, "call {:x}", addr),
-            Self::CallZero(addr) => write!(f, "callz {:x}", addr),
-            Self::CallNZero(addr) => write!(f, "callnz {:x}", addr),
-            Self::CallCarry(addr) => write!(f, "callc {:x}", addr),
-            Self::CallNCarry(addr) => write!(f, "callnc {:x}", addr),
+            Self::Restart(addr) => write!(f, "RST {:x}", addr),
 
-            Self::Restart(addr) => write!(f, "rst {:x}", addr),
-
-            Self::Return => write!(f, "ret"),
-            Self::ReturnI => write!(f, "reti"),
-            Self::ReturnZero => write!(f, "retz"),
-            Self::ReturnNZero => write!(f, "retnz"),
-            Self::ReturnCarry => write!(f, "retc"),
-            Self::ReturnNCarry => write!(f, "retnc"),
+            Self::Return => write!(f, "RET"),
+            Self::ReturnI => write!(f, "RETI"),
+            Self::ReturnConditional(cond) => write!(f, "RET {}", cond),
         }
     }
 }
 
 #[test]
 fn test_display_opcode() {
-    use super::register::{Register8Bits, RegisterSpecial};
+    use super::register::{Register, Register8Bits, RegisterSpecial};
 
-    assert_eq!(Opcode::Jump(0x150_u16.into()).to_string(), "jp 150");
+    assert_eq!(Opcode::Jump(0x150_u16.into()).to_string(), "JP 150");
 
-    assert_eq!(Opcode::JumpR(0x42).to_string(), "jr 42");
-    assert_eq!(Opcode::JumpRNZero(0x42).to_string(), "jrnz 42");
-    assert_eq!(Opcode::JumpRZero(0x42).to_string(), "jrz 42");
-    assert_eq!(Opcode::JumpRNCarry(0x42).to_string(), "jrnc 42");
-    assert_eq!(Opcode::JumpRCarry(0x42).to_string(), "jrc 42");
+    assert_eq!(Opcode::JumpRelative(0x42).to_string(), "JR 42");
+    assert_eq!(
+        Opcode::JumpRelativeConditional(Condition::NotZero, 0x42).to_string(),
+        "JR NZ, 42"
+    );
+    assert_eq!(
+        Opcode::JumpRelativeConditional(Condition::Zero, 0x42).to_string(),
+        "JR Z, 42"
+    );
+    assert_eq!(
+        Opcode::JumpRelativeConditional(Condition::NotCarry, 0x42).to_string(),
+        "JR NC, 42"
+    );
+    assert_eq!(
+        Opcode::JumpRelativeConditional(Condition::Carry, 0x42).to_string(),
+        "JR C, 42"
+    );
 
-    assert_eq!(Opcode::Nop.to_string(), "nop");
-    assert_eq!(Opcode::Stop.to_string(), "stop");
+    assert_eq!(Opcode::Nop.to_string(), "NOP");
+    assert_eq!(Opcode::Stop.to_string(), "STOP");
     assert_eq!(
         Opcode::Ld(
             Store::Indirect16(0x123),
             Value::Register(RegisterSpecial::SP.into())
         )
         .to_string(),
-        "ld (123), SP"
+        "LD (123), SP"
     );
 
     assert_eq!(
         Opcode::LddFrom(register8!(A).into()).to_string(),
-        "ldd (HL), A"
+        "LDD (HL), A"
     );
     assert_eq!(
         Opcode::LdiFrom(register8!(A).into()).to_string(),
-        "ldi (HL), A"
+        "LDI (HL), A"
     );
     assert_eq!(
         Opcode::LddInto(register8!(A).into()).to_string(),
-        "ldd A, (HL)"
+        "LDD A, (HL)"
     );
     assert_eq!(
         Opcode::LdiInto(register8!(A).into()).to_string(),
-        "ldi A, (HL)"
+        "LDI A, (HL)"
     );
 }
