@@ -1,6 +1,5 @@
 use crate::header::Header;
-use gb_bus::{Address, Area, Error, FileOperation};
-use std::cell::RefCell;
+use gb_bus::{Address, Area, Error};
 use std::io::{self, Read};
 
 type RamBank = [u8; Mbc3::RAM_BANK_SIZE];
@@ -46,7 +45,7 @@ impl Mbc3 {
         }
     }
 
-    fn read_rom(&self, addr: Box<dyn Address>) -> Result<u8, Error> {
+    fn read_rom(&self, addr: Box<dyn Address<Area>>) -> Result<u8, Error> {
         let address = addr.get_address();
         match address {
             0x0000..=0x3FFF => Ok(self.rom_banks[0][address]),
@@ -59,7 +58,7 @@ impl Mbc3 {
         &self.rom_banks[self.regs.rom_bank as usize]
     }
 
-    fn write_rom(&mut self, v: u8, addr: Box<dyn Address>) -> Result<(), Error> {
+    fn write_rom(&mut self, v: u8, addr: Box<dyn Address<Area>>) -> Result<(), Error> {
         let address = addr.get_address();
         match address {
             0x0000..=0x1FFF => self.regs.ram_enabled = (v & 0xF) == 0xA,
