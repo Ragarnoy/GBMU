@@ -4,18 +4,18 @@ use super::{
     jump,
     opcode::Opcode,
     read::read,
-    ControlFlow, MicrocodeController, State,
+    CycleDigest, MicrocodeController, MicrocodeFlow, State,
 };
 use std::{cell::RefCell, convert::TryFrom, rc::Rc};
 
-pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> ControlFlow {
+pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     let ctl_ref = Rc::new(RefCell::new(ctl));
     let byte = state.read();
     Opcode::try_from(byte).map_or_else(
         |e| {
             ctl_ref.borrow_mut().opcode = None;
             log::warn!("invalid opcode {}", e);
-            ControlFlow::Err
+            MicrocodeFlow::Break(CycleDigest::Consume)
         },
         |opcode| {
             let mut ctl = ctl_ref.borrow_mut();
@@ -33,7 +33,7 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> ControlFlow {
                 Opcode::PrefixCb => ctl.push_action(fetch_cb),
                 _ => todo!("unimplemented opcode {:?}", opcode),
             };
-            ControlFlow::Ok
+            MicrocodeFlow::Continue(CycleDigest::Consume)
         },
     )
 }

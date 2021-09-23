@@ -1,34 +1,34 @@
-use super::{ControlFlow, MicrocodeController, State};
+use super::{CycleDigest, MicrocodeController, MicrocodeFlow, State};
 use crate::interfaces::ReadFlagReg;
 
-pub fn carry(_clt: &mut MicrocodeController, state: &mut State) -> ControlFlow {
+pub fn carry(_clt: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     if state.regs.carry() {
-        ControlFlow::Chain
+        MicrocodeFlow::Continue(CycleDigest::Again)
     } else {
-        ControlFlow::Break
+        MicrocodeFlow::Break(CycleDigest::Again)
     }
 }
 
-pub fn not_carry(_clt: &mut MicrocodeController, state: &mut State) -> ControlFlow {
+pub fn not_carry(_clt: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     if !state.regs.carry() {
-        ControlFlow::Chain
+        MicrocodeFlow::Continue(CycleDigest::Again)
     } else {
-        ControlFlow::Break
+        MicrocodeFlow::Break(CycleDigest::Again)
     }
 }
 
-pub fn zero(_clt: &mut MicrocodeController, state: &mut State) -> ControlFlow {
+pub fn zero(_clt: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     if state.regs.zero() {
-        ControlFlow::Chain
+        MicrocodeFlow::Continue(CycleDigest::Again)
     } else {
-        ControlFlow::Break
+        MicrocodeFlow::Break(CycleDigest::Again)
     }
 }
 
-pub fn not_zero(_clt: &mut MicrocodeController, state: &mut State) -> ControlFlow {
+pub fn not_zero(_clt: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     if !state.regs.zero() {
-        ControlFlow::Chain
+        MicrocodeFlow::Continue(CycleDigest::Again)
     } else {
-        ControlFlow::Break
+        MicrocodeFlow::Break(CycleDigest::Again)
     }
 }
