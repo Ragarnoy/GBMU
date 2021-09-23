@@ -1,4 +1,4 @@
-ROMS_LINK := "https://projects.intra.42.fr/uploads/document/document/2833/roms.zip"
+ROMS_LINK := "https://projects.intra.42.fr/uploads/document/document/4986/roms.zip"
 ROMS := \
 	roms/Super\ Mario\ Land.gb \
 	roms/Legend\ of\ Zelda,\ The\ -\ Link's\ Awakening\ DX.gbc \
@@ -19,19 +19,29 @@ ROMS := \
 	roms/Legend\ of\ Zelda,\ The\ -\ Oracle\ of\ Ages.gbc \
 	roms/Pokemon\ -\ Jaune.gbc \
 
+BIOS_LINK_ROOT := "https://gbdev.gg8.se/files/roms/bootroms"
+BIOS := \
+		roms/bios/dmg_boot.bin \
+		roms/bios/cgb_boot.bin \
+
 ROMS_DIR := roms
 
-requirement: roms
+requirement: roms bios
+
+bios: $(BIOS)
+
+roms/bios/%:
+	curl --create-dirs --output $@ $(addprefix $(BIOS_LINK_ROOT)/, $*)
 
 roms: $(ROMS)
 
 roms.zip:
-	wget $(ROMS_LINK) -O $@
+	curl --output $@ $(ROMS_LINK)
 
 $(ROMS_DIR)/%: roms.zip
 	echo "target: $@"
 	unzip $< 'roms/*' -x '*/.DS_Store'
-	touch roms/*
+	# touch roms/*
 
 docker: Dockerfile packaging/linux/appimage/Dockerfile
 	docker build -f Dockerfile -t gbmu:latest .

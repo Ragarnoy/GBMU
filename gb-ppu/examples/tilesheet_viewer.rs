@@ -1,7 +1,20 @@
 use sdl2::{event::Event, keyboard::Keycode};
 
 use gb_lcd::{render, window::GBWindow};
-use gb_ppu::{PPU, TILESHEET_HEIGHT, TILESHEET_WIDTH};
+use gb_ppu::{PPUMem, PPU, TILESHEET_HEIGHT, TILESHEET_WIDTH};
+
+fn overwrite_memory(
+    ppu: &mut PPU,
+    ppu_mem: &PPUMem,
+    dump: (&str, &[u8; 8192], &[u8; 160], &[u8; 112]),
+) {
+    assert!(ppu_mem.overwrite_vram(dump.1).is_ok());
+    assert!(ppu_mem.overwrite_oam(dump.2).is_ok());
+    *ppu.bg_palette_mut() = dump.3[0x47].into();
+    *ppu.obj_palette_0_mut() = dump.3[0x48].into();
+    *ppu.obj_palette_1_mut() = dump.3[0x49].into();
+    *ppu.control_mut() = dump.3[0x40].into();
+}
 
 pub fn main() {
     let (sdl_context, video_subsystem, mut event_pump) =
@@ -30,15 +43,28 @@ pub fn main() {
         bar_pixels_size as f32,
     );
     let mut ppu = PPU::new();
+    let ppu_mem = ppu.memory();
     let dumps = [
-        ("mario", include_bytes!("memory dumps/Super_Mario_Land.dmp")),
+        (
+            "mario",
+            include_bytes!("memory dumps/vram/Super_Mario_Land.dmp"),
+            include_bytes!("memory dumps/oam/Super_Mario_Land.dmp"),
+            include_bytes!("memory dumps/io_registers/Super_Mario_Land.dmp"),
+        ),
         (
             "zelda",
-            include_bytes!("memory dumps/Legend_of_Zelda_link_Awaking.dmp"),
+            include_bytes!("memory dumps/vram/Legend_of_Zelda_link_Awaking.dmp"),
+            include_bytes!("memory dumps/oam/Legend_of_Zelda_link_Awaking.dmp"),
+            include_bytes!("memory dumps/io_registers/Legend_of_Zelda_link_Awaking.dmp"),
         ),
-        ("pokemon", include_bytes!("memory dumps/Pokemon_Bleue.dmp")),
+        (
+            "pokemon",
+            include_bytes!("memory dumps/vram/Pokemon_Bleue.dmp"),
+            include_bytes!("memory dumps/oam/Pokemon_Bleue.dmp"),
+            include_bytes!("memory dumps/io_registers/Pokemon_Bleue.dmp"),
+        ),
     ];
-    ppu.overwrite_vram(dumps[0].1);
+    overwrite_memory(&mut ppu, &ppu_mem, dumps[0]);
     let mut image = ppu.tilesheet_image();
 
     'running: loop {
@@ -50,9 +76,9 @@ pub fn main() {
             egui::menu::bar(ui, |ui| {
                 ui.set_height(render::MENU_BAR_SIZE);
                 egui::menu::menu(ui, "dump", |ui| {
-                    for (title, dump) in dumps {
+                    for (title, vram, oam, io_reg) in dumps {
                         if ui.button(title).clicked() {
-                            ppu.overwrite_vram(dump);
+                            overwrite_memory(&mut ppu, &ppu_mem, (title, vram, oam, io_reg));
                             image = ppu.tilesheet_image();
                         }
                     }

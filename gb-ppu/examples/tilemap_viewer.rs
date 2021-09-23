@@ -1,7 +1,20 @@
 use sdl2::{event::Event, keyboard::Keycode};
 
 use gb_lcd::{render, window::GBWindow};
-use gb_ppu::{PPU, TILEMAP_DIM};
+use gb_ppu::{PPUMem, PPU, TILEMAP_DIM};
+
+fn overwrite_memory(
+    ppu: &mut PPU,
+    ppu_mem: &PPUMem,
+    dump: (&str, &[u8; 8192], &[u8; 160], &[u8; 112]),
+) {
+    assert!(ppu_mem.overwrite_vram(dump.1).is_ok());
+    assert!(ppu_mem.overwrite_oam(dump.2).is_ok());
+    *ppu.bg_palette_mut() = dump.3[0x47].into();
+    *ppu.obj_palette_0_mut() = dump.3[0x48].into();
+    *ppu.obj_palette_1_mut() = dump.3[0x49].into();
+    *ppu.control_mut() = dump.3[0x40].into();
+}
 
 pub fn main() {
     let (sdl_context, video_subsystem, mut event_pump) =
@@ -10,7 +23,7 @@ pub fn main() {
     let bar_pixels_size = GBWindow::dots_to_pixels(&video_subsystem, render::MENU_BAR_SIZE)
         .expect("Error while computing bar size");
     let mut gb_window = GBWindow::new(
-        "TileSheet",
+        "Tilemap",
         (TILEMAP_DIM as u32, TILEMAP_DIM as u32 + bar_pixels_size),
         true,
         &video_subsystem,
@@ -26,19 +39,29 @@ pub fn main() {
     let mut display =
         render::RenderImage::<TILEMAP_DIM, TILEMAP_DIM>::with_bar_size(bar_pixels_size as f32);
     let mut ppu = PPU::new();
-    ppu.control_mut().set_bg_win_tiledata_area(1);
+    let ppu_mem = ppu.memory();
     let dumps = [
-        ("mario", include_bytes!("memory dumps/Super_Mario_Land.dmp")),
+        (
+            "mario",
+            include_bytes!("memory dumps/vram/Super_Mario_Land.dmp"),
+            include_bytes!("memory dumps/oam/Super_Mario_Land.dmp"),
+            include_bytes!("memory dumps/io_registers/Super_Mario_Land.dmp"),
+        ),
         (
             "zelda",
-            include_bytes!("memory dumps/Legend_of_Zelda_link_Awaking.dmp"),
+            include_bytes!("memory dumps/vram/Legend_of_Zelda_link_Awaking.dmp"),
+            include_bytes!("memory dumps/oam/Legend_of_Zelda_link_Awaking.dmp"),
+            include_bytes!("memory dumps/io_registers/Legend_of_Zelda_link_Awaking.dmp"),
         ),
-        ("pokemon", include_bytes!("memory dumps/Pokemon_Bleue.dmp")),
+        (
+            "pokemon",
+            include_bytes!("memory dumps/vram/Pokemon_Bleue.dmp"),
+            include_bytes!("memory dumps/oam/Pokemon_Bleue.dmp"),
+            include_bytes!("memory dumps/io_registers/Pokemon_Bleue.dmp"),
+        ),
     ];
-    ppu.overwrite_vram(dumps[0].1);
+    overwrite_memory(&mut ppu, &ppu_mem, dumps[0]);
     let mut display_window = false;
-    ppu.control_mut().set_win_tilemap_area(1);
-    ppu.control_mut().set_bg_tilemap_area(0);
     let mut image = ppu.tilemap_image(display_window);
 
     'running: loop {
@@ -50,9 +73,9 @@ pub fn main() {
             egui::menu::bar(ui, |ui| {
                 ui.set_height(render::MENU_BAR_SIZE);
                 egui::menu::menu(ui, "dump", |ui| {
-                    for (title, dump) in dumps {
+                    for (title, vram, oam, io_reg) in dumps {
                         if ui.button(title).clicked() {
-                            ppu.overwrite_vram(dump);
+                            overwrite_memory(&mut ppu, &ppu_mem, (title, vram, oam, io_reg));
                             image = ppu.tilemap_image(display_window);
                         }
                     }
