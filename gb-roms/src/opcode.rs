@@ -1,16 +1,21 @@
 mod error;
 #[macro_use]
 mod register;
+mod condition;
 pub mod list;
+mod store;
+mod value;
 
 use error::Error;
-use list::{Opcode, Store, Value};
+use list::Opcode;
 use modular_bitfield::{
     bitfield,
     specifiers::{B2, B3},
 };
 use register::{Register, Register16Bits as Reg16, Register8Bits as Reg8};
 use std::{convert::From, fmt};
+use store::Store;
+use value::Value;
 
 macro_rules! op {
 	($t:ident, $($v:expr),+) => {
