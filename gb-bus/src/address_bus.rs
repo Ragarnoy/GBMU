@@ -201,7 +201,8 @@ mod test_address_bus {
     #[test]
     fn read() {
         let addr_bus = AddressBus {
-            bios: None,
+            bios_enabling_reg: 1,
+            bios: Box::new(CharDevice(0)),
             rom: Box::new(CharDevice(1)),
             vram: Box::new(CharDevice(2)),
             ext_ram: Box::new(CharDevice(3)),
@@ -227,7 +228,8 @@ mod test_address_bus {
     #[test]
     fn write() {
         let mut addr_bus = AddressBus {
-            bios: None,
+            bios_enabling_reg: 1,
+            bios: Box::new(CharDevice(0)),
             rom: Box::new(CharDevice(1)),
             vram: Box::new(CharDevice(2)),
             ext_ram: Box::new(CharDevice(3)),
