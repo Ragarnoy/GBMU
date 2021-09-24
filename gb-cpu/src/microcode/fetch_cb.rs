@@ -1,7 +1,7 @@
-use super::{opcode_cb::OpcodeCB, ControlFlow, MicrocodeController, State};
+use super::{opcode_cb::OpcodeCB, MicrocodeController, MicrocodeFlow, State};
 use std::convert::TryFrom;
 
-pub fn fetch_cb(ctl: &mut MicrocodeController, state: &mut State) -> ControlFlow {
+pub fn fetch_cb(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     let byte = state.read();
     OpcodeCB::try_from(byte).map_or_else(
         |e| {
