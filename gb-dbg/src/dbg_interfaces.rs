@@ -30,7 +30,7 @@ impl From<u16> for RegisterValue {
 }
 
 pub trait MemoryDebugOperations {
-    fn read(&self, index: usize) -> u8;
+    fn read(&self, index: u16) -> u8;
 }
 
 pub trait RegisterDebugOperations {
