@@ -19,29 +19,36 @@ impl From<OpcodeCB> for OpcodeType {
     }
 }
 
-pub struct MicrocodeController<B: Bus<u8>> {
+pub struct MicrocodeController {
     /// current opcode
     pub opcode: Option<OpcodeType>,
     /// Microcode actions, their role is to execute one step of an Opcode
     /// Each Actions take at most 1 `M-Cycle`
-    actions: Vec<ActionFn<B>>,
+    /// Used like a LOFI queue
+    actions: Vec<ActionFn>,
+    /// Cache use for microcode action
+    cache: Vec<u8>,
 }
 
-type ActionFn<B> = fn(controller: &mut MicrocodeController<B>, state: &mut State<B>) -> ControlFlow;
+type ActionFn = fn(controller: &mut MicrocodeController, state: &mut State) -> ControlFlow;
 
-impl<B: Bus<u8>> Default for MicrocodeController<B> {
+impl Default for MicrocodeController {
     fn default() -> Self {
         Self {
             opcode: None,
             actions: Vec::with_capacity(8),
+            cache: Vec::with_capacity(4),
         }
     }
 }
 
-impl<B: Bus<u8>> MicrocodeController<B> {
-    pub fn step(&mut self, regs: &mut Registers, bus: &mut B) {
+impl MicrocodeController {
+    pub fn step(&mut self, regs: &mut Registers, bus: &mut impl Bus<u8>) {
         let mut state = State::new(regs, bus);
-        let action = self.actions.pop().unwrap_or(fetch);
+        let action = self.actions.pop().unwrap_or_else(|| {
+            self.cache.clear();
+            fetch
+        });
 
         let res = action(self, &mut state);
         match res {
@@ -51,7 +58,29 @@ impl<B: Bus<u8>> MicrocodeController<B> {
         }
     }
 
-    pub fn push_action(&mut self, action: ActionFn<B>) {
+    /// Push the action a the back of the queue.
+    /// The last pushed action will be the first to be executed
+    pub fn push_action(&mut self, action: ActionFn) {
         self.actions.push(action);
+    }
+
+    /// Push the actions in the queue.
+    /// The actions while be push in the queue in a way that allow the first action of the slice
+    /// to be executed in first.
+    pub fn push_actions(&mut self, actions: &[ActionFn]) {
+        for action in actions.iter().rev() {
+            self.push_action(*action)
+        }
+    }
+
+    /// Push the `byte` to the cache.
+    /// The last `byte` pushed will be the first accessed by `MicrocodeController::pop`.
+    pub fn push(&mut self, byte: u8) {
+        self.cache.push(byte)
+    }
+
+    /// Pop the last pushed `byte` from the cache.
+    pub fn pop(&mut self) -> u8 {
+        self.cache.pop().expect("not enough value stored in cache")
     }
 }
