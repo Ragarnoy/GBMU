@@ -26,7 +26,7 @@ fn test(it: &mut Peekable<impl Iterator<Item = (usize, u8)>>) {
         let current_opcode: u8 = *v;
         let mut gen = OpcodeGenerator::from(it.map(|(_, v)| v));
         match gen.next().expect("expected opcode") {
-            Ok(op) => println!("{:#08x} ({:2x}): {}", current_pos, current_opcode, op),
+            Ok((op, bytes)) => println!("{:#08x} ({:2x}): {:10}: {:?}", current_pos, current_opcode, op, bytes),
             Err(e) => eprintln!(
                 "position={:x}, opcode={:x}, error={:x?}",
                 current_pos, current_opcode, e
