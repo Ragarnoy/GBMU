@@ -20,7 +20,6 @@ impl DisassemblyViewer {
                     ui.label(egui::Label::new("Instruction").text_color(Color32::WHITE));
                     ui.label(egui::Label::new("Data").text_color(Color32::WHITE));
                     ui.end_row();
-                    let it = (0..8).iter();
                     for row in 0..8 {
                         ui.label(egui::Label::new(format!("0x{:04X}", pc + row)));
                         ui.label(egui::Label::new("add x and y"));
@@ -33,13 +32,23 @@ impl DisassemblyViewer {
     }
 }
 
-struct InstructionIterator<'a, MEM: MemoryDebugOperations> {
+struct ByteIterator<'a, MEM: MemoryDebugOperations> {
     start_address: u16,
     address_offset: u16,
     memory: &'a MEM,
 }
 
-impl<'a, MEM: MemoryDebugOperations> Iterator for InstructionIterator<'a, MEM> {
+impl<'a, MEM: MemoryDebugOperations> ByteIterator<'a, MEM> {
+    fn new(start_address: u16, memory: &'a MEM) -> Self {
+        Self {
+            start_address,
+            address_offset: 0,
+            memory,
+        }
+    }
+}
+
+impl<'a, MEM: MemoryDebugOperations> Iterator for ByteIterator<'a, MEM> {
     type Item = u8;
 
     fn next(&mut self) -> Option<Self::Item> {
