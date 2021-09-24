@@ -103,4 +103,24 @@ impl MicrocodeController {
     pub fn get_dest(&mut self) -> &Ident {
         self.target.as_ref().expect("no dest set")
     }
+
+    /// Push the actions in the queue.
+    /// The actions while be push in the queue in a way that allow the first action of the slice
+    /// to be executed in first.
+    pub fn push_actions(&mut self, actions: &[ActionFn]) {
+        for action in actions.iter().rev() {
+            self.push_action(*action)
+        }
+    }
+
+    /// Push the `byte` to the cache.
+    /// The last `byte` pushed will be the first accessed by `MicrocodeController::pop`.
+    pub fn push(&mut self, byte: u8) {
+        self.cache.push(byte)
+    }
+
+    /// Pop the last pushed `byte` from the cache.
+    pub fn pop(&mut self) -> u8 {
+        self.cache.pop().expect("not enough value stored in cache")
+    }
 }

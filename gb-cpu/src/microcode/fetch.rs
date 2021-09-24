@@ -3,7 +3,7 @@ use super::{
     dec,
     fetch_cb::fetch_cb,
     ident::{Reg16, Reg8},
-    inc, jump,
+    inc, jump, jump,
     opcode::Opcode,
     read::{read, read_hl},
     write::write_hl,
@@ -60,7 +60,6 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> ControlFlow {
                 Opcode::DecHLind => ctl.push_actions(&[read_hl, dec::dec_hl, write_hl]),
 
                 Opcode::Nop => &mut ctl,
-
                 Opcode::PrefixCb => ctl.push_action(fetch_cb),
                 _ => todo!("unimplemented opcode {:?}", opcode),
             };
