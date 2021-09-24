@@ -14,7 +14,7 @@ struct ControlBits {
     pub ppu_enable: B1,
 }
 
-#[derive(Default, Clone, Copy)]
+#[derive(Default, Clone, Copy, Debug)]
 pub struct Control {
     bits: ControlBits,
 }

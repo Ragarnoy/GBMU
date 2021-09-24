@@ -1,7 +1,7 @@
 use super::RegisterArray;
 use std::ops::{Index, IndexMut};
 
-#[derive(Default, Clone, Copy)]
+#[derive(Default, Clone, Copy, Debug)]
 pub struct Scrolling {
     scy: u8,
     scx: u8,

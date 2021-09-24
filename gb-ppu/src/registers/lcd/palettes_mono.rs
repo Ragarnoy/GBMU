@@ -1,7 +1,7 @@
 use super::{super::Palette, RegisterArray};
 use std::ops::{Index, IndexMut};
 
-#[derive(Default, Clone, Copy)]
+#[derive(Default, Clone, Copy, Debug)]
 pub struct PalettesMono {
     bg: Palette,
     obj_0: Palette,

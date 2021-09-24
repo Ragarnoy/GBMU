@@ -22,7 +22,7 @@ struct StatBits {
     pub mode: B2,
 }
 
-#[derive(Default, Clone, Copy)]
+#[derive(Default, Clone, Copy, Debug)]
 pub struct Stat {
     bits: StatBits,
 }

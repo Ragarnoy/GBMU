@@ -12,7 +12,7 @@ struct MapField {
     index_3: B2,
 }
 
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Copy, Default, Debug)]
 pub struct Palette {
     map: MapField,
 }
