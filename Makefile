@@ -1,4 +1,4 @@
-ROMS_LINK := "https://projects.intra.42.fr/uploads/document/document/2833/roms.zip"
+ROMS_LINK := "https://projects.intra.42.fr/uploads/document/document/4986/roms.zip"
 ROMS := \
 	roms/Super\ Mario\ Land.gb \
 	roms/Legend\ of\ Zelda,\ The\ -\ Link's\ Awakening\ DX.gbc \
@@ -28,20 +28,20 @@ ROMS_DIR := roms
 
 requirement: roms bios
 
-roms: $(ROMS)
-
-roms.zip:
-	wget $(ROMS_LINK) -O $@
-
-$(ROMS_DIR)/%: roms.zip
-	echo "target: $@"
-	unzip $< 'roms/*' -x '*/.DS_Store'
-	touch roms/*
-
 bios: $(BIOS)
 
 roms/bios/%:
 	curl --create-dirs --output $@ $(addprefix $(BIOS_LINK_ROOT)/, $*)
+
+roms: $(ROMS)
+
+roms.zip:
+	curl --output $@ $(ROMS_LINK)
+
+$(ROMS_DIR)/%: roms.zip
+	echo "target: $@"
+	unzip $< 'roms/*' -x '*/.DS_Store'
+	# touch roms/*
 
 docker: Dockerfile packaging/linux/appimage/Dockerfile
 	docker build -f Dockerfile -t gbmu:latest .
