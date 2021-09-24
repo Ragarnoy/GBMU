@@ -1,5 +1,6 @@
 use egui::{Color32, Label, Ui, Vec2};
 use crate::dbg_interfaces::MemoryDebugOperations;
+use gb_roms::opcode::OpcodeGenerator;
 
 pub struct DisassemblyViewer;
 
@@ -20,9 +21,11 @@ impl DisassemblyViewer {
                     ui.label(egui::Label::new("Instruction").text_color(Color32::WHITE));
                     ui.label(egui::Label::new("Data").text_color(Color32::WHITE));
                     ui.end_row();
-                    for row in 0..8 {
-                        ui.label(egui::Label::new(format!("0x{:04X}", pc + row)));
-                        ui.label(egui::Label::new("add x and y"));
+                    let byte_it = ByteIterator::new(pc, memory);
+                    let generator = OpcodeGenerator::from(byte_it);
+                    for (row_number, row) in generator.take(8).enumerate() {
+                        ui.label(egui::Label::new(format!("0x{:04X}", pc + row_number as u16 + 1)));
+                        ui.label(egui::Label::new(format!("{}", row.unwrap())));
                         ui.label(egui::Label::new("0x00000000"));
                         ui.end_row();
                     }
