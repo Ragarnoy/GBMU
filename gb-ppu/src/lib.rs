@@ -1,9 +1,11 @@
 mod color;
 mod error;
 mod memory;
+mod mode;
 mod object;
 mod ppu;
 mod registers;
+
 #[cfg(test)]
 mod test_tools;
 
