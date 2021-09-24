@@ -1,4 +1,6 @@
-use super::{fetch::fetch, ident::Ident, opcode::Opcode, opcode_cb::OpcodeCB, ControlFlow, State};
+use super::{
+    fetch::fetch, ident::Ident, opcode::Opcode, opcode_cb::OpcodeCB, MicrocodeFlow, State,
+};
 use crate::registers::Registers;
 use gb_bus::Bus;
 
@@ -32,7 +34,7 @@ pub struct MicrocodeController {
     target: Option<Ident>,
 }
 
-type ActionFn = fn(controller: &mut MicrocodeController, state: &mut State) -> ControlFlow;
+type ActionFn = fn(controller: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow;
 
 impl Default for MicrocodeController {
     fn default() -> Self {
@@ -47,17 +49,25 @@ impl Default for MicrocodeController {
 
 impl MicrocodeController {
     pub fn step(&mut self, regs: &mut Registers, bus: &mut impl Bus<u8>) {
+        use super::CycleDigest;
+        use std::ops::ControlFlow;
+
         let mut state = State::new(regs, bus);
         let action = self.actions.pop().unwrap_or_else(|| {
             self.clear();
             fetch
         });
 
-        let res = action(self, &mut state);
-        match res {
-            ControlFlow::Chain => self.step(regs, bus),
-            ControlFlow::Break => self.actions.clear(),
-            _ => {}
+        match action(self, &mut state) {
+            ControlFlow::Continue(CycleDigest::Again) => self.step(regs, bus),
+            ControlFlow::Break(cycle_digest) => {
+                self.cache.clear();
+                self.actions.clear();
+                if cycle_digest == CycleDigest::Again {
+                    self.step(regs, bus);
+                }
+            }
+            ControlFlow::Continue(CycleDigest::Consume) => {}
         }
     }
 
