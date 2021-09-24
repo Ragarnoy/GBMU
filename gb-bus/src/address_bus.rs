@@ -9,15 +9,17 @@ use crate::{
         HRAM_STOP, IE_REG_START, IO_REG_START, IO_REG_STOP, OAM_START, OAM_STOP, RAM_START,
         RAM_STOP, ROM_START, ROM_STOP, VRAM_START, VRAM_STOP,
     },
-    Area, Error, FileOperation,
+    Address as PseudoAddress, Area, Error, FileOperation, IORegArea,
 };
 
 /// AddressBus map specific range address to specific area like ROM/RAM.
 /// This Implementation of an AddressBus will be limited to 16-bit address
 pub struct AddressBus {
-    /// Optional BIOS Rom
-    /// Usually set at startup then removed
-    bios: Option<Box<dyn FileOperation<Area>>>,
+    /// Register to disable / enable the bios mapping.
+    /// Set to non-zero to disable the bios mapping.
+    bios_enabling_reg: u8,
+    /// BIOS Rom
+    bios: Box<dyn FileOperation<Area>>,
     /// Rom from the cartridge
     rom: Box<dyn FileOperation<Area>>,
     /// Video Ram
@@ -42,13 +44,10 @@ pub struct AddressBus {
 impl AddressBus {
     pub fn write_byte(&mut self, addr: u16, v: u8) -> Result<(), Error> {
         match addr {
-            BIOS_START..=BIOS_STOP if self.bios.is_some() => {
-                let b = self.bios.as_mut().unwrap();
-                b.write(
-                    v,
-                    Box::new(Address::from_offset(Area::Bios, addr, BIOS_START)),
-                )
-            }
+            BIOS_START..=BIOS_STOP if self.bios_is_enabled() => self.bios.write(
+                v,
+                Box::new(Address::from_offset(Area::Bios, addr, BIOS_START)),
+            ),
             ROM_START..=ROM_STOP => self.rom.write(
                 v,
                 Box::new(Address::from_offset(Area::Rom, addr, ROM_START)),
@@ -91,10 +90,9 @@ impl AddressBus {
 
     pub fn read_byte(&self, addr: u16) -> Result<u8, Error> {
         match addr {
-            BIOS_START..=BIOS_STOP if self.bios.is_some() => {
-                let b = self.bios.as_ref().unwrap();
-                b.read(Box::new(Address::from_offset(Area::Bios, addr, BIOS_START)))
-            }
+            BIOS_START..=BIOS_STOP if self.bios_is_enabled() => self
+                .bios
+                .read(Box::new(Address::from_offset(Area::Bios, addr, BIOS_START))),
             ROM_START..=ROM_STOP => {
                 self.rom
                     .read(Box::new(Address::from_offset(Area::Rom, addr, ROM_START)))
@@ -139,12 +137,8 @@ impl AddressBus {
         }
     }
 
-    pub fn set_bios(&mut self, bios: Box<dyn FileOperation<Area>>) {
-        self.bios = Some(bios)
-    }
-
-    pub fn remove_bios(&mut self) {
-        self.bios = None
+    pub fn bios_is_enabled(&self) -> bool {
+        self.bios_enabling_reg == 0
     }
 
     pub fn iter(&self) -> Iter {
@@ -175,6 +169,27 @@ impl crate::Bus<u16> for AddressBus {
 
         self.write_byte(address, lower)?;
         self.write_byte(address + 1, upper)
+    }
+}
+
+impl FileOperation<IORegArea> for AddressBus {
+    fn read(&self, address: Box<dyn PseudoAddress<IORegArea>>) -> Result<u8, Error> {
+        let addr: u16 = address.into();
+        if addr == 0 {
+            Ok(self.bios_enabling_reg)
+        } else {
+            Err(Error::BusError(addr))
+        }
+    }
+
+    fn write(&mut self, v: u8, address: Box<dyn PseudoAddress<IORegArea>>) -> Result<(), Error> {
+        let addr: u16 = address.into();
+        if addr == 0 {
+            self.bios_enabling_reg = v;
+            Ok(())
+        } else {
+            Err(Error::BusError(addr))
+        }
     }
 }
 
