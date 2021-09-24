@@ -1,18 +1,18 @@
 use super::{
     flag::Flag,
     ident::{self, Ident},
-    ControlFlow, MicrocodeController, State,
+    MicrocodeController, MicrocodeFlow, State, OK_CONSUME_CYCLE, OK_PLAY_NEXT_ACTION,
 };
 use crate::interfaces::{Read8BitsReg, Write8BitsReg};
 
-pub fn dec_hl(ctl: &mut MicrocodeController, state: &mut State) -> ControlFlow {
+pub fn dec_hl(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     let (val, flag) = sub_reg_flags(ctl.pop(), 1);
     flag.update_reg_flag(state.regs);
     ctl.push(val);
-    ControlFlow::Chain
+    OK_PLAY_NEXT_ACTION
 }
 
-pub fn dec16(ctl: &mut MicrocodeController, state: &mut State) -> ControlFlow {
+pub fn dec16(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     if let Ident::Reg16(r16) = ctl.get_dest() {
         use ident::Reg16;
         match r16 {
@@ -21,7 +21,7 @@ pub fn dec16(ctl: &mut MicrocodeController, state: &mut State) -> ControlFlow {
             Reg16::HL => state.regs.hl -= 1,
             Reg16::SP => state.regs.sp -= 1,
         }
-        ControlFlow::Ok
+        OK_CONSUME_CYCLE
     } else {
         panic!("call dec16 with something other than a reg16");
     }
@@ -35,7 +35,7 @@ macro_rules! dec_reg8 {
     }};
 }
 
-pub fn dec8(ctl: &mut MicrocodeController, state: &mut State) -> ControlFlow {
+pub fn dec8(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     if let Ident::Reg8(r8) = ctl.get_dest() {
         use ident::Reg8;
         match r8 {
@@ -47,7 +47,7 @@ pub fn dec8(ctl: &mut MicrocodeController, state: &mut State) -> ControlFlow {
             Reg8::H => dec_reg8!(state, set_h, h),
             Reg8::L => dec_reg8!(state, set_l, l),
         }
-        ControlFlow::Chain
+        OK_PLAY_NEXT_ACTION
     } else {
         panic!("call dec8 with something other than a reg8");
     }
