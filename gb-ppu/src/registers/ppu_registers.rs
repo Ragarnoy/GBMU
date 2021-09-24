@@ -12,6 +12,16 @@ impl PPURegisters {
     pub fn new(lcd: Rc<RefCell<LcdReg>>) -> Self {
         PPURegisters { lcd }
     }
+
+    /// Completely replace the lcd registers of the ppu.
+    ///
+    /// This function exist for debugging purpose.
+    pub fn overwrite_lcd(&mut self, data: [u8; LcdReg::SIZE]) {
+        match self.lcd.try_borrow_mut() {
+            Ok(mut lcd) => *lcd = data.into(),
+            Err(_) => log::warn!("failed ppu Lcd register read"),
+        }
+    }
 }
 
 impl FileOperation<IORegArea> for PPURegisters {
@@ -19,7 +29,7 @@ impl FileOperation<IORegArea> for PPURegisters {
         log::warn!("missing ppu registers read");
         match addr.area_type() {
             IORegArea::Lcd => match self.lcd.try_borrow() {
-                Ok(area) => area.read(addr),
+                Ok(lcd) => lcd.read(addr),
                 Err(_) => {
                     log::warn!("failed ppu Lcd register read");
                     Ok(UNDEFINED_VALUE)
@@ -45,7 +55,7 @@ impl FileOperation<IORegArea> for PPURegisters {
         log::warn!("missing ppu registers write");
         match addr.area_type() {
             IORegArea::Lcd => match self.lcd.try_borrow_mut() {
-                Ok(mut register) => register.write(addr, v),
+                Ok(mut lcd) => lcd.write(addr, v),
                 Err(_) => {
                     log::warn!("failed ppu register write");
                     Ok(())

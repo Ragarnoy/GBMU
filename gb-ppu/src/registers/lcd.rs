@@ -25,7 +25,7 @@ pub struct LcdReg {
 }
 
 impl LcdReg {
-    const SIZE: usize =
+    pub const SIZE: usize =
         Control::SIZE + Stat::SIZE + Scrolling::SIZE + 1 + PalettesMono::SIZE + WindowPos::SIZE;
 
     pub fn new() -> Self {
