@@ -32,6 +32,7 @@ where
     It: Iterator<Item = u8>,
 {
     stream: It,
+    current_opcode_bytes: Vec<u8>,
 }
 
 impl<It> OpcodeGenerator<It>
@@ -39,15 +40,21 @@ where
     It: Iterator<Item = u8>,
 {
     pub fn new(stream: It) -> Self {
-        Self { stream }
+        Self {
+            stream,
+            current_opcode_bytes: Vec::new(),
+        }
     }
 
     fn read_d(&mut self) -> Option<i8> {
-        self.stream.next().map(|r| r as i8)
+        self.read_n().map(|r| r as i8)
     }
 
     fn read_n(&mut self) -> Option<u8> {
-        self.stream.next()
+        self.stream.next().map(|b| {
+            self.current_opcode_bytes.push(b);
+            b
+        })
     }
 
     fn read_nn(&mut self) -> Option<u16> {
@@ -226,418 +233,422 @@ impl<It> Iterator for OpcodeGenerator<It>
 where
     It: Iterator<Item = u8>,
 {
-    type Item = Result<Opcode, Error>;
+    type Item = Result<(Opcode, Vec<u8>), Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
         use register::{Register16Bits, Register8Bits, RegisterSpecial};
 
-        let current = self.stream.next()?;
+        self.current_opcode_bytes.clear();
+        let current = self.read_n()?;
 
-        Some(match current {
-            // Ld nn, n
-            0x06 => Ok(op!(Ld, register8!(B).into(), self.get_n().into())),
-            0x0E => Ok(op!(Ld, register8!(C).into(), self.get_n().into())),
-            0x16 => Ok(op!(Ld, register8!(D).into(), self.get_n().into())),
-            0x1E => Ok(op!(Ld, register8!(E).into(), self.get_n().into())),
-            0x26 => Ok(op!(Ld, register8!(H).into(), self.get_n().into())),
-            0x2E => Ok(op!(Ld, register8!(L).into(), self.get_n().into())),
+        Some(
+            match current {
+                // Ld nn, n
+                0x06 => Ok(op!(Ld, register8!(B).into(), self.get_n().into())),
+                0x0E => Ok(op!(Ld, register8!(C).into(), self.get_n().into())),
+                0x16 => Ok(op!(Ld, register8!(D).into(), self.get_n().into())),
+                0x1E => Ok(op!(Ld, register8!(E).into(), self.get_n().into())),
+                0x26 => Ok(op!(Ld, register8!(H).into(), self.get_n().into())),
+                0x2E => Ok(op!(Ld, register8!(L).into(), self.get_n().into())),
 
-            // Ld r1, r2
-            0x7F => Ok(op!(Ld, register8!(A).into(), register8!(A).into())),
-            0x78 => Ok(op!(Ld, register8!(A).into(), register8!(B).into())),
-            0x79 => Ok(op!(Ld, register8!(A).into(), register8!(C).into())),
-            0x7A => Ok(op!(Ld, register8!(A).into(), register8!(D).into())),
-            0x7B => Ok(op!(Ld, register8!(A).into(), register8!(E).into())),
-            0x7C => Ok(op!(Ld, register8!(A).into(), register8!(H).into())),
-            0x7D => Ok(op!(Ld, register8!(A).into(), register8!(L).into())),
-            0x7E => Ok(op!(
-                Ld,
-                register8!(A).into(),
-                Value::IndirectReg16(Reg16::HL)
-            )),
-            0x40 => Ok(op!(Ld, register8!(B).into(), register8!(B).into())),
-            0x41 => Ok(op!(Ld, register8!(B).into(), register8!(C).into())),
-            0x42 => Ok(op!(Ld, register8!(B).into(), register8!(D).into())),
-            0x43 => Ok(op!(Ld, register8!(B).into(), register8!(E).into())),
-            0x44 => Ok(op!(Ld, register8!(B).into(), register8!(H).into())),
-            0x45 => Ok(op!(Ld, register8!(B).into(), register8!(L).into())),
-            0x46 => Ok(op!(
-                Ld,
-                register8!(B).into(),
-                Value::IndirectReg16(Reg16::HL)
-            )),
-            0x48 => Ok(op!(Ld, register8!(C).into(), register8!(B).into())),
-            0x49 => Ok(op!(Ld, register8!(C).into(), register8!(C).into())),
-            0x4A => Ok(op!(Ld, register8!(C).into(), register8!(D).into())),
-            0x4B => Ok(op!(Ld, register8!(C).into(), register8!(E).into())),
-            0x4C => Ok(op!(Ld, register8!(C).into(), register8!(H).into())),
-            0x4D => Ok(op!(Ld, register8!(C).into(), register8!(L).into())),
-            0x4E => Ok(op!(
-                Ld,
-                register8!(C).into(),
-                Value::IndirectReg16(Reg16::HL)
-            )),
-            0x50 => Ok(op!(Ld, register8!(D).into(), register8!(B).into())),
-            0x51 => Ok(op!(Ld, register8!(D).into(), register8!(C).into())),
-            0x52 => Ok(op!(Ld, register8!(D).into(), register8!(D).into())),
-            0x53 => Ok(op!(Ld, register8!(D).into(), register8!(E).into())),
-            0x54 => Ok(op!(Ld, register8!(D).into(), register8!(H).into())),
-            0x55 => Ok(op!(Ld, register8!(D).into(), register8!(L).into())),
-            0x56 => Ok(op!(
-                Ld,
-                register8!(D).into(),
-                Value::IndirectReg16(Reg16::HL)
-            )),
-            0x58 => Ok(op!(Ld, register8!(E).into(), register8!(B).into())),
-            0x59 => Ok(op!(Ld, register8!(E).into(), register8!(C).into())),
-            0x5A => Ok(op!(Ld, register8!(E).into(), register8!(D).into())),
-            0x5B => Ok(op!(Ld, register8!(E).into(), register8!(E).into())),
-            0x5C => Ok(op!(Ld, register8!(E).into(), register8!(H).into())),
-            0x5D => Ok(op!(Ld, register8!(E).into(), register8!(L).into())),
-            0x5E => Ok(op!(
-                Ld,
-                register8!(E).into(),
-                Value::IndirectReg16(Reg16::HL)
-            )),
-            0x60 => Ok(op!(Ld, register8!(H).into(), register8!(B).into())),
-            0x61 => Ok(op!(Ld, register8!(H).into(), register8!(C).into())),
-            0x62 => Ok(op!(Ld, register8!(H).into(), register8!(D).into())),
-            0x63 => Ok(op!(Ld, register8!(H).into(), register8!(E).into())),
-            0x64 => Ok(op!(Ld, register8!(H).into(), register8!(H).into())),
-            0x65 => Ok(op!(Ld, register8!(H).into(), register8!(L).into())),
-            0x66 => Ok(op!(
-                Ld,
-                register8!(H).into(),
-                Value::IndirectReg16(Reg16::HL)
-            )),
-            0x68 => Ok(op!(Ld, register8!(L).into(), register8!(B).into())),
-            0x69 => Ok(op!(Ld, register8!(L).into(), register8!(C).into())),
-            0x6A => Ok(op!(Ld, register8!(L).into(), register8!(D).into())),
-            0x6B => Ok(op!(Ld, register8!(L).into(), register8!(E).into())),
-            0x6C => Ok(op!(Ld, register8!(L).into(), register8!(H).into())),
-            0x6D => Ok(op!(Ld, register8!(L).into(), register8!(L).into())),
-            0x6E => Ok(op!(
-                Ld,
-                register8!(L).into(),
-                Value::IndirectReg16(Reg16::HL)
-            )),
-            0x70 => Ok(op!(
-                Ld,
-                Store::IndirectReg16(Reg16::HL),
-                register8!(B).into()
-            )),
-            0x71 => Ok(op!(
-                Ld,
-                Store::IndirectReg16(Reg16::HL),
-                register8!(C).into()
-            )),
-            0x72 => Ok(op!(
-                Ld,
-                Store::IndirectReg16(Reg16::HL),
-                register8!(D).into()
-            )),
-            0x73 => Ok(op!(
-                Ld,
-                Store::IndirectReg16(Reg16::HL),
-                register8!(E).into()
-            )),
-            0x74 => Ok(op!(
-                Ld,
-                Store::IndirectReg16(Reg16::HL),
-                register8!(H).into()
-            )),
-            0x75 => Ok(op!(
-                Ld,
-                Store::IndirectReg16(Reg16::HL),
-                register8!(L).into()
-            )),
-            0x36 => Ok(op!(
-                Ld,
-                Store::IndirectReg16(Reg16::HL),
-                self.get_n().into()
-            )),
+                // Ld r1, r2
+                0x7F => Ok(op!(Ld, register8!(A).into(), register8!(A).into())),
+                0x78 => Ok(op!(Ld, register8!(A).into(), register8!(B).into())),
+                0x79 => Ok(op!(Ld, register8!(A).into(), register8!(C).into())),
+                0x7A => Ok(op!(Ld, register8!(A).into(), register8!(D).into())),
+                0x7B => Ok(op!(Ld, register8!(A).into(), register8!(E).into())),
+                0x7C => Ok(op!(Ld, register8!(A).into(), register8!(H).into())),
+                0x7D => Ok(op!(Ld, register8!(A).into(), register8!(L).into())),
+                0x7E => Ok(op!(
+                    Ld,
+                    register8!(A).into(),
+                    Value::IndirectReg16(Reg16::HL)
+                )),
+                0x40 => Ok(op!(Ld, register8!(B).into(), register8!(B).into())),
+                0x41 => Ok(op!(Ld, register8!(B).into(), register8!(C).into())),
+                0x42 => Ok(op!(Ld, register8!(B).into(), register8!(D).into())),
+                0x43 => Ok(op!(Ld, register8!(B).into(), register8!(E).into())),
+                0x44 => Ok(op!(Ld, register8!(B).into(), register8!(H).into())),
+                0x45 => Ok(op!(Ld, register8!(B).into(), register8!(L).into())),
+                0x46 => Ok(op!(
+                    Ld,
+                    register8!(B).into(),
+                    Value::IndirectReg16(Reg16::HL)
+                )),
+                0x48 => Ok(op!(Ld, register8!(C).into(), register8!(B).into())),
+                0x49 => Ok(op!(Ld, register8!(C).into(), register8!(C).into())),
+                0x4A => Ok(op!(Ld, register8!(C).into(), register8!(D).into())),
+                0x4B => Ok(op!(Ld, register8!(C).into(), register8!(E).into())),
+                0x4C => Ok(op!(Ld, register8!(C).into(), register8!(H).into())),
+                0x4D => Ok(op!(Ld, register8!(C).into(), register8!(L).into())),
+                0x4E => Ok(op!(
+                    Ld,
+                    register8!(C).into(),
+                    Value::IndirectReg16(Reg16::HL)
+                )),
+                0x50 => Ok(op!(Ld, register8!(D).into(), register8!(B).into())),
+                0x51 => Ok(op!(Ld, register8!(D).into(), register8!(C).into())),
+                0x52 => Ok(op!(Ld, register8!(D).into(), register8!(D).into())),
+                0x53 => Ok(op!(Ld, register8!(D).into(), register8!(E).into())),
+                0x54 => Ok(op!(Ld, register8!(D).into(), register8!(H).into())),
+                0x55 => Ok(op!(Ld, register8!(D).into(), register8!(L).into())),
+                0x56 => Ok(op!(
+                    Ld,
+                    register8!(D).into(),
+                    Value::IndirectReg16(Reg16::HL)
+                )),
+                0x58 => Ok(op!(Ld, register8!(E).into(), register8!(B).into())),
+                0x59 => Ok(op!(Ld, register8!(E).into(), register8!(C).into())),
+                0x5A => Ok(op!(Ld, register8!(E).into(), register8!(D).into())),
+                0x5B => Ok(op!(Ld, register8!(E).into(), register8!(E).into())),
+                0x5C => Ok(op!(Ld, register8!(E).into(), register8!(H).into())),
+                0x5D => Ok(op!(Ld, register8!(E).into(), register8!(L).into())),
+                0x5E => Ok(op!(
+                    Ld,
+                    register8!(E).into(),
+                    Value::IndirectReg16(Reg16::HL)
+                )),
+                0x60 => Ok(op!(Ld, register8!(H).into(), register8!(B).into())),
+                0x61 => Ok(op!(Ld, register8!(H).into(), register8!(C).into())),
+                0x62 => Ok(op!(Ld, register8!(H).into(), register8!(D).into())),
+                0x63 => Ok(op!(Ld, register8!(H).into(), register8!(E).into())),
+                0x64 => Ok(op!(Ld, register8!(H).into(), register8!(H).into())),
+                0x65 => Ok(op!(Ld, register8!(H).into(), register8!(L).into())),
+                0x66 => Ok(op!(
+                    Ld,
+                    register8!(H).into(),
+                    Value::IndirectReg16(Reg16::HL)
+                )),
+                0x68 => Ok(op!(Ld, register8!(L).into(), register8!(B).into())),
+                0x69 => Ok(op!(Ld, register8!(L).into(), register8!(C).into())),
+                0x6A => Ok(op!(Ld, register8!(L).into(), register8!(D).into())),
+                0x6B => Ok(op!(Ld, register8!(L).into(), register8!(E).into())),
+                0x6C => Ok(op!(Ld, register8!(L).into(), register8!(H).into())),
+                0x6D => Ok(op!(Ld, register8!(L).into(), register8!(L).into())),
+                0x6E => Ok(op!(
+                    Ld,
+                    register8!(L).into(),
+                    Value::IndirectReg16(Reg16::HL)
+                )),
+                0x70 => Ok(op!(
+                    Ld,
+                    Store::IndirectReg16(Reg16::HL),
+                    register8!(B).into()
+                )),
+                0x71 => Ok(op!(
+                    Ld,
+                    Store::IndirectReg16(Reg16::HL),
+                    register8!(C).into()
+                )),
+                0x72 => Ok(op!(
+                    Ld,
+                    Store::IndirectReg16(Reg16::HL),
+                    register8!(D).into()
+                )),
+                0x73 => Ok(op!(
+                    Ld,
+                    Store::IndirectReg16(Reg16::HL),
+                    register8!(E).into()
+                )),
+                0x74 => Ok(op!(
+                    Ld,
+                    Store::IndirectReg16(Reg16::HL),
+                    register8!(H).into()
+                )),
+                0x75 => Ok(op!(
+                    Ld,
+                    Store::IndirectReg16(Reg16::HL),
+                    register8!(L).into()
+                )),
+                0x36 => Ok(op!(
+                    Ld,
+                    Store::IndirectReg16(Reg16::HL),
+                    self.get_n().into()
+                )),
 
-            // LD A, n
-            0x0A => Ok(op!(
-                Ld,
-                register8!(A).into(),
-                Value::IndirectReg16(Reg16::BC)
-            )),
-            0x1A => Ok(op!(
-                Ld,
-                register8!(A).into(),
-                Value::IndirectReg16(Reg16::DE)
-            )),
-            0xFA => Ok(op!(
-                Ld,
-                register8!(A).into(),
-                Value::Indirect16(self.get_nn())
-            )),
-            0x3E => Ok(op!(Ld, register8!(A).into(), self.get_n().into())),
+                // LD A, n
+                0x0A => Ok(op!(
+                    Ld,
+                    register8!(A).into(),
+                    Value::IndirectReg16(Reg16::BC)
+                )),
+                0x1A => Ok(op!(
+                    Ld,
+                    register8!(A).into(),
+                    Value::IndirectReg16(Reg16::DE)
+                )),
+                0xFA => Ok(op!(
+                    Ld,
+                    register8!(A).into(),
+                    Value::Indirect16(self.get_nn())
+                )),
+                0x3E => Ok(op!(Ld, register8!(A).into(), self.get_n().into())),
 
-            0xF2 => Ok(op!(Ld, register8!(A).into(), Value::IndirectReg8(Reg8::C))),
-            0xE2 => Ok(op!(Ld, Store::IndierectReg8(Reg8::C), register8!(A).into())),
+                0xF2 => Ok(op!(Ld, register8!(A).into(), Value::IndirectReg8(Reg8::C))),
+                0xE2 => Ok(op!(Ld, Store::IndierectReg8(Reg8::C), register8!(A).into())),
 
-            0x32 => Ok(op!(LddFrom, register8!(A).into())),
-            0x3A => Ok(op!(LddInto, register8!(A).into())),
+                0x32 => Ok(op!(LddFrom, register8!(A).into())),
+                0x3A => Ok(op!(LddInto, register8!(A).into())),
 
-            0x22 => Ok(op!(LdiFrom, register8!(A).into())),
-            0x2A => Ok(op!(LdiInto, register8!(A).into())),
+                0x22 => Ok(op!(LdiFrom, register8!(A).into())),
+                0x2A => Ok(op!(LdiInto, register8!(A).into())),
 
-            // ldh (n), A
-            0xE0 => Ok(op!(LdhInto, self.get_n())),
+                // ldh (n), A
+                0xE0 => Ok(op!(LdhInto, self.get_n())),
 
-            // ldh A, (n)
-            0xF0 => Ok(op!(LdhFrom, self.get_n())),
+                // ldh A, (n)
+                0xF0 => Ok(op!(LdhFrom, self.get_n())),
 
-            // ld n, nn
-            0x01 => Ok(op!(Ld, register16!(BC).into(), self.get_nn().into())),
-            0x11 => Ok(op!(Ld, register16!(DE).into(), self.get_nn().into())),
-            0x21 => Ok(op!(Ld, register16!(HL).into(), self.get_nn().into())),
-            0x31 => Ok(op!(Ld, register_special!(SP).into(), self.get_nn().into())),
+                // ld n, nn
+                0x01 => Ok(op!(Ld, register16!(BC).into(), self.get_nn().into())),
+                0x11 => Ok(op!(Ld, register16!(DE).into(), self.get_nn().into())),
+                0x21 => Ok(op!(Ld, register16!(HL).into(), self.get_nn().into())),
+                0x31 => Ok(op!(Ld, register_special!(SP).into(), self.get_nn().into())),
 
-            // ld sp, hl
-            0xF9 => Ok(op!(
-                Ld,
-                register_special!(SP).into(),
-                register16!(HL).into()
-            )),
+                // ld sp, hl
+                0xF9 => Ok(op!(
+                    Ld,
+                    register_special!(SP).into(),
+                    register16!(HL).into()
+                )),
 
-            // ldhl sp, n
-            0xF8 => Ok(op!(Ldhl, self.get_d())),
+                // ldhl sp, n
+                0xF8 => Ok(op!(Ldhl, self.get_d())),
 
-            // ld (nn), SP
-            0x08 => Ok(op!(Ld, self.get_nn().into(), register_special!(SP).into())),
+                // ld (nn), SP
+                0x08 => Ok(op!(Ld, self.get_nn().into(), register_special!(SP).into())),
 
-            // push r16
-            0xF5 => Ok(op!(Push, Reg16::AF)),
-            0xC5 => Ok(op!(Push, Reg16::BC)),
-            0xD5 => Ok(op!(Push, Reg16::DE)),
-            0xE5 => Ok(op!(Push, Reg16::HL)),
+                // push r16
+                0xF5 => Ok(op!(Push, Reg16::AF)),
+                0xC5 => Ok(op!(Push, Reg16::BC)),
+                0xD5 => Ok(op!(Push, Reg16::DE)),
+                0xE5 => Ok(op!(Push, Reg16::HL)),
 
-            // pop r16
-            0xF1 => Ok(op!(Pop, Reg16::AF)),
-            0xC1 => Ok(op!(Pop, Reg16::BC)),
-            0xD1 => Ok(op!(Pop, Reg16::DE)),
-            0xE1 => Ok(op!(Pop, Reg16::HL)),
+                // pop r16
+                0xF1 => Ok(op!(Pop, Reg16::AF)),
+                0xC1 => Ok(op!(Pop, Reg16::BC)),
+                0xD1 => Ok(op!(Pop, Reg16::DE)),
+                0xE1 => Ok(op!(Pop, Reg16::HL)),
 
-            // add A, n
-            0x87 => Ok(op!(Add, register8!(A).into(), register8!(A).into())),
-            0x80 => Ok(op!(Add, register8!(A).into(), register8!(B).into())),
-            0x81 => Ok(op!(Add, register8!(A).into(), register8!(C).into())),
-            0x82 => Ok(op!(Add, register8!(A).into(), register8!(D).into())),
-            0x83 => Ok(op!(Add, register8!(A).into(), register8!(E).into())),
-            0x84 => Ok(op!(Add, register8!(A).into(), register8!(H).into())),
-            0x85 => Ok(op!(Add, register8!(A).into(), register8!(L).into())),
-            0x86 => Ok(op!(
-                Add,
-                register8!(A).into(),
-                Value::IndirectReg16(Reg16::HL)
-            )),
-            0xC6 => Ok(op!(Add, register8!(A).into(), self.get_n().into())),
+                // add A, n
+                0x87 => Ok(op!(Add, register8!(A).into(), register8!(A).into())),
+                0x80 => Ok(op!(Add, register8!(A).into(), register8!(B).into())),
+                0x81 => Ok(op!(Add, register8!(A).into(), register8!(C).into())),
+                0x82 => Ok(op!(Add, register8!(A).into(), register8!(D).into())),
+                0x83 => Ok(op!(Add, register8!(A).into(), register8!(E).into())),
+                0x84 => Ok(op!(Add, register8!(A).into(), register8!(H).into())),
+                0x85 => Ok(op!(Add, register8!(A).into(), register8!(L).into())),
+                0x86 => Ok(op!(
+                    Add,
+                    register8!(A).into(),
+                    Value::IndirectReg16(Reg16::HL)
+                )),
+                0xC6 => Ok(op!(Add, register8!(A).into(), self.get_n().into())),
 
-            // adc A, n
-            0x8F => Ok(op!(Adc, register8!(A).into())),
-            0x88 => Ok(op!(Adc, register8!(B).into())),
-            0x89 => Ok(op!(Adc, register8!(C).into())),
-            0x8A => Ok(op!(Adc, register8!(D).into())),
-            0x8B => Ok(op!(Adc, register8!(E).into())),
-            0x8C => Ok(op!(Adc, register8!(H).into())),
-            0x8D => Ok(op!(Adc, register8!(L).into())),
-            0x8E => Ok(op!(Adc, Value::IndirectReg16(Reg16::HL))),
-            0xCE => Ok(op!(Adc, self.get_n().into())),
+                // adc A, n
+                0x8F => Ok(op!(Adc, register8!(A).into())),
+                0x88 => Ok(op!(Adc, register8!(B).into())),
+                0x89 => Ok(op!(Adc, register8!(C).into())),
+                0x8A => Ok(op!(Adc, register8!(D).into())),
+                0x8B => Ok(op!(Adc, register8!(E).into())),
+                0x8C => Ok(op!(Adc, register8!(H).into())),
+                0x8D => Ok(op!(Adc, register8!(L).into())),
+                0x8E => Ok(op!(Adc, Value::IndirectReg16(Reg16::HL))),
+                0xCE => Ok(op!(Adc, self.get_n().into())),
 
-            // sub A, n
-            0x97 => Ok(op!(Sub, register8!(A).into())),
-            0x90 => Ok(op!(Sub, register8!(B).into())),
-            0x91 => Ok(op!(Sub, register8!(C).into())),
-            0x92 => Ok(op!(Sub, register8!(D).into())),
-            0x93 => Ok(op!(Sub, register8!(E).into())),
-            0x94 => Ok(op!(Sub, register8!(H).into())),
-            0x95 => Ok(op!(Sub, register8!(L).into())),
-            0x96 => Ok(op!(Sub, Value::IndirectReg16(Reg16::HL))),
-            0xD6 => Ok(op!(Sub, self.get_n().into())),
+                // sub A, n
+                0x97 => Ok(op!(Sub, register8!(A).into())),
+                0x90 => Ok(op!(Sub, register8!(B).into())),
+                0x91 => Ok(op!(Sub, register8!(C).into())),
+                0x92 => Ok(op!(Sub, register8!(D).into())),
+                0x93 => Ok(op!(Sub, register8!(E).into())),
+                0x94 => Ok(op!(Sub, register8!(H).into())),
+                0x95 => Ok(op!(Sub, register8!(L).into())),
+                0x96 => Ok(op!(Sub, Value::IndirectReg16(Reg16::HL))),
+                0xD6 => Ok(op!(Sub, self.get_n().into())),
 
-            // sbc A, n
-            0x9F => Ok(op!(Sbc, register8!(A).into())),
-            0x98 => Ok(op!(Sbc, register8!(B).into())),
-            0x99 => Ok(op!(Sbc, register8!(C).into())),
-            0x9A => Ok(op!(Sbc, register8!(D).into())),
-            0x9B => Ok(op!(Sbc, register8!(E).into())),
-            0x9C => Ok(op!(Sbc, register8!(H).into())),
-            0x9D => Ok(op!(Sbc, register8!(L).into())),
-            0x9E => Ok(op!(Sbc, Value::IndirectReg16(Reg16::HL))),
-            0xDE => Ok(op!(Sbc, self.get_n().into())),
+                // sbc A, n
+                0x9F => Ok(op!(Sbc, register8!(A).into())),
+                0x98 => Ok(op!(Sbc, register8!(B).into())),
+                0x99 => Ok(op!(Sbc, register8!(C).into())),
+                0x9A => Ok(op!(Sbc, register8!(D).into())),
+                0x9B => Ok(op!(Sbc, register8!(E).into())),
+                0x9C => Ok(op!(Sbc, register8!(H).into())),
+                0x9D => Ok(op!(Sbc, register8!(L).into())),
+                0x9E => Ok(op!(Sbc, Value::IndirectReg16(Reg16::HL))),
+                0xDE => Ok(op!(Sbc, self.get_n().into())),
 
-            // and A, n
-            0xA7 => Ok(op!(And, register8!(A).into())),
-            0xA0 => Ok(op!(And, register8!(B).into())),
-            0xA1 => Ok(op!(And, register8!(C).into())),
-            0xA2 => Ok(op!(And, register8!(D).into())),
-            0xA3 => Ok(op!(And, register8!(E).into())),
-            0xA4 => Ok(op!(And, register8!(H).into())),
-            0xA5 => Ok(op!(And, register8!(L).into())),
-            0xA6 => Ok(op!(And, Value::IndirectReg16(Reg16::HL))),
-            0xE6 => Ok(op!(And, self.get_n().into())),
+                // and A, n
+                0xA7 => Ok(op!(And, register8!(A).into())),
+                0xA0 => Ok(op!(And, register8!(B).into())),
+                0xA1 => Ok(op!(And, register8!(C).into())),
+                0xA2 => Ok(op!(And, register8!(D).into())),
+                0xA3 => Ok(op!(And, register8!(E).into())),
+                0xA4 => Ok(op!(And, register8!(H).into())),
+                0xA5 => Ok(op!(And, register8!(L).into())),
+                0xA6 => Ok(op!(And, Value::IndirectReg16(Reg16::HL))),
+                0xE6 => Ok(op!(And, self.get_n().into())),
 
-            // or A, n
-            0xB7 => Ok(op!(Or, register8!(A).into())),
-            0xB0 => Ok(op!(Or, register8!(B).into())),
-            0xB1 => Ok(op!(Or, register8!(C).into())),
-            0xB2 => Ok(op!(Or, register8!(D).into())),
-            0xB3 => Ok(op!(Or, register8!(E).into())),
-            0xB4 => Ok(op!(Or, register8!(H).into())),
-            0xB5 => Ok(op!(Or, register8!(L).into())),
-            0xB6 => Ok(op!(Or, Value::IndirectReg16(Reg16::HL))),
-            0xF6 => Ok(op!(Or, self.get_n().into())),
+                // or A, n
+                0xB7 => Ok(op!(Or, register8!(A).into())),
+                0xB0 => Ok(op!(Or, register8!(B).into())),
+                0xB1 => Ok(op!(Or, register8!(C).into())),
+                0xB2 => Ok(op!(Or, register8!(D).into())),
+                0xB3 => Ok(op!(Or, register8!(E).into())),
+                0xB4 => Ok(op!(Or, register8!(H).into())),
+                0xB5 => Ok(op!(Or, register8!(L).into())),
+                0xB6 => Ok(op!(Or, Value::IndirectReg16(Reg16::HL))),
+                0xF6 => Ok(op!(Or, self.get_n().into())),
 
-            // xor A, n
-            0xAF => Ok(op!(Xor, register8!(A).into())),
-            0xA8 => Ok(op!(Xor, register8!(B).into())),
-            0xA9 => Ok(op!(Xor, register8!(C).into())),
-            0xAA => Ok(op!(Xor, register8!(D).into())),
-            0xAB => Ok(op!(Xor, register8!(E).into())),
-            0xAC => Ok(op!(Xor, register8!(H).into())),
-            0xAD => Ok(op!(Xor, register8!(L).into())),
-            0xAE => Ok(op!(Xor, Value::IndirectReg16(Reg16::HL))),
-            0xEE => Ok(op!(Xor, self.get_n().into())),
+                // xor A, n
+                0xAF => Ok(op!(Xor, register8!(A).into())),
+                0xA8 => Ok(op!(Xor, register8!(B).into())),
+                0xA9 => Ok(op!(Xor, register8!(C).into())),
+                0xAA => Ok(op!(Xor, register8!(D).into())),
+                0xAB => Ok(op!(Xor, register8!(E).into())),
+                0xAC => Ok(op!(Xor, register8!(H).into())),
+                0xAD => Ok(op!(Xor, register8!(L).into())),
+                0xAE => Ok(op!(Xor, Value::IndirectReg16(Reg16::HL))),
+                0xEE => Ok(op!(Xor, self.get_n().into())),
 
-            // cp A, n
-            0xBF => Ok(op!(Cp, register8!(A).into())),
-            0xB8 => Ok(op!(Cp, register8!(B).into())),
-            0xB9 => Ok(op!(Cp, register8!(C).into())),
-            0xBA => Ok(op!(Cp, register8!(D).into())),
-            0xBB => Ok(op!(Cp, register8!(E).into())),
-            0xBC => Ok(op!(Cp, register8!(H).into())),
-            0xBD => Ok(op!(Cp, register8!(L).into())),
-            0xBE => Ok(op!(Cp, Value::IndirectReg16(Reg16::HL))),
-            0xFE => Ok(op!(Cp, self.get_n().into())),
+                // cp A, n
+                0xBF => Ok(op!(Cp, register8!(A).into())),
+                0xB8 => Ok(op!(Cp, register8!(B).into())),
+                0xB9 => Ok(op!(Cp, register8!(C).into())),
+                0xBA => Ok(op!(Cp, register8!(D).into())),
+                0xBB => Ok(op!(Cp, register8!(E).into())),
+                0xBC => Ok(op!(Cp, register8!(H).into())),
+                0xBD => Ok(op!(Cp, register8!(L).into())),
+                0xBE => Ok(op!(Cp, Value::IndirectReg16(Reg16::HL))),
+                0xFE => Ok(op!(Cp, self.get_n().into())),
 
-            // inc n
-            0x3C => Ok(op!(Inc, register8!(A).into())),
-            0x04 => Ok(op!(Inc, register8!(B).into())),
-            0x0C => Ok(op!(Inc, register8!(C).into())),
-            0x14 => Ok(op!(Inc, register8!(D).into())),
-            0x1C => Ok(op!(Inc, register8!(E).into())),
-            0x24 => Ok(op!(Inc, register8!(H).into())),
-            0x2C => Ok(op!(Inc, register8!(L).into())),
-            0x34 => Ok(op!(Inc, Store::IndirectReg16(Reg16::HL))),
+                // inc n
+                0x3C => Ok(op!(Inc, register8!(A).into())),
+                0x04 => Ok(op!(Inc, register8!(B).into())),
+                0x0C => Ok(op!(Inc, register8!(C).into())),
+                0x14 => Ok(op!(Inc, register8!(D).into())),
+                0x1C => Ok(op!(Inc, register8!(E).into())),
+                0x24 => Ok(op!(Inc, register8!(H).into())),
+                0x2C => Ok(op!(Inc, register8!(L).into())),
+                0x34 => Ok(op!(Inc, Store::IndirectReg16(Reg16::HL))),
 
-            // dec n
-            0x3D => Ok(op!(Dec, register8!(A).into())),
-            0x05 => Ok(op!(Dec, register8!(B).into())),
-            0x0D => Ok(op!(Dec, register8!(C).into())),
-            0x15 => Ok(op!(Dec, register8!(D).into())),
-            0x1D => Ok(op!(Dec, register8!(E).into())),
-            0x25 => Ok(op!(Dec, register8!(H).into())),
-            0x2D => Ok(op!(Dec, register8!(L).into())),
-            0x35 => Ok(op!(Dec, Store::IndirectReg16(Reg16::HL))),
+                // dec n
+                0x3D => Ok(op!(Dec, register8!(A).into())),
+                0x05 => Ok(op!(Dec, register8!(B).into())),
+                0x0D => Ok(op!(Dec, register8!(C).into())),
+                0x15 => Ok(op!(Dec, register8!(D).into())),
+                0x1D => Ok(op!(Dec, register8!(E).into())),
+                0x25 => Ok(op!(Dec, register8!(H).into())),
+                0x2D => Ok(op!(Dec, register8!(L).into())),
+                0x35 => Ok(op!(Dec, Store::IndirectReg16(Reg16::HL))),
 
-            // add hl, n
-            0x09 => Ok(op!(Add, register16!(HL).into(), register16!(BC).into())),
-            0x19 => Ok(op!(Add, register16!(HL).into(), register16!(DE).into())),
-            0x29 => Ok(op!(Add, register16!(HL).into(), register16!(HL).into())),
-            0x39 => Ok(op!(
-                Add,
-                register16!(HL).into(),
-                register_special!(SP).into()
-            )),
+                // add hl, n
+                0x09 => Ok(op!(Add, register16!(HL).into(), register16!(BC).into())),
+                0x19 => Ok(op!(Add, register16!(HL).into(), register16!(DE).into())),
+                0x29 => Ok(op!(Add, register16!(HL).into(), register16!(HL).into())),
+                0x39 => Ok(op!(
+                    Add,
+                    register16!(HL).into(),
+                    register_special!(SP).into()
+                )),
 
-            // add sp, d
-            0xE8 => Ok(op!(Add, register_special!(SP).into(), self.get_d().into())),
+                // add sp, d
+                0xE8 => Ok(op!(Add, register_special!(SP).into(), self.get_d().into())),
 
-            // inc nn
-            0x03 => Ok(op!(Inc, register16!(BC).into())),
-            0x13 => Ok(op!(Inc, register16!(DE).into())),
-            0x23 => Ok(op!(Inc, register16!(HL).into())),
-            0x33 => Ok(op!(Inc, register_special!(SP).into())),
+                // inc nn
+                0x03 => Ok(op!(Inc, register16!(BC).into())),
+                0x13 => Ok(op!(Inc, register16!(DE).into())),
+                0x23 => Ok(op!(Inc, register16!(HL).into())),
+                0x33 => Ok(op!(Inc, register_special!(SP).into())),
 
-            // dec nn
-            0x0B => Ok(op!(Dec, register16!(BC).into())),
-            0x1B => Ok(op!(Dec, register16!(DE).into())),
-            0x2B => Ok(op!(Dec, register16!(HL).into())),
-            0x3B => Ok(op!(Dec, register_special!(SP).into())),
+                // dec nn
+                0x0B => Ok(op!(Dec, register16!(BC).into())),
+                0x1B => Ok(op!(Dec, register16!(DE).into())),
+                0x2B => Ok(op!(Dec, register16!(HL).into())),
+                0x3B => Ok(op!(Dec, register_special!(SP).into())),
 
-            0xCB => self.decode_cb_prefix(),
+                0xCB => self.decode_cb_prefix(),
 
-            0x27 => Ok(op!(Daa)),
-            0x2F => Ok(op!(Cpl)),
-            0x3F => Ok(op!(Ccf)),
-            0x37 => Ok(op!(Scf)),
+                0x27 => Ok(op!(Daa)),
+                0x2F => Ok(op!(Cpl)),
+                0x3F => Ok(op!(Ccf)),
+                0x37 => Ok(op!(Scf)),
 
-            0x00 => Ok(op!(Nop)),
-            0x76 => Ok(op!(Halt)),
-            0x10 => {
-                if self.stream.next() == Some(0x00) {
-                    Ok(op!(Stop))
-                } else {
-                    Err(Error::InvalideOpcode(0x10))
+                0x00 => Ok(op!(Nop)),
+                0x76 => Ok(op!(Halt)),
+                0x10 => {
+                    if self.stream.next() == Some(0x00) {
+                        Ok(op!(Stop))
+                    } else {
+                        Err(Error::InvalideOpcode(0x10))
+                    }
                 }
+
+                0xF3 => Ok(op!(Di)),
+                0xFB => Ok(op!(Ei)),
+
+                0x07 => Ok(op!(Rlca)),
+                0x17 => Ok(op!(Rla)),
+
+                0x0F => Ok(op!(Rrca)),
+                0x1F => Ok(op!(Rra)),
+
+                // jp nn
+                0xC3 => Ok(op!(Jump, self.get_nn().into())),
+
+                // jp cc,nn
+                0xC2 => Ok(op!(JumpConditional, NotZero, self.get_nn())),
+                0xCA => Ok(op!(JumpConditional, Zero, self.get_nn())),
+                0xD2 => Ok(op!(JumpConditional, NotCarry, self.get_nn())),
+                0xDA => Ok(op!(JumpConditional, Carry, self.get_nn())),
+
+                // jp (hl)
+                0xE9 => Ok(op!(Jump, Value::IndirectReg16(Reg16::HL))),
+
+                // jr d
+                0x18 => Ok(op!(JumpRelative, self.get_d())),
+
+                // jr cc,d
+                0x20 => Ok(op!(JumpRelativeConditional, NotZero, self.get_d())),
+                0x28 => Ok(op!(JumpRelativeConditional, Zero, self.get_d())),
+                0x30 => Ok(op!(JumpRelativeConditional, NotCarry, self.get_d())),
+                0x38 => Ok(op!(JumpRelativeConditional, Carry, self.get_d())),
+
+                // call nn
+                0xCD => Ok(op!(Call, self.get_nn())),
+
+                // call cc, nn
+                0xC4 => Ok(op!(CallConditional, NotZero, self.get_nn())),
+                0xCC => Ok(op!(CallConditional, Zero, self.get_nn())),
+                0xD4 => Ok(op!(CallConditional, NotCarry, self.get_nn())),
+                0xDC => Ok(op!(CallConditional, Carry, self.get_nn())),
+
+                // rst n
+                0xC7 => Ok(op!(Restart, 0x00)),
+                0xCF => Ok(op!(Restart, 0x08)),
+                0xD7 => Ok(op!(Restart, 0x10)),
+                0xDF => Ok(op!(Restart, 0x18)),
+                0xE7 => Ok(op!(Restart, 0x20)),
+                0xEF => Ok(op!(Restart, 0x28)),
+                0xF7 => Ok(op!(Restart, 0x30)),
+                0xFF => Ok(op!(Restart, 0x38)),
+
+                // ret
+                0xC9 => Ok(op!(Return)),
+
+                // ret cc
+                0xC0 => Ok(op!(ReturnConditional, NotZero)),
+                0xC8 => Ok(op!(ReturnConditional, Zero)),
+                0xD0 => Ok(op!(ReturnConditional, NotCarry)),
+                0xD8 => Ok(op!(ReturnConditional, Carry)),
+
+                // reti
+                0xD9 => Ok(op!(ReturnI)),
+
+                _ => Err(Error::UnknownOpcode(current)),
             }
-
-            0xF3 => Ok(op!(Di)),
-            0xFB => Ok(op!(Ei)),
-
-            0x07 => Ok(op!(Rlca)),
-            0x17 => Ok(op!(Rla)),
-
-            0x0F => Ok(op!(Rrca)),
-            0x1F => Ok(op!(Rra)),
-
-            // jp nn
-            0xC3 => Ok(op!(Jump, self.get_nn().into())),
-
-            // jp cc,nn
-            0xC2 => Ok(op!(JumpConditional, NotZero, self.get_nn())),
-            0xCA => Ok(op!(JumpConditional, Zero, self.get_nn())),
-            0xD2 => Ok(op!(JumpConditional, NotCarry, self.get_nn())),
-            0xDA => Ok(op!(JumpConditional, Carry, self.get_nn())),
-
-            // jp (hl)
-            0xE9 => Ok(op!(Jump, Value::IndirectReg16(Reg16::HL))),
-
-            // jr d
-            0x18 => Ok(op!(JumpRelative, self.get_d())),
-
-            // jr cc,d
-            0x20 => Ok(op!(JumpRelativeConditional, NotZero, self.get_d())),
-            0x28 => Ok(op!(JumpRelativeConditional, Zero, self.get_d())),
-            0x30 => Ok(op!(JumpRelativeConditional, NotCarry, self.get_d())),
-            0x38 => Ok(op!(JumpRelativeConditional, Carry, self.get_d())),
-
-            // call nn
-            0xCD => Ok(op!(Call, self.get_nn())),
-
-            // call cc, nn
-            0xC4 => Ok(op!(CallConditional, NotZero, self.get_nn())),
-            0xCC => Ok(op!(CallConditional, Zero, self.get_nn())),
-            0xD4 => Ok(op!(CallConditional, NotCarry, self.get_nn())),
-            0xDC => Ok(op!(CallConditional, Carry, self.get_nn())),
-
-            // rst n
-            0xC7 => Ok(op!(Restart, 0x00)),
-            0xCF => Ok(op!(Restart, 0x08)),
-            0xD7 => Ok(op!(Restart, 0x10)),
-            0xDF => Ok(op!(Restart, 0x18)),
-            0xE7 => Ok(op!(Restart, 0x20)),
-            0xEF => Ok(op!(Restart, 0x28)),
-            0xF7 => Ok(op!(Restart, 0x30)),
-            0xFF => Ok(op!(Restart, 0x38)),
-
-            // ret
-            0xC9 => Ok(op!(Return)),
-
-            // ret cc
-            0xC0 => Ok(op!(ReturnConditional, NotZero)),
-            0xC8 => Ok(op!(ReturnConditional, Zero)),
-            0xD0 => Ok(op!(ReturnConditional, NotCarry)),
-            0xD8 => Ok(op!(ReturnConditional, Carry)),
-
-            // reti
-            0xD9 => Ok(op!(ReturnI)),
-
-            _ => Err(Error::UnknownOpcode(current)),
-        })
+            .map(|opcode| (opcode, self.current_opcode_bytes.clone())),
+        )
     }
 }
 
