@@ -13,9 +13,10 @@ impl<MEM: MemoryDebugOperations> MemoryViewer<MEM> {
         let mut mem_options = MemoryEditorOptions::default();
         mem_options.is_resizable_column = false;
         mem_options.is_options_collapsed = true;
-        let mut mem_edit =
-            MemoryEditor::new(|mem, address| <MEM as MemoryDebugOperations>::read(mem, address as u16))
-                .with_options(mem_options);
+        let mut mem_edit = MemoryEditor::new(|mem, address| {
+            <MEM as MemoryDebugOperations>::read(mem, address as u16)
+        })
+        .with_options(mem_options);
         for (range_name, range) in address_ranges {
             mem_edit = mem_edit.with_address_range(range_name, range);
         }

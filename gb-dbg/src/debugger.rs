@@ -35,7 +35,8 @@ impl<MEM: MemoryDebugOperations> Debugger<MEM> {
             .default_width(545.0)
             .show(ctx, |ui| {
                 ui.vertical(|ui| {
-                    self.disassembler.draw(ui, registers.cpu_get("PC").unwrap().into(), memory);
+                    self.disassembler
+                        .draw(ui, registers.cpu_get("PC").unwrap().into(), memory);
                     ui.separator();
                     self.memory_editor.draw(ui, &mut memory);
                 });
