@@ -1,19 +1,19 @@
 use crate::{microcode::controller::MicrocodeController, registers::Registers};
-use gb_bus::AddressBus;
+use gb_bus::Bus;
 use gb_clock::Ticker;
 
 #[derive(Default)]
 pub struct Cpu {
     registers: Registers,
-    controller: MicrocodeController<AddressBus>,
+    controller: MicrocodeController,
 }
 
-impl Ticker<AddressBus> for Cpu {
+impl Ticker for Cpu {
     fn cycle_count(&self) -> gb_clock::Tick {
         gb_clock::Tick::MCycle
     }
 
-    fn tick(&mut self, addr_bus: &mut AddressBus) {
+    fn tick<B: Bus<u8>>(&mut self, addr_bus: &mut B) {
         self.controller.step(&mut self.registers, addr_bus)
     }
 }
