@@ -14,7 +14,7 @@ pub struct PPUMem {
 }
 
 impl PPUMem {
-    /// Build a [PPUMem] from references counters of Vram and Oam.
+    /// Build a PPUMem from references counters of Vram and Oam.
     ///
     /// This function is used by [PPU.memory()](crate::PPU::memory), you should not need to call this constructor yourself.
     pub fn new(vram: Rc<RefCell<Vram>>, oam: Rc<RefCell<Oam>>) -> Self {

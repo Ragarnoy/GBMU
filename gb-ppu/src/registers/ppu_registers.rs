@@ -5,11 +5,17 @@ use gb_bus::{Address, Error, FileOperation, IORegArea};
 use std::cell::RefCell;
 use std::rc::Rc;
 
+/// Allow external structures to read/write the registers of the ppu.
+///
+/// The read/write operation might be ignored if the ppu is currently using the concerned memory area, but unlike for the memory, this should not happen.
 pub struct PPURegisters {
     lcd: Rc<RefCell<LcdReg>>,
 }
 
 impl PPURegisters {
+    /// Build a PPURegisters from references counters of Vram and Oam.
+    ///
+    /// This function is used by [PPU.registers()](crate::PPU::registers), you should not need to call this constructor yourself.
     pub fn new(lcd: Rc<RefCell<LcdReg>>) -> Self {
         PPURegisters { lcd }
     }

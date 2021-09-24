@@ -14,6 +14,7 @@ use super::{Register, RegisterArray};
 use gb_bus::{Address, Error, IORegArea};
 use std::convert::TryInto;
 
+/// Regroup the registers of the Lcd IOregister area.
 #[derive(Default)]
 pub struct LcdReg {
     pub control: Control,
