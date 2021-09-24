@@ -421,7 +421,7 @@ pub enum Opcode {
     /// `RET`: Pop two bytes from the stack the jump to that address. 4m
     Ret = 0xc9,
     /// `JP Z, u16`: Absolute jump to `u16` if `Z` is set. 3-4m
-    JpZ16 = 0xca,
+    JpZ = 0xca,
     /// Opcode with CB prefix see `microcode::opcode_cb::OpcodeCB`
     PrefixCb = 0xcb,
     /// `CALL Z, u16`: When `Z` is set: Push the address of the next instruction then jump to `u16`. 3-6m
@@ -437,7 +437,7 @@ pub enum Opcode {
     /// `POP DE`: Pop two bytes off the stack into `DE`. 3m
     PopDe = 0xd1,
     /// `JP NC, u16`: Absolute jump to `u16` if `NC` is set. 3-4m
-    JpNc16 = 0xd2,
+    JpNc = 0xd2,
     /// `CALL NC, u16`: When `NC` is set: Push the address of the next instruction then jump to `u16`. 3-6m
     CallNc16 = 0xd4,
     /// `PUSH DE`: push `DE` into the stack. 4m
@@ -451,7 +451,7 @@ pub enum Opcode {
     /// `RETI`: Pop two bytes from the stack then jump to that address and the enable interrupts. 4m
     Reti = 0xd9,
     /// `JP C, u16`: Absolute jump to `u16` if `C` is set. 3-4m
-    JpC16 = 0xda,
+    JpC = 0xda,
     /// `CALL C, u16`: When `C` is set: Push the address of the next instruction then jump to `u16`. 3-6m
     CallC16 = 0xdc,
     /// `SBC A, u8`: sub `u8 + Carry` to `A`. 2m
