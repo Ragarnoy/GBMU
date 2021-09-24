@@ -1,6 +1,6 @@
 use crate::registers;
 use anyhow::anyhow;
-use gb_dbg::dbg_interfaces::{DebugRegister, RegisterMap, RegisterValue};
+use gb_dbg::dbg_interfaces::{RegisterDebugOperations, RegisterMap, RegisterValue};
 
 pub struct Iter<'a> {
     count: u32,
@@ -56,6 +56,7 @@ impl Registers {
     }
 }
 
+//TODO Temporary for now it looks like ass
 impl From<&Registers> for Vec<RegisterMap> {
     fn from(registers: &registers::Registers) -> Self {
         vec![
@@ -69,8 +70,8 @@ impl From<&Registers> for Vec<RegisterMap> {
     }
 }
 
-impl DebugRegister for Registers {
-    fn get(&self, key: &str) -> anyhow::Result<RegisterValue> {
+impl RegisterDebugOperations for Registers {
+    fn cpu_get(&self, key: &str) -> anyhow::Result<RegisterValue> {
         match key {
             "A" => Ok(RegisterValue::from(self.a)),
             "B" => Ok(RegisterValue::from(self.b)),
@@ -82,7 +83,23 @@ impl DebugRegister for Registers {
         }
     }
 
-    fn registers(&self) -> Vec<RegisterMap> {
+    fn ppu_get(&self, key: &str) -> anyhow::Result<RegisterValue> {
+        self.cpu_get(key)
+    }
+
+    fn io_get(&self, key: &str) -> anyhow::Result<RegisterValue> {
+        self.cpu_get(key)
+    }
+
+    fn cpu_registers(&self) -> Vec<RegisterMap> {
+        self.into()
+    }
+
+    fn ppu_registers(&self) -> Vec<RegisterMap> {
+        self.into()
+    }
+
+    fn io_registers(&self) -> Vec<RegisterMap> {
         self.into()
     }
 }
