@@ -1,4 +1,5 @@
 use super::LcdReg;
+use crate::error::{PPUError, PPUResult};
 use crate::UNDEFINED_VALUE;
 use gb_bus::{Address, Error, FileOperation, IORegArea};
 use std::cell::RefCell;
@@ -16,10 +17,15 @@ impl PPURegisters {
     /// Completely replace the lcd registers of the ppu.
     ///
     /// This function exist for debugging purpose.
-    pub fn overwrite_lcd(&mut self, data: [u8; LcdReg::SIZE]) {
+    pub fn overwrite_lcd(&self, data: [u8; LcdReg::SIZE]) -> PPUResult<()> {
         match self.lcd.try_borrow_mut() {
-            Ok(mut lcd) => *lcd = data.into(),
-            Err(_) => log::warn!("failed ppu Lcd register read"),
+            Ok(mut lcd) => {
+                *lcd = data.into();
+                Ok(())
+            }
+            Err(_) => Err(PPUError::RegistersUnavailable {
+                reg_name: String::from("lcd"),
+            }),
         }
     }
 }
