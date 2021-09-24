@@ -770,6 +770,7 @@ dependencies = [
  "eframe",
  "egui 0.14.2",
  "egui_memory_editor",
+ "gb-roms",
 ]
 
 [[package]]
