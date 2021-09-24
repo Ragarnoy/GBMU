@@ -3,7 +3,7 @@ use super::{
     dec,
     fetch_cb::fetch_cb,
     ident::{Reg16, Reg8},
-    inc, jump, jump,
+    inc, jump,
     opcode::Opcode,
     read::{read, read_hl},
     write::write_hl,
