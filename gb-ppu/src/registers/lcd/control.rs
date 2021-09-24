@@ -20,6 +20,8 @@ pub struct Control {
 }
 
 impl Control {
+    pub const SIZE: usize = 1;
+
     pub fn new() -> Self {
         Control {
             bits: ControlBits::new(),

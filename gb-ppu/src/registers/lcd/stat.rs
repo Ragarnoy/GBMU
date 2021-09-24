@@ -22,6 +22,8 @@ pub struct Stat {
 }
 
 impl Stat {
+    pub const SIZE: usize = 1;
+
     pub fn new() -> Self {
         Stat {
             bits: StatBits::new(),

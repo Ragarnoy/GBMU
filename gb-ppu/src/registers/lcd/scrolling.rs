@@ -10,6 +10,8 @@ pub struct Scrolling {
 }
 
 impl Scrolling {
+    pub const SIZE: usize = 4;
+
     pub fn new() -> Self {
         Scrolling {
             scy: 0,

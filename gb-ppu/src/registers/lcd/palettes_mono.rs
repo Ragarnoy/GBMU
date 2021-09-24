@@ -1,4 +1,4 @@
-use super::{Palette, RegisterArray};
+use super::{super::Palette, RegisterArray};
 use std::ops::{Index, IndexMut};
 
 #[derive(Default, Clone, Copy)]
@@ -9,6 +9,8 @@ pub struct PalettesMono {
 }
 
 impl PalettesMono {
+    pub const SIZE: usize = 3;
+
     pub fn new() -> Self {
         PalettesMono {
             bg: Palette::new(),

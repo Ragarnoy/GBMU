@@ -8,6 +8,8 @@ pub struct WindowPos {
 }
 
 impl WindowPos {
+    pub const SIZE: usize = 2;
+
     pub fn new() -> Self {
         WindowPos { wy: 0, wx: 0 }
     }
