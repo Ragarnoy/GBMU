@@ -1,4 +1,4 @@
-use super::{fetch::fetch, opcode::Opcode, opcode_cb::OpcodeCB, ControlFlow, State};
+use super::{fetch::fetch, ident::Ident, opcode::Opcode, opcode_cb::OpcodeCB, ControlFlow, State};
 use crate::registers::Registers;
 use gb_bus::Bus;
 
@@ -28,6 +28,8 @@ pub struct MicrocodeController {
     actions: Vec<ActionFn>,
     /// Cache use for microcode action
     cache: Vec<u8>,
+    /// target for the current opcode
+    target: Option<Ident>,
 }
 
 type ActionFn = fn(controller: &mut MicrocodeController, state: &mut State) -> ControlFlow;
@@ -38,6 +40,7 @@ impl Default for MicrocodeController {
             opcode: None,
             actions: Vec::with_capacity(8),
             cache: Vec::with_capacity(4),
+            target: None,
         }
     }
 }
@@ -46,7 +49,7 @@ impl MicrocodeController {
     pub fn step(&mut self, regs: &mut Registers, bus: &mut impl Bus<u8>) {
         let mut state = State::new(regs, bus);
         let action = self.actions.pop().unwrap_or_else(|| {
-            self.cache.clear();
+            self.clear();
             fetch
         });
 
@@ -58,19 +61,27 @@ impl MicrocodeController {
         }
     }
 
+    /// Clear volatile date saved in controller.
+    pub fn clear(&mut self) {
+        self.cache.clear();
+        self.target = None;
+    }
+
     /// Push the action a the back of the queue.
     /// The last pushed action will be the first to be executed
-    pub fn push_action(&mut self, action: ActionFn) {
+    pub fn push_action(&mut self, action: ActionFn) -> &mut Self {
         self.actions.push(action);
+        self
     }
 
     /// Push the actions in the queue.
     /// The actions while be push in the queue in a way that allow the first action of the slice
     /// to be executed in first.
-    pub fn push_actions(&mut self, actions: &[ActionFn]) {
+    pub fn push_actions(&mut self, actions: &[ActionFn]) -> &mut Self {
         for action in actions.iter().rev() {
-            self.push_action(*action)
+            self.push_action(*action);
         }
+        self
     }
 
     /// Push the `byte` to the cache.
@@ -82,5 +93,14 @@ impl MicrocodeController {
     /// Pop the last pushed `byte` from the cache.
     pub fn pop(&mut self) -> u8 {
         self.cache.pop().expect("not enough value stored in cache")
+    }
+
+    pub fn set_dest(&mut self, ident: Ident) -> &mut Self {
+        self.target = Some(ident);
+        self
+    }
+
+    pub fn get_dest(&mut self) -> &Ident {
+        self.target.as_ref().expect("no dest set")
     }
 }
