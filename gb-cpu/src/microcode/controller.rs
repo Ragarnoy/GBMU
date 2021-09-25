@@ -61,8 +61,7 @@ impl MicrocodeController {
         match action(self, &mut state) {
             ControlFlow::Continue(CycleDigest::Again) => self.step(regs, bus),
             ControlFlow::Break(cycle_digest) => {
-                self.cache.clear();
-                self.actions.clear();
+                self.clear();
                 if cycle_digest == CycleDigest::Again {
                     self.step(regs, bus);
                 }
@@ -71,9 +70,10 @@ impl MicrocodeController {
         }
     }
 
-    /// Clear volatile date saved in controller.
+    /// Clear volatile data (data, actions, ...) saved in controller.
     pub fn clear(&mut self) {
         self.cache.clear();
+        self.actions.clear();
         self.target = None;
     }
 

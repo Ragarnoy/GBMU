@@ -31,6 +31,12 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                 Opcode::JpNc => ctl.push_actions(&[read, read, not_carry, jump::jump]),
                 Opcode::JpHl => ctl.push_actions(&[jump::jump_hl]),
 
+                Opcode::Jr => ctl.push_actions(&[read, jump::jump_relative]),
+                Opcode::JrZ => ctl.push_actions(&[read, zero, jump::jump_relative]),
+                Opcode::JrNz => ctl.push_actions(&[read, not_zero, jump::jump_relative]),
+                Opcode::JrC => ctl.push_actions(&[read, carry, jump::jump_relative]),
+                Opcode::JrNc => ctl.push_actions(&[read, not_carry, jump::jump_relative]),
+
                 Opcode::IncBC => ctl.push_actions(&[inc::inc16]).set_dest(Reg16::BC.into()),
                 Opcode::IncDE => ctl.push_actions(&[inc::inc16]).set_dest(Reg16::DE.into()),
                 Opcode::IncHL => ctl.push_actions(&[inc::inc16]).set_dest(Reg16::HL.into()),
