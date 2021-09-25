@@ -131,7 +131,7 @@ struct Mbc2Data {
 impl From<[u8; MBC2::RAM_SIZE]> for Mbc2Data {
     fn from(bank: [u8; MBC2::RAM_SIZE]) -> Self {
         Self {
-            ram_bank: bank.iter().map(|byte| *byte).collect(),
+            ram_bank: bank.to_vec(),
         }
     }
 }
