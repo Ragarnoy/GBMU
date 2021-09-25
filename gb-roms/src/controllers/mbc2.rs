@@ -163,8 +163,3 @@ impl Controller for MBC2 {
         Ok(())
     }
 }
-
-#[cfg(test)]
-mod test_mbc2 {
-    //TODO: implement test
-}
