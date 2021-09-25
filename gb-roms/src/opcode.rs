@@ -19,12 +19,12 @@ use store::Store;
 use value::Value;
 
 macro_rules! op {
-	($t:ident, $($v:expr),+) => {
-		Opcode::$t($($v),+)
-	};
-	($t:ident) => {
-		Opcode::$t
-	};
+    ($t:ident, $($v:expr),+) => {
+        Opcode::$t($($v),+)
+    };
+    ($t:ident) => {
+        Opcode::$t
+    };
 }
 
 pub struct OpcodeGenerator<It>
@@ -652,9 +652,9 @@ where
 
 #[cfg(test)]
 macro_rules! op_gen {
-	[$($e: expr),*] => {
-		OpcodeGenerator::from(vec![$($e),*].into_iter())
-	}
+    [$($e: expr),*] => {
+        OpcodeGenerator::from(vec![$($e),*].into_iter())
+    }
 }
 
 #[cfg(test)]
@@ -737,7 +737,10 @@ mod test_decode {
         );
         assert_eq!(
             op_gen![0x18, (-24_i8).to_le_bytes()[0]].next(),
-            Some(Ok((Opcode::JumpRelative(-24), vec![0x18, (-24_i8).to_le_bytes()[0]])))
+            Some(Ok((
+                Opcode::JumpRelative(-24),
+                vec![0x18, (-24_i8).to_le_bytes()[0]]
+            )))
         );
         assert_eq!(
             op_gen![0x20, (-24_i8).to_le_bytes()[0]].next(),
@@ -793,19 +796,21 @@ mod test_decode {
 
         assert_eq!(
             op_gen![0x8, 0x34, 0x12].next(),
-            Some(Ok((op!(
-                Ld,
-                Store::Indirect16(0x1234),
-                Value::Register(RegisterSpecial::SP.into())
-            ), vec![0x8, 0x34, 0x12])))
+            Some(Ok((
+                op!(
+                    Ld,
+                    Store::Indirect16(0x1234),
+                    Value::Register(RegisterSpecial::SP.into())
+                ),
+                vec![0x8, 0x34, 0x12]
+            )))
         );
         assert_eq!(
             op_gen![0x11, 0x50, 0x01].next(),
-            Some(Ok((op!(
-                Ld,
-                Register::from(Reg16::DE).into(),
-                Value::Nn(0x150)
-            ), vec![0x11, 0x50, 0x01])))
+            Some(Ok((
+                op!(Ld, Register::from(Reg16::DE).into(), Value::Nn(0x150)),
+                vec![0x11, 0x50, 0x01]
+            )))
         );
     }
 
@@ -873,7 +878,10 @@ mod test_decode {
 
         assert_eq!(
             op_gen![0x39].next(),
-            Some(Ok((op!(Add, register16!(HL).into(), register_special!(SP).into()), vec![0x39])))
+            Some(Ok((
+                op!(Add, register16!(HL).into(), register_special!(SP).into()),
+                vec![0x39]
+            )))
         )
     }
 
