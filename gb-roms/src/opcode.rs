@@ -46,19 +46,23 @@ where
         }
     }
 
-    fn read_d(&mut self) -> Option<i8> {
-        self.read_n().map(|r| r as i8)
-    }
-
-    fn read_n(&mut self) -> Option<u8> {
+    fn read_byte(&mut self) -> Option<u8> {
         self.stream.next().map(|b| {
             self.current_opcode_bytes.push(b);
             b
         })
     }
 
+    fn read_d(&mut self) -> Option<i8> {
+        self.read_byte().map(|r| r as i8)
+    }
+
+    fn read_n(&mut self) -> Option<u8> {
+        self.read_byte()
+    }
+
     fn read_nn(&mut self) -> Option<u16> {
-        let bytes: [u8; 2] = [self.stream.next()?, self.stream.next()?];
+        let bytes: [u8; 2] = [self.read_byte()?, self.read_byte()?];
         Some(u16::from_le_bytes(bytes))
     }
 
@@ -116,7 +120,7 @@ where
     fn decode_cb_prefix(&mut self) -> Result<Opcode, Error> {
         use register::Register8Bits;
 
-        let current = self.stream.next().ok_or(Error::InvalideOpcode(0xCB))?;
+        let current = self.read_byte().ok_or(Error::InvalideOpcode(0xCB))?;
 
         match current {
             // swap n
@@ -239,7 +243,7 @@ where
         use register::{Register16Bits, Register8Bits, RegisterSpecial};
 
         self.current_opcode_bytes.clear();
-        let current = self.read_n()?;
+        let current = self.read_byte()?;
 
         let decode_res: Result<Opcode, Error> = match current {
             // Ld nn, n
@@ -576,7 +580,7 @@ where
             0x00 => Ok(op!(Nop)),
             0x76 => Ok(op!(Halt)),
             0x10 => {
-                if self.stream.next() == Some(0x00) {
+                if self.read_byte() == Some(0x00) {
                     Ok(op!(Stop))
                 } else {
                     Err(Error::InvalideOpcode(0x10))
