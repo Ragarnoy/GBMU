@@ -141,7 +141,7 @@ impl Controller for MBC2 {
     where
         S: serde::Serializer,
     {
-        let data = Mbc2Data::from(self.ram_bank.clone());
+        let data = Mbc2Data::from(self.ram_bank);
         data.serialize(serializer)
     }
 
