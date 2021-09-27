@@ -1,6 +1,6 @@
 use std::convert::From;
 
-#[derive(PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Reg8 {
     A,
     B,
@@ -11,7 +11,7 @@ pub enum Reg8 {
     L,
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Reg16 {
     BC,
     DE,
@@ -19,11 +19,13 @@ pub enum Reg16 {
     SP,
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Ident {
     Reg8(Reg8),
     Reg16(Reg16),
     IndirectHL8,
+    /// u8 argument, need to be retrieve from cache
+    Raw8,
 }
 
 impl From<Reg8> for Ident {
