@@ -1,12 +1,13 @@
 use super::{
-    flag::Flag,
     ident::{self, Ident},
+    math::sub_components,
     MicrocodeController, MicrocodeFlow, State, OK_CONSUME_CYCLE, OK_PLAY_NEXT_ACTION,
 };
 use crate::interfaces::{Read8BitsReg, Write8BitsReg};
 
 pub fn dec_hl(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
-    let (val, flag) = sub_reg_flags(ctl.pop(), 1);
+    let (val, mut flag) = sub_components(ctl.pop(), 1);
+    flag.carry = None;
     flag.update_reg_flag(state.regs);
     ctl.push(val);
     OK_PLAY_NEXT_ACTION
@@ -29,7 +30,8 @@ pub fn dec16(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
 
 macro_rules! dec_reg8 {
     ($state: expr, $setter: ident, $getter: ident) => {{
-        let (val, flag) = sub_reg_flags($state.regs.$getter(), 1);
+        let (val, mut flag) = sub_components($state.regs.$getter(), 1);
+        flag.carry = None;
         flag.update_reg_flag($state.regs);
         $state.regs.$setter(val);
     }};
@@ -51,64 +53,4 @@ pub fn dec8(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     } else {
         panic!("call dec8 with something other than a reg8");
     }
-}
-
-/// Add `amount` to `value`.
-/// Return a Flag set of triggered flag.
-/// PS: the flag `carry` is not used here
-fn sub_reg_flags(value: u8, amount: u8) -> (u8, Flag) {
-    let (res, _) = value.overflowing_sub(amount);
-    (res, Flag::from_values(value, res, true, None))
-}
-
-#[test]
-fn test_sub_reg_flags() {
-    assert_eq!(
-        sub_reg_flags(0xff, 1),
-        (
-            0xfe,
-            Flag {
-                half_carry: Some(true),
-                carry: None,
-                negative: Some(true),
-                zero: Some(false),
-            }
-        )
-    );
-    assert_eq!(
-        sub_reg_flags(0x10, 1),
-        (
-            0xf,
-            Flag {
-                half_carry: Some(false),
-                carry: None,
-                negative: Some(true),
-                zero: Some(false),
-            }
-        )
-    );
-    assert_eq!(
-        sub_reg_flags(0x0, 1),
-        (
-            0xff,
-            Flag {
-                half_carry: Some(false),
-                carry: None,
-                negative: Some(true),
-                zero: Some(false),
-            }
-        )
-    );
-    assert_eq!(
-        sub_reg_flags(0, 0),
-        (
-            0,
-            Flag {
-                half_carry: Some(false),
-                carry: None,
-                negative: Some(true),
-                zero: Some(true),
-            }
-        )
-    );
 }
