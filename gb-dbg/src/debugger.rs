@@ -3,6 +3,7 @@ pub mod flow_control;
 pub mod memory;
 mod options;
 pub mod registers;
+mod breakpoints;
 
 use crate::dbg_interfaces::{MemoryDebugOperations, RegisterDebugOperations};
 use crate::debugger::disassembler::DisassemblyViewer;
