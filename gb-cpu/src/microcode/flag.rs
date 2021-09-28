@@ -1,5 +1,3 @@
-use crate::interfaces::WriteFlagReg;
-
 #[derive(Default, Debug, PartialEq, Eq)]
 pub struct Flag {
     pub half_carry: bool,
