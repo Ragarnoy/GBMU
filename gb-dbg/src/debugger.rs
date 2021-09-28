@@ -11,7 +11,7 @@ use crate::debugger::flow_control::FlowController;
 use crate::debugger::memory::MemoryViewer;
 use crate::debugger::options::DebuggerOptions;
 use crate::debugger::registers::RegisterEditor;
-use egui::{Color32, CtxRef, Label};
+use egui::{Color32, CtxRef, Label, Vec2};
 
 pub struct Debugger<MEM> {
     memory_editor: MemoryViewer<MEM>,
@@ -52,10 +52,17 @@ impl<MEM: MemoryDebugOperations> Debugger<MEM> {
                     .default_open(false)
                     .show(ui, |ui| ui.label("Hello"));
                 ui.separator();
-                ui.columns(2, |columns| {
-                    columns[0].label("Enable");
-                    columns[1].label("Address");
-                })
+                egui::Grid::new("dissas_".to_owned())
+                    .striped(true)
+                    .spacing(Vec2::new(2.5, 2.5))
+                    .show(ui, |ui| {
+                        ui.label(egui::Label::new("Active"));
+                        ui.label(egui::Label::new("Address"));
+                        ui.end_row();
+                        ui.checkbox(&mut false, "0x5F");
+                        ui.label(egui::Label::new("Address"));
+                        ui.end_row();
+                    });
             });
         egui::CentralPanel::default().show(ctx, |ui| {
             self.register_editor.draw(ui, registers);
