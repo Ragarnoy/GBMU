@@ -3,12 +3,13 @@ use super::{
     math::sub_components,
     MicrocodeController, MicrocodeFlow, State, OK_CONSUME_CYCLE, OK_PLAY_NEXT_ACTION,
 };
-use crate::interfaces::{Read8BitsReg, Write8BitsReg};
+use crate::interfaces::{Read8BitsReg, Write8BitsReg, WriteFlagReg};
 
 pub fn dec_hl(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
-    let (val, mut flag) = sub_components(ctl.pop(), 1);
-    flag.carry = None;
-    flag.update_reg_flag(state.regs);
+    let (val, flag) = sub_components(ctl.pop(), 1);
+    state.regs.set_half_carry(flag.half_carry);
+    state.regs.set_zero(flag.zero);
+    state.regs.set_subtraction(true);
     ctl.push(val);
     OK_PLAY_NEXT_ACTION
 }
@@ -30,9 +31,10 @@ pub fn dec16(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
 
 macro_rules! dec_reg8 {
     ($state: expr, $setter: ident, $getter: ident) => {{
-        let (val, mut flag) = sub_components($state.regs.$getter(), 1);
-        flag.carry = None;
-        flag.update_reg_flag($state.regs);
+        let (val, flag) = sub_components($state.regs.$getter(), 1);
+        $state.regs.set_half_carry(flag.half_carry);
+        $state.regs.set_zero(flag.zero);
+        $state.regs.set_subtraction(true);
         $state.regs.$setter(val);
     }};
 }
