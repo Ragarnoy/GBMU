@@ -29,11 +29,35 @@ fn test_sub_components() {
             }
         )
     );
+    assert_eq!(
+        sub_components(2, 4),
+        (
+            0xff - 2 + 1,
+            Flag {
+                half_carry: true,
+                carry: true,
+                negative: true,
+                zero: false,
+            }
+        )
+    );
+    assert_eq!(
+        sub_components(2, 2),
+        (
+            0,
+            Flag {
+                half_carry: false,
+                carry: false,
+                negative: true,
+                zero: true
+            }
+        )
+    );
 }
 
 /// Add `b` to `a` (`a + b`)
-/// Return a Flat set of triggered flag.
-pub fn add_componenets(a: u8, b: u8) -> (u8, Flag) {
+/// Return a Flag set of triggered flag.
+pub fn add_components(a: u8, b: u8) -> (u8, Flag) {
     let (res, overflowing) = a.overflowing_add(b);
     (
         res,
