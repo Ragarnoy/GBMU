@@ -69,3 +69,19 @@ pub fn add_components(a: u8, b: u8) -> (u8, Flag) {
         },
     )
 }
+
+#[test]
+fn test_add_components() {
+    assert_eq!(
+        add_components(4, 4),
+        (
+            8,
+            Flag {
+                half_carry: true,
+                carry: false,
+                negative: false,
+                zero: false
+            }
+        )
+    );
+}
