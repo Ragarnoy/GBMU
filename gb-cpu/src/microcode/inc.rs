@@ -1,4 +1,5 @@
 use super::{
+    flag::Flag,
     ident::{self, Ident},
     math::add_components,
     MicrocodeController, MicrocodeFlow, State, OK_CONSUME_CYCLE, OK_PLAY_NEXT_ACTION,
@@ -7,11 +8,15 @@ use crate::interfaces::{Read8BitsReg, Write8BitsReg, WriteFlagReg};
 
 pub fn inc_hl(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     let (val, flag) = add_components(ctl.pop(), 1);
-    state.regs.set_subtraction(false);
-    state.regs.set_half_carry(flag.half_carry);
-    state.regs.set_zero(flag.zero);
+    update_inc_flag(state.regs, flag);
     ctl.push(val);
     OK_PLAY_NEXT_ACTION
+}
+
+fn update_inc_flag(state: &mut impl WriteFlagReg, flag: Flag) {
+    state.set_subtraction(false);
+    state.set_half_carry(flag.half_carry);
+    state.set_zero(flag.zero);
 }
 
 pub fn inc16(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
@@ -32,9 +37,7 @@ pub fn inc16(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
 macro_rules! inc_reg8 {
     ($state: expr, $setter: ident, $getter: ident) => {{
         let (val, flag) = add_components($state.regs.$getter(), 1);
-        $state.regs.set_zero(flag.zero);
-        $state.regs.set_half_carry(flag.half_carry);
-        $state.regs.set_subtraction(false);
+        update_inc_flag($state.regs, flag);
         $state.regs.$setter(val);
     }};
 }
