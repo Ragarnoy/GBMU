@@ -77,7 +77,7 @@ fn test_add_components() {
         (
             8,
             Flag {
-                half_carry: true,
+                half_carry: false,
                 carry: false,
                 negative: false,
                 zero: false
