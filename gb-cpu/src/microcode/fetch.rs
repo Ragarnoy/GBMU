@@ -2,8 +2,8 @@ use super::{
     condition::{carry, not_carry, not_zero, zero},
     dec,
     fetch_cb::fetch_cb,
-    ident::{Reg16, Reg8},
-    inc, jump,
+    ident::{Ident, Reg16, Reg8},
+    inc, jump, logic,
     opcode::Opcode,
     read::{read, read_hl},
     write::write_hl,
@@ -64,6 +64,18 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                 Opcode::DecH => ctl.push_actions(&[dec::dec8]).set_dest(Reg8::H.into()),
                 Opcode::DecL => ctl.push_actions(&[dec::dec8]).set_dest(Reg8::L.into()),
                 Opcode::DecHLind => ctl.push_actions(&[read_hl, dec::dec_hl, write_hl]),
+
+                Opcode::CpAA => ctl.push_actions(&[logic::cp]).set_src(Reg8::A.into()),
+                Opcode::CpAB => ctl.push_actions(&[logic::cp]).set_src(Reg8::B.into()),
+                Opcode::CpAC => ctl.push_actions(&[logic::cp]).set_src(Reg8::C.into()),
+                Opcode::CpAD => ctl.push_actions(&[logic::cp]).set_src(Reg8::D.into()),
+                Opcode::CpAE => ctl.push_actions(&[logic::cp]).set_src(Reg8::E.into()),
+                Opcode::CpAH => ctl.push_actions(&[logic::cp]).set_src(Reg8::H.into()),
+                Opcode::CpAL => ctl.push_actions(&[logic::cp]).set_src(Reg8::L.into()),
+                Opcode::CpAHL => ctl
+                    .push_actions(&[read_hl, logic::cp])
+                    .set_src(Ident::IndirectHL8),
+                Opcode::CpA8 => ctl.push_actions(&[read, logic::cp]).set_src(Ident::Raw8),
 
                 Opcode::Nop => &mut ctl,
                 Opcode::PrefixCb => ctl.push_action(fetch_cb),
