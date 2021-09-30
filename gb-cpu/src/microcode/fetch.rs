@@ -77,6 +77,18 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                     .set_src(Ident::IndirectHL8),
                 Opcode::CpA8 => ctl.push_actions(&[read, logic::cp]).set_src(Ident::Raw8),
 
+                Opcode::XorAA => ctl.push_actions(&[logic::xor]).set_src(Reg8::A.into()),
+                Opcode::XorAB => ctl.push_actions(&[logic::xor]).set_src(Reg8::B.into()),
+                Opcode::XorAC => ctl.push_actions(&[logic::xor]).set_src(Reg8::C.into()),
+                Opcode::XorAD => ctl.push_actions(&[logic::xor]).set_src(Reg8::D.into()),
+                Opcode::XorAE => ctl.push_actions(&[logic::xor]).set_src(Reg8::E.into()),
+                Opcode::XorAH => ctl.push_actions(&[logic::xor]).set_src(Reg8::H.into()),
+                Opcode::XorAL => ctl.push_actions(&[logic::xor]).set_src(Reg8::L.into()),
+                Opcode::XorAHL => ctl
+                    .push_actions(&[read_hl, logic::xor])
+                    .set_src(Ident::IndirectHL8),
+                Opcode::XorA8 => ctl.push_actions(&[read, logic::xor]).set_src(Ident::Raw8),
+
                 Opcode::Nop => &mut ctl,
                 Opcode::PrefixCb => ctl.push_action(fetch_cb),
                 _ => todo!("unimplemented opcode {:?}", opcode),
