@@ -9,5 +9,6 @@ pub fn cp(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     state.regs.set_subtraction(true);
     state.regs.set_half_carry(flag.half_carry);
     state.regs.set_carry(flag.carry);
+    state.regs.set_zero(flag.zero);
     OK_PLAY_NEXT_ACTION
 }
