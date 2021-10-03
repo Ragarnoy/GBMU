@@ -6,7 +6,7 @@ pub mod rom_only;
 
 pub use bios::Bios;
 pub use mbc1::MBC1;
-pub use mbc3::Mbc3;
+pub use mbc3::MBC3;
 pub use mbc5::MBC5;
 pub use rom_only::RomOnlyController;
 

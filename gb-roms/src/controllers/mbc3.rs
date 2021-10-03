@@ -2,22 +2,22 @@ use crate::header::Header;
 use gb_bus::{Address, Area, Error};
 use std::io::{self, Read};
 
-type RamBank = [u8; Mbc3::RAM_BANK_SIZE];
-type RomBank = [u8; Mbc3::ROM_BANK_SIZE];
+type RamBank = [u8; MBC3::RAM_BANK_SIZE];
+type RomBank = [u8; MBC3::ROM_BANK_SIZE];
 
-pub struct Mbc3 {
+pub struct MBC3 {
     rom_banks: Vec<RomBank>,
     ram_banks: Vec<RamBank>,
-    regs: Mbc3Regs,
+    regs: MBC3Regs,
     clock_enabled: bool,
 }
 
-impl Mbc3 {
+impl MBC3 {
     pub const ROM_BANK_SIZE: usize = 0x4000;
     pub const RAM_BANK_SIZE: usize = 0x2000;
 
     pub fn from_reader(mut reader: impl Read, header: Header) -> Result<Self, io::Error> {
-        let mut ctl = Mbc3::empty(header);
+        let mut ctl = MBC3::empty(header);
 
         for e in ctl.rom_banks.iter_mut() {
             reader.read_exact(e)?;
@@ -38,9 +38,9 @@ impl Mbc3 {
         };
 
         Self {
-            ram_banks: vec![[0_u8; Mbc3::RAM_BANK_SIZE]; ram_amount],
-            rom_banks: vec![[0_u8; Mbc3::ROM_BANK_SIZE]; rom_amount],
-            regs: Mbc3Regs::default(),
+            ram_banks: vec![[0_u8; MBC3::RAM_BANK_SIZE]; ram_amount],
+            rom_banks: vec![[0_u8; MBC3::ROM_BANK_SIZE]; rom_amount],
+            regs: MBC3Regs::default(),
             clock_enabled,
         }
     }
@@ -61,7 +61,7 @@ impl Mbc3 {
     fn write_rom(&mut self, v: u8, addr: Box<dyn Address<Area>>) -> Result<(), Error> {
         let address = addr.get_address();
         match address {
-            0x0000..=0x1FFF => self.regs.ram_enabled = (v & 0xF) == 0xA,
+            0x0000..=0x1FFF => self.regs.ram_and_timer_enabled = (v & 0xF) == 0xA,
             0x2000..=0x3FFF => self.regs.rom_bank = if v == 0 { 1 } else { v & 0xE },
             0x4000..=0x5FFF => self.regs.ram_bank = v & 0xC,
             0x6000..=0x7FFF => {
@@ -77,10 +77,10 @@ impl Mbc3 {
 }
 
 #[derive(Default)]
-struct Mbc3Regs {
+struct MBC3Regs {
     rom_bank: u8,
     ram_bank: u8,
-    ram_enabled: bool,
+    ram_and_timer_enabled: bool,
     rtc: RTCRegs,
     last_writed_byte: Option<u8>,
 }
