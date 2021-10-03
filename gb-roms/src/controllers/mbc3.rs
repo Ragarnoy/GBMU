@@ -62,7 +62,7 @@ impl MBC3 {
         let address = addr.get_address();
         match address {
             0x0000..=0x1FFF => self.regs.ram_and_timer_enabled = (v & 0xF) == 0xA,
-            0x2000..=0x3FFF => self.regs.rom_bank = if v == 0 { 1 } else { v & 0xE },
+            0x2000..=0x3FFF => self.regs.rom_bank = if v == 0 { 1 } else { v & 0x7F },
             0x4000..=0x5FFF => self.regs.ram_bank = v & 0xC,
             0x6000..=0x7FFF => {
                 if self.regs.last_writed_byte == Some(0_u8) && v == 1 {
