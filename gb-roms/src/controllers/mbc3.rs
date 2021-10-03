@@ -1,5 +1,5 @@
 use crate::header::Header;
-use gb_bus::{Address, Area, Error};
+use gb_bus::{Address, Area, Error, FileOperation};
 use std::io::{self, Read};
 
 type RamBank = [u8; MBC3::RAM_BANK_SIZE];
@@ -61,11 +61,12 @@ impl MBC3 {
     fn write_rom(&mut self, v: u8, addr: Box<dyn Address<Area>>) -> Result<(), Error> {
         let address = addr.get_address();
         match address {
-            0x0000..=0x1FFF => self.regs.ram_and_timer_enabled = (v & 0xF) == 0xA,
+            0x0000..=0x1FFF => self.regs.ram_enabled = (v & 0xF) == 0xA,
             0x2000..=0x3FFF => self.regs.rom_bank = if v == 0 { 1 } else { v & 0x7F },
             0x4000..=0x5FFF => self.regs.ram_bank = v & 0xC,
             0x6000..=0x7FFF => {
                 if self.regs.last_writed_byte == Some(0_u8) && v == 1 {
+                    // TODO rtc
                 } else {
                     self.regs.last_writed_byte = Some(v);
                 }
@@ -74,13 +75,65 @@ impl MBC3 {
         }
         Ok(())
     }
+
+    fn read_ram(&self, addr: Box<dyn Address<Area>>) -> Result<u8, Error> {
+        if !self.regs.ram_enabled {
+            return Err(Error::new_segfault(addr));
+        }
+        let address = addr.get_address();
+        let ram_bank = self.regs.ram_bank;
+        match ram_bank {
+            0x0..=0x3 => Ok(self.ram_banks[ram_bank as usize][(address as usize) & 0x1FFF]),
+            0x8 => Ok(self.regs.rtc.seconds),
+            0x9 => Ok(self.regs.rtc.minutes),
+            0xA => Ok(self.regs.rtc.hours),
+            0xB => Ok(self.regs.rtc.lower_day_counter),
+            0xC => Ok(self.regs.rtc.upper_day_counter),
+            _ => return Err(Error::new_segfault(addr)),
+        }
+    }
+
+    fn write_ram(&mut self, v: u8, addr: Box<dyn Address<Area>>) -> Result<(), Error> {
+        if !self.regs.ram_enabled {
+            return Err(Error::new_segfault(addr));
+        }
+        let address = addr.get_address();
+        let ram_bank = self.regs.ram_bank;
+        match ram_bank {
+            0x0..=0x3 => self.ram_banks[ram_bank as usize][(address as usize) & 0x1FFF] = v,
+            0x8 => self.regs.rtc.seconds = v,
+            0x9 => self.regs.rtc.minutes = v,
+            0xA => self.regs.rtc.hours = v,
+            0xB => self.regs.rtc.lower_day_counter = v,
+            0xC => self.regs.rtc.upper_day_counter = v,
+            _ => return Err(Error::new_segfault(addr)),
+        }
+        Ok(())
+    }
+}
+
+impl FileOperation<Area> for MBC3 {
+    fn read(&self, addr: Box<dyn Address<Area>>) -> Result<u8, Error> {
+        match addr.area_type() {
+            Area::Rom => self.read_rom(addr),
+            Area::Ram => self.read_ram(addr),
+            _ => Err(Error::new_bus_error(addr)),
+        }
+    }
+    fn write(&mut self, v: u8, addr: Box<dyn Address<Area>>) -> Result<(), Error> {
+        match addr.area_type() {
+            Area::Rom => self.write_rom(v, addr),
+            Area::Ram => self.write_ram(v, addr),
+            _ => Err(Error::new_bus_error(addr)),
+        }
+    }
 }
 
 #[derive(Default)]
 struct MBC3Regs {
     rom_bank: u8,
     ram_bank: u8,
-    ram_and_timer_enabled: bool,
+    ram_enabled: bool,
     rtc: RTCRegs,
     last_writed_byte: Option<u8>,
 }
