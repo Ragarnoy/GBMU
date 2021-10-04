@@ -7,6 +7,7 @@ mod flag;
 mod ident;
 mod inc;
 mod jump;
+mod load;
 mod logic;
 mod math;
 pub mod opcode;
