@@ -5,7 +5,7 @@ mod options;
 pub mod registers;
 
 use crate::dbg_interfaces::{MemoryDebugOperations, RegisterDebugOperations};
-use crate::debugger::disassembler::Disassembler;
+use crate::debugger::disassembler::DisassemblyViewer;
 use crate::debugger::flow_control::FlowController;
 use crate::debugger::memory::MemoryViewer;
 use crate::debugger::options::DebuggerOptions;
@@ -16,7 +16,7 @@ pub struct Debugger<MEM> {
     memory_editor: MemoryViewer<MEM>,
     register_editor: RegisterEditor,
     flow_controller: FlowController,
-    disassembler: Disassembler,
+    disassembler: DisassemblyViewer,
 }
 
 impl<MEM: MemoryDebugOperations> Debugger<MEM> {
@@ -35,7 +35,8 @@ impl<MEM: MemoryDebugOperations> Debugger<MEM> {
             .default_width(545.0)
             .show(ctx, |ui| {
                 ui.vertical(|ui| {
-                    self.disassembler.draw(ui);
+                    self.disassembler
+                        .draw(ui, registers.cpu_get("PC").unwrap().into(), memory);
                     ui.separator();
                     self.memory_editor.draw(ui, &mut memory);
                 });
@@ -81,7 +82,7 @@ impl DebuggerBuilder {
             memory_editor: MemoryViewer::new(self.options.unwrap_or_default().address_ranges),
             register_editor: RegisterEditor,
             flow_controller: FlowController,
-            disassembler: Disassembler,
+            disassembler: DisassemblyViewer,
         }
     }
 }
