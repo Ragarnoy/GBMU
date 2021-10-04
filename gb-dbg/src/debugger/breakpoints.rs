@@ -13,7 +13,7 @@ impl BreakpointEditor {
         ui.label(Label::new("Breakpoints").text_color(Color32::WHITE));
         breakpoint_options(ui);
         ui.separator();
-        egui::Grid::new("dissas_".to_owned())
+        egui::Grid::new("breakpoints_".to_owned())
             .striped(true)
             .spacing(Vec2::new(2.5, 2.5))
             .show(ui, |ui| {
