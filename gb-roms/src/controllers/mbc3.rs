@@ -100,7 +100,7 @@ impl MBC3 {
             0xA => Ok(self.regs.rtc.hours),
             0xB => Ok(self.regs.rtc.lower_day_counter),
             0xC => Ok(self.regs.rtc.upper_day_counter),
-            _ => return Err(Error::new_segfault(addr)),
+            _ => Err(Error::new_segfault(addr)),
         }
     }
 
