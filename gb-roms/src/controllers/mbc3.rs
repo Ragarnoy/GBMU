@@ -1,6 +1,8 @@
+use super::Controller;
 use crate::header::Header;
 use gb_bus::{Address, Area, Error, FileOperation};
 use gb_rtc::{Naive, ReadRtcRegisters};
+use serde::{Deserialize, Serialize};
 use std::io::{self, Read};
 
 type RamBank = [u8; MBC3::RAM_BANK_SIZE];
@@ -163,7 +165,52 @@ impl<T: ReadRtcRegisters> From<&T> for RTCRegs {
             minutes: clock.minutes(),
             hours: clock.hours(),
             lower_day_counter: clock.lower_days(),
-            upper_day_counter: if clock.upper_days() { 0x1 } else { 0 },
+            upper_day_counter: clock.control(),
         }
+    }
+}
+
+#[derive(serde::Serialize, serde::Deserialize)]
+struct Mbc3Data {
+    ram_banks: Vec<Vec<u8>>,
+}
+
+impl From<Vec<[u8; MBC3::RAM_BANK_SIZE]>> for Mbc3Data {
+    fn from(banks: Vec<[u8; MBC3::RAM_BANK_SIZE]>) -> Self {
+        Self {
+            ram_banks: banks.iter().map(|bank| bank.to_vec()).collect(),
+        }
+    }
+}
+
+impl Controller for MBC3 {
+    fn save<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let data = Mbc3Data::from(self.ram_banks.clone());
+        data.serialize(serializer)
+    }
+
+    fn load<'de, D>(&mut self, deserializer: D) -> Result<(), D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::de::Error;
+        use std::convert::TryFrom;
+
+        let data = Mbc3Data::deserialize(deserializer)?;
+        self.ram_banks = data
+            .ram_banks
+            .into_iter()
+            .map(<[u8; MBC3::RAM_BANK_SIZE]>::try_from)
+            .collect::<Result<Vec<[u8; MBC3::RAM_BANK_SIZE]>, Vec<u8>>>()
+            .map_err(|faulty| {
+                Error::invalid_length(
+                    faulty.len(),
+                    &format!("a ram bank size of size {}", MBC3::RAM_BANK_SIZE).as_str(),
+                )
+            })?;
+        Ok(())
     }
 }
