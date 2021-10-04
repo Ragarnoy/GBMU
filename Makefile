@@ -42,8 +42,7 @@ $(ROMS_ZIP):
 	curl --output $@ $(ROMS_LINK)
 
 $(ROMS_DIR)/%: $(ROMS_ZIP)
-	echo "target: $@"
-	unzip -n $< \*/\*.gb{,c} -d $(ASSETS_DIR)
+	unzip -n $< "roms/$*" -d $(ASSETS_DIR)
 	touch "$@"
 
 docker: Dockerfile packaging/linux/appimage/Dockerfile
