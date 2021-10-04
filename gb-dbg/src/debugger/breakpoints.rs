@@ -21,10 +21,9 @@ impl BreakpointEditor {
                 ui.label(egui::Label::new("Address"));
                 ui.end_row();
                 for breakpoint in &mut self.breakpoints {
-                    let checked: &mut bool = &mut breakpoint.enabled;
-                    let address = breakpoint.r#type();
-                    ui.checkbox(checked, breakpoint.r#type());
-                    ui.label(egui::Label::new("Address"));
+                    let address = breakpoint.r#type().clone();
+                    ui.checkbox(&mut breakpoint.enabled, "");
+                    ui.label(egui::Label::new(address));
                     ui.end_row();
                 }
                 ui.end_row();
