@@ -28,6 +28,8 @@ pub enum Ident {
     IndirectHL8,
     /// u8 argument, need to be retrieve from cache
     Raw8,
+    /// u16 argument, need to be retrieve from cache
+    Raw16,
 }
 
 impl From<Reg8> for Ident {
