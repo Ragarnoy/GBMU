@@ -1,5 +1,6 @@
 use crate::header::Header;
 use gb_bus::{Address, Area, Error, FileOperation};
+use gb_rtc::{Naive, ReadRtcRegisters};
 use std::io::{self, Read};
 
 type RamBank = [u8; MBC3::RAM_BANK_SIZE];
@@ -9,7 +10,7 @@ pub struct MBC3 {
     rom_banks: Vec<RomBank>,
     ram_banks: Vec<RamBank>,
     regs: MBC3Regs,
-    clock_enabled: bool,
+    clock: Option<Naive>,
 }
 
 impl MBC3 {
@@ -32,16 +33,15 @@ impl MBC3 {
 
         let ram_amount = header.ram_size.get_bank_amounts();
         let rom_amount = header.rom_size.get_bank_amounts();
-        let clock_enabled = match header.cartridge_type {
-            Mbc3TimerBattery | Mbc3TimerRamBattery2 => true,
-            _ => false,
+        let clock = match header.cartridge_type {
+            Mbc3TimerBattery | Mbc3TimerRamBattery2 => Some(Naive::default()),
+            _ => None,
         };
-
         Self {
             ram_banks: vec![[0_u8; MBC3::RAM_BANK_SIZE]; ram_amount],
             rom_banks: vec![[0_u8; MBC3::ROM_BANK_SIZE]; rom_amount],
             regs: MBC3Regs::default(),
-            clock_enabled,
+            clock,
         }
     }
 
@@ -66,12 +66,21 @@ impl MBC3 {
             0x4000..=0x5FFF => self.regs.ram_bank = v & 0xC,
             0x6000..=0x7FFF => {
                 if self.regs.last_writed_byte == Some(0_u8) && v == 1 {
-                    // TODO rtc
+                    self.latch_clock_data(addr)?;
                 } else {
                     self.regs.last_writed_byte = Some(v);
                 }
             }
             _ => return Err(Error::new_segfault(addr)),
+        }
+        Ok(())
+    }
+
+    fn latch_clock_data(&mut self, addr: Box<dyn Address<Area>>) -> Result<(), Error> {
+        if let Some(clock) = self.clock.as_ref() {
+            self.regs.rtc = clock.into();
+        } else {
+            return Err(Error::new_segfault(addr));
         }
         Ok(())
     }
@@ -145,4 +154,16 @@ struct RTCRegs {
     hours: u8,
     lower_day_counter: u8,
     upper_day_counter: u8,
+}
+
+impl<T: ReadRtcRegisters> From<&T> for RTCRegs {
+    fn from(clock: &T) -> Self {
+        Self {
+            seconds: clock.seconds(),
+            minutes: clock.minutes(),
+            hours: clock.hours(),
+            lower_day_counter: clock.lower_days(),
+            upper_day_counter: if clock.upper_days() { 0x1 } else { 0 },
+        }
+    }
 }
