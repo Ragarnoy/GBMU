@@ -15,7 +15,7 @@ impl DisassemblyViewer {
         ui.vertical(|ui| {
             egui::Grid::new("dissas_".to_owned())
                 .striped(true)
-                .spacing(Vec2::new(100.0, 2.5))
+                .spacing(Vec2::new(150.0, 2.5))
                 .show(ui, |ui| {
                     ui.label(egui::Label::new("Address").text_color(Color32::WHITE));
                     ui.label(egui::Label::new("Instruction").text_color(Color32::WHITE));
