@@ -16,7 +16,6 @@ pub struct DebuggerApp {
 
 impl App for DebuggerApp {
     fn update(&mut self, ctx: &CtxRef, frame: &mut Frame<'_>) {
-        frame.set_window_size(Vec2::new(1000.0, 600.0));
         self.debugger.draw(ctx, &mut self.memory, &self.register);
     }
 
@@ -32,5 +31,6 @@ fn main() {
         memory: Default::default(),
         register: Default::default(),
     };
-    eframe::run_native(Box::new(dgb_app), eframe::NativeOptions::default())
+    let options = NativeOptions { resizable: false, initial_window_size: Some(Vec2::new(1000.0, 600.0)), ..Default::default()};
+    eframe::run_native(Box::new(dgb_app), options)
 }
