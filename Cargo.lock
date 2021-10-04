@@ -789,6 +789,7 @@ version = "0.1.0"
 dependencies = [
  "egui 0.13.1",
  "gb-bus",
+ "gb-clock",
  "gb-lcd",
  "log",
  "modular-bitfield",

@@ -78,7 +78,7 @@ fn main() {
             .start_frame()
             .expect("Fail at the start for the main window");
 
-        // render is updated just before drawing for now but we might want to change that later
+        // render is updated just before PixelDrawing for now but we might want to change that later
         ppu.compute();
         display.update_render(ppu.pixels());
         // emulation render here
