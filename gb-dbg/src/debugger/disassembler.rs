@@ -15,7 +15,7 @@ impl DisassemblyViewer {
         ui.vertical(|ui| {
             egui::Grid::new("dissas_".to_owned())
                 .striped(true)
-                .spacing(Vec2::new(100.0, 2.5))
+                .spacing(Vec2::new(150.0, 2.5))
                 .show(ui, |ui| {
                     ui.label(egui::Label::new("Address").text_color(Color32::WHITE));
                     ui.label(egui::Label::new("Instruction").text_color(Color32::WHITE));
@@ -28,8 +28,15 @@ impl DisassemblyViewer {
                             "0x{:04X}",
                             pc + row_number as u16 + 1
                         )));
-                        ui.label(egui::Label::new(format!("{}", row.unwrap())));
-                        ui.label(egui::Label::new("0x00000000"));
+                        ui.label(egui::Label::new(row.as_ref().unwrap().0.to_string()));
+                        ui.label(egui::Label::new(
+                            row.unwrap()
+                                .1
+                                .iter()
+                                .fold(String::with_capacity(8), |acc, &s| {
+                                    acc + format!("0x{:02X} ", s).as_str()
+                                }),
+                        ));
                         ui.end_row();
                     }
                     ui.end_row();

@@ -44,6 +44,12 @@ apt update && apt install cmake libgtk-3-dev
 pacman -Sy cmake gtk3
 ```
 
+#### using brew
+
+```sh
+brew install cmake gtk+3
+```
+
 ### For MacOS
 
 Building this project on MacOs requires `cmake`.

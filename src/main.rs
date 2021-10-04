@@ -1,6 +1,6 @@
 mod settings;
 
-use rfd::FileDialog;
+use native_dialog::FileDialog;
 #[cfg(feature = "debug_render")]
 use sdl2::keyboard::Scancode;
 use sdl2::{event::Event, keyboard::Keycode};
@@ -22,8 +22,8 @@ impl Default for Memory {
 }
 
 impl dbg_interfaces::MemoryDebugOperations for Memory {
-    fn read(&self, index: usize) -> u8 {
-        *self.memory.get(index).unwrap()
+    fn read(&self, index: u16) -> u8 {
+        *self.memory.get(index as usize).unwrap()
     }
 }
 
@@ -90,12 +90,12 @@ fn main() {
                 ui.set_height(render::MENU_BAR_SIZE);
                 if ui.button("Load").clicked() {
                     let files = FileDialog::new()
-                        .add_filter("rom", &["gb", "gbc", "rom"])
-                        .set_directory(
-                            std::env::current_dir()
+                        .set_location(
+                            &std::env::current_dir()
                                 .unwrap_or_else(|_| std::path::PathBuf::from("/")),
                         )
-                        .pick_file();
+                        .add_filter("rom", &["gb", "gbc", "rom"])
+                        .show_open_single_file();
                     log::debug!("picked file: {:?}", files);
                 }
                 if ui.button("Debug").clicked() && debug_window.is_none() {

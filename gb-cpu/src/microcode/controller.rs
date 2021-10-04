@@ -70,7 +70,7 @@ impl MicrocodeController {
         }
     }
 
-    /// Clear volatile data (data, actions, ...) saved in controller.
+    /// Clear volatile date saved in controller.
     pub fn clear(&mut self) {
         self.cache.clear();
         self.actions.clear();

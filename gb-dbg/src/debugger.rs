@@ -33,7 +33,7 @@ impl<MEM: MemoryDebugOperations> Debugger<MEM> {
         });
         egui::SidePanel::left("left_panel")
             .resizable(false)
-            .default_width(545.0)
+            .default_width(510.0)
             .show(ctx, |ui| {
                 ui.vertical(|ui| {
                     self.disassembler
