@@ -262,8 +262,12 @@ mod test_mbc1 {
         ctl.regs.special = 0;
         ctl.regs.banking_mode = BankingMode::Simple;
 
-        ctl.write_rom(42, Box::new(Address::from_offset(Area::Rom, 0x4000, 0)))
-            .expect("failed to write");
+        ctl.rom_bank[0][0x3fff] = 51;
+        ctl.rom_bank[1][0] = 42;
+        let b = ctl
+            .read_rom(Box::new(Address::from_offset(Area::Rom, 0x3fff, 0)))
+            .expect("failed to read");
+        assert_eq!(b, 51);
         let b = ctl
             .read_rom(Box::new(Address::from_offset(Area::Rom, 0x4000, 0)))
             .expect("failed to read");
