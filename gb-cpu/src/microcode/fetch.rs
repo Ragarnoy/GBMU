@@ -2,7 +2,6 @@ use super::{
     condition::{carry, not_carry, not_zero, zero},
     dec,
     fetch_cb::fetch_cb,
-    ident::{Ident, Reg16, Reg8},
     inc, jump, logic,
     opcode::Opcode,
     read::{self, read},
@@ -49,7 +48,7 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                 Opcode::IncH => ctl.push_actions(&[read::h, inc::inc8, write::h]),
                 Opcode::IncL => ctl.push_actions(&[read::l, inc::inc8, write::l]),
                 Opcode::IncHLind => {
-                    ctl.push_actions(&[read::hl, read::ind, inc::inc_hl, read::hl, write::ind])
+                    ctl.push_actions(&[read::hl, read::ind, inc::inc8, read::hl, write::ind])
                 }
                 Opcode::DecBC => ctl.push_actions(&[read::bc, dec::dec16, write::bc]),
                 Opcode::DecDE => ctl.push_actions(&[read::de, dec::dec16, write::de]),
@@ -64,7 +63,7 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                 Opcode::DecH => ctl.push_actions(&[read::h, dec::dec8, write::h]),
                 Opcode::DecL => ctl.push_actions(&[read::l, dec::dec8, write::l]),
                 Opcode::DecHLind => {
-                    ctl.push_actions(&[read::hl, read::ind, dec::dec_hl, read::hl, write::ind])
+                    ctl.push_actions(&[read::hl, read::ind, dec::dec8, read::hl, write::ind])
                 }
                 Opcode::CpAA => ctl.push_actions(&[read::a, logic::cp, write::a]),
                 Opcode::CpAB => ctl.push_actions(&[read::b, logic::cp, write::b]),
