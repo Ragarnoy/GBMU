@@ -241,7 +241,7 @@ impl Controller for MBC3 {
             Err(_) => panic!("SystemTime before UNIX EPOCH!"),
         };
         let timestamp = data.clock.game_time + (current_time - data.clock.save_time);
-        self.clock = Some(Naive::new(timestamp as u32));
+        self.clock = Some(Naive::new(timestamp));
         if let Some(clock) = self.clock.as_mut() {
             clock.set_day_counter_carry(data.clock.day_carry);
         }
