@@ -172,7 +172,7 @@ impl From<&Naive> for NaiveSave {
             Err(_) => panic!("SystemTime before UNIX EPOCH!"),
         };
         let game_time =
-            (data.timestamp as u64) + data.clock.unwrap_or(Instant::now()).elapsed().as_secs();
+            (data.timestamp as u64) + data.clock.map(|i| i.elapsed().as_secs()).unwrap_or(0);
         Self {
             save_time,
             game_time,
