@@ -6,7 +6,6 @@ mod fetch_cb;
 mod flag;
 mod inc;
 mod jump;
-mod load;
 mod logic;
 mod math;
 pub mod opcode;
