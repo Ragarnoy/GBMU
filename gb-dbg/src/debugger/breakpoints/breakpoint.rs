@@ -1,7 +1,7 @@
 use std::fmt::{Display, Formatter};
 
 enum BreakpointType {
-    Address(u16)
+    Address(u16),
 }
 
 impl Default for BreakpointType {
@@ -34,7 +34,7 @@ impl Breakpoint {
 
     pub fn address(&self) -> u16 {
         match self.r#type {
-            BreakpointType::Address(x) => x
+            BreakpointType::Address(x) => x,
         }
     }
 }

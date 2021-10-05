@@ -1,8 +1,8 @@
 mod breakpoint;
 
-use egui::{Color32, Label, Ui, Vec2};
-use crate::dbg_interfaces::{MemoryDebugOperations};
+use crate::dbg_interfaces::MemoryDebugOperations;
 use crate::debugger::breakpoints::breakpoint::Breakpoint;
+use egui::{Color32, Label, Ui, Vec2};
 
 pub struct BreakpointEditor {
     breakpoints: Vec<Breakpoint>,
@@ -25,13 +25,29 @@ impl BreakpointEditor {
 
         ui.separator();
         self.new_address.retain(|c| c.is_ascii_hexdigit());
-        if self.new_address.len() <= 5 { self.new_address.truncate(4) }
+        if self.new_address.len() <= 5 {
+            self.new_address.truncate(4)
+        }
         ui.horizontal(|ui| {
-            if ui.add(egui::Button::new("+").enabled(self.is_valid_address(&self.new_address))).clicked() {
+            if ui
+                .add(egui::Button::new("+").enabled(self.is_valid_address(&self.new_address)))
+                .clicked()
+            {
                 self.add_address_breakpoint(u16::from_str_radix(&*self.new_address, 16).unwrap());
             };
-            ui.add(egui::Label::new("0x").text_color(Color32::from_gray(90)).weak());
-            if ui.add(egui::TextEdit::singleline(&mut self.new_address).desired_width(85.0).hint_text("555F")).lost_focus() {
+            ui.add(
+                egui::Label::new("0x")
+                    .text_color(Color32::from_gray(90))
+                    .weak(),
+            );
+            if ui
+                .add(
+                    egui::TextEdit::singleline(&mut self.new_address)
+                        .desired_width(85.0)
+                        .hint_text("555F"),
+                )
+                .lost_focus()
+            {
                 self.new_address.clear();
             };
         });
@@ -45,16 +61,21 @@ impl BreakpointEditor {
                 ui.label(egui::Label::new("Active"));
                 ui.label(egui::Label::new("Address"));
                 ui.end_row();
+
                 for (i, breakpoint) in &mut self.breakpoints.iter_mut().enumerate() {
                     let address = breakpoint.to_string().clone();
-                    if ui.add(egui::Button::new("-")).clicked() { deletion_list.push(i) }
+                    if ui.add(egui::Button::new("-")).clicked() {
+                        deletion_list.push(i)
+                    }
                     ui.checkbox(&mut breakpoint.enabled, "");
                     ui.label(egui::Label::new(address));
                     ui.end_row();
                 }
                 ui.end_row();
             });
-        deletion_list.into_iter().for_each(|i| { self.breakpoints.remove(i); });
+        deletion_list.into_iter().for_each(|i| {
+            self.breakpoints.remove(i);
+        });
     }
 
     fn add_address_breakpoint(&mut self, address: u16) {

@@ -1,18 +1,18 @@
+mod breakpoints;
 pub mod disassembler;
 pub mod flow_control;
 pub mod memory;
 mod options;
 pub mod registers;
-mod breakpoints;
 
 use crate::dbg_interfaces::{MemoryDebugOperations, RegisterDebugOperations};
+use crate::debugger::breakpoints::BreakpointEditor;
 use crate::debugger::disassembler::DisassemblyViewer;
 use crate::debugger::flow_control::FlowController;
 use crate::debugger::memory::MemoryViewer;
 use crate::debugger::options::DebuggerOptions;
 use crate::debugger::registers::RegisterEditor;
-use egui::{CtxRef};
-use crate::debugger::breakpoints::BreakpointEditor;
+use egui::CtxRef;
 
 pub struct Debugger<MEM> {
     memory_editor: MemoryViewer<MEM>,
