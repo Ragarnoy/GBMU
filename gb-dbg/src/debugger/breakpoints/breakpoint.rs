@@ -1,11 +1,27 @@
+use std::fmt::{Display, Formatter};
 
 enum BreakpointType {
     Address(u16)
 }
 
+impl Default for BreakpointType {
+    fn default() -> Self {
+        Self::Address(0)
+    }
+}
+
+#[derive(Default)]
 pub struct Breakpoint {
     r#type: BreakpointType,
     pub enabled: bool,
+}
+
+impl Display for Breakpoint {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self.r#type {
+            BreakpointType::Address(x) => write!(f, "0x{:04X}", x),
+        }
+    }
 }
 
 impl Breakpoint {
@@ -15,10 +31,10 @@ impl Breakpoint {
             enabled: false,
         }
     }
-    
-    pub fn r#type(&self) -> String {
+
+    pub fn address(&self) -> u16 {
         match self.r#type {
-            BreakpointType::Address(x) => format!("0x{:04X}", x)
+            BreakpointType::Address(x) => x
         }
     }
 }
