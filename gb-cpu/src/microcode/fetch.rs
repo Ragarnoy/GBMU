@@ -4,8 +4,7 @@ use super::{
     fetch_cb::fetch_cb,
     inc, jump, logic,
     opcode::Opcode,
-    read::{self, read},
-    write, CycleDigest, MicrocodeController, MicrocodeFlow, State,
+    read, write, CycleDigest, MicrocodeController, MicrocodeFlow, State,
 };
 use std::{cell::RefCell, convert::TryFrom, rc::Rc};
 
@@ -22,18 +21,18 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
             let mut ctl = ctl_ref.borrow_mut();
             ctl.opcode = Some(opcode.into());
             match opcode {
-                Opcode::Jp => ctl.push_actions(&[read, read, jump::jump]),
-                Opcode::JpZ => ctl.push_actions(&[read, read, zero, jump::jump]),
-                Opcode::JpNz => ctl.push_actions(&[read, read, not_zero, jump::jump]),
-                Opcode::JpC => ctl.push_actions(&[read, read, carry, jump::jump]),
-                Opcode::JpNc => ctl.push_actions(&[read, read, not_carry, jump::jump]),
+                Opcode::Jp => ctl.push_actions(&[read::byte, read::byte, jump::jump]),
+                Opcode::JpZ => ctl.push_actions(&[read::byte, read::byte, zero, jump::jump]),
+                Opcode::JpNz => ctl.push_actions(&[read::byte, read::byte, not_zero, jump::jump]),
+                Opcode::JpC => ctl.push_actions(&[read::byte, read::byte, carry, jump::jump]),
+                Opcode::JpNc => ctl.push_actions(&[read::byte, read::byte, not_carry, jump::jump]),
                 Opcode::JpHl => ctl.push_actions(&[jump::jump_hl]),
 
-                Opcode::Jr => ctl.push_actions(&[read, jump::jump_relative]),
-                Opcode::JrZ => ctl.push_actions(&[read, zero, jump::jump_relative]),
-                Opcode::JrNz => ctl.push_actions(&[read, not_zero, jump::jump_relative]),
-                Opcode::JrC => ctl.push_actions(&[read, carry, jump::jump_relative]),
-                Opcode::JrNc => ctl.push_actions(&[read, not_carry, jump::jump_relative]),
+                Opcode::Jr => ctl.push_actions(&[read::byte, jump::jump_relative]),
+                Opcode::JrZ => ctl.push_actions(&[read::byte, zero, jump::jump_relative]),
+                Opcode::JrNz => ctl.push_actions(&[read::byte, not_zero, jump::jump_relative]),
+                Opcode::JrC => ctl.push_actions(&[read::byte, carry, jump::jump_relative]),
+                Opcode::JrNc => ctl.push_actions(&[read::byte, not_carry, jump::jump_relative]),
 
                 Opcode::IncBC => ctl.push_actions(&[read::bc, inc::inc16, write::bc]),
                 Opcode::IncDE => ctl.push_actions(&[read::de, inc::inc16, write::de]),
