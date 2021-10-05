@@ -160,26 +160,23 @@ impl WriteRtcRegisters for Naive {
 
 #[derive(serde::Serialize, serde::Deserialize)]
 struct NaiveData {
-    current_time: u128,
-    timestamp: u128,
+    current_time: u64,
+    timestamp: u64,
     day_carry: bool,
 }
 
 impl From<Naive> for NaiveData {
     fn from(data: Naive) -> Self {
         let current_time = match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
-            Ok(n) => n.as_millis(),
+            Ok(n) => n.as_secs(),
             Err(_) => panic!("SystemTime before UNIX EPOCH!"),
         };
-        let mut timestamp: u128 = data.timestamp as u128;
-        if let Some(clock) = data.clock {
-            timestamp += clock.elapsed().as_millis();
-        }
-        let day_carry = data.day_carry;
+        let timestamp =
+            (data.timestamp as u64) + data.clock.unwrap_or(Instant::now()).elapsed().as_secs();
         Self {
             current_time,
             timestamp,
-            day_carry,
+            day_carry: data.day_carry,
         }
     }
 }
