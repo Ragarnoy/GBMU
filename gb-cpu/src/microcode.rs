@@ -5,7 +5,6 @@ mod dec;
 mod fetch;
 mod fetch_cb;
 mod flag;
-mod ident;
 mod inc;
 mod jump;
 mod logic;
