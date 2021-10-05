@@ -30,6 +30,8 @@ pub struct MicrocodeController {
     actions: Vec<ActionFn>,
     /// Cache use for microcode action
     cache: Vec<u8>,
+    /// source for the current opcode
+    source: Option<Ident>,
     /// target for the current opcode
     target: Option<Ident>,
 }
@@ -42,6 +44,7 @@ impl Default for MicrocodeController {
             opcode: None,
             actions: Vec::with_capacity(8),
             cache: Vec::with_capacity(4),
+            source: None,
             target: None,
         }
     }
@@ -110,7 +113,16 @@ impl MicrocodeController {
         self
     }
 
-    pub fn get_dest(&mut self) -> &Ident {
+    pub fn get_dest(&self) -> &Ident {
         self.target.as_ref().expect("no dest set")
+    }
+
+    pub fn set_src(&mut self, ident: Ident) -> &mut Self {
+        self.source = Some(ident);
+        self
+    }
+
+    pub fn get_src(&mut self) -> &Ident {
+        self.source.as_ref().expect("no src set")
     }
 }
