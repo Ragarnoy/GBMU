@@ -1,8 +1,9 @@
 mod breakpoint;
 
-use crate::dbg_interfaces::MemoryDebugOperations;
 use crate::debugger::breakpoints::breakpoint::Breakpoint;
+use crate::run_duration::RunDuration;
 use egui::{Color32, Label, Ui, Vec2};
+use std::ops::ControlFlow;
 
 pub struct BreakpointEditor {
     breakpoints: Vec<Breakpoint>,
@@ -19,10 +20,11 @@ impl Default for BreakpointEditor {
 }
 
 impl BreakpointEditor {
-    pub fn draw<MEM: MemoryDebugOperations>(&mut self, ui: &mut Ui, _memory: &MEM) {
+    pub fn draw(&mut self, ui: &mut Ui, pc: u16) -> Option<ControlFlow<(), RunDuration>> {
         ui.label(Label::new("Breakpoints").text_color(Color32::WHITE));
         breakpoint_options(ui);
 
+        let mut ret = None;
         ui.separator();
         self.new_address.retain(|c| c.is_ascii_hexdigit());
         if self.new_address.len() <= 5 {
@@ -63,12 +65,19 @@ impl BreakpointEditor {
                 ui.end_row();
 
                 for (i, breakpoint) in &mut self.breakpoints.iter_mut().enumerate() {
-                    let address = breakpoint.to_string().clone();
                     if ui.add(egui::Button::new("-")).clicked() {
                         deletion_list.push(i)
                     }
                     ui.checkbox(&mut breakpoint.enabled, "");
-                    ui.label(egui::Label::new(address));
+                    if pc == breakpoint.address() && breakpoint.enabled {
+                        ui.add(
+                            egui::Label::new(breakpoint.to_string().clone())
+                                .text_color(Color32::RED),
+                        );
+                        ret = Some(ControlFlow::Break(()));
+                    } else {
+                        ui.add(egui::Label::new(breakpoint.to_string().clone()));
+                    }
                     ui.end_row();
                 }
                 ui.end_row();
@@ -76,6 +85,7 @@ impl BreakpointEditor {
         deletion_list.into_iter().for_each(|i| {
             self.breakpoints.remove(i);
         });
+        ret
     }
 
     fn add_address_breakpoint(&mut self, address: u16) {
