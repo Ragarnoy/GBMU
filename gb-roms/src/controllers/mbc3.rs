@@ -170,16 +170,42 @@ impl<T: ReadRtcRegisters> From<&T> for RTCRegs {
     }
 }
 
+impl From<Vec<u8>> for RTCRegs {
+    fn from(data: Vec<u8>) -> Self {
+        if data.len() < 5 {
+            return RTCRegs::default();
+        }
+        Self {
+            seconds: data[0],
+            minutes: data[1],
+            hours: data[2],
+            lower_day_counter: data[3],
+            upper_day_counter: data[4],
+        }
+    }
+}
+
 #[derive(serde::Serialize, serde::Deserialize)]
 struct Mbc3Data {
+    rtc: Vec<u8>,
     ram_banks: Vec<Vec<u8>>,
 }
 
-impl From<Vec<[u8; MBC3::RAM_BANK_SIZE]>> for Mbc3Data {
-    fn from(banks: Vec<[u8; MBC3::RAM_BANK_SIZE]>) -> Self {
-        Self {
-            ram_banks: banks.iter().map(|bank| bank.to_vec()).collect(),
-        }
+impl From<(&RTCRegs, Vec<[u8; MBC3::RAM_BANK_SIZE]>)> for Mbc3Data {
+    fn from(data: (&RTCRegs, Vec<[u8; MBC3::RAM_BANK_SIZE]>)) -> Self {
+        let rtc_data = data.0;
+        let banks = data.1;
+
+        let rtc = vec![
+            rtc_data.seconds,
+            rtc_data.minutes,
+            rtc_data.hours,
+            rtc_data.lower_day_counter,
+            rtc_data.upper_day_counter,
+        ];
+        let ram_banks = banks.iter().map(|bank| bank.to_vec()).collect();
+
+        Self { rtc, ram_banks }
     }
 }
 
@@ -188,7 +214,7 @@ impl Controller for MBC3 {
     where
         S: serde::Serializer,
     {
-        let data = Mbc3Data::from(self.ram_banks.clone());
+        let data = Mbc3Data::from((&self.regs.rtc, self.ram_banks.clone()));
         data.serialize(serializer)
     }
 
@@ -200,6 +226,7 @@ impl Controller for MBC3 {
         use std::convert::TryFrom;
 
         let data = Mbc3Data::deserialize(deserializer)?;
+        self.regs.rtc = data.rtc.into();
         self.ram_banks = data
             .ram_banks
             .into_iter()
