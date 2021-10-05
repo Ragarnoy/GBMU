@@ -1,4 +1,5 @@
 use super::{
+    arithmetic,
     condition::{carry, not_carry, not_zero, zero},
     dec,
     fetch_cb::fetch_cb,
@@ -73,6 +74,46 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                 Opcode::CpAL => ctl.push_actions(&[read::l, logic::cp, write::l]),
                 Opcode::CpAHL => ctl.push_actions(&[read::hl, read::ind, logic::cp]),
                 Opcode::CpA8 => ctl.push_actions(&[read::byte, logic::cp]),
+
+                Opcode::XorAA => ctl.push_actions(&[logic::xor]).set_src(Reg8::A.into()),
+                Opcode::XorAB => ctl.push_actions(&[logic::xor]).set_src(Reg8::B.into()),
+                Opcode::XorAC => ctl.push_actions(&[logic::xor]).set_src(Reg8::C.into()),
+                Opcode::XorAD => ctl.push_actions(&[logic::xor]).set_src(Reg8::D.into()),
+                Opcode::XorAE => ctl.push_actions(&[logic::xor]).set_src(Reg8::E.into()),
+                Opcode::XorAH => ctl.push_actions(&[logic::xor]).set_src(Reg8::H.into()),
+                Opcode::XorAL => ctl.push_actions(&[logic::xor]).set_src(Reg8::L.into()),
+                Opcode::XorAHL => ctl
+                    .push_actions(&[read_hl, logic::xor])
+                    .set_src(Ident::IndirectHL8),
+                Opcode::XorA8 => ctl.push_actions(&[read, logic::xor]).set_src(Ident::Raw8),
+
+                Opcode::SubAA => ctl.push_actions(&[arithmetic::sub]).set_src(Reg8::A.into()),
+                Opcode::SubAB => ctl.push_actions(&[arithmetic::sub]).set_src(Reg8::B.into()),
+                Opcode::SubAC => ctl.push_actions(&[arithmetic::sub]).set_src(Reg8::C.into()),
+                Opcode::SubAD => ctl.push_actions(&[arithmetic::sub]).set_src(Reg8::D.into()),
+                Opcode::SubAE => ctl.push_actions(&[arithmetic::sub]).set_src(Reg8::E.into()),
+                Opcode::SubAH => ctl.push_actions(&[arithmetic::sub]).set_src(Reg8::H.into()),
+                Opcode::SubAL => ctl.push_actions(&[arithmetic::sub]).set_src(Reg8::L.into()),
+                Opcode::SubAHL => ctl
+                    .push_actions(&[read_hl, arithmetic::sub])
+                    .set_src(Ident::IndirectHL8),
+                Opcode::SubA8 => ctl
+                    .push_actions(&[read, arithmetic::sub])
+                    .set_src(Ident::Raw8),
+
+                Opcode::AddAA => ctl.push_actions(&[arithmetic::add]).set_src(Reg8::A.into()),
+                Opcode::AddAB => ctl.push_actions(&[arithmetic::add]).set_src(Reg8::B.into()),
+                Opcode::AddAC => ctl.push_actions(&[arithmetic::add]).set_src(Reg8::C.into()),
+                Opcode::AddAD => ctl.push_actions(&[arithmetic::add]).set_src(Reg8::D.into()),
+                Opcode::AddAE => ctl.push_actions(&[arithmetic::add]).set_src(Reg8::E.into()),
+                Opcode::AddAH => ctl.push_actions(&[arithmetic::add]).set_src(Reg8::H.into()),
+                Opcode::AddAL => ctl.push_actions(&[arithmetic::add]).set_src(Reg8::L.into()),
+                Opcode::AddAHL => ctl
+                    .push_actions(&[read_hl, arithmetic::add])
+                    .set_src(Ident::IndirectHL8),
+                Opcode::AddA8 => ctl
+                    .push_actions(&[read, arithmetic::add])
+                    .set_src(Ident::Raw8),
 
                 Opcode::Nop => &mut ctl,
                 Opcode::PrefixCb => ctl.push_action(fetch_cb),

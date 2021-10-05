@@ -10,3 +10,12 @@ pub fn cp(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     state.regs.set_zero(flag.zero);
     OK_PLAY_NEXT_ACTION
 }
+
+pub fn xor(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
+    let value = ctl.pop();
+    let value = state.regs.a() ^ value;
+    state.regs.set_raw(0);
+    state.regs.set_zero(value == 0);
+    ctl.push(value);
+    OK_PLAY_NEXT_ACTION
+}
