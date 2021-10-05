@@ -1,6 +1,4 @@
-use super::{
-    fetch::fetch, ident::Ident, opcode::Opcode, opcode_cb::OpcodeCB, MicrocodeFlow, State,
-};
+use super::{fetch::fetch, opcode::Opcode, opcode_cb::OpcodeCB, MicrocodeFlow, State};
 use crate::registers::Registers;
 use gb_bus::Bus;
 
