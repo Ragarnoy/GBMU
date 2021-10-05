@@ -230,8 +230,9 @@ impl Ticker for PPU {
     where
         B: Bus<u8> + Bus<u16>,
     {
+        let lcd_reg = self.lcd_reg.try_borrow_mut().ok();
         // update state after executing tick
-        self.state.update();
+        self.state.update(lcd_reg);
     }
 }
 

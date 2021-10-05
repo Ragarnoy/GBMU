@@ -1,20 +1,22 @@
 use super::Mode;
+use crate::registers::LcdReg;
+use std::cell::RefMut;
 
 pub struct State {
     mode: Mode,
-    line: u32,
-    step: u32,
-    pixel_drawn: u32,
+    line: u8,
+    step: u16,
+    pixel_drawn: u8,
 }
 
 impl State {
-    const LINE_COUNT: u32 = 154;
-    const STEP_COUNT: u32 = 456;
+    const LINE_COUNT: u8 = 154;
+    const VBLANK_START: u8 = 144;
 
-    const HBLANK_MIN_START: u32 = 252;
-    const HBLANK_MAX_START: u32 = 369;
-    const VBLANK_START: u32 = 144;
-    const PIXEL_DRAWING_START: u32 = 80;
+    const PIXEL_DRAWING_START: u16 = 80;
+    const HBLANK_MIN_START: u16 = 252;
+    const HBLANK_MAX_START: u16 = 369;
+    const STEP_COUNT: u16 = 456;
 
     pub fn new() -> Self {
         State {
@@ -25,7 +27,7 @@ impl State {
         }
     }
 
-    pub fn update(&mut self) {
+    pub fn update(&mut self, lcd_reg: Option<RefMut<LcdReg>>) {
         match self {
             Mode::HBlank => self.update_hblank(),
             Mode::VBlank => self.update_vblank(),
@@ -36,6 +38,12 @@ impl State {
         if self.step == 0 {
             self.line = (self.line + 1) % LINE_COUNT;
             self.pixel_drawn = 0;
+        }
+        if let Some(lcd) = lcd_reg {
+            self.update_registers(lcd);
+        }
+        else {
+            log::error!("PPU state failed to update registers");
         }
     }
 
@@ -92,5 +100,11 @@ impl State {
             },
             _ => {}
         }
+    }
+
+    fn update_registers(&self, lcd_reg: RefMut<LcdReg>) {
+        lcd_reg.scrolling.set_ly(self.line);
+        lcd_reg.stat.set_mode(self.mode);
+        lcd_reg.stat.set_lyc_eq_ly(self.line == lcd_reg.scrolling.lyc());
     }
 }
