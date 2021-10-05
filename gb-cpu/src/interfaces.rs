@@ -39,5 +39,5 @@ pub trait WriteFlagReg {
     fn set_subtraction(&mut self, value: bool);
     fn set_half_carry(&mut self, value: bool);
     fn set_carry(&mut self, value: bool);
-    fn raw(&mut self, value: u8);
+    fn set_raw(&mut self, value: u8);
 }
