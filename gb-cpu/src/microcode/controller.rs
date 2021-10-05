@@ -103,9 +103,19 @@ impl MicrocodeController {
         self.cache.push(byte)
     }
 
+    pub fn push_u16(&mut self, value: u16) {
+        let bytes = value.to_be_bytes();
+        self.push(bytes[0]);
+        self.push(bytes[1]);
+    }
+
     /// Pop the last pushed `byte` from the cache.
     pub fn pop(&mut self) -> u8 {
         self.cache.pop().expect("not enough value stored in cache")
+    }
+
+    pub fn pop_u16(&mut self) -> u16 {
+        u16::from_be_bytes([self.pop(), self.pop()])
     }
 
     pub fn set_dest(&mut self, ident: Ident) -> &mut Self {
