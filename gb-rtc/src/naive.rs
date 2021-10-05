@@ -394,3 +394,35 @@ mod test_write_regs {
         assert_eq!(date.days(), 0);
     }
 }
+
+#[cfg(test)]
+mod test_ticking_clock {
+    use super::{Naive, ReadRtcRegisters, WriteRtcRegisters};
+    use std::thread::sleep;
+    use std::time::{Duration, Instant};
+
+    #[test]
+    fn read() {
+        let mut clock = Naive::new(42);
+        clock.clock = Some(Instant::now());
+
+        sleep(Duration::from_secs(2));
+        let seconds = clock.seconds();
+        assert_eq!(seconds, 44);
+    }
+
+    #[test]
+    fn write() {
+        let mut clock = Naive::new(42);
+        clock.clock = Some(Instant::now());
+
+        sleep(Duration::from_secs(1));
+        assert_eq!(clock.seconds(), 43);
+
+        clock.set_seconds(38);
+        assert_eq!(clock.seconds(), 38);
+
+        sleep(Duration::from_secs(1));
+        assert_eq!(clock.seconds(), 39);
+    }
+}
