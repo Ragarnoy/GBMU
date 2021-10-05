@@ -3,7 +3,10 @@ use crate::header::Header;
 use gb_bus::{Address, Area, Error, FileOperation};
 use gb_rtc::{naive::NaiveSave, Naive, ReadRtcRegisters, WriteRtcRegisters};
 use serde::{Deserialize, Serialize};
-use std::io::{self, Read};
+use std::{
+    io::{self, Read},
+    time::SystemTime,
+};
 
 type RamBank = [u8; MBC3::RAM_BANK_SIZE];
 type RomBank = [u8; MBC3::ROM_BANK_SIZE];
@@ -233,7 +236,11 @@ impl Controller for MBC3 {
         let data = Mbc3Data::deserialize(deserializer)?;
         self.regs.rtc = data.rtc.into();
 
-        let timestamp = data.clock.game_time + data.clock.save_time;
+        let current_time = match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
+            Ok(n) => n.as_secs(),
+            Err(_) => panic!("SystemTime before UNIX EPOCH!"),
+        };
+        let timestamp = data.clock.game_time + (current_time - data.clock.save_time);
         self.clock = Some(Naive::new(timestamp as u32));
         if let Some(clock) = self.clock.as_mut() {
             clock.set_day_counter_carry(data.clock.day_carry);
