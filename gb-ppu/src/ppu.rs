@@ -1,4 +1,4 @@
-use crate::drawing::Mode;
+use crate::drawing::{Mode, State};
 use crate::memory::{Oam, PPUMem, Vram};
 use crate::registers::{LcdReg, PPURegisters};
 use crate::{
@@ -21,9 +21,7 @@ pub struct PPU {
     oam: Rc<RefCell<Oam>>,
     lcd_reg: Rc<RefCell<LcdReg>>,
     pixels: RenderData<SCREEN_WIDTH, SCREEN_HEIGHT>,
-    mode: Mode,
-    current_line: u8,
-    line_cycle: u32,
+    state: State,
 }
 
 impl PPU {
@@ -33,9 +31,7 @@ impl PPU {
             oam: Rc::new(RefCell::new(Oam::new())),
             lcd_reg: Rc::new(RefCell::new(LcdReg::new())),
             pixels: [[[255; 3]; SCREEN_WIDTH]; SCREEN_HEIGHT],
-            mode: Mode::OAMFetch,
-            current_line: 0,
-            line_cycle: 0,
+            state: state::new(),
         }
     }
 
@@ -234,8 +230,8 @@ impl Ticker for PPU {
     where
         B: Bus<u8> + Bus<u16>,
     {
-        // update mode after executing tick
-        self.mode.update(self.current_line, self.line_cycle);
+        // update state after executing tick
+        self.state.update();
     }
 }
 
