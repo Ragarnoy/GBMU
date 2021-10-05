@@ -1,4 +1,5 @@
 use super::{
+    arithmetic,
     condition::{carry, not_carry, not_zero, zero},
     dec,
     fetch_cb::fetch_cb,
@@ -64,15 +65,55 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                 Opcode::DecHLind => {
                     ctl.push_actions(&[read::hl, read::ind, dec::dec8, read::hl, write::ind])
                 }
-                Opcode::CpAA => ctl.push_actions(&[read::a, logic::cp, write::a]),
-                Opcode::CpAB => ctl.push_actions(&[read::b, logic::cp, write::b]),
-                Opcode::CpAC => ctl.push_actions(&[read::c, logic::cp, write::c]),
-                Opcode::CpAD => ctl.push_actions(&[read::d, logic::cp, write::d]),
-                Opcode::CpAE => ctl.push_actions(&[read::e, logic::cp, write::e]),
-                Opcode::CpAH => ctl.push_actions(&[read::h, logic::cp, write::h]),
-                Opcode::CpAL => ctl.push_actions(&[read::l, logic::cp, write::l]),
-                Opcode::CpAHL => ctl.push_actions(&[read::hl, read::ind, logic::cp]),
-                Opcode::CpA8 => ctl.push_actions(&[read::byte, logic::cp]),
+                Opcode::CpAA => ctl.push_actions(&[read::a, read::a, logic::cp]),
+                Opcode::CpAB => ctl.push_actions(&[read::b, read::a, logic::cp]),
+                Opcode::CpAC => ctl.push_actions(&[read::c, read::a, logic::cp]),
+                Opcode::CpAD => ctl.push_actions(&[read::d, read::a, logic::cp]),
+                Opcode::CpAE => ctl.push_actions(&[read::e, read::a, logic::cp]),
+                Opcode::CpAH => ctl.push_actions(&[read::h, read::a, logic::cp]),
+                Opcode::CpAL => ctl.push_actions(&[read::l, read::a, logic::cp]),
+                Opcode::CpAHL => ctl.push_actions(&[read::hl, read::ind, read::a, logic::cp]),
+                Opcode::CpA8 => ctl.push_actions(&[read::byte, read::a, logic::cp]),
+
+                Opcode::XorAA => ctl.push_actions(&[read::a, read::a, logic::xor, write::a]),
+                Opcode::XorAB => ctl.push_actions(&[read::b, read::a, logic::xor, write::a]),
+                Opcode::XorAC => ctl.push_actions(&[read::c, read::a, logic::xor, write::a]),
+                Opcode::XorAD => ctl.push_actions(&[read::d, read::a, logic::xor, write::a]),
+                Opcode::XorAE => ctl.push_actions(&[read::e, read::a, logic::xor, write::a]),
+                Opcode::XorAH => ctl.push_actions(&[read::h, read::a, logic::xor, write::a]),
+                Opcode::XorAL => ctl.push_actions(&[read::l, read::a, logic::xor, write::a]),
+                Opcode::XorAHL => {
+                    ctl.push_actions(&[read::hl, read::ind, read::a, logic::xor, write::a])
+                }
+                Opcode::XorA8 => ctl.push_actions(&[read::byte, read::a, logic::xor, write::a]),
+
+                Opcode::SubAA => ctl.push_actions(&[read::a, read::a, arithmetic::sub, write::a]),
+                Opcode::SubAB => ctl.push_actions(&[read::b, read::a, arithmetic::sub, write::a]),
+                Opcode::SubAC => ctl.push_actions(&[read::c, read::a, arithmetic::sub, write::a]),
+                Opcode::SubAD => ctl.push_actions(&[read::d, read::a, arithmetic::sub, write::a]),
+                Opcode::SubAE => ctl.push_actions(&[read::e, read::a, arithmetic::sub, write::a]),
+                Opcode::SubAH => ctl.push_actions(&[read::h, read::a, arithmetic::sub, write::a]),
+                Opcode::SubAL => ctl.push_actions(&[read::l, read::a, arithmetic::sub, write::a]),
+                Opcode::SubAHL => {
+                    ctl.push_actions(&[read::hl, read::ind, read::a, arithmetic::sub, write::a])
+                }
+                Opcode::SubA8 => {
+                    ctl.push_actions(&[read::byte, read::a, arithmetic::sub, write::a])
+                }
+
+                Opcode::AddAA => ctl.push_actions(&[read::a, read::a, arithmetic::add, write::a]),
+                Opcode::AddAB => ctl.push_actions(&[read::b, read::a, arithmetic::add, write::a]),
+                Opcode::AddAC => ctl.push_actions(&[read::c, read::a, arithmetic::add, write::a]),
+                Opcode::AddAD => ctl.push_actions(&[read::d, read::a, arithmetic::add, write::a]),
+                Opcode::AddAE => ctl.push_actions(&[read::e, read::a, arithmetic::add, write::a]),
+                Opcode::AddAH => ctl.push_actions(&[read::h, read::a, arithmetic::add, write::a]),
+                Opcode::AddAL => ctl.push_actions(&[read::l, read::a, arithmetic::add, write::a]),
+                Opcode::AddAHL => {
+                    ctl.push_actions(&[read::hl, read::ind, read::a, arithmetic::add, write::a])
+                }
+                Opcode::AddA8 => {
+                    ctl.push_actions(&[read::byte, read::a, arithmetic::add, write::a])
+                }
 
                 Opcode::LdBC16 => ctl.push_actions(&[read::byte, read::byte, write::bc]),
                 Opcode::LdDE16 => ctl.push_actions(&[read::byte, read::byte, write::de]),

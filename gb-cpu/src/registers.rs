@@ -147,7 +147,7 @@ impl WriteFlagReg for Registers {
         }
     }
 
-    fn raw(&mut self, value: u8) {
+    fn set_raw(&mut self, value: u8) {
         self.set_f(value)
     }
 }
