@@ -55,6 +55,16 @@ impl Naive {
                 .map(|instant| instant.elapsed().as_secs())
                 .unwrap_or(0)
     }
+
+    fn may_reset_instant(&mut self) {
+        if self.clock.is_some() {
+            self.reset_instant()
+        }
+    }
+
+    fn reset_instant(&mut self) {
+        self.clock.replace(Instant::now());
+    }
 }
 
 impl Default for Naive {
@@ -122,27 +132,32 @@ impl std::ops::Add<u64> for Naive {
 impl WriteRtcRegisters for Naive {
     fn set_seconds(&mut self, seconds: u8) {
         self.timestamp = self.timestamp() - self.seconds() as u64 + (seconds % 60) as u64;
-        self.clock.
+        self.may_reset_instant();
     }
 
     fn set_minutes(&mut self, minutes: u8) {
         self.timestamp =
             self.timestamp() - self.minutes() as u64 * MINUTE + (minutes % 60) as u64 * MINUTE;
+        self.may_reset_instant();
     }
 
     fn set_hours(&mut self, hours: u8) {
         self.timestamp = self.timestamp() - self.hours() as u64 * HOUR + (hours % 24) as u64 * HOUR;
+        self.may_reset_instant();
     }
 
     fn set_lower_days(&mut self, ldays: u8) {
         self.timestamp = self.timestamp() - self.lower_days() as u64 * DAY + ldays as u64 * DAY;
+        self.may_reset_instant();
     }
 
     fn set_upper_days(&mut self, udays: bool) {
         if udays && !self.upper_days() {
-            self.timestamp += 0x100 * DAY;
+            self.timestamp = 0x100 * DAY + self.timestamp();
+            self.may_reset_instant();
         } else if !udays && self.upper_days() {
-            self.timestamp -= 0x100 * DAY;
+            self.timestamp = self.timestamp() - 0x100 * DAY;
+            self.may_reset_instant();
         }
     }
 
