@@ -19,12 +19,12 @@ use store::Store;
 use value::Value;
 
 macro_rules! op {
-	($t:ident, $($v:expr),+) => {
-		Opcode::$t($($v),+)
-	};
-	($t:ident) => {
-		Opcode::$t
-	};
+    ($t:ident, $($v:expr),+) => {
+        Opcode::$t($($v),+)
+    };
+    ($t:ident) => {
+        Opcode::$t
+    };
 }
 
 pub struct OpcodeGenerator<It>
@@ -32,6 +32,7 @@ where
     It: Iterator<Item = u8>,
 {
     stream: It,
+    current_opcode_bytes: Vec<u8>,
 }
 
 impl<It> OpcodeGenerator<It>
@@ -39,19 +40,29 @@ where
     It: Iterator<Item = u8>,
 {
     pub fn new(stream: It) -> Self {
-        Self { stream }
+        Self {
+            stream,
+            current_opcode_bytes: Vec::new(),
+        }
+    }
+
+    fn read_byte(&mut self) -> Option<u8> {
+        self.stream.next().map(|b| {
+            self.current_opcode_bytes.push(b);
+            b
+        })
     }
 
     fn read_d(&mut self) -> Option<i8> {
-        self.stream.next().map(|r| r as i8)
+        self.read_byte().map(|r| r as i8)
     }
 
     fn read_n(&mut self) -> Option<u8> {
-        self.stream.next()
+        self.read_byte()
     }
 
     fn read_nn(&mut self) -> Option<u16> {
-        let bytes: [u8; 2] = [self.stream.next()?, self.stream.next()?];
+        let bytes: [u8; 2] = [self.read_byte()?, self.read_byte()?];
         Some(u16::from_le_bytes(bytes))
     }
 
@@ -109,7 +120,7 @@ where
     fn decode_cb_prefix(&mut self) -> Result<Opcode, Error> {
         use register::Register8Bits;
 
-        let current = self.stream.next().ok_or(Error::InvalideOpcode(0xCB))?;
+        let current = self.read_byte().ok_or(Error::InvalideOpcode(0xCB))?;
 
         match current {
             // swap n
@@ -226,14 +237,15 @@ impl<It> Iterator for OpcodeGenerator<It>
 where
     It: Iterator<Item = u8>,
 {
-    type Item = Result<Opcode, Error>;
+    type Item = Result<(Opcode, Vec<u8>), Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
         use register::{Register16Bits, Register8Bits, RegisterSpecial};
 
-        let current = self.stream.next()?;
+        self.current_opcode_bytes.clear();
+        let current = self.read_byte()?;
 
-        Some(match current {
+        let decode_res: Result<Opcode, Error> = match current {
             // Ld nn, n
             0x06 => Ok(op!(Ld, register8!(B).into(), self.get_n().into())),
             0x0E => Ok(op!(Ld, register8!(C).into(), self.get_n().into())),
@@ -568,7 +580,7 @@ where
             0x00 => Ok(op!(Nop)),
             0x76 => Ok(op!(Halt)),
             0x10 => {
-                if self.stream.next() == Some(0x00) {
+                if self.read_byte() == Some(0x00) {
                     Ok(op!(Stop))
                 } else {
                     Err(Error::InvalideOpcode(0x10))
@@ -637,15 +649,16 @@ where
             0xD9 => Ok(op!(ReturnI)),
 
             _ => Err(Error::UnknownOpcode(current)),
-        })
+        };
+        Some(decode_res.map(|opcode| (opcode, self.current_opcode_bytes.clone())))
     }
 }
 
 #[cfg(test)]
 macro_rules! op_gen {
-	[$($e: expr),*] => {
-		OpcodeGenerator::from(vec![$($e),*].into_iter())
-	}
+    [$($e: expr),*] => {
+        OpcodeGenerator::from(vec![$($e),*].into_iter())
+    }
 }
 
 #[cfg(test)]
@@ -660,23 +673,35 @@ mod test_decode {
     fn test_jump() {
         assert_eq!(
             op_gen![0xc3, 0x50, 0x01].next(),
-            Some(Ok(op!(Jump, 0x150_u16.into())))
+            Some(Ok((op!(Jump, 0x150_u16.into()), vec![0xc3, 0x50, 0x01])))
         );
         assert_eq!(
             op_gen![0xca, 0x55, 0x00].next(),
-            Some(Ok(op!(JumpConditional, Zero, 0x55)))
+            Some(Ok((
+                op!(JumpConditional, Zero, 0x55),
+                vec![0xca, 0x55, 0x00]
+            )))
         );
         assert_eq!(
             op_gen![0xc2, 0x55, 0x00].next(),
-            Some(Ok(op!(JumpConditional, NotZero, 0x55)))
+            Some(Ok((
+                op!(JumpConditional, NotZero, 0x55),
+                vec![0xc2, 0x55, 0x00]
+            )))
         );
         assert_eq!(
             op_gen![0xda, 0x55, 0x00].next(),
-            Some(Ok(op!(JumpConditional, Carry, 0x55)))
+            Some(Ok((
+                op!(JumpConditional, Carry, 0x55),
+                vec![0xda, 0x55, 0x00]
+            )))
         );
         assert_eq!(
             op_gen![0xd2, 0x55, 0x00].next(),
-            Some(Ok(op!(JumpConditional, NotCarry, 0x55)))
+            Some(Ok((
+                op!(JumpConditional, NotCarry, 0x55),
+                vec![0xd2, 0x55, 0x00]
+            )))
         );
     }
 
@@ -684,59 +709,89 @@ mod test_decode {
     fn test_jump_relative() {
         assert_eq!(
             op_gen![0x18, 0x42].next(),
-            Some(Ok(op!(JumpRelative, 0x42)))
+            Some(Ok((op!(JumpRelative, 0x42), vec![0x18, 0x42])))
         );
         assert_eq!(
             op_gen![0x28, 0x42].next(),
-            Some(Ok(op!(JumpRelativeConditional, Zero, 0x42)))
+            Some(Ok((
+                op!(JumpRelativeConditional, Zero, 0x42),
+                vec![0x28, 0x42]
+            )))
         );
         assert_eq!(
             op_gen![0x20, 0x42].next(),
-            Some(Ok(op!(JumpRelativeConditional, NotZero, 0x42)))
+            Some(Ok((
+                op!(JumpRelativeConditional, NotZero, 0x42),
+                vec![0x20, 0x42]
+            )))
         );
         assert_eq!(
             op_gen![0x38, 0x42].next(),
-            Some(Ok(op!(JumpRelativeConditional, Carry, 0x42)))
+            Some(Ok((
+                op!(JumpRelativeConditional, Carry, 0x42),
+                vec![0x38, 0x42]
+            )))
         );
         assert_eq!(
             op_gen![0x30, 0x42].next(),
-            Some(Ok(op!(JumpRelativeConditional, NotCarry, 0x42)))
+            Some(Ok((
+                op!(JumpRelativeConditional, NotCarry, 0x42),
+                vec![0x30, 0x42]
+            )))
         );
         assert_eq!(
             op_gen![0x18, (-24_i8).to_le_bytes()[0]].next(),
-            Some(Ok(Opcode::JumpRelative(-24)))
+            Some(Ok((
+                Opcode::JumpRelative(-24),
+                vec![0x18, (-24_i8).to_le_bytes()[0]]
+            )))
         );
         assert_eq!(
             op_gen![0x20, (-24_i8).to_le_bytes()[0]].next(),
-            Some(Ok(op!(JumpRelativeConditional, NotZero, -24)))
+            Some(Ok((
+                op!(JumpRelativeConditional, NotZero, -24),
+                vec![0x20, (-24_i8).to_le_bytes()[0]]
+            )))
         );
         assert_eq!(
             op_gen![0x28, (-24_i8).to_le_bytes()[0]].next(),
-            Some(Ok(op!(JumpRelativeConditional, Zero, -24)))
+            Some(Ok((
+                op!(JumpRelativeConditional, Zero, -24),
+                vec![0x28, (-24_i8).to_le_bytes()[0]]
+            )))
         );
         assert_eq!(
             op_gen![0x30, (-24_i8).to_le_bytes()[0]].next(),
-            Some(Ok(op!(JumpRelativeConditional, NotCarry, -24)))
+            Some(Ok((
+                op!(JumpRelativeConditional, NotCarry, -24),
+                vec![0x30, (-24_i8).to_le_bytes()[0]]
+            )))
         );
         assert_eq!(
             op_gen![0x38, (-24_i8).to_le_bytes()[0]].next(),
-            Some(Ok(op!(JumpRelativeConditional, Carry, -24)))
+            Some(Ok((
+                op!(JumpRelativeConditional, Carry, -24),
+                vec![0x38, (-24_i8).to_le_bytes()[0]]
+            )))
         );
     }
 
     #[test]
     fn test_nop() {
-        assert_eq!(op_gen![0x0].next(), Some(Ok(op!(Nop))));
+        assert_eq!(op_gen![0x0].next(), Some(Ok((op!(Nop), vec![0x0]))));
     }
 
     #[test]
     fn test_halt() {
-        assert_eq!(op_gen![0x76].next(), Some(Ok(op!(Halt))))
+        assert_eq!(op_gen![0x76].next(), Some(Ok((op!(Halt), vec![0x76]))))
     }
 
     #[test]
     fn test_stop() {
-        assert_eq!(op_gen![0x10, 0x00].next(), Some(Ok(op!(Stop))));
+        assert_eq!(
+            op_gen![0x10, 0x00].next(),
+            Some(Ok((op!(Stop), vec![0x10, 0x00])))
+        );
     }
 
     #[test]
@@ -745,18 +800,20 @@ mod test_decode {
 
         assert_eq!(
             op_gen![0x8, 0x34, 0x12].next(),
-            Some(Ok(op!(
-                Ld,
-                Store::Indirect16(0x1234),
-                Value::Register(RegisterSpecial::SP.into())
+            Some(Ok((
+                op!(
+                    Ld,
+                    Store::Indirect16(0x1234),
+                    Value::Register(RegisterSpecial::SP.into())
+                ),
+                vec![0x8, 0x34, 0x12]
             )))
         );
         assert_eq!(
             op_gen![0x11, 0x50, 0x01].next(),
-            Some(Ok(op!(
-                Ld,
-                Register::from(Reg16::DE).into(),
-                Value::Nn(0x150)
+            Some(Ok((
+                op!(Ld, Register::from(Reg16::DE).into(), Value::Nn(0x150)),
+                vec![0x11, 0x50, 0x01]
             )))
         );
     }
@@ -765,11 +822,11 @@ mod test_decode {
     fn test_ldi_ldd() {
         assert_eq!(
             op_gen![0x2a].next(),
-            Some(Ok(op!(LdiInto, register8!(A).into())))
+            Some(Ok((op!(LdiInto, register8!(A).into()), vec![0x2a])))
         );
         assert_eq!(
             op_gen![0x22].next(),
-            Some(Ok(op!(LdiFrom, register8!(A).into())))
+            Some(Ok((op!(LdiFrom, register8!(A).into()), vec![0x22])))
         );
     }
 
@@ -779,29 +836,44 @@ mod test_decode {
 
         assert_eq!(
             op_gen![0x3a].next(),
-            Some(Ok(op!(LddInto, register8!(A).into())))
+            Some(Ok((op!(LddInto, register8!(A).into()), vec![0x3a])))
         );
         assert_eq!(
             op_gen![0x32].next(),
-            Some(Ok(op!(LddFrom, register8!(A).into())))
+            Some(Ok((op!(LddFrom, register8!(A).into()), vec![0x32])))
         );
     }
 
     #[test]
     fn test_ldh() {
-        assert_eq!(op_gen![0xe0, 0xb0].next(), Some(Ok(op!(LdhInto, 0xb0))));
-        assert_eq!(op_gen![0xf0, 0x4f].next(), Some(Ok(op!(LdhFrom, 0x4f))));
-        assert_eq!(op_gen![0xf8, 0xcd].next(), Some(Ok(op!(Ldhl, -0x33))))
+        assert_eq!(
+            op_gen![0xe0, 0xb0].next(),
+            Some(Ok((op!(LdhInto, 0xb0), vec![0xe0, 0xb0])))
+        );
+        assert_eq!(
+            op_gen![0xf0, 0x4f].next(),
+            Some(Ok((op!(LdhFrom, 0x4f), vec![0xf0, 0x4f])))
+        );
+        assert_eq!(
+            op_gen![0xf8, 0xcd].next(),
+            Some(Ok((op!(Ldhl, -0x33), vec![0xf8, 0xcd])))
+        )
     }
 
     #[test]
     fn test_push() {
-        assert_eq!(op_gen![0xc5].next(), Some(Ok(op!(Push, Reg16::BC))))
+        assert_eq!(
+            op_gen![0xc5].next(),
+            Some(Ok((op!(Push, Reg16::BC), vec![0xc5])))
+        )
     }
 
     #[test]
     fn test_pop() {
-        assert_eq!(op_gen![0xd1].next(), Some(Ok(op!(Pop, Reg16::DE))))
+        assert_eq!(
+            op_gen![0xd1].next(),
+            Some(Ok((op!(Pop, Reg16::DE), vec![0xd1])))
+        )
     }
 
     #[test]
@@ -810,9 +882,9 @@ mod test_decode {
 
         assert_eq!(
             op_gen![0x39].next(),
-            Some(Ok(Opcode::Add(
-                Register::from(Reg16::HL).into(),
-                Register::from(RegisterSpecial::SP).into()
+            Some(Ok((
+                op!(Add, register16!(HL).into(), register_special!(SP).into()),
+                vec![0x39]
             )))
         )
     }
@@ -821,7 +893,7 @@ mod test_decode {
     fn test_adc() {
         assert_eq!(
             op_gen![0x89].next(),
-            Some(Ok(op!(Adc, register8!(C).into())))
+            Some(Ok((op!(Adc, register8!(C).into()), vec![0x89])))
         );
     }
 
@@ -829,7 +901,7 @@ mod test_decode {
     fn test_sub() {
         assert_eq!(
             op_gen![0x97].next(),
-            Some(Ok(op!(Sub, register8!(A).into())))
+            Some(Ok((op!(Sub, register8!(A).into()), vec![0x97])))
         );
     }
 
@@ -837,7 +909,7 @@ mod test_decode {
     fn test_sbc() {
         assert_eq!(
             op_gen![0x9d].next(),
-            Some(Ok(op!(Sbc, register8!(L).into())))
+            Some(Ok((op!(Sbc, register8!(L).into()), vec![0x9d])))
         );
     }
 
@@ -845,11 +917,11 @@ mod test_decode {
     fn test_and() {
         assert_eq!(
             op_gen![0xa6].next(),
-            Some(Ok(op!(And, Value::IndirectReg16(Reg16::HL))))
+            Some(Ok((op!(And, Value::IndirectReg16(Reg16::HL)), vec![0xa6])))
         );
         assert_eq!(
             op_gen![0xa2].next(),
-            Some(Ok(op!(And, register8!(D).into())))
+            Some(Ok((op!(And, register8!(D).into()), vec![0xa2])))
         );
     }
 
@@ -857,7 +929,7 @@ mod test_decode {
     fn test_or() {
         assert_eq!(
             op_gen![0xb0].next(),
-            Some(Ok(op!(Or, register8!(B).into())))
+            Some(Ok((op!(Or, register8!(B).into()), vec![0xb0])))
         )
     }
 
@@ -865,7 +937,7 @@ mod test_decode {
     fn test_xor() {
         assert_eq!(
             op_gen![0xaa].next(),
-            Some(Ok(op!(Xor, register8!(D).into())))
+            Some(Ok((op!(Xor, register8!(D).into()), vec![0xaa])))
         );
     }
 
@@ -873,11 +945,11 @@ mod test_decode {
     fn test_cp() {
         assert_eq!(
             op_gen![0xbc].next(),
-            Some(Ok(op!(Cp, register8!(H).into())))
+            Some(Ok((op!(Cp, register8!(H).into()), vec![0xbc])))
         );
         assert_eq!(
             op_gen![0xfe, 0x42].next(),
-            Some(Ok(op!(Cp, 0x42_u8.into())))
+            Some(Ok((op!(Cp, 0x42_u8.into()), vec![0xfe, 0x42])))
         );
     }
 
@@ -885,7 +957,7 @@ mod test_decode {
     fn test_inc() {
         assert_eq!(
             op_gen![0xc].next(),
-            Some(Ok(op!(Inc, register8!(C).into())))
+            Some(Ok((op!(Inc, register8!(C).into()), vec![0xc])))
         );
     }
 
@@ -893,106 +965,124 @@ mod test_decode {
     fn test_dec() {
         assert_eq!(
             op_gen![0xb].next(),
-            Some(Ok(op!(Dec, register16!(BC).into())))
+            Some(Ok((op!(Dec, register16!(BC).into()), vec![0xb])))
         );
     }
 
     #[test]
     fn test_daa() {
-        assert_eq!(op_gen![0x27].next(), Some(Ok(op!(Daa))))
+        assert_eq!(op_gen![0x27].next(), Some(Ok((op!(Daa), vec![0x27]))))
     }
 
     #[test]
     fn test_cpl() {
-        assert_eq!(op_gen![0x2f].next(), Some(Ok(op!(Cpl))))
+        assert_eq!(op_gen![0x2f].next(), Some(Ok((op!(Cpl), vec![0x2f]))))
     }
 
     #[test]
     fn test_ccf() {
-        assert_eq!(op_gen![0x3f].next(), Some(Ok(op!(Ccf))))
+        assert_eq!(op_gen![0x3f].next(), Some(Ok((op!(Ccf), vec![0x3f]))))
     }
 
     #[test]
     fn test_scf() {
-        assert_eq!(op_gen![0x37].next(), Some(Ok(op!(Scf))))
+        assert_eq!(op_gen![0x37].next(), Some(Ok((op!(Scf), vec![0x37]))))
     }
 
     #[test]
     fn test_di() {
-        assert_eq!(op_gen![0xf3].next(), Some(Ok(op!(Di))))
+        assert_eq!(op_gen![0xf3].next(), Some(Ok((op!(Di), vec![0xf3]))))
     }
 
     #[test]
     fn test_ei() {
-        assert_eq!(op_gen![0xfb].next(), Some(Ok(op!(Ei))))
+        assert_eq!(op_gen![0xfb].next(), Some(Ok((op!(Ei), vec![0xfb]))))
     }
 
     #[test]
     fn test_rlca() {
-        assert_eq!(op_gen![0x07].next(), Some(Ok(op!(Rlca))))
+        assert_eq!(op_gen![0x07].next(), Some(Ok((op!(Rlca), vec![0x07]))))
     }
 
     #[test]
     fn test_rla() {
-        assert_eq!(op_gen![0x17].next(), Some(Ok(op!(Rla))))
+        assert_eq!(op_gen![0x17].next(), Some(Ok((op!(Rla), vec![0x17]))))
     }
 
     #[test]
     fn test_rrca() {
-        assert_eq!(op_gen![0x0f].next(), Some(Ok(op!(Rrca))))
+        assert_eq!(op_gen![0x0f].next(), Some(Ok((op!(Rrca), vec![0x0f]))))
     }
 
     #[test]
     fn test_rra() {
-        assert_eq!(op_gen![0x1f].next(), Some(Ok(op!(Rra))))
+        assert_eq!(op_gen![0x1f].next(), Some(Ok((op!(Rra), vec![0x1f]))))
     }
 
     #[test]
     fn test_call() {
         assert_eq!(
             op_gen![0xcd, 0x42, 0x42].next(),
-            Some(Ok(op!(Call, 0x4242)))
+            Some(Ok((op!(Call, 0x4242), vec![0xcd, 0x42, 0x42])))
         );
         assert_eq!(
             op_gen![0xc4, 0x34, 0x12].next(),
-            Some(Ok(op!(CallConditional, NotZero, 0x1234)))
+            Some(Ok((
+                op!(CallConditional, NotZero, 0x1234),
+                vec![0xc4, 0x34, 0x12]
+            )))
         );
         assert_eq!(
             op_gen![0xcc, 0x34, 0x12].next(),
-            Some(Ok(op!(CallConditional, Zero, 0x1234)))
+            Some(Ok((
+                op!(CallConditional, Zero, 0x1234),
+                vec![0xcc, 0x34, 0x12]
+            )))
         );
         assert_eq!(
             op_gen![0xd4, 0x34, 0x12].next(),
-            Some(Ok(op!(CallConditional, NotCarry, 0x1234)))
+            Some(Ok((
+                op!(CallConditional, NotCarry, 0x1234),
+                vec![0xd4, 0x34, 0x12]
+            )))
         );
         assert_eq!(
             op_gen![0xdc, 0x34, 0x12].next(),
-            Some(Ok(op!(CallConditional, Carry, 0x1234)))
+            Some(Ok((
+                op!(CallConditional, Carry, 0x1234),
+                vec![0xdc, 0x34, 0x12]
+            )))
         );
     }
 
     #[test]
     fn test_restart() {
-        assert_eq!(op_gen![0xe7].next(), Some(Ok(op!(Restart, 0x20))))
+        assert_eq!(
+            op_gen![0xe7].next(),
+            Some(Ok((op!(Restart, 0x20), vec![0xe7])))
+        )
     }
 
     #[test]
     fn test_return() {
-        assert_eq!(op_gen![0xc9].next(), Some(Ok(op!(Return))));
+        assert_eq!(op_gen![0xc9].next(), Some(Ok((op!(Return), vec![0xc9]))));
         assert_eq!(
             op_gen![0xc0].next(),
-            Some(Ok(op!(ReturnConditional, NotZero)))
+            Some(Ok((op!(ReturnConditional, NotZero), vec![0xc0])))
         );
-        assert_eq!(op_gen![0xc8].next(), Some(Ok(op!(ReturnConditional, Zero))));
+        assert_eq!(
+            op_gen![0xc8].next(),
+            Some(Ok((op!(ReturnConditional, Zero), vec![0xc8])))
+        );
         assert_eq!(
             op_gen![0xd0].next(),
-            Some(Ok(op!(ReturnConditional, NotCarry)))
+            Some(Ok((op!(ReturnConditional, NotCarry), vec![0xd0])))
         );
         assert_eq!(
             op_gen![0xd8].next(),
-            Some(Ok(op!(ReturnConditional, Carry)))
+            Some(Ok((op!(ReturnConditional, Carry), vec![0xd8])))
         );
-        assert_eq!(op_gen![0xd9].next(), Some(Ok(op!(ReturnI))));
+        assert_eq!(op_gen![0xd9].next(), Some(Ok((op!(ReturnI), vec![0xd9]))));
     }
 }
 
@@ -1005,7 +1095,7 @@ mod test_decode_cb_prefix {
     fn test_swap() {
         assert_eq!(
             op_gen![0xcb, 0x33].next(),
-            Some(Ok(op!(Swap, register8!(E).into())))
+            Some(Ok((op!(Swap, register8!(E).into()), vec![0xcb, 0x33])))
         )
     }
 
@@ -1013,7 +1103,7 @@ mod test_decode_cb_prefix {
     fn test_rlc() {
         assert_eq!(
             op_gen![0xcb, 0x07].next(),
-            Some(Ok(op!(Rlc, register8!(A).into())))
+            Some(Ok((op!(Rlc, register8!(A).into()), vec![0xcb, 0x07])))
         )
     }
 
@@ -1021,7 +1111,7 @@ mod test_decode_cb_prefix {
     fn test_rl() {
         assert_eq!(
             op_gen![0xcb, 0x14].next(),
-            Some(Ok(op!(Rl, register8!(H).into())))
+            Some(Ok((op!(Rl, register8!(H).into()), vec![0xcb, 0x14])))
         )
     }
 
@@ -1029,7 +1119,7 @@ mod test_decode_cb_prefix {
     fn test_rrc() {
         assert_eq!(
             op_gen![0xcb, 0x0a].next(),
-            Some(Ok(op!(Rrc, register8!(D).into())))
+            Some(Ok((op!(Rrc, register8!(D).into()), vec![0xcb, 0x0a])))
         )
     }
 
@@ -1037,7 +1127,7 @@ mod test_decode_cb_prefix {
     fn test_rr() {
         assert_eq!(
             op_gen![0xcb, 0x1b].next(),
-            Some(Ok(op!(Rr, register8!(E).into())))
+            Some(Ok((op!(Rr, register8!(E).into()), vec![0xcb, 0x1b])))
         )
     }
 
@@ -1045,7 +1135,7 @@ mod test_decode_cb_prefix {
     fn test_sla() {
         assert_eq!(
             op_gen![0xcb, 0x25].next(),
-            Some(Ok(op!(Sla, register8!(L).into())))
+            Some(Ok((op!(Sla, register8!(L).into()), vec![0xcb, 0x25])))
         )
     }
 
@@ -1053,7 +1143,10 @@ mod test_decode_cb_prefix {
     fn test_sra() {
         assert_eq!(
             op_gen![0xcb, 0x2e].next(),
-            Some(Ok(op!(Sra, Store::IndirectReg16(Reg16::HL))))
+            Some(Ok((
+                op!(Sra, Store::IndirectReg16(Reg16::HL)),
+                vec![0xcb, 0x2e]
+            )))
         )
     }
 
@@ -1061,7 +1154,7 @@ mod test_decode_cb_prefix {
     fn test_srl() {
         assert_eq!(
             op_gen![0xcb, 0x3c].next(),
-            Some(Ok(op!(Srl, register8!(H).into())))
+            Some(Ok((op!(Srl, register8!(H).into()), vec![0xcb, 0x3c])))
         )
     }
 
@@ -1069,7 +1162,7 @@ mod test_decode_cb_prefix {
     fn test_bit() {
         assert_eq!(
             op_gen![0xcb, 0x52].next(),
-            Some(Ok(op!(Bit, 2, register8!(D).into())))
+            Some(Ok((op!(Bit, 2, register8!(D).into()), vec![0xcb, 0x52])))
         )
     }
 
@@ -1077,7 +1170,7 @@ mod test_decode_cb_prefix {
     fn test_set() {
         assert_eq!(
             op_gen![0xcb, 0xfd].next(),
-            Some(Ok(op!(Set, 7, register8!(L).into())))
+            Some(Ok((op!(Set, 7, register8!(L).into()), vec![0xcb, 0xfd])))
         )
     }
 
@@ -1085,7 +1178,7 @@ mod test_decode_cb_prefix {
     fn test_res() {
         assert_eq!(
             op_gen![0xcb, 0x80].next(),
-            Some(Ok(op!(Res, 0, register8!(B).into())))
+            Some(Ok((op!(Res, 0, register8!(B).into()), vec![0xcb, 0x80])))
         )
     }
 }
