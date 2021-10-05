@@ -6,14 +6,14 @@ use std::time::Instant;
 
 #[derive(PartialEq, Eq, Debug)]
 pub struct Naive {
-    timestamp: u32,
+    timestamp: u64,
     clock: Option<Instant>,
 
     day_carry: bool,
 }
 
 impl Naive {
-    pub fn new(timestamp: u32) -> Self {
+    pub fn new(timestamp: u64) -> Self {
         Self {
             timestamp: timestamp % (MAX_TIME + 1),
             clock: None,
@@ -28,7 +28,7 @@ impl Naive {
 
     pub fn from_days_opt(days: u16) -> Option<Self> {
         if days <= MAX_DAYS as u16 {
-            Some(Self::new(days as u32 * DAY))
+            Some(Self::new(days as u64 * DAY))
         } else {
             None
         }
@@ -43,9 +43,17 @@ impl Naive {
             None
         } else {
             Some(Self::new(
-                self.days() as u32 + hours as u32 * HOUR + minutes as u32 * MINUTE + seconds as u32,
+                self.days() as u64 + hours as u64 * HOUR + minutes as u64 * MINUTE + seconds as u64,
             ))
         }
+    }
+
+    pub fn timestamp(&self) -> u64 {
+        self.timestamp
+            + self
+                .clock
+                .map(|instant| instant.elapsed().as_secs())
+                .unwrap_or(0)
     }
 }
 
@@ -57,19 +65,19 @@ impl Default for Naive {
 
 impl ReadRtcRegisters for Naive {
     fn seconds(&self) -> u8 {
-        (self.timestamp % MINUTE) as u8
+        (self.timestamp() % MINUTE) as u8
     }
 
     fn minutes(&self) -> u8 {
-        ((self.timestamp % HOUR) / MINUTE) as u8
+        ((self.timestamp() % HOUR) / MINUTE) as u8
     }
 
     fn hours(&self) -> u8 {
-        ((self.timestamp % DAY) / HOUR) as u8
+        ((self.timestamp() % DAY) / HOUR) as u8
     }
 
     fn days(&self) -> u16 {
-        (self.timestamp / DAY) as u16 & 0x1FF
+        (self.timestamp() / DAY) as u16 & 0x1FF
     }
 
     fn lower_days(&self) -> u8 {
@@ -99,34 +107,35 @@ impl std::ops::Add<std::time::Duration> for Naive {
     type Output = Self;
 
     fn add(self, rhs: std::time::Duration) -> Self::Output {
-        self + rhs.as_secs() as u32
+        self + rhs.as_secs() as u64
     }
 }
 
-impl std::ops::Add<u32> for Naive {
+impl std::ops::Add<u64> for Naive {
     type Output = Self;
 
-    fn add(self, rhs: u32) -> Self::Output {
-        Self::Output::new(self.timestamp + rhs)
+    fn add(self, rhs: u64) -> Self::Output {
+        Self::Output::new(self.timestamp() + rhs)
     }
 }
 
 impl WriteRtcRegisters for Naive {
     fn set_seconds(&mut self, seconds: u8) {
-        self.timestamp = self.timestamp - self.seconds() as u32 + (seconds % 60) as u32;
+        self.timestamp = self.timestamp() - self.seconds() as u64 + (seconds % 60) as u64;
+        self.clock.
     }
 
     fn set_minutes(&mut self, minutes: u8) {
         self.timestamp =
-            self.timestamp - self.minutes() as u32 * MINUTE + (minutes % 60) as u32 * MINUTE;
+            self.timestamp() - self.minutes() as u64 * MINUTE + (minutes % 60) as u64 * MINUTE;
     }
 
     fn set_hours(&mut self, hours: u8) {
-        self.timestamp = self.timestamp - self.hours() as u32 * HOUR + (hours % 24) as u32 * HOUR;
+        self.timestamp = self.timestamp() - self.hours() as u64 * HOUR + (hours % 24) as u64 * HOUR;
     }
 
     fn set_lower_days(&mut self, ldays: u8) {
-        self.timestamp = self.timestamp - self.lower_days() as u32 * DAY + ldays as u32 * DAY;
+        self.timestamp = self.timestamp() - self.lower_days() as u64 * DAY + ldays as u64 * DAY;
     }
 
     fn set_upper_days(&mut self, udays: bool) {
@@ -139,6 +148,7 @@ impl WriteRtcRegisters for Naive {
 
     fn set_halted(&mut self, halted: bool) {
         if halted != self.halted() {
+            self.timestamp = self.timestamp();
             if halted {
                 self.clock = None;
             } else {
@@ -257,7 +267,7 @@ mod test_ops {
     use crate::constant::{DAY, HOUR};
 
     #[test]
-    fn add_u32() {
+    fn add_u64() {
         let date = Naive::default();
 
         assert_eq!(date.timestamp, 0);
