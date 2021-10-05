@@ -159,23 +159,23 @@ impl WriteRtcRegisters for Naive {
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
-struct NaiveData {
-    current_time: u64,
-    timestamp: u64,
+pub struct NaiveSave {
+    save_time: u64,
+    game_time: u64,
     day_carry: bool,
 }
 
-impl From<Naive> for NaiveData {
-    fn from(data: Naive) -> Self {
-        let current_time = match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
+impl From<&Naive> for NaiveSave {
+    fn from(data: &Naive) -> Self {
+        let save_time = match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
             Ok(n) => n.as_secs(),
             Err(_) => panic!("SystemTime before UNIX EPOCH!"),
         };
-        let timestamp =
+        let game_time =
             (data.timestamp as u64) + data.clock.unwrap_or(Instant::now()).elapsed().as_secs();
         Self {
-            current_time,
-            timestamp,
+            save_time,
+            game_time,
             day_carry: data.day_carry,
         }
     }

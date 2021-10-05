@@ -1,7 +1,7 @@
 use super::Controller;
 use crate::header::Header;
 use gb_bus::{Address, Area, Error, FileOperation};
-use gb_rtc::{Naive, ReadRtcRegisters};
+use gb_rtc::{naive::NaiveSave, Naive, ReadRtcRegisters};
 use serde::{Deserialize, Serialize};
 use std::io::{self, Read};
 
@@ -188,13 +188,13 @@ impl From<Vec<u8>> for RTCRegs {
 #[derive(serde::Serialize, serde::Deserialize)]
 struct Mbc3Data {
     rtc: Vec<u8>,
+    clock: NaiveSave,
     ram_banks: Vec<Vec<u8>>,
 }
 
-impl From<(&RTCRegs, Vec<[u8; MBC3::RAM_BANK_SIZE]>)> for Mbc3Data {
-    fn from(data: (&RTCRegs, Vec<[u8; MBC3::RAM_BANK_SIZE]>)) -> Self {
-        let rtc_data = data.0;
-        let banks = data.1;
+impl From<&MBC3> for Mbc3Data {
+    fn from(mbc3: &MBC3) -> Self {
+        let rtc_data = &mbc3.regs.rtc;
 
         let rtc = vec![
             rtc_data.seconds,
@@ -203,9 +203,14 @@ impl From<(&RTCRegs, Vec<[u8; MBC3::RAM_BANK_SIZE]>)> for Mbc3Data {
             rtc_data.lower_day_counter,
             rtc_data.upper_day_counter,
         ];
-        let ram_banks = banks.iter().map(|bank| bank.to_vec()).collect();
+        let clock = mbc3.clock.as_ref().unwrap_or(&Naive::default()).into();
+        let ram_banks = mbc3.ram_banks.iter().map(|bank| bank.to_vec()).collect();
 
-        Self { rtc, ram_banks }
+        Self {
+            rtc,
+            clock,
+            ram_banks,
+        }
     }
 }
 
@@ -214,7 +219,7 @@ impl Controller for MBC3 {
     where
         S: serde::Serializer,
     {
-        let data = Mbc3Data::from((&self.regs.rtc, self.ram_banks.clone()));
+        let data = Mbc3Data::from(self);
         data.serialize(serializer)
     }
 
