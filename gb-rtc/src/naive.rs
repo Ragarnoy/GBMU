@@ -160,9 +160,9 @@ impl WriteRtcRegisters for Naive {
 
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct NaiveSave {
-    save_time: u64,
-    game_time: u64,
-    day_carry: bool,
+    pub save_time: u64,
+    pub game_time: u64,
+    pub day_carry: bool,
 }
 
 impl From<&Naive> for NaiveSave {

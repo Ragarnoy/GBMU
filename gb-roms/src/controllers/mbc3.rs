@@ -1,7 +1,7 @@
 use super::Controller;
 use crate::header::Header;
 use gb_bus::{Address, Area, Error, FileOperation};
-use gb_rtc::{naive::NaiveSave, Naive, ReadRtcRegisters};
+use gb_rtc::{naive::NaiveSave, Naive, ReadRtcRegisters, WriteRtcRegisters};
 use serde::{Deserialize, Serialize};
 use std::io::{self, Read};
 
@@ -232,6 +232,13 @@ impl Controller for MBC3 {
 
         let data = Mbc3Data::deserialize(deserializer)?;
         self.regs.rtc = data.rtc.into();
+
+        let timestamp = data.clock.game_time + data.clock.save_time;
+        self.clock = Some(Naive::new(timestamp as u32));
+        if let Some(clock) = self.clock.as_mut() {
+            clock.set_day_counter_carry(data.clock.day_carry);
+        }
+
         self.ram_banks = data
             .ram_banks
             .into_iter()
