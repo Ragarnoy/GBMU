@@ -5,9 +5,8 @@ use super::{
     ident::{Ident, Reg16, Reg8},
     inc, jump, logic,
     opcode::Opcode,
-    read::{read, read_hl},
-    write::write_hl,
-    CycleDigest, MicrocodeController, MicrocodeFlow, State,
+    read::{self, read},
+    write, CycleDigest, MicrocodeController, MicrocodeFlow, State,
 };
 use std::{cell::RefCell, convert::TryFrom, rc::Rc};
 
@@ -37,20 +36,21 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                 Opcode::JrC => ctl.push_actions(&[read, carry, jump::jump_relative]),
                 Opcode::JrNc => ctl.push_actions(&[read, not_carry, jump::jump_relative]),
 
-                Opcode::IncBC => ctl.push_actions(&[inc::inc16]).set_dest(Reg16::BC.into()),
-                Opcode::IncDE => ctl.push_actions(&[inc::inc16]).set_dest(Reg16::DE.into()),
-                Opcode::IncHL => ctl.push_actions(&[inc::inc16]).set_dest(Reg16::HL.into()),
-                Opcode::IncSP => ctl.push_actions(&[inc::inc16]).set_dest(Reg16::SP.into()),
+                Opcode::IncBC => ctl.push_actions(&[read::bc, inc::inc16, write::bc]),
+                Opcode::IncDE => ctl.push_actions(&[read::de, inc::inc16, write::de]),
+                Opcode::IncHL => ctl.push_actions(&[read::hl, inc::inc16, write::hl]),
+                Opcode::IncSP => ctl.push_actions(&[read::sp, inc::inc16, write::sp]),
 
-                Opcode::IncA => ctl.push_actions(&[inc::inc8]).set_dest(Reg8::A.into()),
-                Opcode::IncB => ctl.push_actions(&[inc::inc8]).set_dest(Reg8::B.into()),
-                Opcode::IncC => ctl.push_actions(&[inc::inc8]).set_dest(Reg8::C.into()),
-                Opcode::IncD => ctl.push_actions(&[inc::inc8]).set_dest(Reg8::D.into()),
-                Opcode::IncE => ctl.push_actions(&[inc::inc8]).set_dest(Reg8::E.into()),
-                Opcode::IncH => ctl.push_actions(&[inc::inc8]).set_dest(Reg8::H.into()),
-                Opcode::IncL => ctl.push_actions(&[inc::inc8]).set_dest(Reg8::L.into()),
-                Opcode::IncHLind => ctl.push_actions(&[read_hl, inc::inc_hl, write_hl]),
-
+                Opcode::IncA => ctl.push_actions(&[read::a, inc::inc8, write::a]),
+                Opcode::IncB => ctl.push_actions(&[read::b, inc::inc8, write::b]),
+                Opcode::IncC => ctl.push_actions(&[read::c, inc::inc8, write::c]),
+                Opcode::IncD => ctl.push_actions(&[read::d, inc::inc8, write::d]),
+                Opcode::IncE => ctl.push_actions(&[read::e, inc::inc8, write::e]),
+                Opcode::IncH => ctl.push_actions(&[read::h, inc::inc8, write::h]),
+                Opcode::IncL => ctl.push_actions(&[read::l, inc::inc8, write::l]),
+                Opcode::IncHLind => {
+                    ctl.push_actions(&[read::hl, read::ind, inc::inc_hl, read::hl, write::ind])
+                }
                 Opcode::DecBC => ctl.push_actions(&[dec::dec16]).set_dest(Reg16::BC.into()),
                 Opcode::DecDE => ctl.push_actions(&[dec::dec16]).set_dest(Reg16::DE.into()),
                 Opcode::DecHL => ctl.push_actions(&[dec::dec16]).set_dest(Reg16::HL.into()),
@@ -63,8 +63,7 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                 Opcode::DecE => ctl.push_actions(&[dec::dec8]).set_dest(Reg8::E.into()),
                 Opcode::DecH => ctl.push_actions(&[dec::dec8]).set_dest(Reg8::H.into()),
                 Opcode::DecL => ctl.push_actions(&[dec::dec8]).set_dest(Reg8::L.into()),
-                Opcode::DecHLind => ctl.push_actions(&[read_hl, dec::dec_hl, write_hl]),
-
+                // Opcode::DecHLind => ctl.push_actions(&[read_hl, dec::dec_hl, write_hl]),
                 Opcode::CpAA => ctl.push_actions(&[logic::cp]).set_src(Reg8::A.into()),
                 Opcode::CpAB => ctl.push_actions(&[logic::cp]).set_src(Reg8::B.into()),
                 Opcode::CpAC => ctl.push_actions(&[logic::cp]).set_src(Reg8::C.into()),
@@ -72,9 +71,9 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                 Opcode::CpAE => ctl.push_actions(&[logic::cp]).set_src(Reg8::E.into()),
                 Opcode::CpAH => ctl.push_actions(&[logic::cp]).set_src(Reg8::H.into()),
                 Opcode::CpAL => ctl.push_actions(&[logic::cp]).set_src(Reg8::L.into()),
-                Opcode::CpAHL => ctl
-                    .push_actions(&[read_hl, logic::cp])
-                    .set_src(Ident::IndirectHL8),
+                // Opcode::CpAHL => ctl
+                //     .push_actions(&[read_hl, logic::cp])
+                //     .set_src(Ident::IndirectHL8),
                 Opcode::CpA8 => ctl.push_actions(&[read, logic::cp]).set_src(Ident::Raw8),
 
                 Opcode::Nop => &mut ctl,
