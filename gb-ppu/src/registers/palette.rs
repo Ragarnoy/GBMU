@@ -1,3 +1,4 @@
+use super::Register;
 use crate::color::Color;
 use crate::error::{PPUError, PPUResult};
 use modular_bitfield::{bitfield, specifiers::B2};
@@ -11,7 +12,7 @@ struct MapField {
     index_3: B2,
 }
 
-#[derive(Default)]
+#[derive(Clone, Copy, Default, Debug)]
 pub struct Palette {
     map: MapField,
 }
@@ -67,3 +68,5 @@ impl From<Palette> for u8 {
         register.map.into()
     }
 }
+
+impl Register for Palette {}

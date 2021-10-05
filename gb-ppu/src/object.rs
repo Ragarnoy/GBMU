@@ -68,7 +68,7 @@ impl Object {
         line: usize,
         vram: &Vram,
         size_16: bool,
-        palettes: &(Palette, Palette),
+        palettes: (&Palette, &Palette),
     ) -> PPUResult<[(u8, Color); 8]> {
         let palette = if self.attributes.palette_nb() == 0 {
             &palettes.0

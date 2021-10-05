@@ -1,19 +1,20 @@
 use sdl2::{event::Event, keyboard::Keycode};
 
 use gb_lcd::{render, window::GBWindow};
-use gb_ppu::{PPUMem, PPU, TILESHEET_HEIGHT, TILESHEET_WIDTH};
+use gb_ppu::{PPUMem, PPURegisters, PPU, TILESHEET_HEIGHT, TILESHEET_WIDTH};
+
+use std::convert::TryInto;
 
 fn overwrite_memory(
-    ppu: &mut PPU,
     ppu_mem: &PPUMem,
+    ppu_reg: &PPURegisters,
     dump: (&str, &[u8; 8192], &[u8; 160], &[u8; 112]),
 ) {
     assert!(ppu_mem.overwrite_vram(dump.1).is_ok());
     assert!(ppu_mem.overwrite_oam(dump.2).is_ok());
-    *ppu.bg_palette_mut() = dump.3[0x47].into();
-    *ppu.obj_palette_0_mut() = dump.3[0x48].into();
-    *ppu.obj_palette_1_mut() = dump.3[0x49].into();
-    *ppu.control_mut() = dump.3[0x40].into();
+    assert!(ppu_reg
+        .overwrite_lcd(dump.3[0x40..0x4C].try_into().expect("invalid lcd bytes"))
+        .is_ok());
 }
 
 pub fn main() {
@@ -42,8 +43,9 @@ pub fn main() {
     let mut display = render::RenderImage::<TILESHEET_WIDTH, TILESHEET_HEIGHT>::with_bar_size(
         bar_pixels_size as f32,
     );
-    let mut ppu = PPU::new();
+    let ppu = PPU::new();
     let ppu_mem = ppu.memory();
+    let ppu_reg = ppu.registers();
     let dumps = [
         (
             "mario",
@@ -64,7 +66,7 @@ pub fn main() {
             include_bytes!("memory dumps/io_registers/Pokemon_Bleue.dmp"),
         ),
     ];
-    overwrite_memory(&mut ppu, &ppu_mem, dumps[0]);
+    overwrite_memory(&ppu_mem, &ppu_reg, dumps[0]);
     let mut image = ppu.tilesheet_image();
 
     'running: loop {
@@ -78,7 +80,7 @@ pub fn main() {
                 egui::menu::menu(ui, "dump", |ui| {
                     for (title, vram, oam, io_reg) in dumps {
                         if ui.button(title).clicked() {
-                            overwrite_memory(&mut ppu, &ppu_mem, (title, vram, oam, io_reg));
+                            overwrite_memory(&ppu_mem, &ppu_reg, (title, vram, oam, io_reg));
                             image = ppu.tilesheet_image();
                         }
                     }
