@@ -72,7 +72,7 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                 Opcode::CpAH => ctl.push_actions(&[read::h, logic::cp, write::h]),
                 Opcode::CpAL => ctl.push_actions(&[read::l, logic::cp, write::l]),
                 Opcode::CpAHL => ctl.push_actions(&[read::hl, read::ind, logic::cp]),
-                Opcode::CpA8 => ctl.push_actions(&[read, logic::cp]),
+                Opcode::CpA8 => ctl.push_actions(&[read::byte, logic::cp]),
 
                 Opcode::Nop => &mut ctl,
                 Opcode::PrefixCb => ctl.push_action(fetch_cb),
