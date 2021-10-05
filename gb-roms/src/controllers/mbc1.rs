@@ -66,34 +66,15 @@ impl MBC1 {
 
     fn read_rom(&self, addr: Box<dyn Address<Area>>) -> Result<u8, Error> {
         let address = addr.get_address();
-        let root_bank = address < 0x3fff;
-        let rom = self.get_selected_rom(root_bank);
+        let is_root_bank = address < 0x4000;
+        let rom = self.get_selected_rom(is_root_bank);
 
-        if root_bank {
+        if is_root_bank {
             Ok(rom[address])
         } else {
             let address = address - 0x4000;
             Ok(rom[address])
         }
-    }
-
-    fn write_ram(&mut self, v: u8, addr: Box<dyn Address<Area>>) -> Result<(), Error> {
-        if !self.regs.ram_enabled {
-            return Err(Error::new_segfault(addr));
-        }
-        let ram = self.get_selected_ram_mut();
-        let address = addr.get_address();
-        ram[address] = v;
-        Ok(())
-    }
-
-    fn read_ram(&self, addr: Box<dyn Address<Area>>) -> Result<u8, Error> {
-        if !self.regs.ram_enabled {
-            return Err(Error::new_segfault(addr));
-        }
-        let ram = self.get_selected_ram();
-        let address = addr.get_address();
-        Ok(ram[address])
     }
 
     fn get_selected_rom(&self, root_bank: bool) -> &[u8; MBC1::ROM_SIZE] {
@@ -131,6 +112,25 @@ impl MBC1 {
         } else {
             upper_index | index as usize
         }
+    }
+
+    fn write_ram(&mut self, v: u8, addr: Box<dyn Address<Area>>) -> Result<(), Error> {
+        if !self.regs.ram_enabled {
+            return Err(Error::new_segfault(addr));
+        }
+        let ram = self.get_selected_ram_mut();
+        let address = addr.get_address();
+        ram[address] = v;
+        Ok(())
+    }
+
+    fn read_ram(&self, addr: Box<dyn Address<Area>>) -> Result<u8, Error> {
+        if !self.regs.ram_enabled {
+            return Err(Error::new_segfault(addr));
+        }
+        let ram = self.get_selected_ram();
+        let address = addr.get_address();
+        Ok(ram[address])
     }
 
     fn get_selected_ram_mut(&mut self) -> &mut [u8; MBC1::RAM_SIZE] {
@@ -220,6 +220,7 @@ impl Controller for MBC1 {
 #[cfg(test)]
 mod test_mbc1 {
     use super::{BankingMode, Configuration, RamSize, RomSize, MBC1};
+    use gb_bus::{address::Address, Area};
 
     #[test]
     fn test_extra_rom_default_selection() {
@@ -256,6 +257,21 @@ mod test_mbc1 {
         assert_eq!(ctl.get_main_rom_index(), 0);
         assert_eq!(ctl.get_extra_rom_index(), (2 << 5) | 11);
         assert_eq!(ctl.get_ram_index(), 0);
+
+        ctl.regs.rom_number = 1;
+        ctl.regs.special = 0;
+        ctl.regs.banking_mode = BankingMode::Simple;
+
+        ctl.rom_bank[0][0x3fff] = 51;
+        ctl.rom_bank[1][0] = 42;
+        let b = ctl
+            .read_rom(Box::new(Address::from_offset(Area::Rom, 0x3fff, 0)))
+            .expect("failed to read");
+        assert_eq!(b, 51);
+        let b = ctl
+            .read_rom(Box::new(Address::from_offset(Area::Rom, 0x4000, 0)))
+            .expect("failed to read");
+        assert_eq!(b, 42);
     }
 
     #[test]

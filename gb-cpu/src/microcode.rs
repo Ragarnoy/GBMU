@@ -1,12 +1,14 @@
+mod arithmetic;
 mod condition;
 pub mod controller;
 mod dec;
 mod fetch;
 mod fetch_cb;
 mod flag;
-mod ident;
 mod inc;
 mod jump;
+mod logic;
+mod math;
 pub mod opcode;
 pub mod opcode_cb;
 mod read;

@@ -1,7 +1,7 @@
 use super::{CycleDigest, MicrocodeController, MicrocodeFlow, State};
 
 pub fn jump(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
-    let addr = u16::from_be_bytes([ctl.pop(), ctl.pop()]);
+    let addr = ctl.pop_u16();
     log::trace!("[microcode] jumping to {:#x}", addr);
     state.regs.pc = addr;
     MicrocodeFlow::Continue(CycleDigest::Consume)
