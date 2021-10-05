@@ -94,7 +94,7 @@ impl MBC3 {
         let address = addr.get_address();
         let ram_bank = self.regs.ram_bank;
         match ram_bank {
-            0x0..=0x3 => Ok(self.ram_banks[ram_bank as usize][(address as usize) & 0x1FFF]),
+            0x0..=0x3 => Ok(self.ram_banks[ram_bank as usize][address]),
             0x8 => Ok(self.regs.rtc.seconds),
             0x9 => Ok(self.regs.rtc.minutes),
             0xA => Ok(self.regs.rtc.hours),
@@ -111,7 +111,7 @@ impl MBC3 {
         let address = addr.get_address();
         let ram_bank = self.regs.ram_bank;
         match ram_bank {
-            0x0..=0x3 => self.ram_banks[ram_bank as usize][(address as usize) & 0x1FFF] = v,
+            0x0..=0x3 => self.ram_banks[ram_bank as usize][address] = v,
             0x8 => self.regs.rtc.seconds = v,
             0x9 => self.regs.rtc.minutes = v,
             0xA => self.regs.rtc.hours = v,
