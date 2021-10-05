@@ -2,7 +2,7 @@ use crate::{
     constant::{DAY, HOUR, MAX_DAYS, MAX_TIME, MINUTE},
     ReadRtcRegisters, WriteRtcRegisters,
 };
-use std::time::Instant;
+use std::time::{Instant, SystemTime};
 
 #[derive(PartialEq, Eq, Debug)]
 pub struct Naive {
@@ -155,6 +155,32 @@ impl WriteRtcRegisters for Naive {
         self.set_upper_days((control & 1) == 1);
         self.set_halted((control & 0b100_0000) == 0b100_0000);
         self.set_day_counter_carry((control & 0b1000_0000) == 0b1000_0000);
+    }
+}
+
+#[derive(serde::Serialize, serde::Deserialize)]
+struct NaiveData {
+    current_time: u128,
+    timestamp: u128,
+    day_carry: bool,
+}
+
+impl From<Naive> for NaiveData {
+    fn from(data: Naive) -> Self {
+        let current_time = match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
+            Ok(n) => n.as_millis(),
+            Err(_) => panic!("SystemTime before UNIX EPOCH!"),
+        };
+        let mut timestamp: u128 = data.timestamp as u128;
+        if let Some(clock) = data.clock {
+            timestamp += clock.elapsed().as_millis();
+        }
+        let day_carry = data.day_carry;
+        Self {
+            current_time,
+            timestamp,
+            day_carry,
+        }
     }
 }
 
