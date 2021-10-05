@@ -2,12 +2,10 @@ use super::{
     condition::{carry, not_carry, not_zero, zero},
     dec,
     fetch_cb::fetch_cb,
-    ident::{Ident, Reg16, Reg8},
     inc, jump, logic,
     opcode::Opcode,
-    read::{read, read_hl},
-    write::write_hl,
-    CycleDigest, MicrocodeController, MicrocodeFlow, State,
+    read::{self, read},
+    write, CycleDigest, MicrocodeController, MicrocodeFlow, State,
 };
 use std::{cell::RefCell, convert::TryFrom, rc::Rc};
 
@@ -37,45 +35,45 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                 Opcode::JrC => ctl.push_actions(&[read, carry, jump::jump_relative]),
                 Opcode::JrNc => ctl.push_actions(&[read, not_carry, jump::jump_relative]),
 
-                Opcode::IncBC => ctl.push_actions(&[inc::inc16]).set_dest(Reg16::BC.into()),
-                Opcode::IncDE => ctl.push_actions(&[inc::inc16]).set_dest(Reg16::DE.into()),
-                Opcode::IncHL => ctl.push_actions(&[inc::inc16]).set_dest(Reg16::HL.into()),
-                Opcode::IncSP => ctl.push_actions(&[inc::inc16]).set_dest(Reg16::SP.into()),
+                Opcode::IncBC => ctl.push_actions(&[read::bc, inc::inc16, write::bc]),
+                Opcode::IncDE => ctl.push_actions(&[read::de, inc::inc16, write::de]),
+                Opcode::IncHL => ctl.push_actions(&[read::hl, inc::inc16, write::hl]),
+                Opcode::IncSP => ctl.push_actions(&[read::sp, inc::inc16, write::sp]),
 
-                Opcode::IncA => ctl.push_actions(&[inc::inc8]).set_dest(Reg8::A.into()),
-                Opcode::IncB => ctl.push_actions(&[inc::inc8]).set_dest(Reg8::B.into()),
-                Opcode::IncC => ctl.push_actions(&[inc::inc8]).set_dest(Reg8::C.into()),
-                Opcode::IncD => ctl.push_actions(&[inc::inc8]).set_dest(Reg8::D.into()),
-                Opcode::IncE => ctl.push_actions(&[inc::inc8]).set_dest(Reg8::E.into()),
-                Opcode::IncH => ctl.push_actions(&[inc::inc8]).set_dest(Reg8::H.into()),
-                Opcode::IncL => ctl.push_actions(&[inc::inc8]).set_dest(Reg8::L.into()),
-                Opcode::IncHLind => ctl.push_actions(&[read_hl, inc::inc_hl, write_hl]),
+                Opcode::IncA => ctl.push_actions(&[read::a, inc::inc8, write::a]),
+                Opcode::IncB => ctl.push_actions(&[read::b, inc::inc8, write::b]),
+                Opcode::IncC => ctl.push_actions(&[read::c, inc::inc8, write::c]),
+                Opcode::IncD => ctl.push_actions(&[read::d, inc::inc8, write::d]),
+                Opcode::IncE => ctl.push_actions(&[read::e, inc::inc8, write::e]),
+                Opcode::IncH => ctl.push_actions(&[read::h, inc::inc8, write::h]),
+                Opcode::IncL => ctl.push_actions(&[read::l, inc::inc8, write::l]),
+                Opcode::IncHLind => {
+                    ctl.push_actions(&[read::hl, read::ind, inc::inc8, read::hl, write::ind])
+                }
+                Opcode::DecBC => ctl.push_actions(&[read::bc, dec::dec16, write::bc]),
+                Opcode::DecDE => ctl.push_actions(&[read::de, dec::dec16, write::de]),
+                Opcode::DecHL => ctl.push_actions(&[read::hl, dec::dec16, write::hl]),
+                Opcode::DecSP => ctl.push_actions(&[read::sp, dec::dec16, write::sp]),
 
-                Opcode::DecBC => ctl.push_actions(&[dec::dec16]).set_dest(Reg16::BC.into()),
-                Opcode::DecDE => ctl.push_actions(&[dec::dec16]).set_dest(Reg16::DE.into()),
-                Opcode::DecHL => ctl.push_actions(&[dec::dec16]).set_dest(Reg16::HL.into()),
-                Opcode::DecSP => ctl.push_actions(&[dec::dec16]).set_dest(Reg16::SP.into()),
-
-                Opcode::DecA => ctl.push_actions(&[dec::dec8]).set_dest(Reg8::A.into()),
-                Opcode::DecB => ctl.push_actions(&[dec::dec8]).set_dest(Reg8::B.into()),
-                Opcode::DecC => ctl.push_actions(&[dec::dec8]).set_dest(Reg8::C.into()),
-                Opcode::DecD => ctl.push_actions(&[dec::dec8]).set_dest(Reg8::D.into()),
-                Opcode::DecE => ctl.push_actions(&[dec::dec8]).set_dest(Reg8::E.into()),
-                Opcode::DecH => ctl.push_actions(&[dec::dec8]).set_dest(Reg8::H.into()),
-                Opcode::DecL => ctl.push_actions(&[dec::dec8]).set_dest(Reg8::L.into()),
-                Opcode::DecHLind => ctl.push_actions(&[read_hl, dec::dec_hl, write_hl]),
-
-                Opcode::CpAA => ctl.push_actions(&[logic::cp]).set_src(Reg8::A.into()),
-                Opcode::CpAB => ctl.push_actions(&[logic::cp]).set_src(Reg8::B.into()),
-                Opcode::CpAC => ctl.push_actions(&[logic::cp]).set_src(Reg8::C.into()),
-                Opcode::CpAD => ctl.push_actions(&[logic::cp]).set_src(Reg8::D.into()),
-                Opcode::CpAE => ctl.push_actions(&[logic::cp]).set_src(Reg8::E.into()),
-                Opcode::CpAH => ctl.push_actions(&[logic::cp]).set_src(Reg8::H.into()),
-                Opcode::CpAL => ctl.push_actions(&[logic::cp]).set_src(Reg8::L.into()),
-                Opcode::CpAHL => ctl
-                    .push_actions(&[read_hl, logic::cp])
-                    .set_src(Ident::IndirectHL8),
-                Opcode::CpA8 => ctl.push_actions(&[read, logic::cp]).set_src(Ident::Raw8),
+                Opcode::DecA => ctl.push_actions(&[read::a, dec::dec8, write::a]),
+                Opcode::DecB => ctl.push_actions(&[read::b, dec::dec8, write::b]),
+                Opcode::DecC => ctl.push_actions(&[read::c, dec::dec8, write::c]),
+                Opcode::DecD => ctl.push_actions(&[read::d, dec::dec8, write::d]),
+                Opcode::DecE => ctl.push_actions(&[read::e, dec::dec8, write::e]),
+                Opcode::DecH => ctl.push_actions(&[read::h, dec::dec8, write::h]),
+                Opcode::DecL => ctl.push_actions(&[read::l, dec::dec8, write::l]),
+                Opcode::DecHLind => {
+                    ctl.push_actions(&[read::hl, read::ind, dec::dec8, read::hl, write::ind])
+                }
+                Opcode::CpAA => ctl.push_actions(&[read::a, logic::cp, write::a]),
+                Opcode::CpAB => ctl.push_actions(&[read::b, logic::cp, write::b]),
+                Opcode::CpAC => ctl.push_actions(&[read::c, logic::cp, write::c]),
+                Opcode::CpAD => ctl.push_actions(&[read::d, logic::cp, write::d]),
+                Opcode::CpAE => ctl.push_actions(&[read::e, logic::cp, write::e]),
+                Opcode::CpAH => ctl.push_actions(&[read::h, logic::cp, write::h]),
+                Opcode::CpAL => ctl.push_actions(&[read::l, logic::cp, write::l]),
+                Opcode::CpAHL => ctl.push_actions(&[read::hl, read::ind, logic::cp]),
+                Opcode::CpA8 => ctl.push_actions(&[read, logic::cp]),
 
                 Opcode::Nop => &mut ctl,
                 Opcode::PrefixCb => ctl.push_action(fetch_cb),

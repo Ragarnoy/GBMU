@@ -13,6 +13,9 @@ pub enum PPUError {
     MemoryUnavailable {
         mem_name: String,
     },
+    RegistersUnavailable {
+        reg_name: String,
+    },
 }
 
 impl Display for PPUError {
@@ -29,6 +32,9 @@ impl Display for PPUError {
             ),
             PPUError::MemoryUnavailable { mem_name } => {
                 write!(f, "memory '{}' is unavailable", mem_name)
+            }
+            PPUError::RegistersUnavailable { reg_name } => {
+                write!(f, "registers '{}' are unavailable", reg_name)
             }
         }
     }
