@@ -120,6 +120,9 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                 Opcode::LdHL16 => ctl.push_actions(&[read::byte, read::byte, write::hl]),
                 Opcode::LdSP16 => ctl.push_actions(&[read::byte, read::byte, write::sp]),
 
+                Opcode::LddHLA => ctl.push_actions(&[read::a, read::hl, write::ind, dec::hl]),
+                Opcode::LddAHL => ctl.push_actions(&[read::hl, read::ind, write::a, dec::hl]),
+
                 Opcode::LdA8 => ctl.push_actions(&[read::byte, write::a]),
                 Opcode::LdB8 => ctl.push_actions(&[read::byte, write::b]),
                 Opcode::LdC8 => ctl.push_actions(&[read::byte, write::c]),
