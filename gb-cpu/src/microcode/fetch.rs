@@ -163,6 +163,43 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                     write::ind,
                 ]),
 
+                Opcode::PopBc => ctl.push_actions(&[
+                    read::sp,
+                    inc::sp,
+                    read::ind,
+                    read::sp,
+                    inc::sp,
+                    read::ind,
+                    write::bc,
+                ]),
+                Opcode::PopDe => ctl.push_actions(&[
+                    read::sp,
+                    inc::sp,
+                    read::ind,
+                    read::sp,
+                    inc::sp,
+                    read::ind,
+                    write::de,
+                ]),
+                Opcode::PopHl => ctl.push_actions(&[
+                    read::sp,
+                    inc::sp,
+                    read::ind,
+                    read::sp,
+                    inc::sp,
+                    read::ind,
+                    write::hl,
+                ]),
+                Opcode::PopAf => ctl.push_actions(&[
+                    read::sp,
+                    inc::sp,
+                    read::ind,
+                    read::sp,
+                    inc::sp,
+                    read::ind,
+                    write::af,
+                ]),
+
                 Opcode::LdiHLA => ctl.push_actions(&[read::a, read::hl, write::ind, inc::hl]),
                 Opcode::LdiAHL => ctl.push_actions(&[read::hl, read::ind, write::a, inc::hl]),
 

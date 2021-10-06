@@ -23,6 +23,12 @@ fn update_inc_flag(state: &mut impl WriteFlagReg, flag: Flag) {
     state.set_zero(flag.zero);
 }
 
+/// increase sp by one
+pub fn sp(_ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
+    state.regs.sp += 1;
+    OK_PLAY_NEXT_ACTION
+}
+
 /// increase `HL` without consuming the cycle
 pub fn hl(_ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     state.regs.hl += 1;

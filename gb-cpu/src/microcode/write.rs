@@ -61,6 +61,12 @@ pub fn hl(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     OK_PLAY_NEXT_ACTION
 }
 
+/// Write the value stored in cache to `HL`, do not consume the cycle
+pub fn af(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
+    state.regs.hl = ctl.pop_u16();
+    OK_PLAY_NEXT_ACTION
+}
+
 /// Write the value stored in cache to `SP`, do not consume the cycle
 pub fn sp(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     state.regs.sp = u16::from_be_bytes([ctl.pop(), ctl.pop()]);
