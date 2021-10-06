@@ -83,7 +83,7 @@ pub fn sp(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
 
 /// Read the byte from the u16 addr stored in the cache, do consume the cycle
 pub fn ind(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
-    let addr = u16::from_be_bytes([ctl.pop(), ctl.pop()]);
+    let addr = ctl.pop_u16();
     let value = state.read_bus(addr);
     ctl.push(value);
     OK_CONSUME_CYCLE
