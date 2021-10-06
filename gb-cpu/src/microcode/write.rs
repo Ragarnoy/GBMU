@@ -69,7 +69,7 @@ pub fn sp(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
 
 /// Write the value stored in cache to the u16 address stored in cache, do consume the cycle
 pub fn ind(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
-    let addr = u16::from_be_bytes([ctl.pop(), ctl.pop()]);
+    let addr = ctl.pop_u16();
     let value = ctl.pop();
     state.write_bus(addr, value);
     OK_CONSUME_CYCLE

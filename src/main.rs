@@ -22,8 +22,8 @@ impl Default for Memory {
 }
 
 impl dbg_interfaces::MemoryDebugOperations for Memory {
-    fn read(&self, index: usize) -> u8 {
-        *self.memory.get(index).unwrap()
+    fn read(&self, index: u16) -> u8 {
+        *self.memory.get(index as usize).unwrap()
     }
 }
 
