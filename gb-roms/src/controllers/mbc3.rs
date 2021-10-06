@@ -1,12 +1,9 @@
 use super::Controller;
 use crate::header::Header;
 use gb_bus::{Address, Area, Error, FileOperation};
-use gb_rtc::{naive::NaiveSave, Naive, ReadRtcRegisters, WriteRtcRegisters};
+use gb_rtc::{Naive, ReadRtcRegisters};
 use serde::{Deserialize, Serialize};
-use std::{
-    io::{self, Read},
-    time::SystemTime,
-};
+use std::io::{self, Read};
 
 type RamBank = [u8; MBC3::RAM_BANK_SIZE];
 type RomBank = [u8; MBC3::ROM_BANK_SIZE];
@@ -173,47 +170,17 @@ impl<T: ReadRtcRegisters> From<&T> for RTCRegs {
     }
 }
 
-impl From<Vec<u8>> for RTCRegs {
-    fn from(data: Vec<u8>) -> Self {
-        if data.len() < 5 {
-            return RTCRegs::default();
-        }
-        Self {
-            seconds: data[0],
-            minutes: data[1],
-            hours: data[2],
-            lower_day_counter: data[3],
-            upper_day_counter: data[4],
-        }
-    }
-}
-
 #[derive(serde::Serialize, serde::Deserialize)]
 struct Mbc3Data {
-    rtc: Vec<u8>,
-    clock: NaiveSave,
+    clock: Option<Naive>,
     ram_banks: Vec<Vec<u8>>,
 }
 
 impl From<&MBC3> for Mbc3Data {
     fn from(mbc3: &MBC3) -> Self {
-        let rtc_data = &mbc3.regs.rtc;
-
-        let rtc = vec![
-            rtc_data.seconds,
-            rtc_data.minutes,
-            rtc_data.hours,
-            rtc_data.lower_day_counter,
-            rtc_data.upper_day_counter,
-        ];
-        let clock = mbc3.clock.as_ref().unwrap_or(&Naive::default()).into();
+        let clock = mbc3.clock.clone();
         let ram_banks = mbc3.ram_banks.iter().map(|bank| bank.to_vec()).collect();
-
-        Self {
-            rtc,
-            clock,
-            ram_banks,
-        }
+        Self { clock, ram_banks }
     }
 }
 
@@ -234,17 +201,8 @@ impl Controller for MBC3 {
         use std::convert::TryFrom;
 
         let data = Mbc3Data::deserialize(deserializer)?;
-        self.regs.rtc = data.rtc.into();
 
-        let current_time = match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
-            Ok(n) => n.as_secs(),
-            Err(_) => panic!("SystemTime before UNIX EPOCH!"),
-        };
-        let timestamp = data.clock.game_time + (current_time - data.clock.save_time);
-        self.clock = Some(Naive::new(timestamp));
-        if let Some(clock) = self.clock.as_mut() {
-            clock.set_day_counter_carry(data.clock.day_carry);
-        }
+        self.clock = data.clock;
 
         self.ram_banks = data
             .ram_banks
