@@ -23,7 +23,7 @@ pub struct PPU {
     lcd_reg: Rc<RefCell<LcdReg>>,
     pixels: RenderData<SCREEN_WIDTH, SCREEN_HEIGHT>,
     state: State,
-    _oam_fetched: Vec<Sprite>,
+    scanline_sprites: Vec<Sprite>,
 }
 
 impl PPU {
@@ -34,7 +34,7 @@ impl PPU {
             lcd_reg: Rc::new(RefCell::new(LcdReg::new())),
             pixels: [[[255; 3]; SCREEN_WIDTH]; SCREEN_HEIGHT],
             state: State::new(),
-            _oam_fetched: Vec::with_capacity(10),
+            scanline_sprites: Vec::with_capacity(10),
         }
     }
 
@@ -225,7 +225,17 @@ impl PPU {
             }
             if let Some(Lock::Ppu) = lock {
                 // fetch oam here
+                if self.state.step() % 2 == 1 {
+                    // fetch oam here
+                    let sprite_pos = self.state.step() as usize / 2;
+                    match oam.read_sprite(sprite_pos) {
+                        Err(err) => log::error!("Error while reading sprite: {}", err),
+                        Ok(sprite) => {}
+                    }
+                }
             }
+        } else {
+            log::error!("Oam borrow failed for ppu in mode 2");
         }
     }
 }
