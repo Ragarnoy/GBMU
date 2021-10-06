@@ -1,4 +1,4 @@
-use crate::drawing::{Mode, State};
+use crate::drawing::{State};
 use crate::memory::{Oam, PPUMem, Vram};
 use crate::registers::{LcdReg, PPURegisters};
 use crate::{
@@ -31,7 +31,7 @@ impl PPU {
             oam: Rc::new(RefCell::new(Oam::new())),
             lcd_reg: Rc::new(RefCell::new(LcdReg::new())),
             pixels: [[[255; 3]; SCREEN_WIDTH]; SCREEN_HEIGHT],
-            state: state::new(),
+            state: State::new(),
         }
     }
 

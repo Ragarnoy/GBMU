@@ -3,10 +3,10 @@ use std::ops::{Index, IndexMut};
 
 #[derive(Default, Clone, Copy, Debug)]
 pub struct Scrolling {
-    scy: u8,
-    scx: u8,
-    ly: u8,
-    lyc: u8,
+    pub scy: u8,
+    pub scx: u8,
+    pub ly: u8,
+    pub lyc: u8,
 }
 
 impl Scrolling {

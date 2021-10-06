@@ -11,12 +11,15 @@ pub struct State {
 
 impl State {
     const LINE_COUNT: u8 = 154;
+    const LAST_LINE: u8 = Self::LINE_COUNT - 1;
     const VBLANK_START: u8 = 144;
 
     const PIXEL_DRAWING_START: u16 = 80;
+    const LAST_OAM_FETCH_STEP: u16 = Self::PIXEL_DRAWING_START - 1;
     const HBLANK_MIN_START: u16 = 252;
     const HBLANK_MAX_START: u16 = 369;
     const STEP_COUNT: u16 = 456;
+    const LAST_STEP: u16 = Self::STEP_COUNT - 1;
 
     pub fn new() -> Self {
         State {
@@ -28,15 +31,15 @@ impl State {
     }
 
     pub fn update(&mut self, lcd_reg: Option<RefMut<LcdReg>>) {
-        match self {
+        match self.mode {
             Mode::HBlank => self.update_hblank(),
             Mode::VBlank => self.update_vblank(),
             Mode::OAMFetch => self.update_oam_fetch(),
             Mode::PixelDrawing => self.update_pixel_drawing(),
         }
-        self.step = (self.step + 1) % STEP_COUNT;
+        self.step = (self.step + 1) % Self::STEP_COUNT;
         if self.step == 0 {
-            self.line = (self.line + 1) % LINE_COUNT;
+            self.line = (self.line + 1) % Self::LINE_COUNT;
             self.pixel_drawn = 0;
         }
         if let Some(lcd) = lcd_reg {
@@ -55,7 +58,7 @@ impl State {
             (_, step) if step < Self::HBLANK_MIN_START => {
                 log::error!("HBlank reached on OAMFetch/PixelDrawing period")
             }
-            (line, STEP_COUNT - 1) => if line == Self::VBLANK_START - 1 {
+            (line, Self::LAST_STEP) => if line == Self::VBLANK_START - 1 {
                 self.mode = Mode::VBlank;
             } else {
                 self.mode = Mode::OAMFetch;
@@ -67,8 +70,8 @@ impl State {
     fn update_vblank(&mut self) {
         match (self.line, self.step) {
             (line, _) if line < Self::VBLANK_START => log::error!("VBlank reached on draw line"),
-            (Self::LINE_COUNT - 1, Self::STEP_COUNT - 1) => {
-                self::mode = Mode::OAMFetch
+            (Self::LAST_LINE, Self::LAST_STEP) => {
+                self.mode = Mode::OAMFetch
             },
             _ => {}
         }
@@ -78,8 +81,8 @@ impl State {
         match (self.line, self.step) {
             (line, _) if line >= Self::VBLANK_START => log::error!("OAMFetch reached on VBlank period"),
             (_, step) if step >= Self::PIXEL_DRAWING_START => log::error!("OAMFetch reached on PixelDrawing period"),
-            (_, Self::PIXEL_DRAWING_START - 1) => {
-                self::mode = Mode::PixelDrawing
+            (_, Self::LAST_OAM_FETCH_STEP) => {
+                self.mode = Mode::PixelDrawing
             },
             _ => {}
         }
@@ -102,9 +105,10 @@ impl State {
         }
     }
 
-    fn update_registers(&self, lcd_reg: RefMut<LcdReg>) {
-        lcd_reg.scrolling.set_ly(self.line);
+    fn update_registers(&self, mut lcd_reg: RefMut<LcdReg>) {
+        lcd_reg.scrolling.ly = self.line;
         lcd_reg.stat.set_mode(self.mode);
-        lcd_reg.stat.set_lyc_eq_ly(self.line == lcd_reg.scrolling.lyc());
+        let lyc_eq_ly = self.line == lcd_reg.scrolling.lyc;
+        lcd_reg.stat.set_lyc_eq_ly(lyc_eq_ly);
     }
 }
