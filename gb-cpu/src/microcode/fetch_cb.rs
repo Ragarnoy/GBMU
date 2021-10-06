@@ -1,4 +1,6 @@
-use super::{opcode_cb::OpcodeCB, MicrocodeController, MicrocodeFlow, State};
+use super::{
+    bitwise, opcode_cb::OpcodeCB, read, CycleDigest, MicrocodeController, MicrocodeFlow, State,
+};
 use std::convert::TryFrom;
 
 pub fn fetch_cb(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
@@ -12,7 +14,11 @@ pub fn fetch_cb(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFl
         },
         |opcode| {
             ctl.opcode = Some(opcode.into());
-            unimplemented!("cb prefixed opcode not implemented: {:?}", opcode)
+            match opcode {
+                OpcodeCB::Bit0B => ctl.push_actions(&[read::b, bitwise::bit_0]),
+                _ => todo!("unimplemented opcode {:?}", opcode),
+            };
+            MicrocodeFlow::Continue(CycleDigest::Consume)
         },
     )
 }
