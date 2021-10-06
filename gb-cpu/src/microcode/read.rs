@@ -75,6 +75,14 @@ pub fn hl(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     OK_PLAY_NEXT_ACTION
 }
 
+/// Read `HL` register, do not consume the current cycle
+pub fn af(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
+    let bytes = state.regs.af.to_be_bytes();
+    ctl.push(bytes[0]);
+    ctl.push(bytes[1]);
+    OK_PLAY_NEXT_ACTION
+}
+
 /// Read `SP` register, do not consume the current cycle
 pub fn sp(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     let bytes = state.regs.sp.to_be_bytes();
