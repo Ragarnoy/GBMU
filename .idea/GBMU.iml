@@ -16,6 +16,7 @@
       <sourceFolder url="file://$MODULE_DIR$/gb-clock/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/gb-joypad/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/gb-rtc/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/gb-cpu/examples" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />
