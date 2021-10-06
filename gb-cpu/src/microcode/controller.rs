@@ -1,6 +1,4 @@
-use super::{
-    fetch::fetch, ident::Ident, opcode::Opcode, opcode_cb::OpcodeCB, MicrocodeFlow, State,
-};
+use super::{fetch::fetch, opcode::Opcode, opcode_cb::OpcodeCB, MicrocodeFlow, State};
 use crate::registers::Registers;
 use gb_bus::Bus;
 
@@ -30,8 +28,6 @@ pub struct MicrocodeController {
     actions: Vec<ActionFn>,
     /// Cache use for microcode action
     cache: Vec<u8>,
-    /// target for the current opcode
-    target: Option<Ident>,
 }
 
 type ActionFn = fn(controller: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow;
@@ -42,7 +38,6 @@ impl Default for MicrocodeController {
             opcode: None,
             actions: Vec::with_capacity(8),
             cache: Vec::with_capacity(4),
-            target: None,
         }
     }
 }
@@ -74,7 +69,6 @@ impl MicrocodeController {
     pub fn clear(&mut self) {
         self.cache.clear();
         self.actions.clear();
-        self.target = None;
     }
 
     /// Push the action a the back of the queue.
@@ -100,17 +94,20 @@ impl MicrocodeController {
         self.cache.push(byte)
     }
 
+    /// Push the value to the cache
+    pub fn push_u16(&mut self, value: u16) {
+        let bytes = value.to_be_bytes();
+        self.cache.push(bytes[0]);
+        self.cache.push(bytes[1]);
+    }
+
     /// Pop the last pushed `byte` from the cache.
     pub fn pop(&mut self) -> u8 {
         self.cache.pop().expect("not enough value stored in cache")
     }
 
-    pub fn set_dest(&mut self, ident: Ident) -> &mut Self {
-        self.target = Some(ident);
-        self
-    }
-
-    pub fn get_dest(&mut self) -> &Ident {
-        self.target.as_ref().expect("no dest set")
+    /// Pop the last u16 from the cache.
+    pub fn pop_u16(&mut self) -> u16 {
+        u16::from_be_bytes([self.pop(), self.pop()])
     }
 }

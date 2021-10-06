@@ -1,6 +1,6 @@
 use super::Register;
+use crate::drawing::Mode;
 use crate::error::PPUResult;
-use crate::mode::PPUMode;
 
 use std::convert::TryInto;
 
@@ -71,10 +71,10 @@ impl Stat {
         self.bits.set_lyc_eq_ly(if flag { 1 } else { 0 })
     }
 
-    pub fn mode(&self) -> PPUResult<PPUMode> {
+    pub fn mode(&self) -> PPUResult<Mode> {
         self.bits.mode().try_into()
     }
-    pub fn set_mode(&mut self, mode: PPUMode) {
+    pub fn set_mode(&mut self, mode: Mode) {
         self.bits.set_mode(mode.into())
     }
 }
