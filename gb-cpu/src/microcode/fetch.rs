@@ -120,6 +120,9 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                 Opcode::LdHL16 => ctl.push_actions(&[read::byte, read::byte, write::hl]),
                 Opcode::LdSP16 => ctl.push_actions(&[read::byte, read::byte, write::sp]),
 
+                Opcode::LdiHLA => ctl.push_actions(&[read::a, read::hl, write::ind, inc::hl]),
+                Opcode::LdiAHL => ctl.push_actions(&[read::hl, read::ind, write::a, inc::hl]),
+
                 Opcode::Nop => &mut ctl,
                 Opcode::PrefixCb => ctl.push_action(fetch_cb),
                 _ => todo!("unimplemented opcode {:?}", opcode),
