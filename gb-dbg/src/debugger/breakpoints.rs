@@ -43,13 +43,15 @@ impl BreakpointEditor {
                     .desired_width(85.0)
                     .hint_text("555F"),
             );
-            if text_field_response.lost_focus() {
-                self.new_address.clear();
-            }
             if add_button_response.clicked()
-                || text_field_response.has_focus() && ui.input().key_pressed(egui::Key::Enter)
+                || text_field_response.clicked()
+                    && ui.input().key_pressed(egui::Key::Enter)
+                    && self.is_valid_address(&self.new_address)
             {
                 self.add_address_breakpoint(u16::from_str_radix(&*self.new_address, 16).unwrap());
+            }
+            if text_field_response.lost_focus() {
+                self.new_address.clear();
             }
         });
 
