@@ -22,3 +22,9 @@ fn update_dec_flag(state: &mut impl WriteFlagReg, flag: Flag) {
     state.set_zero(flag.zero);
     state.set_subtraction(true);
 }
+
+/// decrease hl by one
+pub fn hl(_ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
+    state.regs.hl -= 1;
+    OK_PLAY_NEXT_ACTION
+}

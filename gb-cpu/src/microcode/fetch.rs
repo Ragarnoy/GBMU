@@ -123,6 +123,18 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                 Opcode::LdiHLA => ctl.push_actions(&[read::a, read::hl, write::ind, inc::hl]),
                 Opcode::LdiAHL => ctl.push_actions(&[read::hl, read::ind, write::a, inc::hl]),
 
+                Opcode::LddHLA => ctl.push_actions(&[read::a, read::hl, write::ind, dec::hl]),
+                Opcode::LddAHL => ctl.push_actions(&[read::hl, read::ind, write::a, dec::hl]),
+
+                Opcode::LdA8 => ctl.push_actions(&[read::byte, write::a]),
+                Opcode::LdB8 => ctl.push_actions(&[read::byte, write::b]),
+                Opcode::LdC8 => ctl.push_actions(&[read::byte, write::c]),
+                Opcode::LdD8 => ctl.push_actions(&[read::byte, write::d]),
+                Opcode::LdE8 => ctl.push_actions(&[read::byte, write::e]),
+                Opcode::LdH8 => ctl.push_actions(&[read::byte, write::h]),
+                Opcode::LdL8 => ctl.push_actions(&[read::byte, write::l]),
+                Opcode::LdHL8 => ctl.push_actions(&[read::byte, read::hl, write::ind]),
+
                 Opcode::Nop => &mut ctl,
                 Opcode::PrefixCb => ctl.push_action(fetch_cb),
                 _ => todo!("unimplemented opcode {:?}", opcode),
