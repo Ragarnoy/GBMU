@@ -31,27 +31,26 @@ impl BreakpointEditor {
             self.new_address.truncate(4)
         }
         ui.horizontal(|ui| {
-            if ui
-                .add(egui::Button::new("+").enabled(self.is_valid_address(&self.new_address)))
-                .clicked()
-            {
-                self.add_address_breakpoint(u16::from_str_radix(&*self.new_address, 16).unwrap());
-            };
+            let add_button_response =
+                ui.add(egui::Button::new("+").enabled(self.is_valid_address(&self.new_address)));
             ui.add(
                 egui::Label::new("0x")
                     .text_color(Color32::from_gray(90))
                     .weak(),
             );
-            if ui
-                .add(
-                    egui::TextEdit::singleline(&mut self.new_address)
-                        .desired_width(85.0)
-                        .hint_text("555F"),
-                )
-                .lost_focus()
-            {
+            let text_field_response = ui.add(
+                egui::TextEdit::singleline(&mut self.new_address)
+                    .desired_width(85.0)
+                    .hint_text("555F"),
+            );
+            if text_field_response.lost_focus() {
                 self.new_address.clear();
-            };
+            }
+            if add_button_response.clicked()
+                || text_field_response.has_focus() && ui.input().key_pressed(egui::Key::Enter)
+            {
+                self.add_address_breakpoint(u16::from_str_radix(&*self.new_address, 16).unwrap());
+            }
         });
 
         let mut deletion_list: Vec<usize> = Vec::with_capacity(20);
