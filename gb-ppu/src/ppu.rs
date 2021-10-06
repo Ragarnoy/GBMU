@@ -1,5 +1,5 @@
-use crate::drawing::State;
-use crate::memory::{Oam, PPUMem, Vram};
+use crate::drawing::{Mode, State};
+use crate::memory::{Lock, Lockable, Oam, PPUMem, Vram};
 use crate::registers::{LcdReg, PPURegisters};
 use crate::{
     OBJECT_LIST_PER_LINE, OBJECT_LIST_RENDER_HEIGHT, OBJECT_LIST_RENDER_WIDTH,
@@ -213,6 +213,19 @@ impl PPU {
         }
         image
     }
+
+    fn oam_fetch(&mut self) {
+        if let Ok(mut oam) = self.oam.try_borrow_mut() {
+            let lock = oam.get_lock();
+            if lock.is_none() {
+                oam.lock(Some(Lock::Ppu))
+            }
+            if let Some(Lock::Dma) = lock {
+                return;
+            }
+            // fetch oam here
+        }
+    }
 }
 
 impl Default for PPU {
@@ -230,94 +243,61 @@ impl Ticker for PPU {
     where
         B: Bus<u8> + Bus<u16>,
     {
-        let lcd_reg = self.lcd_reg.try_borrow_mut().ok();
+        match self.state.mode() {
+            Mode::OAMFetch => self.oam_fetch(),
+            Mode::PixelDrawing => {}
+            _ => {}
+        }
         // update state after executing tick
+        let lcd_reg = self.lcd_reg.try_borrow_mut().ok();
         self.state.update(lcd_reg);
     }
 }
 
 #[cfg(test)]
-mod vram {
+mod mem_lock {
     use super::PPU;
+    use crate::memory::{Lock, Lockable};
     use crate::test_tools::TestAddress;
     use gb_bus::FileOperation;
 
     #[test]
-    fn locking() {
+    fn vram() {
         let ppu = PPU::new();
         let mut ppu_mem = ppu.memory();
         {
-            let _lock = ppu.vram.borrow();
+            ppu.vram.borrow_mut().lock(Some(Lock::Ppu));
             ppu_mem
                 .write(0x42, Box::new(TestAddress::root_vram()))
                 .expect("Try write value into borrowed vram");
             let res = ppu_mem
                 .read(Box::new(TestAddress::root_vram()))
-                .expect("Try reading borrowed value from vram");
-            assert_eq!(res, 0x00, "invalid value from borrowed vram");
-        }
-    }
+                .expect("Try reading mut borrowed value from vram");
+            assert_eq!(res, 0xFF, "invalid value from vram");
 
-    #[test]
-    fn locking_mut() {
-        let ppu = PPU::new();
-        let mut ppu_mem = ppu.memory();
-        {
-            {
-                let _lock = ppu.vram.borrow_mut();
-                ppu_mem
-                    .write(0x42, Box::new(TestAddress::root_vram()))
-                    .expect("Try write value into borrowed vram");
-                let res = ppu_mem
-                    .read(Box::new(TestAddress::root_vram()))
-                    .expect("Try reading mut borrowed value from vram");
-                assert_eq!(res, 0xFF, "invalid value from vram");
-            }
+            ppu.vram.borrow_mut().lock(None);
             let res = ppu_mem
                 .read(Box::new(TestAddress::root_vram()))
                 .expect("Try reading mut borrowed value from vram");
             assert_eq!(res, 0x00, "invalid value from vram");
         }
     }
-}
-
-#[cfg(test)]
-mod oam {
-    use super::PPU;
-    use crate::test_tools::TestAddress;
-    use gb_bus::FileOperation;
 
     #[test]
-    fn locking() {
+    fn oam() {
         let ppu = PPU::new();
         let mut ppu_mem = ppu.memory();
         {
-            let _lock = ppu.oam.borrow();
+            ppu.oam.borrow_mut().lock(Some(Lock::Ppu));
             ppu_mem
                 .write(0x42, Box::new(TestAddress::root_oam()))
                 .expect("Try write value into borrowed oam");
             let res = ppu_mem
                 .read(Box::new(TestAddress::root_oam()))
-                .expect("Try reading borrowed value from oam");
-            assert_eq!(res, 0x00, "invalid value from borrowed oam");
-        }
-    }
+                .expect("Try reading mut borrowed value from oam");
+            assert_eq!(res, 0xFF, "invalid value from oam");
 
-    #[test]
-    fn locking_mut() {
-        let ppu = PPU::new();
-        let mut ppu_mem = ppu.memory();
-        {
-            {
-                let _lock = ppu.oam.borrow_mut();
-                ppu_mem
-                    .write(0x42, Box::new(TestAddress::root_oam()))
-                    .expect("Try write value into borrowed oam");
-                let res = ppu_mem
-                    .read(Box::new(TestAddress::root_oam()))
-                    .expect("Try reading mut borrowed value from oam");
-                assert_eq!(res, 0xFF, "invalid value from oam");
-            }
+            ppu.oam.borrow_mut().lock(None);
             let res = ppu_mem
                 .read(Box::new(TestAddress::root_oam()))
                 .expect("Try reading mut borrowed value from oam");

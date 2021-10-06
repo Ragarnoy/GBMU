@@ -1,3 +1,4 @@
+use super::{Lock, Lockable};
 use crate::error::{PPUError, PPUResult};
 use crate::object::Object;
 use std::collections::BTreeMap;
@@ -6,6 +7,7 @@ use std::convert::TryInto;
 /// Contains operations to collect objects from memory.
 pub struct Oam {
     data: [u8; Oam::SIZE as usize],
+    lock: Option<Lock>,
 }
 
 impl Oam {
@@ -15,6 +17,7 @@ impl Oam {
     pub fn new() -> Self {
         Oam {
             data: [0x00; Self::SIZE as usize],
+            lock: None,
         }
     }
 
@@ -99,13 +102,26 @@ impl Default for Oam {
 
 impl From<[u8; Oam::SIZE]> for Oam {
     fn from(bytes: [u8; Oam::SIZE]) -> Oam {
-        Oam { data: bytes }
+        Oam {
+            data: bytes,
+            lock: None,
+        }
     }
 }
 
 impl From<Oam> for [u8; Oam::SIZE] {
     fn from(mem: Oam) -> [u8; Oam::SIZE] {
         mem.data
+    }
+}
+
+impl Lockable for Oam {
+    fn lock(&mut self, owner: Option<Lock>) {
+        self.lock = owner;
+    }
+
+    fn get_lock(&self) -> Option<Lock> {
+        self.lock
     }
 }
 
