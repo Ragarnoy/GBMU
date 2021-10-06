@@ -53,33 +53,31 @@ pub fn l(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
 
 /// Read `BC` register, do not consume the current cycle
 pub fn bc(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
-    let bytes = state.regs.bc.to_be_bytes();
-    ctl.push(bytes[0]);
-    ctl.push(bytes[1]);
+    ctl.push_u16(state.regs.bc);
     OK_PLAY_NEXT_ACTION
 }
 
 /// Read `DE` register, do not consume the current cycle
 pub fn de(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
-    let bytes = state.regs.de.to_be_bytes();
-    ctl.push(bytes[0]);
-    ctl.push(bytes[1]);
+    ctl.push_u16(state.regs.de);
     OK_PLAY_NEXT_ACTION
 }
 
 /// Read `HL` register, do not consume the current cycle
 pub fn hl(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
-    let bytes = state.regs.hl.to_be_bytes();
-    ctl.push(bytes[0]);
-    ctl.push(bytes[1]);
+    ctl.push_u16(state.regs.hl);
+    OK_PLAY_NEXT_ACTION
+}
+
+/// Read `HL` register, do not consume the current cycle
+pub fn af(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
+    ctl.push_u16(state.regs.af);
     OK_PLAY_NEXT_ACTION
 }
 
 /// Read `SP` register, do not consume the current cycle
 pub fn sp(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
-    let bytes = state.regs.sp.to_be_bytes();
-    ctl.push(bytes[0]);
-    ctl.push(bytes[1]);
+    ctl.push_u16(state.regs.sp);
     OK_PLAY_NEXT_ACTION
 }
 
