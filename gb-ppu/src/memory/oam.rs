@@ -1,18 +1,18 @@
 use super::{Lock, Lockable};
 use crate::error::{PPUError, PPUResult};
-use crate::object::Object;
+use crate::Sprite;
 use std::collections::BTreeMap;
 use std::convert::TryInto;
 
-/// Contains operations to collect objects from memory.
+/// Contains operations to collect sprites from memory.
 pub struct Oam {
     data: [u8; Oam::SIZE as usize],
     lock: Option<Lock>,
 }
 
 impl Oam {
-    pub const OBJECT_COUNT: usize = 40;
-    pub const SIZE: usize = Self::OBJECT_COUNT * Object::SIZE;
+    pub const SPRITE_COUNT: usize = 40;
+    pub const SIZE: usize = Self::SPRITE_COUNT * Sprite::SIZE;
 
     pub fn new() -> Self {
         Oam {
@@ -46,38 +46,38 @@ impl Oam {
         }
     }
 
-    fn read_object(&self, pos: usize) -> PPUResult<Object> {
-        if pos > Self::OBJECT_COUNT - 1 {
+    fn read_sprite(&self, pos: usize) -> PPUResult<Sprite> {
+        if pos > Self::SPRITE_COUNT - 1 {
             return Err(PPUError::OutOfBound {
                 value: pos,
                 min_bound: 0,
-                max_bound: Self::OBJECT_COUNT - 1,
+                max_bound: Self::SPRITE_COUNT - 1,
             });
         }
-        let index = pos * Object::SIZE;
-        let bytes: [u8; Object::SIZE] = self.data[index..index + Object::SIZE]
+        let index = pos * Sprite::SIZE;
+        let bytes: [u8; Sprite::SIZE] = self.data[index..index + Sprite::SIZE]
             .try_into()
-            .expect("failed to map object's bytes into array");
-        Ok(Object::from(bytes))
+            .expect("failed to map sprite's bytes into array");
+        Ok(Sprite::from(bytes))
     }
 
-    /// Return all the objects contained in memory.
-    pub fn collect_all_objects(&self) -> PPUResult<[Object; Self::OBJECT_COUNT]> {
-        let mut objects = [Object::new(); Self::OBJECT_COUNT];
-        for (i, object) in objects.iter_mut().enumerate() {
-            *object = self.read_object(i)?;
+    /// Return all the sprites contained in memory.
+    pub fn collect_all_sprites(&self) -> PPUResult<[Sprite; Self::SPRITE_COUNT]> {
+        let mut sprites = [Sprite::new(); Self::SPRITE_COUNT];
+        for (i, sprite) in sprites.iter_mut().enumerate() {
+            *sprite = self.read_sprite(i)?;
         }
-        Ok(objects)
+        Ok(sprites)
     }
 
     /// Return the first 10 obj on the x axis that overlap a line of the viewport.
     ///
     /// ### Parameters
     ///  - **line**: the y coordinate of the line. 0 is the top of the viewport.
-    ///  - **size_16**: the bit 2 flag from Control indicating if objects are 8(*false*) or 16(*true*) pixels high.
-    pub fn scan_line_object(&self, line: u8, size_16: bool) -> PPUResult<Vec<Object>> {
+    ///  - **size_16**: the bit 2 flag from Control indicating if sprites are 8(*false*) or 16(*true*) pixels high.
+    pub fn scan_line_sprite(&self, line: u8, size_16: bool) -> PPUResult<Vec<Sprite>> {
         let mut selected_obj = BTreeMap::new();
-        let all_obj = self.collect_all_objects()?;
+        let all_obj = self.collect_all_sprites()?;
         let scanline = line + 16;
         for obj in all_obj {
             let top = obj.y_pos();
@@ -136,8 +136,8 @@ mod tests {
                 .into();
         let line = 32;
         let scanned_line = oam
-            .scan_line_object(line, true)
-            .expect("Should not contains objects out of memory");
+            .scan_line_sprite(line, true)
+            .expect("Should not contains sprites out of memory");
         assert_eq!(scanned_line.len(), 4);
         assert!(
             scanned_line[0].x_pos() <= scanned_line[1].x_pos(),
@@ -161,8 +161,8 @@ mod tests {
         .into();
         let line = 30;
         let scanned_line = oam
-            .scan_line_object(line, true)
-            .expect("Should not contains objects out of memory");
+            .scan_line_sprite(line, true)
+            .expect("Should not contains sprites out of memory");
         assert_eq!(scanned_line.len(), 10);
         let mut previous = 0x00;
         for obj in scanned_line {
