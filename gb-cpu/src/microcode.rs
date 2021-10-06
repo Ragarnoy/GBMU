@@ -1,4 +1,5 @@
 mod arithmetic;
+mod bitwise;
 mod condition;
 pub mod controller;
 mod dec;
