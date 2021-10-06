@@ -18,7 +18,7 @@ pub struct Breakpoint {
 }
 
 impl Display for Breakpoint {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
         match self.r#type {
             BreakpointType::Address(x) => write!(f, "0x{:04X}", x),
         }

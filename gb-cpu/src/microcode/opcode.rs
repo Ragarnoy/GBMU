@@ -16,7 +16,7 @@ pub enum Opcode {
     /// `DEC B`: decrement `B`, 1m
     DecB = 0x05,
     /// `LD B, u8`: load `u8` into `B`, 2m
-    LdB = 0x06,
+    LdB8 = 0x06,
     /// `RLCA`: rotate `A` left, 1m
     RlcA = 0x07,
     /// `LD (u16), SP`: load `SP` into `(u16)`, 5m
