@@ -45,19 +45,19 @@ pub fn l(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
 
 /// Write the value stored in cache to `BC`, do not consume the cycle
 pub fn bc(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
-    state.regs.bc = u16::from_be_bytes([ctl.pop(), ctl.pop()]);
+    state.regs.bc = ctl.pop_u16();
     OK_PLAY_NEXT_ACTION
 }
 
 /// Write the value stored in cache to `DE`, do not consume the cycle
 pub fn de(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
-    state.regs.de = u16::from_be_bytes([ctl.pop(), ctl.pop()]);
+    state.regs.de = ctl.pop_u16();
     OK_PLAY_NEXT_ACTION
 }
 
 /// Write the value stored in cache to `HL`, do not consume the cycle
 pub fn hl(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
-    state.regs.hl = u16::from_be_bytes([ctl.pop(), ctl.pop()]);
+    state.regs.hl = ctl.pop_u16();
     OK_PLAY_NEXT_ACTION
 }
 
@@ -69,7 +69,7 @@ pub fn af(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
 
 /// Write the value stored in cache to `SP`, do not consume the cycle
 pub fn sp(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
-    state.regs.sp = u16::from_be_bytes([ctl.pop(), ctl.pop()]);
+    state.regs.sp = ctl.pop_u16();
     OK_PLAY_NEXT_ACTION
 }
 
