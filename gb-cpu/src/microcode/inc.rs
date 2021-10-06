@@ -22,3 +22,9 @@ fn update_inc_flag(state: &mut impl WriteFlagReg, flag: Flag) {
     state.set_half_carry(flag.half_carry);
     state.set_zero(flag.zero);
 }
+
+/// increase `HL` without consuming the cycle
+pub fn hl(_ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
+    state.regs.hl += 1;
+    OK_PLAY_NEXT_ACTION
+}
