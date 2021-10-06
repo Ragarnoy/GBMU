@@ -1,3 +1,5 @@
+use crate::microcode::utils;
+
 use super::{
     arithmetic,
     condition::{carry, not_carry, not_zero, zero},
@@ -119,6 +121,17 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                 Opcode::LdDE16 => ctl.push_actions(&[read::byte, read::byte, write::de]),
                 Opcode::LdHL16 => ctl.push_actions(&[read::byte, read::byte, write::hl]),
                 Opcode::LdSP16 => ctl.push_actions(&[read::byte, read::byte, write::sp]),
+
+                Opcode::PushBc => ctl.push_actions(&[
+                    utils::sleep,
+                    read::bc,
+                    dec::sp,
+                    read::sp,
+                    write::ind,
+                    dec::sp,
+                    read::sp,
+                    write::ind,
+                ]),
 
                 Opcode::Nop => &mut ctl,
                 Opcode::PrefixCb => ctl.push_action(fetch_cb),
