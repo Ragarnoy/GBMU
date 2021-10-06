@@ -44,8 +44,7 @@ impl State {
         }
         if let Some(lcd) = lcd_reg {
             self.update_registers(lcd);
-        }
-        else {
+        } else {
             log::error!("PPU state failed to update registers");
         }
     }
@@ -58,11 +57,13 @@ impl State {
             (_, step) if step < Self::HBLANK_MIN_START => {
                 log::error!("HBlank reached on OAMFetch/PixelDrawing period")
             }
-            (line, Self::LAST_STEP) => if line == Self::VBLANK_START - 1 {
-                self.mode = Mode::VBlank;
-            } else {
-                self.mode = Mode::OAMFetch;
-            },
+            (line, Self::LAST_STEP) => {
+                if line == Self::VBLANK_START - 1 {
+                    self.mode = Mode::VBlank;
+                } else {
+                    self.mode = Mode::OAMFetch;
+                }
+            }
             _ => {}
         }
     }
@@ -70,29 +71,35 @@ impl State {
     fn update_vblank(&mut self) {
         match (self.line, self.step) {
             (line, _) if line < Self::VBLANK_START => log::error!("VBlank reached on draw line"),
-            (Self::LAST_LINE, Self::LAST_STEP) => {
-                self.mode = Mode::OAMFetch
-            },
+            (Self::LAST_LINE, Self::LAST_STEP) => self.mode = Mode::OAMFetch,
             _ => {}
         }
     }
 
     fn update_oam_fetch(&mut self) {
         match (self.line, self.step) {
-            (line, _) if line >= Self::VBLANK_START => log::error!("OAMFetch reached on VBlank period"),
-            (_, step) if step >= Self::PIXEL_DRAWING_START => log::error!("OAMFetch reached on PixelDrawing period"),
-            (_, Self::LAST_OAM_FETCH_STEP) => {
-                self.mode = Mode::PixelDrawing
-            },
+            (line, _) if line >= Self::VBLANK_START => {
+                log::error!("OAMFetch reached on VBlank period")
+            }
+            (_, step) if step >= Self::PIXEL_DRAWING_START => {
+                log::error!("OAMFetch reached on PixelDrawing period")
+            }
+            (_, Self::LAST_OAM_FETCH_STEP) => self.mode = Mode::PixelDrawing,
             _ => {}
         }
     }
 
     fn update_pixel_drawing(&mut self) {
         match (self.line, self.step) {
-            (line, _) if line >= Self::VBLANK_START => log::error!("OAMFetch reached on VBlank period"),
-            (_, step) if step < Self::PIXEL_DRAWING_START => log::error!("PixelDrawing reached on OAMFetch period"),
-            (_, step) if step >= Self::HBLANK_MAX_START => log::error!("PixelDrawing reached on HBlank period"),
+            (line, _) if line >= Self::VBLANK_START => {
+                log::error!("OAMFetch reached on VBlank period")
+            }
+            (_, step) if step < Self::PIXEL_DRAWING_START => {
+                log::error!("PixelDrawing reached on OAMFetch period")
+            }
+            (_, step) if step >= Self::HBLANK_MAX_START => {
+                log::error!("PixelDrawing reached on HBlank period")
+            }
             (_, step) if step >= Self::HBLANK_MIN_START => {
                 if self.pixel_drawn >= 160 {
                     self.mode = Mode::HBlank;
@@ -100,7 +107,7 @@ impl State {
                         log::error!("Too many pixel drawn before switching to HBlank");
                     }
                 }
-            },
+            }
             _ => {}
         }
     }

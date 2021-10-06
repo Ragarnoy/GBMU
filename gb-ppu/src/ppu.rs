@@ -1,4 +1,4 @@
-use crate::drawing::{State};
+use crate::drawing::State;
 use crate::memory::{Oam, PPUMem, Vram};
 use crate::registers::{LcdReg, PPURegisters};
 use crate::{
