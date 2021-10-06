@@ -8,7 +8,7 @@ use zip::ZipArchive;
 fn main() {
     let out_dir = env::var_os("CARGO_MANIFEST_DIR").unwrap();
     let dst_path = Path::new(&out_dir).join("..").join("assets").join("bios");
-    let src_path = dst_path.clone().with_extension("zip");
+    let src_path = dst_path.with_extension("zip");
 
     if let Ok(file) = fs::File::open(&src_path) {
         if let Ok(mut archive) = ZipArchive::new(file) {
