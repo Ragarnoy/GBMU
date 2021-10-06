@@ -218,24 +218,51 @@ impl PPU {
     }
 
     fn oam_fetch(&mut self) {
-        if let Ok(mut oam) = self.oam.try_borrow_mut() {
-            let lock = oam.get_lock();
-            if lock.is_none() {
-                oam.lock(Lock::Ppu);
-            }
-            if let Some(Lock::Ppu) = lock {
-                // fetch oam here
-                if self.state.step() % 2 == 1 {
-                    // fetch oam here
-                    let sprite_pos = self.state.step() as usize / 2;
-                    match oam.read_sprite(sprite_pos) {
-                        Err(err) => log::error!("Error while reading sprite: {}", err),
-                        Ok(sprite) => {}
+        if let Ok(lcd_reg) = self.lcd_reg.try_borrow() {
+            if let Ok(mut oam) = self.oam.try_borrow_mut() {
+                let lock = oam.get_lock();
+                let step = self.state.step();
+
+                if lock.is_none() {
+                    oam.lock(Lock::Ppu);
+                    self.scanline_sprites.clear();
+                }
+                if let Some(Lock::Ppu) = lock {
+                    if step % 2 == 1 {
+                        let sprite_pos = step as usize / 2;
+
+                        match oam.read_sprite(sprite_pos) {
+                            Err(err) => log::error!("Error while reading sprite: {}", err),
+                            Ok(sprite) => {
+                                let scanline = self.state.line() + 16;
+                                let top = sprite.y_pos();
+                                let bot = top + if lcd_reg.control.obj_size() { 16 } else { 8 };
+
+                                if scanline >= top && scanline < bot {
+                                    for i in 0..self.scanline_sprites.len() {
+                                        let scan_sprite = self.scanline_sprites[i];
+
+                                        if sprite.x_pos() < scan_sprite.x_pos() {
+                                            self.scanline_sprites.insert(i, sprite);
+                                            if self.scanline_sprites.len() > 10 {
+                                                self.scanline_sprites.pop();
+                                            }
+                                            return;
+                                        }
+                                    }
+                                    if self.scanline_sprites.len() < 10 {
+                                        self.scanline_sprites.push(sprite);
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
+            } else {
+                log::error!("Oam borrow failed for ppu in mode 2");
             }
         } else {
-            log::error!("Oam borrow failed for ppu in mode 2");
+            log::error!("Lcd reg borrow failed for ppu in mode 2");
         }
     }
 }

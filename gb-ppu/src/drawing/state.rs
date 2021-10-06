@@ -34,6 +34,10 @@ impl State {
         self.mode
     }
 
+    pub fn line(&self) -> u8 {
+        self.line
+    }
+
     pub fn step(&self) -> u16 {
         self.step
     }
