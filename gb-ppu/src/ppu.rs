@@ -23,7 +23,7 @@ pub struct PPU {
     lcd_reg: Rc<RefCell<LcdReg>>,
     pixels: RenderData<SCREEN_WIDTH, SCREEN_HEIGHT>,
     state: State,
-    oam_fetched: Vec<Sprite>,
+    _oam_fetched: Vec<Sprite>,
 }
 
 impl PPU {
@@ -34,7 +34,7 @@ impl PPU {
             lcd_reg: Rc::new(RefCell::new(LcdReg::new())),
             pixels: [[[255; 3]; SCREEN_WIDTH]; SCREEN_HEIGHT],
             state: State::new(),
-            oam_fetched: Vec::with_capacity(10),
+            _oam_fetched: Vec::with_capacity(10),
         }
     }
 
