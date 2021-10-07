@@ -1,5 +1,5 @@
 use super::{MicrocodeController, MicrocodeFlow, State, OK_PLAY_NEXT_ACTION};
-use crate::interfaces::WriteFlagReg;
+use crate::interfaces::{ReadFlagReg, WriteFlagReg};
 
 fn read_bit(ctl: &mut MicrocodeController, state: &mut State, bit: u8) -> MicrocodeFlow {
     let value = ctl.pop();
@@ -41,4 +41,13 @@ pub fn bit_6(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
 
 pub fn bit_7(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     read_bit(ctl, state, 7)
+}
+
+pub fn rl(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
+    let mut value = ctl.pop();
+    let top_bit = value >> 7;
+    value <<= 1 + (if state.regs.carry() { 1 } else { 0 });
+    state.regs.set_carry(top_bit == 1);
+    ctl.push(value);
+    OK_PLAY_NEXT_ACTION
 }
