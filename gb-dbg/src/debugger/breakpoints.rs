@@ -1,8 +1,9 @@
 mod breakpoint;
 
-use crate::dbg_interfaces::MemoryDebugOperations;
 use crate::debugger::breakpoints::breakpoint::Breakpoint;
+use crate::run_duration::RunDuration;
 use egui::{Color32, Label, Ui, Vec2};
+use std::ops::ControlFlow;
 
 pub struct BreakpointEditor {
     breakpoints: Vec<Breakpoint>,
@@ -19,37 +20,39 @@ impl Default for BreakpointEditor {
 }
 
 impl BreakpointEditor {
-    pub fn draw<MEM: MemoryDebugOperations>(&mut self, ui: &mut Ui, _memory: &MEM) {
+    pub fn draw(&mut self, ui: &mut Ui, pc: u16) -> Option<ControlFlow<(), RunDuration>> {
         ui.label(Label::new("Breakpoints").text_color(Color32::WHITE));
         breakpoint_options(ui);
 
+        let mut ret = None;
         ui.separator();
         self.new_address.retain(|c| c.is_ascii_hexdigit());
         if self.new_address.len() <= 5 {
             self.new_address.truncate(4)
         }
         ui.horizontal(|ui| {
-            if ui
-                .add(egui::Button::new("+").enabled(self.is_valid_address(&self.new_address)))
-                .clicked()
-            {
-                self.add_address_breakpoint(u16::from_str_radix(&*self.new_address, 16).unwrap());
-            };
+            let add_button_response =
+                ui.add(egui::Button::new("+").enabled(self.is_valid_address(&self.new_address)));
             ui.add(
                 egui::Label::new("0x")
                     .text_color(Color32::from_gray(90))
                     .weak(),
             );
-            if ui
-                .add(
-                    egui::TextEdit::singleline(&mut self.new_address)
-                        .desired_width(85.0)
-                        .hint_text("555F"),
-                )
-                .lost_focus()
+            let text_field_response = ui.add(
+                egui::TextEdit::singleline(&mut self.new_address)
+                    .desired_width(85.0)
+                    .hint_text("555F"),
+            );
+            if add_button_response.clicked()
+                || text_field_response.clicked()
+                    && ui.input().key_pressed(egui::Key::Enter)
+                    && self.is_valid_address(&self.new_address)
             {
+                self.add_address_breakpoint(u16::from_str_radix(&*self.new_address, 16).unwrap());
+            }
+            if text_field_response.lost_focus() {
                 self.new_address.clear();
-            };
+            }
         });
 
         let mut deletion_list: Vec<usize> = Vec::with_capacity(20);
@@ -63,12 +66,19 @@ impl BreakpointEditor {
                 ui.end_row();
 
                 for (i, breakpoint) in &mut self.breakpoints.iter_mut().enumerate() {
-                    let address = breakpoint.to_string().clone();
                     if ui.add(egui::Button::new("-")).clicked() {
                         deletion_list.push(i)
                     }
                     ui.checkbox(&mut breakpoint.enabled, "");
-                    ui.label(egui::Label::new(address));
+                    if pc == breakpoint.address() && breakpoint.enabled {
+                        ui.add(
+                            egui::Label::new(breakpoint.to_string().clone())
+                                .text_color(Color32::RED),
+                        );
+                        ret = Some(ControlFlow::Break(()));
+                    } else {
+                        ui.add(egui::Label::new(breakpoint.to_string().clone()));
+                    }
                     ui.end_row();
                 }
                 ui.end_row();
@@ -76,6 +86,7 @@ impl BreakpointEditor {
         deletion_list.into_iter().for_each(|i| {
             self.breakpoints.remove(i);
         });
+        ret
     }
 
     fn add_address_breakpoint(&mut self, address: u16) {
