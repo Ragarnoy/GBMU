@@ -88,3 +88,11 @@ pub fn ind(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     ctl.push(value);
     OK_CONSUME_CYCLE
 }
+
+/// Read the byte from the address resulting of `u8 + 0xFF00` where `u8` come from the cache
+pub fn hram(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
+    let addr = 0xFF00 + ctl.pop() as u16;
+    let value = state.read_bus(addr);
+    ctl.push(value);
+    OK_CONSUME_CYCLE
+}
