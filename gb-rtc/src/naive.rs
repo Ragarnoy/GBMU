@@ -2,9 +2,9 @@ use crate::{
     constant::{DAY, HOUR, MAX_DAYS, MAX_TIME, MINUTE},
     ReadRtcRegisters, WriteRtcRegisters,
 };
-use std::time::Instant;
+use std::time::{Instant, SystemTime};
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 pub struct Naive {
     timestamp: u64,
     clock: Option<Instant>,
@@ -180,6 +180,68 @@ impl WriteRtcRegisters for Naive {
         self.set_upper_days((control & 1) == 1);
         self.set_halted((control & 0b100_0000) == 0b100_0000);
         self.set_day_counter_carry((control & 0b1000_0000) == 0b1000_0000);
+    }
+}
+
+impl serde::Serialize for Naive {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        NaiveSave::from(self).serialize(serializer)
+    }
+}
+
+impl<'de> serde::Deserialize<'de> for Naive {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let save = NaiveSave::deserialize(deserializer)?;
+        Ok(save.into())
+    }
+}
+
+#[derive(serde::Serialize, serde::Deserialize)]
+struct NaiveSave {
+    pub save_time: u64,
+    pub game_time: u64,
+    pub day_carry: bool,
+    pub halted: bool,
+}
+
+impl From<&Naive> for NaiveSave {
+    fn from(data: &Naive) -> Self {
+        let save_time = match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
+            Ok(n) => n.as_secs(),
+            Err(_) => panic!("SystemTime before UNIX EPOCH!"),
+        };
+        let game_time = data.timestamp + data.clock.map(|i| i.elapsed().as_secs()).unwrap_or(0);
+        Self {
+            save_time,
+            game_time,
+            day_carry: data.day_carry,
+            halted: data.halted(),
+        }
+    }
+}
+
+impl From<NaiveSave> for Naive {
+    fn from(save: NaiveSave) -> Self {
+        let current_time = match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
+            Ok(n) => n.as_secs(),
+            Err(_) => panic!("SystemTime before UNIX EPOCH!"),
+        };
+        let timestamp = save.game_time + (current_time - save.save_time);
+        Self {
+            timestamp,
+            clock: if save.halted {
+                Some(Instant::now())
+            } else {
+                None
+            },
+            day_carry: save.day_carry,
+        }
     }
 }
 
