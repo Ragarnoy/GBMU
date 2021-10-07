@@ -163,6 +163,43 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                     write::ind,
                 ]),
 
+                Opcode::PopBc => ctl.push_actions(&[
+                    read::sp,
+                    inc::sp,
+                    read::ind,
+                    read::sp,
+                    inc::sp,
+                    read::ind,
+                    write::bc,
+                ]),
+                Opcode::PopDe => ctl.push_actions(&[
+                    read::sp,
+                    inc::sp,
+                    read::ind,
+                    read::sp,
+                    inc::sp,
+                    read::ind,
+                    write::de,
+                ]),
+                Opcode::PopHl => ctl.push_actions(&[
+                    read::sp,
+                    inc::sp,
+                    read::ind,
+                    read::sp,
+                    inc::sp,
+                    read::ind,
+                    write::hl,
+                ]),
+                Opcode::PopAf => ctl.push_actions(&[
+                    read::sp,
+                    inc::sp,
+                    read::ind,
+                    read::sp,
+                    inc::sp,
+                    read::ind,
+                    write::af,
+                ]),
+
                 Opcode::Ld16A => ctl.push_actions(&[read::a, read::byte, read::byte, write::ind]),
 
                 Opcode::LdiHLA => ctl.push_actions(&[read::a, read::hl, write::ind, inc::hl]),
@@ -187,6 +224,7 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                     write::ind16,
                     utils::sleep,
                 ]),
+                Opcode::LdSPHL => ctl.push_actions(&[read::hl, write::sp, utils::sleep]),
                 Opcode::LdA16 => ctl.push_actions(&[read::byte, read::byte, read::ind, write::a]),
 
                 Opcode::Nop => &mut ctl,
