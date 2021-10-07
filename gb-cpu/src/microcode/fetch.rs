@@ -368,6 +368,75 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                     write::ind,
                 ]),
 
+                Opcode::RetNz => ctl.push_actions(&[
+                    utils::sleep,
+                    not_zero,
+                    read::sp,
+                    inc::sp,
+                    read::ind,
+                    read::sp,
+                    inc::sp,
+                    read::ind,
+                    jump::jump,
+                ]),
+
+                Opcode::RetZ => ctl.push_actions(&[
+                    utils::sleep,
+                    zero,
+                    read::sp,
+                    inc::sp,
+                    read::ind,
+                    read::sp,
+                    inc::sp,
+                    read::ind,
+                    jump::jump,
+                ]),
+
+                Opcode::Ret => ctl.push_actions(&[
+                    read::sp,
+                    inc::sp,
+                    read::ind,
+                    read::sp,
+                    inc::sp,
+                    read::ind,
+                    jump::jump,
+                ]),
+
+                Opcode::RetNc => ctl.push_actions(&[
+                    utils::sleep,
+                    not_carry,
+                    read::sp,
+                    inc::sp,
+                    read::ind,
+                    read::sp,
+                    inc::sp,
+                    read::ind,
+                    jump::jump,
+                ]),
+
+                Opcode::RetC => ctl.push_actions(&[
+                    utils::sleep,
+                    carry,
+                    read::sp,
+                    inc::sp,
+                    read::ind,
+                    read::sp,
+                    inc::sp,
+                    read::ind,
+                    jump::jump,
+                ]),
+
+                Opcode::Reti => ctl.push_actions(&[
+                    read::sp,
+                    inc::sp,
+                    read::ind,
+                    read::sp,
+                    inc::sp,
+                    read::ind,
+                    jump::jump,
+                    // TODO enable interrupt
+                ]),
+
                 Opcode::Nop => &mut ctl,
                 Opcode::PrefixCb => ctl.push_action(fetch_cb),
                 _ => todo!("unimplemented opcode {:?}", opcode),
