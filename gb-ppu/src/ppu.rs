@@ -217,6 +217,16 @@ impl PPU {
         image
     }
 
+    fn hblank(&mut self) {
+        if let Ok(mut oam) = self.oam.try_borrow_mut() {
+            if let Some(Lock::Ppu) = oam.get_lock() {
+                oam.unlock();
+            }
+        } else {
+            log::error!("Oam borrow failed for ppu in mode 0");
+        }
+    }
+
     fn oam_fetch(&mut self) {
         if let Ok(lcd_reg) = self.lcd_reg.try_borrow() {
             if let Ok(mut oam) = self.oam.try_borrow_mut() {
@@ -285,7 +295,8 @@ impl Ticker for PPU {
         match self.state.mode() {
             Mode::OAMFetch => self.oam_fetch(),
             Mode::PixelDrawing => {}
-            _ => {}
+            Mode::HBlank => self.hblank(),
+            Mode::VBlank => {}
         }
         // update state after executing tick
         let lcd_reg = self.lcd_reg.try_borrow_mut().ok();
