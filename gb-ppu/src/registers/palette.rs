@@ -1,6 +1,6 @@
 use super::Register;
-use crate::color::Color;
 use crate::error::{PPUError, PPUResult};
+use crate::Color;
 use modular_bitfield::{bitfield, specifiers::B2};
 
 #[bitfield]
