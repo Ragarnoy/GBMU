@@ -48,11 +48,12 @@ pub fn rl(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     let top_bit = value >> 7;
 
     value <<= 1;
-    value += if state.regs.carry() { 1 } else { 0 };
+    state.regs.set_zero(value == 0);
+
+    value += state.regs.carry() as u8;
     ctl.push(value);
 
     state.regs.set_carry(top_bit == 1);
-    state.regs.set_zero(value == 0);
     state.regs.set_half_carry(false);
     state.regs.set_subtraction(false);
     OK_PLAY_NEXT_ACTION
