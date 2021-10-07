@@ -11,7 +11,7 @@ pub struct State {
 
 impl State {
     const LINE_COUNT: u8 = 154;
-    const LAST_LINE: u8 = Self::LINE_COUNT - 1;
+    pub const LAST_LINE: u8 = Self::LINE_COUNT - 1;
     const VBLANK_START: u8 = 144;
 
     const PIXEL_DRAWING_START: u16 = 80;
@@ -19,7 +19,7 @@ impl State {
     const HBLANK_MIN_START: u16 = 252;
     const HBLANK_MAX_START: u16 = 369;
     const STEP_COUNT: u16 = 456;
-    const LAST_STEP: u16 = Self::STEP_COUNT - 1;
+    pub const LAST_STEP: u16 = Self::STEP_COUNT - 1;
 
     pub fn new() -> Self {
         State {
@@ -48,6 +48,10 @@ impl State {
 
     pub fn draw_pixel(&mut self) {
         self.pixel_drawn += 1;
+    }
+
+    pub fn clear_pixel_count(&mut self) {
+        self.pixel_drawn = 0;
     }
 
     pub fn update(&mut self, lcd_reg: Option<RefMut<LcdReg>>) {

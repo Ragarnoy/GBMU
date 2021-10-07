@@ -222,6 +222,12 @@ impl PPU {
         image
     }
 
+    fn vblank(&mut self) {
+        if self.state.line() == State::LAST_LINE && self.state.step() == State::LAST_STEP {
+            std::mem::swap(&mut self.pixels, &mut self.next_pixels);
+        }
+    }
+
     fn hblank(&mut self) {
         if let Ok(mut oam) = self.oam.try_borrow_mut() {
             if let Some(Lock::Ppu) = oam.get_lock() {
@@ -295,6 +301,7 @@ impl PPU {
             if lock.is_none() {
                 vram.lock(Lock::Ppu);
                 self.pixel_fifo.clear();
+                self.state.clear_pixel_count();
             }
             if self.pixel_fifo.enabled {
                 if let Some(pixel) = self.pixel_fifo.pop() {
@@ -328,7 +335,7 @@ impl Ticker for PPU {
             Mode::OAMFetch => self.oam_fetch(),
             Mode::PixelDrawing => self.pixel_drawing(),
             Mode::HBlank => self.hblank(),
-            Mode::VBlank => {}
+            Mode::VBlank => self.vblank(),
         }
         // update state after executing tick
         let lcd_reg = self.lcd_reg.try_borrow_mut().ok();
