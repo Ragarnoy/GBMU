@@ -9,6 +9,9 @@ edition = "2018"
 [dev-dependencies]
 clap = { version = "3.0.0-beta.2" }
 
+[build-dependencies]
+zip = { version = "0.5" }
+
 [dependencies]
 modular-bitfield = "0.11.2"
 gb-bus = { path = "../gb-bus" }

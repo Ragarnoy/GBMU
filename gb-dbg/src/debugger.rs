@@ -1,3 +1,4 @@
+mod breakpoints;
 pub mod disassembler;
 pub mod flow_control;
 pub mod memory;
@@ -5,18 +6,20 @@ mod options;
 pub mod registers;
 
 use crate::dbg_interfaces::{MemoryDebugOperations, RegisterDebugOperations};
-use crate::debugger::disassembler::Disassembler;
+use crate::debugger::breakpoints::BreakpointEditor;
+use crate::debugger::disassembler::DisassemblyViewer;
 use crate::debugger::flow_control::FlowController;
 use crate::debugger::memory::MemoryViewer;
 use crate::debugger::options::DebuggerOptions;
 use crate::debugger::registers::RegisterEditor;
-use egui::{Color32, CtxRef, Label};
+use egui::CtxRef;
 
 pub struct Debugger<MEM> {
     memory_editor: MemoryViewer<MEM>,
     register_editor: RegisterEditor,
     flow_controller: FlowController,
-    disassembler: Disassembler,
+    disassembler: DisassemblyViewer,
+    breakpoint_editor: BreakpointEditor,
 }
 
 impl<MEM: MemoryDebugOperations> Debugger<MEM> {
@@ -32,10 +35,11 @@ impl<MEM: MemoryDebugOperations> Debugger<MEM> {
         });
         egui::SidePanel::left("left_panel")
             .resizable(false)
-            .default_width(545.0)
+            .default_width(510.0)
             .show(ctx, |ui| {
                 ui.vertical(|ui| {
-                    self.disassembler.draw(ui);
+                    self.disassembler
+                        .draw(ui, registers.cpu_get("PC").unwrap().into(), memory);
                     ui.separator();
                     self.memory_editor.draw(ui, &mut memory);
                 });
@@ -44,16 +48,7 @@ impl<MEM: MemoryDebugOperations> Debugger<MEM> {
             .resizable(false)
             .default_width(170.0)
             .show(ctx, |ui| {
-                ui.label(Label::new("Breakpoints").text_color(Color32::WHITE));
-                egui::CollapsingHeader::new("🛠 Options")
-                    .id_source(55)
-                    .default_open(false)
-                    .show(ui, |ui| ui.label("Hello"));
-                ui.separator();
-                ui.columns(2, |columns| {
-                    columns[0].label("Enable");
-                    columns[1].label("Address");
-                })
+                self.breakpoint_editor.draw(ui, memory);
             });
         egui::CentralPanel::default().show(ctx, |ui| {
             self.register_editor.draw(ui, registers);
@@ -81,7 +76,8 @@ impl DebuggerBuilder {
             memory_editor: MemoryViewer::new(self.options.unwrap_or_default().address_ranges),
             register_editor: RegisterEditor,
             flow_controller: FlowController,
-            disassembler: Disassembler,
+            disassembler: DisassemblyViewer,
+            breakpoint_editor: BreakpointEditor::default(),
         }
     }
 }
