@@ -497,7 +497,7 @@ pub enum Opcode {
     /// `LDHL SP, i8`: put `SP + i8` into `HL`. 3m
     LdhlSp8 = 0xf8,
     /// `LD SP, HL`: load `HL` inot `SP`. 2m
-    LdSpHl = 0xf9,
+    LdSPHL = 0xf9,
     /// `LD A,(u16)`: load `(u16)` into `A`. 4m
     LdA16 = 0xfa,
     /// `EI`: Enable interrups after the end of the next instruction. 1m

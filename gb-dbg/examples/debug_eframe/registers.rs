@@ -26,14 +26,15 @@ impl<'a> Iterator for Iter<'a> {
     }
 }
 
+#[derive(Debug)]
 pub struct Registers {
-    a: u8,
-    b: u8,
-    c: u8,
-    d: u8,
-    e: u8,
-    f: u8,
-    pc: u16,
+    pub a: u8,
+    pub b: u8,
+    pub c: u8,
+    pub d: u8,
+    pub e: u8,
+    pub f: u8,
+    pub pc: u16,
 }
 
 impl Default for Registers {
