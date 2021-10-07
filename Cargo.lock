@@ -817,11 +817,13 @@ dependencies = [
 name = "gbmu"
 version = "0.1.0"
 dependencies = [
- "egui 0.13.1",
+ "egui 0.14.2",
+ "egui_glium",
  "gb-dbg",
  "gb-joypad",
  "gb-lcd",
  "gb-ppu",
+ "glium",
  "log",
  "native-dialog",
  "sdl2",
