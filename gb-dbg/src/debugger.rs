@@ -12,7 +12,9 @@ use crate::debugger::flow_control::FlowController;
 use crate::debugger::memory::MemoryViewer;
 use crate::debugger::options::DebuggerOptions;
 use crate::debugger::registers::RegisterEditor;
+use crate::run_duration::RunDuration;
 use egui::CtxRef;
+use std::ops::ControlFlow;
 
 pub struct Debugger<MEM> {
     memory_editor: MemoryViewer<MEM>,
@@ -20,6 +22,7 @@ pub struct Debugger<MEM> {
     flow_controller: FlowController,
     disassembler: DisassemblyViewer,
     breakpoint_editor: BreakpointEditor,
+    flow_status: Option<ControlFlow<(), RunDuration>>,
 }
 
 impl<MEM: MemoryDebugOperations> Debugger<MEM> {
@@ -31,8 +34,9 @@ impl<MEM: MemoryDebugOperations> Debugger<MEM> {
     ) {
         // ctx.set_debug_on_hover(true);
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
-            self.flow_controller.draw(ui);
+            self.flow_status = self.flow_controller.draw(ui);
         });
+
         egui::SidePanel::left("left_panel")
             .resizable(false)
             .default_width(510.0)
@@ -44,15 +48,23 @@ impl<MEM: MemoryDebugOperations> Debugger<MEM> {
                     self.memory_editor.draw(ui, &mut memory);
                 });
             });
+
         egui::SidePanel::right("right_panel")
             .resizable(false)
             .default_width(170.0)
             .show(ctx, |ui| {
-                self.breakpoint_editor.draw(ui, memory);
+                self.flow_status = self
+                    .breakpoint_editor
+                    .draw(ui, registers.cpu_get("PC").unwrap().into());
             });
+
         egui::CentralPanel::default().show(ctx, |ui| {
             self.register_editor.draw(ui, registers);
         });
+    }
+
+    pub fn flow_status(&self) -> Option<ControlFlow<(), RunDuration>> {
+        self.flow_status
     }
 }
 
@@ -78,6 +90,7 @@ impl DebuggerBuilder {
             flow_controller: FlowController,
             disassembler: DisassemblyViewer,
             breakpoint_editor: BreakpointEditor::default(),
+            flow_status: None,
         }
     }
 }

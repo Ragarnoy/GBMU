@@ -1,31 +1,23 @@
+use crate::run_duration::RunDuration;
 use egui::Ui;
+use std::ops::ControlFlow;
 
 pub struct FlowController;
 
 impl FlowController {
-    pub fn draw(&self, ui: &mut Ui) {
+    pub fn draw(&self, ui: &mut Ui) -> Option<ControlFlow<(), RunDuration>> {
+        let mut ret: Option<ControlFlow<(), RunDuration>> = None;
         ui.horizontal(|ui| {
             if ui.button("Step").clicked() {
-                self.step();
+                ret = Some(ControlFlow::Continue(RunDuration::Step));
             }
             if ui.button("Run one frame").clicked() {
-                self.run_one_frame();
+                ret = Some(ControlFlow::Continue(RunDuration::RunFrame));
             }
             if ui.button("Run one second").clicked() {
-                self.run_one_second();
+                ret = Some(ControlFlow::Continue(RunDuration::RunSecond));
             }
         });
-    }
-
-    pub fn step(&self) {
-        todo!()
-    }
-
-    pub fn run_one_frame(&self) {
-        todo!()
-    }
-
-    pub fn run_one_second(&self) {
-        todo!()
+        ret
     }
 }
