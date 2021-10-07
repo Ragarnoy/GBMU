@@ -1,4 +1,4 @@
-use super::{Oam, Vram};
+use super::{Lockable, Oam, Vram};
 use crate::error::{PPUError, PPUResult};
 use crate::UNDEFINED_VALUE;
 use gb_bus::{Address, Area, Error, FileOperation};
@@ -59,18 +59,28 @@ impl FileOperation<Area> for PPUMem {
     fn read(&self, addr: Box<dyn Address<Area>>) -> Result<u8, Error> {
         match addr.area_type() {
             Area::Vram => match self.vram.try_borrow() {
-                Ok(vram) => vram
-                    .read(addr.get_address())
-                    .map_err(|_| Error::SegmentationFault(addr.into())),
+                Ok(vram) => {
+                    if vram.get_lock().is_none() {
+                        vram.read(addr.get_address())
+                            .map_err(|_| Error::SegmentationFault(addr.into()))
+                    } else {
+                        Ok(UNDEFINED_VALUE)
+                    }
+                }
                 Err(err) => {
                     log::error!("failed vram read: {}", err);
                     Ok(UNDEFINED_VALUE)
                 }
             },
             Area::Oam => match self.oam.try_borrow() {
-                Ok(oam) => oam
-                    .read(addr.get_address())
-                    .map_err(|_| Error::SegmentationFault(addr.into())),
+                Ok(oam) => {
+                    if oam.get_lock().is_none() {
+                        oam.read(addr.get_address())
+                            .map_err(|_| Error::SegmentationFault(addr.into()))
+                    } else {
+                        Ok(UNDEFINED_VALUE)
+                    }
+                }
                 Err(err) => {
                     log::error!("failed oam read: {}", err);
                     Ok(UNDEFINED_VALUE)
@@ -84,18 +94,28 @@ impl FileOperation<Area> for PPUMem {
     fn write(&mut self, v: u8, addr: Box<dyn Address<Area>>) -> Result<(), Error> {
         match addr.area_type() {
             Area::Vram => match self.vram.try_borrow_mut() {
-                Ok(mut vram) => vram
-                    .write(addr.get_address(), v)
-                    .map_err(|_| Error::SegmentationFault(addr.into())),
+                Ok(mut vram) => {
+                    if vram.get_lock().is_none() {
+                        vram.write(addr.get_address(), v)
+                            .map_err(|_| Error::SegmentationFault(addr.into()))
+                    } else {
+                        Ok(())
+                    }
+                }
                 Err(err) => {
                     log::error!("failed vram write: {}", err);
                     Ok(())
                 }
             },
             Area::Oam => match self.oam.try_borrow_mut() {
-                Ok(mut oam) => oam
-                    .write(addr.get_address(), v)
-                    .map_err(|_| Error::SegmentationFault(addr.into())),
+                Ok(mut oam) => {
+                    if oam.get_lock().is_none() {
+                        oam.write(addr.get_address(), v)
+                            .map_err(|_| Error::SegmentationFault(addr.into()))
+                    } else {
+                        Ok(())
+                    }
+                }
                 Err(err) => {
                     log::error!("failed oam write: {}", err);
                     Ok(())

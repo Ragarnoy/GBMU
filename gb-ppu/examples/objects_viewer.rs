@@ -2,8 +2,8 @@ use sdl2::{event::Event, keyboard::Keycode};
 
 use gb_lcd::{render, window::GBWindow};
 use gb_ppu::{
-    PPUMem, PPURegisters, OBJECT_LIST_RENDER_HEIGHT, OBJECT_LIST_RENDER_WIDTH,
-    OBJECT_RENDER_HEIGHT, OBJECT_RENDER_WIDTH, PPU,
+    PPUMem, PPURegisters, PPU, SPRITE_LIST_RENDER_HEIGHT, SPRITE_LIST_RENDER_WIDTH,
+    SPRITE_RENDER_HEIGHT, SPRITE_RENDER_WIDTH,
 };
 
 use std::convert::TryInto;
@@ -27,10 +27,10 @@ pub fn main() {
     let bar_pixels_size = GBWindow::dots_to_pixels(&video_subsystem, render::MENU_BAR_SIZE)
         .expect("Error while computing bar size");
     let mut gb_window = GBWindow::new(
-        "Objects",
+        "Sprites",
         (
-            OBJECT_RENDER_WIDTH as u32,
-            OBJECT_RENDER_HEIGHT as u32 + bar_pixels_size,
+            SPRITE_RENDER_WIDTH as u32,
+            SPRITE_RENDER_HEIGHT as u32 + bar_pixels_size,
         ),
         true,
         &video_subsystem,
@@ -44,11 +44,11 @@ pub fn main() {
         .expect("Failed to configure main window");
 
     let mut view_display =
-        render::RenderImage::<OBJECT_RENDER_WIDTH, OBJECT_RENDER_HEIGHT>::with_bar_size(
+        render::RenderImage::<SPRITE_RENDER_WIDTH, SPRITE_RENDER_HEIGHT>::with_bar_size(
             bar_pixels_size as f32,
         );
     let mut list_display =
-        render::RenderImage::<OBJECT_LIST_RENDER_WIDTH, OBJECT_LIST_RENDER_HEIGHT>::with_bar_size(
+        render::RenderImage::<SPRITE_LIST_RENDER_WIDTH, SPRITE_LIST_RENDER_HEIGHT>::with_bar_size(
             bar_pixels_size as f32,
         );
     let ppu = PPU::new();
@@ -76,8 +76,8 @@ pub fn main() {
     ];
     overwrite_memory(&ppu_mem, &ppu_reg, dumps[0]);
     let mut list_mode = false;
-    let mut view_image = ppu.objects_image();
-    let mut list_image = ppu.objects_list_image();
+    let mut view_image = ppu.sprites_image();
+    let mut list_image = ppu.sprites_list_image();
 
     'running: loop {
         gb_window
@@ -91,8 +91,8 @@ pub fn main() {
                     for (title, vram, oam, io_reg) in dumps {
                         if ui.button(title).clicked() {
                             overwrite_memory(&ppu_mem, &ppu_reg, (title, vram, oam, io_reg));
-                            view_image = ppu.objects_image();
-                            list_image = ppu.objects_list_image();
+                            view_image = ppu.sprites_image();
+                            list_image = ppu.sprites_list_image();
                         }
                     }
                 });

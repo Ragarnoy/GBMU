@@ -1,9 +1,10 @@
-use crate::drawing::State;
-use crate::memory::{Oam, PPUMem, Vram};
+use crate::drawing::{Mode, State};
+use crate::memory::{Lock, Lockable, Oam, PPUMem, Vram};
 use crate::registers::{LcdReg, PPURegisters};
+use crate::Sprite;
 use crate::{
-    OBJECT_LIST_PER_LINE, OBJECT_LIST_RENDER_HEIGHT, OBJECT_LIST_RENDER_WIDTH,
-    OBJECT_RENDER_HEIGHT, OBJECT_RENDER_WIDTH, TILEMAP_DIM, TILEMAP_TILE_COUNT, TILESHEET_HEIGHT,
+    SPRITE_LIST_PER_LINE, SPRITE_LIST_RENDER_HEIGHT, SPRITE_LIST_RENDER_WIDTH,
+    SPRITE_RENDER_HEIGHT, SPRITE_RENDER_WIDTH, TILEMAP_DIM, TILEMAP_TILE_COUNT, TILESHEET_HEIGHT,
     TILESHEET_TILE_COUNT, TILESHEET_WIDTH,
 };
 use gb_bus::Bus;
@@ -22,6 +23,7 @@ pub struct PPU {
     lcd_reg: Rc<RefCell<LcdReg>>,
     pixels: RenderData<SCREEN_WIDTH, SCREEN_HEIGHT>,
     state: State,
+    _oam_fetched: Vec<Sprite>,
 }
 
 impl PPU {
@@ -32,6 +34,7 @@ impl PPU {
             lcd_reg: Rc::new(RefCell::new(LcdReg::new())),
             pixels: [[[255; 3]; SCREEN_WIDTH]; SCREEN_HEIGHT],
             state: State::new(),
+            _oam_fetched: Vec::with_capacity(10),
         }
     }
 
@@ -134,24 +137,24 @@ impl PPU {
         image
     }
 
-    /// Create an image of the currents objects placed relatively to the viewport.
+    /// Create an image of the currents sprites placed relatively to the viewport.
     ///
     /// This function is used for debugging purpose.
-    pub fn objects_image(&self) -> RenderData<OBJECT_RENDER_WIDTH, OBJECT_RENDER_HEIGHT> {
-        let mut image = [[[255; 3]; OBJECT_RENDER_WIDTH]; OBJECT_RENDER_HEIGHT];
-        let objects = self
+    pub fn sprites_image(&self) -> RenderData<SPRITE_RENDER_WIDTH, SPRITE_RENDER_HEIGHT> {
+        let mut image = [[[255; 3]; SPRITE_RENDER_WIDTH]; SPRITE_RENDER_HEIGHT];
+        let sprites = self
             .oam
             .borrow()
-            .collect_all_objects()
-            .expect("failed to collect objects for image");
+            .collect_all_sprites()
+            .expect("failed to collect sprites for image");
         let vram = self.vram.borrow();
         let lcd_reg = self.lcd_reg.borrow();
         let height = if lcd_reg.control.obj_size() { 16 } else { 8 };
-        for object in objects {
-            let x = object.x_pos().min(OBJECT_RENDER_WIDTH as u8 - 8) as usize;
-            let y = object.y_pos().min(OBJECT_RENDER_HEIGHT as u8 - 16) as usize;
+        for sprite in sprites {
+            let x = sprite.x_pos().min(SPRITE_RENDER_WIDTH as u8 - 8) as usize;
+            let y = sprite.y_pos().min(SPRITE_RENDER_HEIGHT as u8 - 16) as usize;
             for j in 0..height {
-                let pixels_values = object
+                let pixels_values = sprite
                     .get_pixels_row(j, &vram, lcd_reg.control.obj_size(), lcd_reg.pal_mono.obj())
                     .expect("invalid line passed");
                 let y_img = y + j;
@@ -166,12 +169,12 @@ impl PPU {
         // draw screen outline
         for (y, column) in image.iter_mut().enumerate() {
             for (x, pixel) in column.iter_mut().enumerate() {
-                if ((x == 7 || x == OBJECT_RENDER_WIDTH - 8)
+                if ((x == 7 || x == SPRITE_RENDER_WIDTH - 8)
                     && y >= 15
-                    && y <= OBJECT_RENDER_HEIGHT - 16)
-                    || ((y == 15 || y == OBJECT_RENDER_HEIGHT - 16)
+                    && y <= SPRITE_RENDER_HEIGHT - 16)
+                    || ((y == 15 || y == SPRITE_RENDER_HEIGHT - 16)
                         && x >= 7
-                        && x <= OBJECT_RENDER_WIDTH - 8)
+                        && x <= SPRITE_RENDER_WIDTH - 8)
                 {
                     *pixel = [!pixel[0], !pixel[1], !pixel[2]];
                 }
@@ -180,26 +183,26 @@ impl PPU {
         image
     }
 
-    /// Create an image of the currents objects.
+    /// Create an image of the currents sprites.
     ///
     /// This function is used for debugging purpose.
-    pub fn objects_list_image(
+    pub fn sprites_list_image(
         &self,
-    ) -> RenderData<OBJECT_LIST_RENDER_WIDTH, OBJECT_LIST_RENDER_HEIGHT> {
-        let mut image = [[[255; 3]; OBJECT_LIST_RENDER_WIDTH]; OBJECT_LIST_RENDER_HEIGHT];
-        let objects = self
+    ) -> RenderData<SPRITE_LIST_RENDER_WIDTH, SPRITE_LIST_RENDER_HEIGHT> {
+        let mut image = [[[255; 3]; SPRITE_LIST_RENDER_WIDTH]; SPRITE_LIST_RENDER_HEIGHT];
+        let sprites = self
             .oam
             .borrow()
-            .collect_all_objects()
-            .expect("failed to collect objects for image");
+            .collect_all_sprites()
+            .expect("failed to collect sprites for image");
         let vram = self.vram.borrow();
         let lcd_reg = self.lcd_reg.borrow();
         let height = if lcd_reg.control.obj_size() { 16 } else { 8 };
-        for (r, object) in objects.iter().enumerate() {
-            let x = (r % OBJECT_LIST_PER_LINE) * 8;
-            let y = (r / OBJECT_LIST_PER_LINE) * 16;
+        for (r, sprite) in sprites.iter().enumerate() {
+            let x = (r % SPRITE_LIST_PER_LINE) * 8;
+            let y = (r / SPRITE_LIST_PER_LINE) * 16;
             for j in 0..height {
-                let pixels_values = object
+                let pixels_values = sprite
                     .get_pixels_row(j, &vram, lcd_reg.control.obj_size(), lcd_reg.pal_mono.obj())
                     .expect("invalid line passed");
                 let y_img = y + j;
@@ -212,6 +215,18 @@ impl PPU {
             }
         }
         image
+    }
+
+    fn oam_fetch(&mut self) {
+        if let Ok(mut oam) = self.oam.try_borrow_mut() {
+            let lock = oam.get_lock();
+            if lock.is_none() {
+                oam.lock(Lock::Ppu);
+            }
+            if let Some(Lock::Ppu) = lock {
+                // fetch oam here
+            }
+        }
     }
 }
 
@@ -230,94 +245,61 @@ impl Ticker for PPU {
     where
         B: Bus<u8> + Bus<u16>,
     {
-        let lcd_reg = self.lcd_reg.try_borrow_mut().ok();
+        match self.state.mode() {
+            Mode::OAMFetch => self.oam_fetch(),
+            Mode::PixelDrawing => {}
+            _ => {}
+        }
         // update state after executing tick
+        let lcd_reg = self.lcd_reg.try_borrow_mut().ok();
         self.state.update(lcd_reg);
     }
 }
 
 #[cfg(test)]
-mod vram {
+mod mem_lock {
     use super::PPU;
+    use crate::memory::{Lock, Lockable};
     use crate::test_tools::TestAddress;
     use gb_bus::FileOperation;
 
     #[test]
-    fn locking() {
+    fn vram() {
         let ppu = PPU::new();
         let mut ppu_mem = ppu.memory();
         {
-            let _lock = ppu.vram.borrow();
+            ppu.vram.borrow_mut().lock(Lock::Ppu);
             ppu_mem
                 .write(0x42, Box::new(TestAddress::root_vram()))
                 .expect("Try write value into borrowed vram");
             let res = ppu_mem
                 .read(Box::new(TestAddress::root_vram()))
-                .expect("Try reading borrowed value from vram");
-            assert_eq!(res, 0x00, "invalid value from borrowed vram");
-        }
-    }
+                .expect("Try reading mut borrowed value from vram");
+            assert_eq!(res, 0xFF, "invalid value from vram");
 
-    #[test]
-    fn locking_mut() {
-        let ppu = PPU::new();
-        let mut ppu_mem = ppu.memory();
-        {
-            {
-                let _lock = ppu.vram.borrow_mut();
-                ppu_mem
-                    .write(0x42, Box::new(TestAddress::root_vram()))
-                    .expect("Try write value into borrowed vram");
-                let res = ppu_mem
-                    .read(Box::new(TestAddress::root_vram()))
-                    .expect("Try reading mut borrowed value from vram");
-                assert_eq!(res, 0xFF, "invalid value from vram");
-            }
+            ppu.vram.borrow_mut().unlock();
             let res = ppu_mem
                 .read(Box::new(TestAddress::root_vram()))
                 .expect("Try reading mut borrowed value from vram");
             assert_eq!(res, 0x00, "invalid value from vram");
         }
     }
-}
-
-#[cfg(test)]
-mod oam {
-    use super::PPU;
-    use crate::test_tools::TestAddress;
-    use gb_bus::FileOperation;
 
     #[test]
-    fn locking() {
+    fn oam() {
         let ppu = PPU::new();
         let mut ppu_mem = ppu.memory();
         {
-            let _lock = ppu.oam.borrow();
+            ppu.oam.borrow_mut().lock(Lock::Ppu);
             ppu_mem
                 .write(0x42, Box::new(TestAddress::root_oam()))
                 .expect("Try write value into borrowed oam");
             let res = ppu_mem
                 .read(Box::new(TestAddress::root_oam()))
-                .expect("Try reading borrowed value from oam");
-            assert_eq!(res, 0x00, "invalid value from borrowed oam");
-        }
-    }
+                .expect("Try reading mut borrowed value from oam");
+            assert_eq!(res, 0xFF, "invalid value from oam");
 
-    #[test]
-    fn locking_mut() {
-        let ppu = PPU::new();
-        let mut ppu_mem = ppu.memory();
-        {
-            {
-                let _lock = ppu.oam.borrow_mut();
-                ppu_mem
-                    .write(0x42, Box::new(TestAddress::root_oam()))
-                    .expect("Try write value into borrowed oam");
-                let res = ppu_mem
-                    .read(Box::new(TestAddress::root_oam()))
-                    .expect("Try reading mut borrowed value from oam");
-                assert_eq!(res, 0xFF, "invalid value from oam");
-            }
+            ppu.oam.borrow_mut().unlock();
             let res = ppu_mem
                 .read(Box::new(TestAddress::root_oam()))
                 .expect("Try reading mut borrowed value from oam");

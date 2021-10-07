@@ -22,16 +22,16 @@ struct Attributes {
 }
 
 #[derive(Clone, Copy, Debug, Default)]
-pub struct Object {
+pub struct Sprite {
     y_pos: u8,
     x_pos: u8,
     tile_index: u8,
     attributes: Attributes,
 }
 
-impl Object {
+impl Sprite {
     pub fn new() -> Self {
-        Object {
+        Sprite {
             y_pos: 0,
             x_pos: 0,
             tile_index: 0,
@@ -57,12 +57,12 @@ impl Object {
         self.attributes.x_flip() != 0
     }
 
-    /// Read the row of 8 pixels values for this object.
+    /// Read the row of 8 pixels values for this sprite.
     ///
     /// ### Parameters
     ///  - **line**: The index of the row of pixel to return. Should be below 8 or 16 depending of the size_16 flag.
     ///  - **vram**: A reference to the vram to read the pixel values from.
-    ///  - **size_16**: the bit 2 flag from Control indicating if the object is 8(*false*) or 16(*true*) pixels high.
+    ///  - **size_16**: the bit 2 flag from Control indicating if the sprite is 8(*false*) or 16(*true*) pixels high.
     pub fn get_pixels_row(
         &self,
         line: usize,
@@ -82,7 +82,7 @@ impl Object {
         }
     }
 
-    /// Read the row of 8 pixels values for this object in 8x8 pixels mode.
+    /// Read the row of 8 pixels values for this sprite in 8x8 pixels mode.
     ///
     /// ### Parameters
     ///  - **line**: The index of the row of pixel to return. Should be below 8.
@@ -112,7 +112,7 @@ impl Object {
         Ok(row)
     }
 
-    /// Read the row of 8 pixels values for this object in 8x16 pixels mode.
+    /// Read the row of 8 pixels values for this sprite in 8x16 pixels mode.
     ///
     /// ### Parameters
     ///  - **line**: The index of the row of pixel to return. Should be below 16.
@@ -151,9 +151,9 @@ impl Object {
     }
 }
 
-impl From<[u8; Object::SIZE]> for Object {
-    fn from(bytes: [u8; Object::SIZE]) -> Object {
-        Object {
+impl From<[u8; Sprite::SIZE]> for Sprite {
+    fn from(bytes: [u8; Sprite::SIZE]) -> Sprite {
+        Sprite {
             y_pos: bytes[0],
             x_pos: bytes[1],
             tile_index: bytes[2],
@@ -162,8 +162,8 @@ impl From<[u8; Object::SIZE]> for Object {
     }
 }
 
-impl From<Object> for [u8; Object::SIZE] {
-    fn from(obj: Object) -> [u8; Object::SIZE] {
+impl From<Sprite> for [u8; Sprite::SIZE] {
+    fn from(obj: Sprite) -> [u8; Sprite::SIZE] {
         [
             obj.y_pos,
             obj.x_pos,
