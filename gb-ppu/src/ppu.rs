@@ -221,12 +221,11 @@ impl PPU {
         if let Ok(mut oam) = self.oam.try_borrow_mut() {
             let lock = oam.get_lock();
             if lock.is_none() {
-                oam.lock(Some(Lock::Ppu))
+                oam.lock(Lock::Ppu);
             }
-            if let Some(Lock::Dma) = lock {
-                return;
+            if let Some(Lock::Ppu) = lock {
+                // fetch oam here
             }
-            // fetch oam here
         }
     }
 }
@@ -269,7 +268,7 @@ mod mem_lock {
         let ppu = PPU::new();
         let mut ppu_mem = ppu.memory();
         {
-            ppu.vram.borrow_mut().lock(Some(Lock::Ppu));
+            ppu.vram.borrow_mut().lock(Lock::Ppu);
             ppu_mem
                 .write(0x42, Box::new(TestAddress::root_vram()))
                 .expect("Try write value into borrowed vram");
@@ -278,7 +277,7 @@ mod mem_lock {
                 .expect("Try reading mut borrowed value from vram");
             assert_eq!(res, 0xFF, "invalid value from vram");
 
-            ppu.vram.borrow_mut().lock(None);
+            ppu.vram.borrow_mut().unlock();
             let res = ppu_mem
                 .read(Box::new(TestAddress::root_vram()))
                 .expect("Try reading mut borrowed value from vram");
@@ -291,7 +290,7 @@ mod mem_lock {
         let ppu = PPU::new();
         let mut ppu_mem = ppu.memory();
         {
-            ppu.oam.borrow_mut().lock(Some(Lock::Ppu));
+            ppu.oam.borrow_mut().lock(Lock::Ppu);
             ppu_mem
                 .write(0x42, Box::new(TestAddress::root_oam()))
                 .expect("Try write value into borrowed oam");
@@ -300,7 +299,7 @@ mod mem_lock {
                 .expect("Try reading mut borrowed value from oam");
             assert_eq!(res, 0xFF, "invalid value from oam");
 
-            ppu.oam.borrow_mut().lock(None);
+            ppu.oam.borrow_mut().unlock();
             let res = ppu_mem
                 .read(Box::new(TestAddress::root_oam()))
                 .expect("Try reading mut borrowed value from oam");

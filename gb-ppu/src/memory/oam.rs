@@ -116,8 +116,12 @@ impl From<Oam> for [u8; Oam::SIZE] {
 }
 
 impl Lockable for Oam {
-    fn lock(&mut self, owner: Option<Lock>) {
-        self.lock = owner;
+    fn lock(&mut self, owner: Lock) {
+        self.lock = Some(owner);
+    }
+
+    fn unlock(&mut self) {
+        self.lock = None;
     }
 
     fn get_lock(&self) -> Option<Lock> {
