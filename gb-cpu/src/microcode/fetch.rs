@@ -372,8 +372,6 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                     write::ind,
                     jump::jump,
                 ]),
-                Opcode::Daa => ctl.push_actions(&[read::a, arithmetic::daa, write::a]),
-                Opcode::Rla => ctl.push_actions(&[read::a, bitwise::rl, write::a]),
 
                 Opcode::RetNz => ctl.push_actions(&[
                     utils::sleep,
@@ -433,16 +431,8 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                     jump::jump,
                 ]),
 
-                Opcode::Reti => ctl.push_actions(&[
-                    read::sp,
-                    inc::sp,
-                    read::ind,
-                    read::sp,
-                    inc::sp,
-                    read::ind,
-                    jump::jump,
-                    // TODO enable interrupt
-                ]),
+                Opcode::Daa => ctl.push_actions(&[read::a, arithmetic::daa, write::a]),
+                Opcode::Rla => ctl.push_actions(&[read::a, bitwise::rl, write::a]),
 
                 Opcode::Nop => &mut ctl,
                 Opcode::PrefixCb => ctl.push_action(fetch_cb),
