@@ -74,3 +74,11 @@ pub fn ind(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     state.write_bus(addr, value);
     OK_CONSUME_CYCLE
 }
+
+/// Write the value stored in cache to result of `u8 + 0xFF00` where `u8` is stored in the cache
+pub fn hram(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
+    let addr = 0xff00 + ctl.pop() as u16;
+    let value = ctl.pop();
+    state.write_bus(addr, value);
+    OK_CONSUME_CYCLE
+}
