@@ -1,47 +1,49 @@
 ROMS_LINK := "https://projects.intra.42.fr/uploads/document/document/4986/roms.zip"
 ROMS := \
-	roms/Super\ Mario\ Land.gb \
-	roms/Legend\ of\ Zelda,\ The\ -\ Link's\ Awakening\ DX.gbc \
-	roms/Legend\ of\ Zelda,\ The\ -\ Oracle\ of\ Seasons.gbc \
-	roms/Pokemon_Rouge.gb \
-	roms/Pokemon\ -\ Version\ Cristal.gbc \
-	roms/Tetris.gb \
-	roms/Bubble_Ghost.gb \
-	roms/Pokemon\ -\ Version\ Argent.gbc \
-	roms/Super\ Mario\ Land\ 2.gb \
-	roms/Metroid\ II\ -\ Return\ of\ Samus.gb \
-	roms/Pokemon\ -\ Version\ Or.gbc \
-	roms/Legend_of_Zelda_link_Awaking.gb \
-	roms/Metal\ Gear\ Solid.gbc \
-	roms/Kirby\ 2.gb \
-	roms/Mystic_Quest.gb \
-	roms/Pokemon_Bleue.gb \
-	roms/Legend\ of\ Zelda,\ The\ -\ Oracle\ of\ Ages.gbc \
-	roms/Pokemon\ -\ Jaune.gbc \
+	assets/roms/Super\ Mario\ Land.gb \
+	assets/roms/Legend\ of\ Zelda,\ The\ -\ Link's\ Awakening\ DX.gbc \
+	assets/roms/Legend\ of\ Zelda,\ The\ -\ Oracle\ of\ Seasons.gbc \
+	assets/roms/Pokemon_Rouge.gb \
+	assets/roms/Pokemon\ -\ Version\ Cristal.gbc \
+	assets/roms/Tetris.gb \
+	assets/roms/Bubble_Ghost.gb \
+	assets/roms/Pokemon\ -\ Version\ Argent.gbc \
+	assets/roms/Super\ Mario\ Land\ 2.gb \
+	assets/roms/Metroid\ II\ -\ Return\ of\ Samus.gb \
+	assets/roms/Pokemon\ -\ Version\ Or.gbc \
+	assets/roms/Legend_of_Zelda_link_Awaking.gb \
+	assets/roms/Metal\ Gear\ Solid.gbc \
+	assets/roms/Kirby\ 2.gb \
+	assets/roms/Mystic_Quest.gb \
+	assets/roms/Pokemon_Bleue.gb \
+	assets/roms/Legend\ of\ Zelda,\ The\ -\ Oracle\ of\ Ages.gbc \
+	assets/roms/Pokemon\ -\ Jaune.gbc \
 
 BIOS_LINK_ROOT := "https://gbdev.gg8.se/files/roms/bootroms"
 BIOS := \
-		roms/bios/dmg_boot.bin \
-		roms/bios/cgb_boot.bin \
+		assets/bios/dmg_boot.bin \
+		assets/bios/cgb_boot.bin \
 
-ROMS_DIR := roms
+ASSETS_DIR := assets
+ROMS_ZIP := $(ASSETS_DIR)/roms.zip
+ROMS_DIR := $(ASSETS_DIR)/roms
+BIOS_DIR := $(ASSETS_DIR)/bios
 
 requirement: roms bios
 
 bios: $(BIOS)
 
-roms/bios/%:
+$(BIOS_DIR)/%:
 	curl --create-dirs --output $@ $(addprefix $(BIOS_LINK_ROOT)/, $*)
 
 roms: $(ROMS)
 
-roms.zip:
+$(ROMS_ZIP):
 	curl --output $@ $(ROMS_LINK)
 
-$(ROMS_DIR)/%: roms.zip
-	echo "target: $@"
-	unzip $< 'roms/*' -x '*/.DS_Store'
-	# touch roms/*
+$(ROMS_DIR)/%: $(ROMS_ZIP)
+	unzip -n $< "roms/$*" -d $(ASSETS_DIR)
+	touch "$@"
 
 docker: Dockerfile packaging/linux/appimage/Dockerfile
 	docker build -f Dockerfile -t gbmu:latest .

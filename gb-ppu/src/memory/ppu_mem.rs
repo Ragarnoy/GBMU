@@ -1,10 +1,9 @@
 use super::{Oam, Vram};
 use crate::error::{PPUError, PPUResult};
+use crate::UNDEFINED_VALUE;
 use gb_bus::{Address, Area, Error, FileOperation};
 use std::cell::RefCell;
 use std::rc::Rc;
-
-const UNDEFINED_VALUE: u8 = 0xFF;
 
 /// Allow external structures to read/write the memory of the ppu.
 ///
@@ -15,7 +14,7 @@ pub struct PPUMem {
 }
 
 impl PPUMem {
-    /// Build a [PPUMem] from references counters of Vram and Oam.
+    /// Build a PPUMem from references counters of Vram and Oam.
     ///
     /// This function is used by [PPU.memory()](crate::PPU::memory), you should not need to call this constructor yourself.
     pub fn new(vram: Rc<RefCell<Vram>>, oam: Rc<RefCell<Oam>>) -> Self {

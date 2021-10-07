@@ -1,10 +1,13 @@
+use crate::drawing::State;
 use crate::memory::{Oam, PPUMem, Vram};
-use crate::registers::{Control, Palette};
+use crate::registers::{LcdReg, PPURegisters};
 use crate::{
     OBJECT_LIST_PER_LINE, OBJECT_LIST_RENDER_HEIGHT, OBJECT_LIST_RENDER_WIDTH,
     OBJECT_RENDER_HEIGHT, OBJECT_RENDER_WIDTH, TILEMAP_DIM, TILEMAP_TILE_COUNT, TILESHEET_HEIGHT,
     TILESHEET_TILE_COUNT, TILESHEET_WIDTH,
 };
+use gb_bus::Bus;
+use gb_clock::{Tick, Ticker};
 use gb_lcd::render::{RenderData, SCREEN_HEIGHT, SCREEN_WIDTH};
 
 use std::cell::RefCell;
@@ -13,16 +16,12 @@ use std::rc::Rc;
 /// The Pixel Process Unit is in charge of selecting the pixel to be displayed on the lcd screen.
 ///
 /// It owns the VRAM and the OAM, as well as a few registers.
-///
-/// Registers owned by the ppu are simply exposed by public function when required for examples for now.
-/// This impl propably won't work once the cpu will need to access them.
 pub struct PPU {
     vram: Rc<RefCell<Vram>>,
     oam: Rc<RefCell<Oam>>,
-    control: Control,
-    bg_palette: Palette,
-    obj_palette: (Palette, Palette),
+    lcd_reg: Rc<RefCell<LcdReg>>,
     pixels: RenderData<SCREEN_WIDTH, SCREEN_HEIGHT>,
+    state: State,
 }
 
 impl PPU {
@@ -30,10 +29,9 @@ impl PPU {
         Self {
             vram: Rc::new(RefCell::new(Vram::new())),
             oam: Rc::new(RefCell::new(Oam::new())),
-            control: Control::new(),
-            bg_palette: Palette::new(),
-            obj_palette: (Palette::new(), Palette::new()),
+            lcd_reg: Rc::new(RefCell::new(LcdReg::new())),
             pixels: [[[255; 3]; SCREEN_WIDTH]; SCREEN_HEIGHT],
+            state: State::new(),
         }
     }
 
@@ -42,26 +40,13 @@ impl PPU {
         PPUMem::new(Rc::clone(&self.vram), Rc::clone(&self.oam))
     }
 
+    /// Build and return a [PPURegisters] struct to access/modify the registers of this ppu instance.
+    pub fn registers(&self) -> PPURegisters {
+        PPURegisters::new(Rc::clone(&self.lcd_reg))
+    }
+
     pub fn pixels(&self) -> &RenderData<SCREEN_WIDTH, SCREEN_HEIGHT> {
         &self.pixels
-    }
-
-    pub fn control(&self) -> &Control {
-        &self.control
-    }
-
-    pub fn control_mut(&mut self) -> &mut Control {
-        &mut self.control
-    }
-
-    pub fn bg_palette_mut(&mut self) -> &mut Palette {
-        &mut self.bg_palette
-    }
-    pub fn obj_palette_0_mut(&mut self) -> &mut Palette {
-        &mut self.obj_palette.0
-    }
-    pub fn obj_palette_1_mut(&mut self) -> &mut Palette {
-        &mut self.obj_palette.1
     }
 
     pub fn compute(&mut self) {
@@ -86,12 +71,17 @@ impl PPU {
         let mut x = 0;
         let mut y = 0;
         let vram = self.vram.borrow();
+        let lcd_reg = self.lcd_reg.borrow();
         for k in 0..TILESHEET_TILE_COUNT {
             let tile = vram.read_8x8_tile(k).unwrap();
             for (j, row) in tile.iter().enumerate() {
                 for (i, pixel) in row.iter().rev().enumerate() {
-                    image[y * 8 + j][x * 8 + i] =
-                        self.bg_palette.get_color(*pixel).unwrap_or_default().into();
+                    image[y * 8 + j][x * 8 + i] = lcd_reg
+                        .pal_mono
+                        .bg()
+                        .get_color(*pixel)
+                        .unwrap_or_default()
+                        .into();
                 }
             }
             x += 1;
@@ -111,23 +101,28 @@ impl PPU {
         let mut x = 0;
         let mut y = 0;
         let vram = self.vram.borrow();
+        let lcd_reg = self.lcd_reg.borrow();
         for k in 0..TILEMAP_TILE_COUNT {
             let index = vram
                 .get_map_tile_index(
                     k,
                     if !window {
-                        self.control.bg_tilemap_area()
+                        lcd_reg.control.bg_tilemap_area()
                     } else {
-                        self.control.win_tilemap_area()
+                        lcd_reg.control.win_tilemap_area()
                     },
-                    self.control.bg_win_tiledata_area(),
+                    lcd_reg.control.bg_win_tiledata_area(),
                 )
                 .unwrap();
             let tile = vram.read_8x8_tile(index).unwrap();
             for (j, row) in tile.iter().enumerate() {
                 for (i, pixel) in row.iter().rev().enumerate() {
-                    image[y * 8 + j][x * 8 + i] =
-                        self.bg_palette.get_color(*pixel).unwrap_or_default().into();
+                    image[y * 8 + j][x * 8 + i] = lcd_reg
+                        .pal_mono
+                        .bg()
+                        .get_color(*pixel)
+                        .unwrap_or_default()
+                        .into();
                 }
             }
             x += 1;
@@ -149,14 +144,15 @@ impl PPU {
             .borrow()
             .collect_all_objects()
             .expect("failed to collect objects for image");
-        let height = if self.control.obj_size() { 16 } else { 8 };
         let vram = self.vram.borrow();
+        let lcd_reg = self.lcd_reg.borrow();
+        let height = if lcd_reg.control.obj_size() { 16 } else { 8 };
         for object in objects {
             let x = object.x_pos().min(OBJECT_RENDER_WIDTH as u8 - 8) as usize;
             let y = object.y_pos().min(OBJECT_RENDER_HEIGHT as u8 - 16) as usize;
             for j in 0..height {
                 let pixels_values = object
-                    .get_pixels_row(j, &vram, self.control.obj_size(), &self.obj_palette)
+                    .get_pixels_row(j, &vram, lcd_reg.control.obj_size(), lcd_reg.pal_mono.obj())
                     .expect("invalid line passed");
                 let y_img = y + j;
                 for (i, (pixel_value, pixel_color)) in pixels_values.iter().rev().enumerate() {
@@ -196,14 +192,15 @@ impl PPU {
             .borrow()
             .collect_all_objects()
             .expect("failed to collect objects for image");
-        let height = if self.control.obj_size() { 16 } else { 8 };
         let vram = self.vram.borrow();
+        let lcd_reg = self.lcd_reg.borrow();
+        let height = if lcd_reg.control.obj_size() { 16 } else { 8 };
         for (r, object) in objects.iter().enumerate() {
             let x = (r % OBJECT_LIST_PER_LINE) * 8;
             let y = (r / OBJECT_LIST_PER_LINE) * 16;
             for j in 0..height {
                 let pixels_values = object
-                    .get_pixels_row(j, &vram, self.control.obj_size(), &self.obj_palette)
+                    .get_pixels_row(j, &vram, lcd_reg.control.obj_size(), lcd_reg.pal_mono.obj())
                     .expect("invalid line passed");
                 let y_img = y + j;
                 for (i, (pixel_value, pixel_color)) in pixels_values.iter().rev().enumerate() {
@@ -221,6 +218,21 @@ impl PPU {
 impl Default for PPU {
     fn default() -> PPU {
         PPU::new()
+    }
+}
+
+impl Ticker for PPU {
+    fn cycle_count(&self) -> Tick {
+        Tick::TCycle
+    }
+
+    fn tick<B>(&mut self, _adr_bus: &mut B)
+    where
+        B: Bus<u8> + Bus<u16>,
+    {
+        let lcd_reg = self.lcd_reg.try_borrow_mut().ok();
+        // update state after executing tick
+        self.state.update(lcd_reg);
     }
 }
 

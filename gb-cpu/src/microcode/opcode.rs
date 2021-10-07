@@ -16,7 +16,7 @@ pub enum Opcode {
     /// `DEC B`: decrement `B`, 1m
     DecB = 0x05,
     /// `LD B, u8`: load `u8` into `B`, 2m
-    LdB = 0x06,
+    LdB8 = 0x06,
     /// `RLCA`: rotate `A` left, 1m
     RlcA = 0x07,
     /// `LD (u16), SP`: load `SP` into `(u16)`, 5m
@@ -54,7 +54,7 @@ pub enum Opcode {
     /// `RLA`: rotate `A` left, 1m
     Rla = 0x17,
     /// `JR i8`: relative jump to `i8`, 3m
-    Jr8 = 0x18,
+    Jr = 0x18,
     /// `ADD HL, DE`: add `DE` to `HL`, 2m
     AddHLDE = 0x19,
     /// `LD A, (DE)`: load `(DE)` into `A`, 2m
@@ -71,7 +71,7 @@ pub enum Opcode {
     Rra = 0x1f,
 
     /// `JR NZ, i8`: relative jump to `i8` when `Zero` is not set, 2-3m
-    JrNZ8 = 0x20,
+    JrNz = 0x20,
     /// `LD HL, u16`: load `u16` into `HL`, 3m
     LdHL16 = 0x21,
     /// `LDI (HL), A`: load `A` into `(HL)` then increment `HL`, 2m
@@ -87,7 +87,7 @@ pub enum Opcode {
     /// `DAA`: decimal ajust `A`, 1m
     Daa = 0x27,
     /// `JR Z, i8`: relative jump to `i8` when `Zero` is set, 2-3m
-    JrZ8 = 0x28,
+    JrZ = 0x28,
     /// `ADD HL, HL`: add `HL` to `HL`
     AddHLHL = 0x29,
     /// `LDI A, (HL)`: load `(HL)` into `A` then increment `HL`, 2m
@@ -104,7 +104,7 @@ pub enum Opcode {
     Cpl = 0x2f,
 
     /// `JR NC, i8`: relative jump to `i8` when `Carry` is not set, 2-3m
-    JrNC8 = 0x30,
+    JrNc = 0x30,
     /// `LD SP, u16`: load `u16` into `SP`, 3m
     LdSP16 = 0x31,
     /// `LDD (HL), A`: load `A` into `HL` then decrement `HL`, 2m
@@ -120,7 +120,7 @@ pub enum Opcode {
     /// `SCF`: set `Carry`, 1m
     Scf = 0x37,
     /// `JR C, i8`: relative jump to `i8` when `Carry`, 2-3m
-    JrC8 = 0x38,
+    JrC = 0x38,
     /// `ADD HL, SP`: add `SP` to `HL`, 2m
     AddHLSP = 0x39,
     /// `LDD A, (HL)`: load `(HL)` into `A` then decrement `HL`, 2m
@@ -421,7 +421,7 @@ pub enum Opcode {
     /// `RET`: Pop two bytes from the stack the jump to that address. 4m
     Ret = 0xc9,
     /// `JP Z, u16`: Absolute jump to `u16` if `Z` is set. 3-4m
-    JpZ16 = 0xca,
+    JpZ = 0xca,
     /// Opcode with CB prefix see `microcode::opcode_cb::OpcodeCB`
     PrefixCb = 0xcb,
     /// `CALL Z, u16`: When `Z` is set: Push the address of the next instruction then jump to `u16`. 3-6m
@@ -437,7 +437,7 @@ pub enum Opcode {
     /// `POP DE`: Pop two bytes off the stack into `DE`. 3m
     PopDe = 0xd1,
     /// `JP NC, u16`: Absolute jump to `u16` if `NC` is set. 3-4m
-    JpNc16 = 0xd2,
+    JpNc = 0xd2,
     /// `CALL NC, u16`: When `NC` is set: Push the address of the next instruction then jump to `u16`. 3-6m
     CallNc16 = 0xd4,
     /// `PUSH DE`: push `DE` into the stack. 4m
@@ -451,7 +451,7 @@ pub enum Opcode {
     /// `RETI`: Pop two bytes from the stack then jump to that address and the enable interrupts. 4m
     Reti = 0xd9,
     /// `JP C, u16`: Absolute jump to `u16` if `C` is set. 3-4m
-    JpC16 = 0xda,
+    JpC = 0xda,
     /// `CALL C, u16`: When `C` is set: Push the address of the next instruction then jump to `u16`. 3-6m
     CallC16 = 0xdc,
     /// `SBC A, u8`: sub `u8 + Carry` to `A`. 2m
@@ -497,7 +497,7 @@ pub enum Opcode {
     /// `LDHL SP, i8`: put `SP + i8` into `HL`. 3m
     LdhlSp8 = 0xf8,
     /// `LD SP, HL`: load `HL` inot `SP`. 2m
-    LdSpHl = 0xf9,
+    LdSPHL = 0xf9,
     /// `LD A,(u16)`: load `(u16)` into `A`. 4m
     LdA16 = 0xfa,
     /// `EI`: Enable interrups after the end of the next instruction. 1m

@@ -11,6 +11,7 @@ impl From<RegisterValue> for u16 {
     }
 }
 
+#[derive(Clone, Copy)]
 pub enum RegisterValue {
     U8(u8),
     U16(u16),
@@ -28,16 +29,20 @@ impl From<u16> for RegisterValue {
     }
 }
 
-pub trait RW {
-    fn read(&self, index: usize) -> u8;
-
-    fn write(&mut self, _index: usize, _value: u8) {
-        // Default to Read-Only
-    }
+pub trait MemoryDebugOperations {
+    fn read(&self, index: u16) -> u8;
 }
 
-pub trait DebugRegister {
-    fn get(&self, key: &str) -> Result<RegisterValue>;
+pub trait RegisterDebugOperations {
+    fn cpu_get(&self, key: &str) -> Result<RegisterValue>;
 
-    fn registers(&self) -> Vec<RegisterMap>;
+    fn ppu_get(&self, key: &str) -> Result<RegisterValue>;
+
+    fn io_get(&self, key: &str) -> Result<RegisterValue>;
+
+    fn cpu_registers(&self) -> Vec<RegisterMap>;
+
+    fn ppu_registers(&self) -> Vec<RegisterMap>;
+
+    fn io_registers(&self) -> Vec<RegisterMap>;
 }

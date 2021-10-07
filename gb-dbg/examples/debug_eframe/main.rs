@@ -6,31 +6,30 @@ use crate::registers::Registers;
 use eframe::egui::CtxRef;
 use eframe::epi::*;
 use egui::Vec2;
-use gb_dbg::dbg_interfaces::RW;
-use gb_dbg::debugger::disassembler::Disassembler;
-use gb_dbg::debugger::flow_control::FlowController;
-use gb_dbg::debugger::memory::MemoryEditorBuilder;
-use gb_dbg::debugger::registers::RegisterEditorBuilder;
-use gb_dbg::debugger::Debugger;
+use gb_dbg::debugger::{Debugger, DebuggerBuilder};
+use gb_dbg::run_duration::RunDuration;
+use std::ops::ControlFlow;
 
 pub struct DebuggerApp {
-    pub debugger: Debugger<Memory, Registers>,
-}
-
-impl RW for Memory {
-    fn read(&self, index: usize) -> u8 {
-        *self.memory.get(index).unwrap()
-    }
-
-    fn write(&mut self, _index: usize, _value: u8) {
-        self.memory[_index] = _value
-    }
+    pub debugger: Debugger<Memory>,
+    pub memory: Memory,
+    pub register: Registers,
 }
 
 impl App for DebuggerApp {
-    fn update(&mut self, ctx: &CtxRef, frame: &mut Frame<'_>) {
-        frame.set_window_size(Vec2::new(1000.0, 600.0));
-        self.debugger.draw(ctx);
+    fn update(&mut self, ctx: &CtxRef, _frame: &mut Frame<'_>) {
+        self.debugger.draw(ctx, &mut self.memory, &self.register);
+
+        if let Some(flow) = self.debugger.flow_status() {
+            match flow {
+                ControlFlow::Continue(x) => match x {
+                    RunDuration::Step => self.register.pc += 1,
+                    RunDuration::RunFrame => self.register.pc += 2,
+                    RunDuration::RunSecond => self.register.pc += 3,
+                },
+                ControlFlow::Break(_) => self.register.pc = 1,
+            };
+        }
     }
 
     fn name(&self) -> &str {
@@ -39,21 +38,16 @@ impl App for DebuggerApp {
 }
 
 fn main() {
-    let mem = Default::default();
-    let gbm_mem = MemoryEditorBuilder::new(mem)
-        .with_address_range("VRam", 0..0xFF + 1)
-        .with_address_range("Ram", 0xFF..0xFFF)
-        .build();
-    let rega = Registers::default();
-    let regb = Registers::default();
-    let regc = Registers::default();
-    let regs = RegisterEditorBuilder::default()
-        .with_cpu(rega)
-        .with_ppu(regb)
-        .with_io(regc)
-        .build();
+    let dbg: Debugger<Memory> = DebuggerBuilder::new().build();
     let dgb_app = DebuggerApp {
-        debugger: Debugger::new(gbm_mem, regs, FlowController, Disassembler),
+        debugger: dbg,
+        memory: Default::default(),
+        register: Default::default(),
     };
-    eframe::run_native(Box::new(dgb_app), eframe::NativeOptions::default())
+    let options = NativeOptions {
+        resizable: false,
+        initial_window_size: Some(Vec2::new(1000.0, 600.0)),
+        ..Default::default()
+    };
+    eframe::run_native(Box::new(dgb_app), options)
 }

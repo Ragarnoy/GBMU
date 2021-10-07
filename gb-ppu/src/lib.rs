@@ -1,14 +1,17 @@
 mod color;
+mod drawing;
 mod error;
 mod memory;
 mod object;
 mod ppu;
 mod registers;
+
 #[cfg(test)]
 mod test_tools;
 
 pub use memory::PPUMem;
 pub use ppu::PPU;
+pub use registers::PPURegisters;
 
 pub const TILESHEET_WIDTH: usize = 128;
 pub const TILESHEET_HEIGHT: usize = 192;
@@ -24,3 +27,5 @@ const OBJECT_LIST_PER_LINE: usize = 8;
 pub const OBJECT_LIST_RENDER_WIDTH: usize = OBJECT_LIST_PER_LINE * 8;
 pub const OBJECT_LIST_RENDER_HEIGHT: usize =
     (memory::Oam::OBJECT_COUNT / OBJECT_LIST_PER_LINE) * 16;
+
+const UNDEFINED_VALUE: u8 = 0xFF;

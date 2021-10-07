@@ -1,3 +1,4 @@
+use super::Register;
 use modular_bitfield::{bitfield, specifiers::B1};
 
 #[bitfield]
@@ -13,12 +14,14 @@ struct ControlBits {
     pub ppu_enable: B1,
 }
 
-#[derive(Default)]
+#[derive(Default, Clone, Copy, Debug)]
 pub struct Control {
     bits: ControlBits,
 }
 
 impl Control {
+    pub const SIZE: usize = 1;
+
     pub fn new() -> Self {
         Control {
             bits: ControlBits::new(),
@@ -105,3 +108,5 @@ impl From<Control> for u8 {
         register.bits.into()
     }
 }
+
+impl Register for Control {}
