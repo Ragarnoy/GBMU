@@ -1,4 +1,4 @@
-use crate::microcode::{utils, write};
+use crate::microcode::write;
 
 use super::{
     bitwise, opcode_cb::OpcodeCB, read, CycleDigest, MicrocodeController, MicrocodeFlow, State,
