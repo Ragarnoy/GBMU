@@ -8,7 +8,7 @@ pub struct Pixel {
     pub palette: Rc<Cell<Palette>>,
     is_sprite: bool,
     _sprite_priority: Option<u8>,
-    _background_priority: bool,
+    background_priority: bool,
 }
 
 impl Pixel {
@@ -16,19 +16,19 @@ impl Pixel {
         color: u8,
         palette: Rc<Cell<Palette>>,
         is_sprite: bool,
-        _background_priority: bool,
+        background_priority: bool,
     ) -> Self {
         Pixel {
             color,
             palette,
             is_sprite,
             _sprite_priority: None,
-            _background_priority,
+            background_priority,
         }
     }
 
     pub fn mix(&mut self, other: Pixel) {
-        if !self.is_sprite && other.is_sprite && other.color != 0 {
+        if !self.is_sprite && !other.background_priority && other.is_sprite && other.color != 0 {
             *self = other;
         }
     }
