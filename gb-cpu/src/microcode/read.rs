@@ -81,6 +81,12 @@ pub fn sp(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     OK_PLAY_NEXT_ACTION
 }
 
+/// Read `PC` register, do not consume the current cycle
+pub fn pc(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
+    ctl.push_u16(state.regs.pc);
+    OK_PLAY_NEXT_ACTION
+}
+
 /// Read the byte from the u16 addr stored in the cache, do consume the cycle
 pub fn ind(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     let addr = ctl.pop_u16();
