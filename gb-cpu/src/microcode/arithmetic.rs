@@ -89,17 +89,31 @@ fn daa_subtraction(value: u8, carry: bool, half_carry: bool) -> (u8, bool) {
             _ => 0,
         }
     };
-    value.overflowing_add(offset)
+    let (value, _) = value.overflowing_add(offset);
+    (value, carry)
 }
 
 /// return the upper/lower bound of a byte
-/// ```
-/// let (upper, lower) = slice_byte(0x83);
-/// assert_eq!(upper, 8);
-/// assert_eq!(lower, 3);
-/// ```
 fn slice_byte(value: u8) -> (u8, u8) {
     let upper = value >> 4;
     let lower = value & 0xf;
     (upper, lower)
+}
+
+#[test]
+fn test_daa_addition() {
+    assert_eq!(daa_addition(0x7D, false, false), (0x83, false));
+}
+
+#[test]
+fn test_daa_subtraction() {
+    assert_eq!(daa_subtraction(0x4b, false, true), (0x45, false));
+}
+
+#[test]
+fn test_slice_byte() {
+    assert_eq!(slice_byte(0x83), (8, 3));
+    assert_eq!(slice_byte(0x6), (0, 6));
+    assert_eq!(slice_byte(0x60), (6, 0));
+    assert_eq!(slice_byte(0), (0, 0));
 }
