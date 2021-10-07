@@ -1,14 +1,17 @@
 use super::Pixel;
 use std::collections::VecDeque;
 
+#[derive(Default)]
 pub struct PixelFIFO {
     fifo: VecDeque<Pixel>,
+    pub enabled: bool,
 }
 
 impl PixelFIFO {
     pub fn new() -> Self {
         PixelFIFO {
             fifo: VecDeque::with_capacity(16),
+            enabled: true,
         }
     }
 
@@ -18,5 +21,9 @@ impl PixelFIFO {
         } else {
             None
         }
+    }
+
+    pub fn clear(&mut self) {
+        self.fifo.clear();
     }
 }

@@ -42,6 +42,14 @@ impl State {
         self.step
     }
 
+    pub fn pixel_drawn(&self) -> u8 {
+        self.pixel_drawn
+    }
+
+    pub fn draw_pixel(&mut self) {
+        self.pixel_drawn += 1;
+    }
+
     pub fn update(&mut self, lcd_reg: Option<RefMut<LcdReg>>) {
         match self.mode {
             Mode::HBlank => self.update_hblank(),
@@ -110,6 +118,7 @@ impl State {
                 log::error!("PixelDrawing reached on OAMFetch period")
             }
             (_, step) if step >= Self::HBLANK_MAX_START => {
+                self.mode = Mode::HBlank;
                 log::error!("PixelDrawing reached on HBlank period")
             }
             (_, step) if step >= Self::HBLANK_MIN_START => {
