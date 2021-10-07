@@ -1,7 +1,7 @@
 mod color;
+mod drawing;
 mod error;
 mod memory;
-mod mode;
 mod object;
 mod ppu;
 mod registers;
