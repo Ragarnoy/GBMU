@@ -1,3 +1,4 @@
+use super::{Lock, Lockable};
 use crate::error::{PPUError, PPUResult};
 
 pub const TILEDATA_ADRESS_MAX: usize = 0x17FF;
@@ -9,6 +10,7 @@ pub const TILEDATA_START_1: usize = 0x1000 / 16;
 /// Contains operations to read more easily the differents values of the vram.
 pub struct Vram {
     data: [u8; Vram::SIZE as usize],
+    lock: Option<Lock>,
 }
 
 impl Vram {
@@ -17,6 +19,7 @@ impl Vram {
     pub fn new() -> Self {
         Vram {
             data: [0x00; Self::SIZE as usize],
+            lock: None,
         }
     }
 
@@ -147,13 +150,27 @@ impl Vram {
 
 impl From<[u8; Vram::SIZE]> for Vram {
     fn from(data: [u8; Vram::SIZE]) -> Vram {
-        Vram { data }
+        Vram { data, lock: None }
     }
 }
 
 impl Default for Vram {
     fn default() -> Vram {
         Vram::new()
+    }
+}
+
+impl Lockable for Vram {
+    fn lock(&mut self, owner: Lock) {
+        self.lock = Some(owner);
+    }
+
+    fn unlock(&mut self) {
+        self.lock = None;
+    }
+
+    fn get_lock(&self) -> Option<Lock> {
+        self.lock
     }
 }
 

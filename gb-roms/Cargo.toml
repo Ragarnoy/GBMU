@@ -15,4 +15,6 @@ zip = { version = "0.5" }
 [dependencies]
 modular-bitfield = "0.11.2"
 gb-bus = { path = "../gb-bus" }
+gb-rtc = { path = "../gb-rtc" }
+chrono = "0.4"
 serde = { version = "1.0.130" , features = [ "derive" ] }

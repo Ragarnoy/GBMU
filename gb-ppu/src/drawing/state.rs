@@ -30,6 +30,10 @@ impl State {
         }
     }
 
+    pub fn mode(&self) -> Mode {
+        self.mode
+    }
+
     pub fn update(&mut self, lcd_reg: Option<RefMut<LcdReg>>) {
         match self.mode {
             Mode::HBlank => self.update_hblank(),

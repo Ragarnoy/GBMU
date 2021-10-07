@@ -828,8 +828,10 @@ dependencies = [
 name = "gb-roms"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "clap",
  "gb-bus",
+ "gb-rtc",
  "modular-bitfield",
  "serde",
  "zip",
