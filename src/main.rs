@@ -1,10 +1,12 @@
+mod context;
+mod event;
 mod settings;
 
 use native_dialog::FileDialog;
 #[cfg(feature = "debug_render")]
 use sdl2::keyboard::Scancode;
-use sdl2::{event::Event, keyboard::Keycode};
 
+use context::{Context, Windows};
 use gb_dbg::*;
 use gb_lcd::{render, window::GBWindow};
 use gb_ppu::PPU;
@@ -73,60 +75,79 @@ fn main() {
     #[cfg(feature = "debug_render")]
     let mut debug = false;
 
+    let windows = Windows {
+        main: gb_window,
+        debug: debug_window,
+        input: input_window,
+    };
+    let mut context = Context {
+        sdl: sdl_context,
+        video: video_subsystem,
+        display: display,
+        joypad,
+        windows,
+    };
     'running: loop {
-        gb_window
+        context
+            .windows
+            .main
             .start_frame()
             .expect("Fail at the start for the main window");
 
         // render is updated just before drawing for now but we might want to change that later
         ppu.compute();
-        display.update_render(ppu.pixels());
+        context.display.update_render(ppu.pixels());
         // emulation render here
-        display.draw();
+        context.display.draw();
 
         // set ui logic here
-        egui::containers::TopBottomPanel::top("Top menu").show(gb_window.egui_ctx(), |ui| {
-            egui::menu::bar(ui, |ui| {
-                ui.set_height(render::MENU_BAR_SIZE);
-                if ui.button("Load").clicked() {
-                    let files = FileDialog::new()
-                        .set_location(
-                            &std::env::current_dir()
-                                .unwrap_or_else(|_| std::path::PathBuf::from("/")),
-                        )
-                        .add_filter("rom", &["gb", "gbc", "rom"])
-                        .show_open_single_file();
-                    log::debug!("picked file: {:?}", files);
-                }
-                if ui.button("Debug").clicked() && debug_window.is_none() {
-                    debug_window = Some(
-                        GBWindow::new("GBMU Debug", (800, 600), false, &video_subsystem)
-                            .expect("Error while building debug window"),
-                    );
-                }
-                if ui.button("Input").clicked() && input_window.is_none() {
-                    input_window = Some(
-                        GBWindow::new(
-                            "GBMU Input Settings",
-                            (
-                                GBWindow::dots_to_pixels(&video_subsystem, 250.0)
-                                    .expect("error while computing widow size"),
-                                GBWindow::dots_to_pixels(&video_subsystem, 250.0)
-                                    .expect("error while computing widow size"),
-                            ),
-                            false,
-                            &video_subsystem,
-                        )
-                        .expect("Error while building input window"),
-                    );
-                }
-            })
-        });
-        gb_window
+        egui::containers::TopBottomPanel::top("Top menu").show(
+            context.windows.main.egui_ctx(),
+            |ui| {
+                egui::menu::bar(ui, |ui| {
+                    ui.set_height(render::MENU_BAR_SIZE);
+                    if ui.button("Load").clicked() {
+                        let files = FileDialog::new()
+                            .set_location(
+                                &std::env::current_dir()
+                                    .unwrap_or_else(|_| std::path::PathBuf::from("/")),
+                            )
+                            .add_filter("rom", &["gb", "gbc", "rom"])
+                            .show_open_single_file();
+                        log::debug!("picked file: {:?}", files);
+                    }
+                    if ui.button("Debug").clicked() && context.windows.debug.is_none() {
+                        context.windows.debug = Some(
+                            GBWindow::new("GBMU Debug", (800, 600), false, &context.video)
+                                .expect("Error while building debug window"),
+                        );
+                    }
+                    if ui.button("Input").clicked() && context.windows.input.is_none() {
+                        context.windows.input = Some(
+                            GBWindow::new(
+                                "GBMU Input Settings",
+                                (
+                                    GBWindow::dots_to_pixels(&context.video, 250.0)
+                                        .expect("error while computing widow size"),
+                                    GBWindow::dots_to_pixels(&context.video, 250.0)
+                                        .expect("error while computing widow size"),
+                                ),
+                                false,
+                                &context.video,
+                            )
+                            .expect("Error while building input window"),
+                        );
+                    }
+                })
+            },
+        );
+        context
+            .windows
+            .main
             .end_frame()
             .expect("Fail at the end for the main window");
 
-        if let Some(ref mut dgb_wind) = debug_window {
+        if let Some(ref mut dgb_wind) = context.windows.debug {
             dgb_wind
                 .start_frame()
                 .expect("Fail at the start for the debug window");
@@ -137,91 +158,29 @@ fn main() {
                 .expect("Fail at the end for the debug window");
         }
 
-        if let Some(ref mut input_wind) = input_window {
+        if let Some(ref mut input_wind) = context.windows.input {
             input_wind
                 .start_frame()
                 .expect("Fail at the start for the input window");
-            joypad.settings(input_wind.egui_ctx());
+            context.joypad.settings(input_wind.egui_ctx());
             input_wind
                 .end_frame()
                 .expect("Fail at the end for the input window");
         }
 
-        for event in event_pump.poll_iter() {
-            joypad.send_event(&event);
-            match event {
-                Event::Quit { .. }
-                | Event::KeyDown {
-                    // here for debug, maybe remove later ?
-                    keycode: Some(Keycode::Escape),
-                    ..
-                } => break 'running,
-                #[cfg(feature = "debug_render")]
-                sdl2::event::Event::KeyDown {
-                    window_id,
-                    scancode,
-                    ..
-                } => {
-                    if gb_window.sdl_window().id() == window_id && scancode == Some(Scancode::Grave)
-                    {
-                        debug = !debug;
-                        log::debug!("toggle debug ({})", debug);
-                        display.switch_draw_mode(debug);
-                        gb_window.set_debug(debug);
-                    }
-                }
-                Event::Window {
-                    win_event,
-                    window_id,
-                    ..
-                } => match win_event {
-                    sdl2::event::WindowEvent::SizeChanged(width, height) => {
-                        if gb_window.sdl_window().id() == window_id {
-                            gb_window
-                                .resize((width as u32, height as u32), &video_subsystem)
-                                .expect("Fail to resize GB window");
-                            display.resize(gb_window.sdl_window().size());
-                        } else if let Some(ref mut dbg_wind) = debug_window {
-                            if dbg_wind.sdl_window().id() == window_id {
-                                dbg_wind
-                                    .resize((width as u32, height as u32), &video_subsystem)
-                                    .expect("Fail to resize debug window");
-                            }
-                        } else if let Some(ref mut input_wind) = input_window {
-                            if input_wind.sdl_window().id() == window_id {
-                                input_wind
-                                    .resize((width as u32, height as u32), &video_subsystem)
-                                    .expect("Fail to resize input window");
-                            }
-                        }
-                    }
-                    sdl2::event::WindowEvent::Close => {
-                        if gb_window.sdl_window().id() == window_id {
-                            break 'running;
-                        } else if let Some(ref mut dbg_wind) = debug_window {
-                            if dbg_wind.sdl_window().id() == window_id {
-                                debug_window = None;
-                            }
-                        } else if let Some(ref mut input_wind) = input_window {
-                            if input_wind.sdl_window().id() == window_id {
-                                settings::save(joypad.get_config());
-                                input_window = None;
-                            }
-                        }
-                    }
-                    _ => {}
-                },
-                _ => {
-                    if !gb_window.send_event(&event, &sdl_context) {
-                        if let Some(ref mut dbg_wind) = debug_window {
-                            dbg_wind.send_event(&event, &sdl_context);
-                        }
-                        if let Some(ref mut input_wind) = input_window {
-                            input_wind.send_event(&event, &sdl_context);
-                        }
-                    }
-                }
-            }
+        if std::ops::ControlFlow::Break(())
+            == event::process_event(
+                &context.sdl,
+                &mut context.windows.main,
+                &mut context.windows.debug,
+                &context.video,
+                &mut context.display,
+                &mut context.windows.input,
+                &mut event_pump,
+                &mut context.joypad,
+            )
+        {
+            break 'running;
         }
         // std::thread::sleep(::std::time::Duration::new(0, 1_000_000_000u32 / 60));
     }
