@@ -58,7 +58,7 @@ impl FileOperation<Area> for PPUMem {
     /// Read a value from memory. If the concerned memory area is currently locked an undefined value is returned.
     fn read(&self, addr: Box<dyn Address<Area>>) -> Result<u8, Error> {
         match addr.area_type() {
-            Area::Vram => match self.vram.try_borrow_mut() {
+            Area::Vram => match self.vram.try_borrow() {
                 Ok(vram) => {
                     if vram.get_lock().is_none() {
                         vram.read(addr.get_address())
