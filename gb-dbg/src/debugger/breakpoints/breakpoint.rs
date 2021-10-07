@@ -1,5 +1,6 @@
 use std::fmt::{Display, Formatter};
 
+#[derive(Debug)]
 enum BreakpointType {
     Address(u16),
 }
@@ -10,7 +11,7 @@ impl Default for BreakpointType {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Breakpoint {
     r#type: BreakpointType,
     pub enabled: bool,
