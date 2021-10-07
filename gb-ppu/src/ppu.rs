@@ -1,3 +1,4 @@
+use crate::drawing::State;
 use crate::memory::{Oam, PPUMem, Vram};
 use crate::registers::{LcdReg, PPURegisters};
 use crate::{
@@ -5,6 +6,8 @@ use crate::{
     OBJECT_RENDER_HEIGHT, OBJECT_RENDER_WIDTH, TILEMAP_DIM, TILEMAP_TILE_COUNT, TILESHEET_HEIGHT,
     TILESHEET_TILE_COUNT, TILESHEET_WIDTH,
 };
+use gb_bus::Bus;
+use gb_clock::{Tick, Ticker};
 use gb_lcd::render::{RenderData, SCREEN_HEIGHT, SCREEN_WIDTH};
 
 use std::cell::RefCell;
@@ -18,6 +21,7 @@ pub struct PPU {
     oam: Rc<RefCell<Oam>>,
     lcd_reg: Rc<RefCell<LcdReg>>,
     pixels: RenderData<SCREEN_WIDTH, SCREEN_HEIGHT>,
+    state: State,
 }
 
 impl PPU {
@@ -27,6 +31,7 @@ impl PPU {
             oam: Rc::new(RefCell::new(Oam::new())),
             lcd_reg: Rc::new(RefCell::new(LcdReg::new())),
             pixels: [[[255; 3]; SCREEN_WIDTH]; SCREEN_HEIGHT],
+            state: State::new(),
         }
     }
 
@@ -213,6 +218,21 @@ impl PPU {
 impl Default for PPU {
     fn default() -> PPU {
         PPU::new()
+    }
+}
+
+impl Ticker for PPU {
+    fn cycle_count(&self) -> Tick {
+        Tick::TCycle
+    }
+
+    fn tick<B>(&mut self, _adr_bus: &mut B)
+    where
+        B: Bus<u8> + Bus<u16>,
+    {
+        let lcd_reg = self.lcd_reg.try_borrow_mut().ok();
+        // update state after executing tick
+        self.state.update(lcd_reg);
     }
 }
 
