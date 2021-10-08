@@ -303,7 +303,7 @@ impl PPU {
                 self.pixel_fifo.clear();
                 self.state.clear_pixel_count();
             }
-            if self.pixel_fifo.enabled && self.state.pixel_drawn() < 160 {
+            if self.pixel_fifo.enabled && self.state.pixel_drawn() < SCREEN_WIDTH as u8 {
                 if let Some(pixel) = self.pixel_fifo.pop() {
                     self.next_pixels[self.state.line() as usize]
                         [self.state.pixel_drawn() as usize] = Color::from(pixel).into();
