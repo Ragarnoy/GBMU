@@ -8,7 +8,7 @@ use modular_bitfield::{
 };
 
 #[bitfield]
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 struct Attributes {
     #[skip]
     pub palette_cgb_nb: B3,
@@ -21,7 +21,7 @@ struct Attributes {
     pub bg_win_priority: B1,
 }
 
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct Sprite {
     y_pos: u8,
     x_pos: u8,
