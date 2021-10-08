@@ -1,35 +1,32 @@
 #[cfg(debug_assertions)]
-pub fn init_logger() {
-    use log::LevelFilter;
+pub fn init_logger(level: log::LevelFilter) {
     use simplelog::Config;
 
-    setup_terminal_logger(LevelFilter::Debug, Config::default());
+    setup_terminal_logger(level, Config::default());
 }
 
 #[cfg(not(debug_assertions))]
-pub fn init_logger() {
-    use log::LevelFilter;
+pub fn init_logger(level: log::LevelFilter) {
     use simplelog::{Config, WriteLogger};
     use std::fs::File;
 
-    const LEVEL_FILTER: LevelFilter = LevelFilter::Warn;
     const LOG_FILE: &'static str = "/tmp/gbmu.log";
     let config: Config = Config::default();
     let file_res = File::create(LOG_FILE);
 
     if let Ok(file) = file_res {
-        let write_logger_res = WriteLogger::init(LEVEL_FILTER, config.clone(), file);
+        let write_logger_res = WriteLogger::init(level, config.clone(), file);
         if write_logger_res.is_ok() {
             return;
         } else {
-            setup_terminal_logger(LEVEL_FILTER, config);
+            setup_terminal_logger(level, config);
             log::warn!(
                 "cannot setup write logger (because: {})",
                 write_logger_res.unwrap_err()
             );
         }
     } else {
-        setup_terminal_logger(LEVEL_FILTER, config);
+        setup_terminal_logger(level, config);
         log::warn!(
             "cannot setup logging to file {} (because: {})",
             LOG_FILE,
