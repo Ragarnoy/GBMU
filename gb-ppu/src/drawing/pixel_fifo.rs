@@ -61,26 +61,27 @@ mod tests {
 
     #[test]
     fn mix() {
-        let palette = Rc::new(Cell::new(Palette::new()));
+        let pal_0 = Rc::new(Cell::new(Palette::new(false)));
         let pixels_0 = VecDeque::from_iter([
-            Pixel::new(1, palette.clone(), false, false),
-            Pixel::new(1, palette.clone(), false, false),
-            Pixel::new(1, palette.clone(), false, false),
-            Pixel::new(1, palette.clone(), false, false),
-            Pixel::new(1, palette.clone(), false, false),
-            Pixel::new(1, palette.clone(), false, false),
-            Pixel::new(1, palette.clone(), false, false),
-            Pixel::new(1, palette.clone(), false, false),
+            Pixel::new(1, pal_0.clone(), false),
+            Pixel::new(1, pal_0.clone(), false),
+            Pixel::new(1, pal_0.clone(), false),
+            Pixel::new(1, pal_0.clone(), false),
+            Pixel::new(1, pal_0.clone(), false),
+            Pixel::new(1, pal_0.clone(), false),
+            Pixel::new(1, pal_0.clone(), false),
+            Pixel::new(1, pal_0.clone(), false),
         ]);
+        let pal_1 = Rc::new(Cell::new(Palette::new(true)));
         let pixels_1 = VecDeque::from_iter([
-            Pixel::new(2, palette.clone(), true, false),
-            Pixel::new(0, palette.clone(), true, false),
-            Pixel::new(2, palette.clone(), true, false),
-            Pixel::new(0, palette.clone(), true, false),
-            Pixel::new(2, palette.clone(), true, false),
-            Pixel::new(0, palette.clone(), true, false),
-            Pixel::new(2, palette.clone(), true, false),
-            Pixel::new(0, palette.clone(), true, false),
+            Pixel::new(2, pal_1.clone(), false),
+            Pixel::new(0, pal_1.clone(), false),
+            Pixel::new(2, pal_1.clone(), false),
+            Pixel::new(0, pal_1.clone(), false),
+            Pixel::new(2, pal_1.clone(), false),
+            Pixel::new(0, pal_1.clone(), false),
+            Pixel::new(2, pal_1.clone(), false),
+            Pixel::new(0, pal_1.clone(), false),
         ]);
         let mut fifo = PixelFIFO::new();
 
@@ -89,25 +90,25 @@ mod tests {
         assert_eq!(fifo.pixels.len(), 8, "incorrect pixel amount pushed");
         for (i, pixel) in fifo.pixels.iter().enumerate() {
             if i % 2 == 0 {
-                assert!(pixel.is_sprite, "pixel mixing failed");
+                assert!(pixel.palette.get().is_sprite(), "pixel mixing failed");
             } else {
-                assert!(!pixel.is_sprite, "pixel mixing failed");
+                assert!(!pixel.palette.get().is_sprite(), "pixel mixing failed");
             }
         }
     }
 
     #[test]
     fn append() {
-        let palette = Rc::new(Cell::new(Palette::new()));
+        let palette = Rc::new(Cell::new(Palette::new(false)));
         let pixels = VecDeque::from_iter([
-            Pixel::new(0, palette.clone(), false, false),
-            Pixel::new(1, palette.clone(), false, false),
-            Pixel::new(2, palette.clone(), false, false),
-            Pixel::new(3, palette.clone(), false, false),
-            Pixel::new(0, palette.clone(), false, false),
-            Pixel::new(1, palette.clone(), false, false),
-            Pixel::new(2, palette.clone(), false, false),
-            Pixel::new(3, palette.clone(), false, false),
+            Pixel::new(0, palette.clone(), false),
+            Pixel::new(1, palette.clone(), false),
+            Pixel::new(2, palette.clone(), false),
+            Pixel::new(3, palette.clone(), false),
+            Pixel::new(0, palette.clone(), false),
+            Pixel::new(1, palette.clone(), false),
+            Pixel::new(2, palette.clone(), false),
+            Pixel::new(3, palette.clone(), false),
         ]);
         let mut fifo = PixelFIFO::new();
 
@@ -120,26 +121,26 @@ mod tests {
 
     #[test]
     fn pop() {
-        let palette = Rc::new(Cell::new(Palette::new()));
+        let palette = Rc::new(Cell::new(Palette::new(false)));
         let pixels_0 = VecDeque::from_iter([
-            Pixel::new(0, palette.clone(), false, false),
-            Pixel::new(1, palette.clone(), false, false),
-            Pixel::new(0, palette.clone(), false, false),
-            Pixel::new(1, palette.clone(), false, false),
-            Pixel::new(0, palette.clone(), false, false),
-            Pixel::new(1, palette.clone(), false, false),
-            Pixel::new(0, palette.clone(), false, false),
-            Pixel::new(1, palette.clone(), false, false),
+            Pixel::new(0, palette.clone(), false),
+            Pixel::new(1, palette.clone(), false),
+            Pixel::new(0, palette.clone(), false),
+            Pixel::new(1, palette.clone(), false),
+            Pixel::new(0, palette.clone(), false),
+            Pixel::new(1, palette.clone(), false),
+            Pixel::new(0, palette.clone(), false),
+            Pixel::new(1, palette.clone(), false),
         ]);
         let pixels_1 = VecDeque::from_iter([
-            Pixel::new(2, palette.clone(), false, false),
-            Pixel::new(3, palette.clone(), false, false),
-            Pixel::new(2, palette.clone(), false, false),
-            Pixel::new(3, palette.clone(), false, false),
-            Pixel::new(2, palette.clone(), false, false),
-            Pixel::new(3, palette.clone(), false, false),
-            Pixel::new(2, palette.clone(), false, false),
-            Pixel::new(3, palette.clone(), false, false),
+            Pixel::new(2, palette.clone(), false),
+            Pixel::new(3, palette.clone(), false),
+            Pixel::new(2, palette.clone(), false),
+            Pixel::new(3, palette.clone(), false),
+            Pixel::new(2, palette.clone(), false),
+            Pixel::new(3, palette.clone(), false),
+            Pixel::new(2, palette.clone(), false),
+            Pixel::new(3, palette.clone(), false),
         ]);
         let mut fifo = PixelFIFO::new();
 
