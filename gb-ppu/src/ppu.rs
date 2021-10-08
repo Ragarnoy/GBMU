@@ -23,7 +23,7 @@ pub struct PPU {
     lcd_reg: Rc<RefCell<LcdReg>>,
     pixels: RenderData<SCREEN_WIDTH, SCREEN_HEIGHT>,
     state: State,
-    _oam_fetched: Vec<Sprite>,
+    scanline_sprites: Vec<Sprite>,
 }
 
 impl PPU {
@@ -34,7 +34,7 @@ impl PPU {
             lcd_reg: Rc::new(RefCell::new(LcdReg::new())),
             pixels: [[[255; 3]; SCREEN_WIDTH]; SCREEN_HEIGHT],
             state: State::new(),
-            _oam_fetched: Vec::with_capacity(10),
+            scanline_sprites: Vec::with_capacity(10),
         }
     }
 
@@ -217,15 +217,62 @@ impl PPU {
         image
     }
 
-    fn oam_fetch(&mut self) {
+    fn hblank(&mut self) {
         if let Ok(mut oam) = self.oam.try_borrow_mut() {
-            let lock = oam.get_lock();
-            if lock.is_none() {
-                oam.lock(Lock::Ppu);
+            if let Some(Lock::Ppu) = oam.get_lock() {
+                oam.unlock();
             }
-            if let Some(Lock::Ppu) = lock {
-                // fetch oam here
+        } else {
+            log::error!("Oam borrow failed for ppu in mode 0");
+        }
+    }
+
+    fn oam_fetch(&mut self) {
+        if let Ok(lcd_reg) = self.lcd_reg.try_borrow() {
+            if let Ok(mut oam) = self.oam.try_borrow_mut() {
+                let lock = oam.get_lock();
+                let step = self.state.step();
+
+                if lock.is_none() {
+                    oam.lock(Lock::Ppu);
+                    self.scanline_sprites.clear();
+                }
+                if let Some(Lock::Ppu) = lock {
+                    if step % 2 == 1 {
+                        let sprite_pos = step as usize / 2;
+
+                        match oam.read_sprite(sprite_pos) {
+                            Err(err) => log::error!("Error while reading sprite: {}", err),
+                            Ok(sprite) => {
+                                let scanline = self.state.line() + 16;
+                                let top = sprite.y_pos();
+                                let bot = top + if lcd_reg.control.obj_size() { 16 } else { 8 };
+
+                                if scanline >= top && scanline < bot {
+                                    for i in 0..self.scanline_sprites.len() {
+                                        let scan_sprite = self.scanline_sprites[i];
+
+                                        if sprite.x_pos() < scan_sprite.x_pos() {
+                                            self.scanline_sprites.insert(i, sprite);
+                                            if self.scanline_sprites.len() > 10 {
+                                                self.scanline_sprites.pop();
+                                            }
+                                            return;
+                                        }
+                                    }
+                                    if self.scanline_sprites.len() < 10 {
+                                        self.scanline_sprites.push(sprite);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                log::error!("Oam borrow failed for ppu in mode 2");
             }
+        } else {
+            log::error!("Lcd reg borrow failed for ppu in mode 2");
         }
     }
 }
@@ -248,7 +295,8 @@ impl Ticker for PPU {
         match self.state.mode() {
             Mode::OAMFetch => self.oam_fetch(),
             Mode::PixelDrawing => {}
-            _ => {}
+            Mode::HBlank => self.hblank(),
+            Mode::VBlank => {}
         }
         // update state after executing tick
         let lcd_reg = self.lcd_reg.try_borrow_mut().ok();

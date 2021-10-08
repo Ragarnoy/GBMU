@@ -34,6 +34,14 @@ impl State {
         self.mode
     }
 
+    pub fn line(&self) -> u8 {
+        self.line
+    }
+
+    pub fn step(&self) -> u16 {
+        self.step
+    }
+
     pub fn update(&mut self, lcd_reg: Option<RefMut<LcdReg>>) {
         match self.mode {
             Mode::HBlank => self.update_hblank(),
