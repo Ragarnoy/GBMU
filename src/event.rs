@@ -1,20 +1,12 @@
-use crate::settings;
-use gb_joypad::Joypad;
-use gb_lcd::{render::RenderImage, window::GBWindow};
+use crate::{context::Context, settings};
 use sdl2::{event::Event, keyboard::Keycode, EventPump};
 
 pub fn process_event<const WIDTH: usize, const HEIGHT: usize>(
-    sdl_context: &sdl2::Sdl,
-    window: &mut GBWindow,
-    debug_window: &mut Option<GBWindow>,
-    video: &sdl2::VideoSubsystem,
-    display: &mut RenderImage<WIDTH, HEIGHT>,
-    input: &mut Option<GBWindow>,
+    context: &mut Context<WIDTH, HEIGHT>,
     events: &mut EventPump,
-    joypad: &mut Joypad,
 ) -> std::ops::ControlFlow<()> {
     for event in events.poll_iter() {
-        joypad.send_event(&event);
+        context.joypad.send_event(&event);
         match event {
             Event::Quit { .. }
             | Event::KeyDown {
@@ -41,48 +33,52 @@ pub fn process_event<const WIDTH: usize, const HEIGHT: usize>(
                 ..
             } => match win_event {
                 sdl2::event::WindowEvent::SizeChanged(width, height) => {
-                    if window.sdl_window().id() == window_id {
-                        window
-                            .resize((width as u32, height as u32), video)
+                    if context.windows.main.sdl_window().id() == window_id {
+                        context
+                            .windows
+                            .main
+                            .resize((width as u32, height as u32), &context.video)
                             .expect("Fail to resize GB window");
-                        display.resize(window.sdl_window().size());
-                    } else if let Some(ref mut dbg_wind) = debug_window {
+                        context
+                            .display
+                            .resize(context.windows.main.sdl_window().size());
+                    } else if let Some(ref mut dbg_wind) = context.windows.debug {
                         if dbg_wind.sdl_window().id() == window_id {
                             dbg_wind
-                                .resize((width as u32, height as u32), video)
+                                .resize((width as u32, height as u32), &context.video)
                                 .expect("Fail to resize debug window");
                         }
-                    } else if let Some(ref mut input_wind) = input {
+                    } else if let Some(ref mut input_wind) = context.windows.input {
                         if input_wind.sdl_window().id() == window_id {
                             input_wind
-                                .resize((width as u32, height as u32), video)
+                                .resize((width as u32, height as u32), &context.video)
                                 .expect("Fail to resize input window");
                         }
                     }
                 }
                 sdl2::event::WindowEvent::Close => {
-                    if window.sdl_window().id() == window_id {
+                    if context.windows.main.sdl_window().id() == window_id {
                         return std::ops::ControlFlow::Break(());
-                    } else if let Some(ref mut dbg_wind) = debug_window {
+                    } else if let Some(ref mut dbg_wind) = context.windows.debug {
                         if dbg_wind.sdl_window().id() == window_id {
-                            *debug_window = None;
+                            context.windows.debug = None;
                         }
-                    } else if let Some(ref mut input_wind) = input {
+                    } else if let Some(ref mut input_wind) = context.windows.input {
                         if input_wind.sdl_window().id() == window_id {
-                            settings::save(joypad.get_config());
-                            *input = None;
+                            settings::save(context.joypad.get_config());
+                            context.windows.input = None;
                         }
                     }
                 }
                 _ => {}
             },
             _ => {
-                if !window.send_event(&event, sdl_context) {
-                    if let Some(ref mut dbg_wind) = debug_window {
-                        dbg_wind.send_event(&event, sdl_context);
+                if !context.windows.main.send_event(&event, &context.sdl) {
+                    if let Some(ref mut dbg_wind) = context.windows.debug {
+                        dbg_wind.send_event(&event, &context.sdl);
                     }
-                    if let Some(ref mut input_wind) = input {
-                        input_wind.send_event(&event, sdl_context);
+                    if let Some(ref mut input_wind) = context.windows.input {
+                        input_wind.send_event(&event, &context.sdl);
                     }
                 }
             }
