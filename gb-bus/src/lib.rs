@@ -15,7 +15,7 @@ pub use area::Area;
 pub use error::Error;
 pub use file_operation::{Address, FileOperation};
 pub use io_reg_area::IORegArea;
-pub use working_ram::WRam;
+pub use working_ram::WorkingRam;
 
 pub trait Bus<N> {
     /// read `N` into the bus
