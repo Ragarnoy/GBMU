@@ -46,7 +46,7 @@ impl Oam {
         }
     }
 
-    fn read_sprite(&self, pos: usize) -> PPUResult<Sprite> {
+    pub fn read_sprite(&self, pos: usize) -> PPUResult<Sprite> {
         if pos > Self::SPRITE_COUNT - 1 {
             return Err(PPUError::OutOfBound {
                 value: pos,

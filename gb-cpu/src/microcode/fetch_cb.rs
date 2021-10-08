@@ -122,6 +122,17 @@ pub fn fetch_cb(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFl
                 }
                 OpcodeCB::RrcA => ctl.push_actions(&[read::a, bitwise::rrc, write::a]),
 
+                OpcodeCB::RrB => ctl.push_actions(&[read::b, bitwise::rr, write::b]),
+                OpcodeCB::RrC => ctl.push_actions(&[read::c, bitwise::rr, write::c]),
+                OpcodeCB::RrD => ctl.push_actions(&[read::d, bitwise::rr, write::d]),
+                OpcodeCB::RrE => ctl.push_actions(&[read::e, bitwise::rr, write::e]),
+                OpcodeCB::RrH => ctl.push_actions(&[read::h, bitwise::rr, write::h]),
+                OpcodeCB::RrL => ctl.push_actions(&[read::l, bitwise::rr, write::l]),
+                OpcodeCB::RrHL => {
+                    ctl.push_actions(&[read::hl, read::ind, bitwise::rr, read::hl, write::ind])
+                }
+                OpcodeCB::RrA => ctl.push_actions(&[read::a, bitwise::rr, write::a]),
+
                 _ => todo!("unimplemented opcode {:?}", opcode),
             };
             MicrocodeFlow::Continue(CycleDigest::Consume)
