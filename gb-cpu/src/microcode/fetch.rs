@@ -381,6 +381,7 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                     inc::sp,
                     read::sp,
                     read::ind,
+                    inc::sp,
                     jump::jump,
                 ]),
 
@@ -392,6 +393,7 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                     inc::sp,
                     read::sp,
                     read::ind,
+                    inc::sp,
                     jump::jump,
                 ]),
 
@@ -401,6 +403,7 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                     inc::sp,
                     read::sp,
                     read::ind,
+                    inc::sp,
                     jump::jump,
                 ]),
 
@@ -412,6 +415,7 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                     inc::sp,
                     read::sp,
                     read::ind,
+                    inc::sp,
                     jump::jump,
                 ]),
 
@@ -423,6 +427,7 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                     inc::sp,
                     read::sp,
                     read::ind,
+                    inc::sp,
                     jump::jump,
                 ]),
 
