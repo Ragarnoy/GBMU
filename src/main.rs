@@ -78,7 +78,7 @@ fn main() {
     let mut context = Context {
         sdl: sdl_context,
         video: video_subsystem,
-        display: display,
+        display,
         joypad,
         windows,
     };
@@ -129,17 +129,7 @@ fn main() {
                 .expect("Fail at the end for the input window");
         }
 
-        if std::ops::ControlFlow::Break(())
-            == event::process_event(
-                &mut context.windows.main,
-                &mut context.windows.debug,
-                &context.video,
-                &mut context.display,
-                &mut context.windows.input,
-                &mut event_pump,
-                &mut context.joypad,
-            )
-        {
+        if std::ops::ControlFlow::Break(()) == event::process_event(&mut context, &mut event_pump) {
             break 'running;
         }
         // std::thread::sleep(::std::time::Duration::new(0, 1_000_000_000u32 / 60));
