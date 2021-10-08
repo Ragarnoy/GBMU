@@ -46,10 +46,24 @@ pub fn bit_7(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
 pub fn rl(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     let mut value = ctl.pop();
     let top_bit = value >> 7;
-
     value <<= 1;
-
     value += state.regs.carry() as u8;
+
+    ctl.push(value);
+
+    state.regs.set_zero(value == 0);
+    state.regs.set_carry(top_bit == 1);
+    state.regs.set_half_carry(false);
+    state.regs.set_subtraction(false);
+    OK_PLAY_NEXT_ACTION
+}
+
+pub fn rlc(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
+    let mut value = ctl.pop();
+    let top_bit = value >> 7;
+    value <<= 1;
+    value += top_bit;
+
     ctl.push(value);
 
     state.regs.set_zero(value == 0);
