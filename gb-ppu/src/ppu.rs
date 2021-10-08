@@ -302,6 +302,7 @@ impl PPU {
 
             if lock.is_none() {
                 vram.lock(Lock::Ppu);
+                self.pixel_fetcher.clear();
                 self.pixel_fifo.clear();
                 self.state.clear_pixel_count();
             }

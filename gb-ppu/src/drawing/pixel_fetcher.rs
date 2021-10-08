@@ -30,6 +30,12 @@ impl PixelFetcher {
         }
     }
 
+    pub fn clear(&mut self) {
+        self.internal_tick = 0;
+        self.pixels.clear();
+        self.mode = FetchMode::Background;
+    }
+
     pub fn set_mode(&mut self, mode: FetchMode) {
         if self.mode != mode {
             self.internal_tick = 0;
