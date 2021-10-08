@@ -372,6 +372,65 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                     write::ind,
                     jump::jump,
                 ]),
+
+                Opcode::RetNz => ctl.push_actions(&[
+                    utils::sleep,
+                    not_zero,
+                    read::sp,
+                    read::ind,
+                    inc::sp,
+                    read::sp,
+                    read::ind,
+                    inc::sp,
+                    jump::jump,
+                ]),
+
+                Opcode::RetZ => ctl.push_actions(&[
+                    utils::sleep,
+                    zero,
+                    read::sp,
+                    read::ind,
+                    inc::sp,
+                    read::sp,
+                    read::ind,
+                    inc::sp,
+                    jump::jump,
+                ]),
+
+                Opcode::Ret => ctl.push_actions(&[
+                    read::sp,
+                    read::ind,
+                    inc::sp,
+                    read::sp,
+                    read::ind,
+                    inc::sp,
+                    jump::jump,
+                ]),
+
+                Opcode::RetNc => ctl.push_actions(&[
+                    utils::sleep,
+                    not_carry,
+                    read::sp,
+                    read::ind,
+                    inc::sp,
+                    read::sp,
+                    read::ind,
+                    inc::sp,
+                    jump::jump,
+                ]),
+
+                Opcode::RetC => ctl.push_actions(&[
+                    utils::sleep,
+                    carry,
+                    read::sp,
+                    read::ind,
+                    inc::sp,
+                    read::sp,
+                    read::ind,
+                    inc::sp,
+                    jump::jump,
+                ]),
+
                 Opcode::Daa => ctl.push_actions(&[read::a, arithmetic::daa, write::a]),
                 Opcode::Rla => ctl.push_actions(&[read::a, bitwise::rl, write::a]),
 
