@@ -1,4 +1,4 @@
-use crate::drawing::{Mode, PixelFIFO, State};
+use crate::drawing::{Mode, PixelFIFO, PixelFetcher, State};
 use crate::memory::{Lock, Lockable, Oam, PPUMem, Vram};
 use crate::registers::{LcdReg, PPURegisters};
 use crate::Color;
@@ -25,6 +25,7 @@ pub struct PPU {
     pixels: RenderData<SCREEN_WIDTH, SCREEN_HEIGHT>,
     next_pixels: RenderData<SCREEN_WIDTH, SCREEN_HEIGHT>,
     pixel_fifo: PixelFIFO,
+    pixel_fetcher: PixelFetcher,
     state: State,
     scanline_sprites: Vec<Sprite>,
 }
@@ -38,6 +39,7 @@ impl PPU {
             pixels: [[[255; 3]; SCREEN_WIDTH]; SCREEN_HEIGHT],
             next_pixels: [[[255; 3]; SCREEN_WIDTH]; SCREEN_HEIGHT],
             pixel_fifo: PixelFIFO::new(),
+            pixel_fetcher: PixelFetcher::new(),
             state: State::new(),
             scanline_sprites: Vec::with_capacity(10),
         }
@@ -309,6 +311,8 @@ impl PPU {
                         [self.state.pixel_drawn() as usize] = Color::from(pixel).into();
                     self.state.draw_pixel();
                 };
+                // the fetcher try to push its pixel to the FIFO after each of its steps
+                self.pixel_fetcher.push_to_fifo(&mut self.pixel_fifo);
             }
         } else {
             log::error!("Vram borrow failed for ppu in mode 3");

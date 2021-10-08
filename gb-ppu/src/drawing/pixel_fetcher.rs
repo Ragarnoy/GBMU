@@ -37,4 +37,26 @@ impl PixelFetcher {
         }
         self.mode = mode;
     }
+
+    pub fn push_to_fifo(&mut self, fifo: &mut PixelFIFO) {
+        if self.pixels.len() >= 8 && self.internal_tick % 2 == 1 {
+            match self.mode {
+                FetchMode::Background => self.append_to_fifo(fifo),
+                FetchMode::Window => self.append_to_fifo(fifo),
+                FetchMode::Sprite(_) => self.mix_to_fifo(fifo),
+            }
+        }
+    }
+
+    fn append_to_fifo(&mut self, fifo: &mut PixelFIFO) {
+        if let Some(unused_pixels) = fifo.append(self.pixels.drain(0..).collect()) {
+            self.pixels = unused_pixels;
+        }
+    }
+
+    fn mix_to_fifo(&mut self, fifo: &mut PixelFIFO) {
+        if let Some(unused_pixels) = fifo.mix(self.pixels.drain(0..).collect()) {
+            self.pixels = unused_pixels;
+        }
+    }
 }
