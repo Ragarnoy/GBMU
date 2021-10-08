@@ -36,6 +36,18 @@ impl PixelFIFO {
             Some(new_pixels)
         }
     }
+
+    #[allow(dead_code)]
+    pub fn mix(&mut self, mix_pixels: VecDeque<Pixel>) -> Option<VecDeque<Pixel>> {
+        if self.pixels.len() >= 8 && mix_pixels.len() == 8 {
+            for (in_place, mix_pixel) in self.pixels.iter_mut().zip(mix_pixels) {
+                in_place.mix(mix_pixel);
+            }
+            None
+        } else {
+            Some(mix_pixels)
+        }
+    }
 }
 
 #[cfg(test)]
@@ -46,6 +58,43 @@ mod tests {
     use std::collections::VecDeque;
     use std::iter::FromIterator;
     use std::rc::Rc;
+
+    #[test]
+    fn mix() {
+        let palette = Rc::new(Cell::new(Palette::new()));
+        let pixels_0 = VecDeque::from_iter([
+            Pixel::new(1, palette.clone(), false, false),
+            Pixel::new(1, palette.clone(), false, false),
+            Pixel::new(1, palette.clone(), false, false),
+            Pixel::new(1, palette.clone(), false, false),
+            Pixel::new(1, palette.clone(), false, false),
+            Pixel::new(1, palette.clone(), false, false),
+            Pixel::new(1, palette.clone(), false, false),
+            Pixel::new(1, palette.clone(), false, false),
+        ]);
+        let pixels_1 = VecDeque::from_iter([
+            Pixel::new(2, palette.clone(), true, false),
+            Pixel::new(0, palette.clone(), true, false),
+            Pixel::new(2, palette.clone(), true, false),
+            Pixel::new(0, palette.clone(), true, false),
+            Pixel::new(2, palette.clone(), true, false),
+            Pixel::new(0, palette.clone(), true, false),
+            Pixel::new(2, palette.clone(), true, false),
+            Pixel::new(0, palette.clone(), true, false),
+        ]);
+        let mut fifo = PixelFIFO::new();
+
+        fifo.append(pixels_0);
+        fifo.mix(pixels_1);
+        assert_eq!(fifo.pixels.len(), 8, "incorrect pixel amount pushed");
+        for (i, pixel) in fifo.pixels.iter().enumerate() {
+            if i % 2 == 0 {
+                assert!(pixel.is_sprite, "pixel mixing failed");
+            } else {
+                assert!(!pixel.is_sprite, "pixel mixing failed");
+            }
+        }
+    }
 
     #[test]
     fn append() {
@@ -98,14 +147,12 @@ mod tests {
         assert!(fifo.pop().is_none(), "pop should have been blocked");
         fifo.append(pixels_1);
         assert!(fifo.pop().is_some(), "pop should not have been blocked");
-        assert!(fifo.pop().is_some(), "pop should not have been blocked");
-        assert_eq!(fifo.pixels.len(), 14, "incorrect pixel amount pushed");
+        assert_eq!(fifo.pixels.len(), 15, "incorrect pixel amount pushed");
         for (i, pixel) in fifo.pixels.iter().enumerate() {
-            if i < 6 {
-                assert_eq!(pixel.color as usize, i % 2, "pixel order");
-            }
-            if i >= 6 {
-                assert_eq!(pixel.color as usize, i % 2 + 2, "pixel order");
+            if i < 7 {
+                assert_eq!(pixel.color as usize, (i + 1) % 2, "pixel order");
+            } else {
+                assert_eq!(pixel.color as usize, (i + 1) % 2 + 2, "pixel order");
             }
         }
     }
