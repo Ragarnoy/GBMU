@@ -54,14 +54,10 @@ fn main() {
         .set_minimum_size(width, height)
         .expect("Failed to configure main window");
 
-    let mut display = render::RenderImage::with_bar_size(bar_pixels_size as f32);
+    let display = render::RenderImage::with_bar_size(bar_pixels_size as f32);
     let mut ppu = PPU::new();
 
-    let mut debug_window = None;
-    // Regression for now
-    // let mut dbg_app = Debugger::new(gbm_mem, FlowController, Disassembler);
-
-    let mut joypad = match settings::load() {
+    let joypad = match settings::load() {
         Some(conf) => gb_joypad::Joypad::from_config(gb_window.sdl_window().id(), conf),
         None => {
             log::warn!("No settings found, using default input configuration");
@@ -70,15 +66,14 @@ fn main() {
             tmp
         }
     };
-    let mut input_window = None;
 
     #[cfg(feature = "debug_render")]
     let mut debug = false;
 
     let windows = Windows {
         main: gb_window,
-        debug: debug_window,
-        input: input_window,
+        debug: None,
+        input: None,
     };
     let mut context = Context {
         sdl: sdl_context,
@@ -136,7 +131,6 @@ fn main() {
 
         if std::ops::ControlFlow::Break(())
             == event::process_event(
-                &context.sdl,
                 &mut context.windows.main,
                 &mut context.windows.debug,
                 &context.video,
