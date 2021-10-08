@@ -312,6 +312,7 @@ impl PPU {
                         [self.state.pixel_drawn() as usize] = Color::from(pixel).into();
                     self.state.draw_pixel();
                 };
+                self.pixel_fetcher.fetch(vram);
                 // the fetcher try to push its pixel to the FIFO after each of its steps
                 self.pixel_fetcher.push_to_fifo(&mut self.pixel_fifo);
             }

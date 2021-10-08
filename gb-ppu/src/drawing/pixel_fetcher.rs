@@ -1,5 +1,7 @@
 use super::{Pixel, PixelFIFO};
+use crate::memory::Vram;
 use crate::Sprite;
+use std::cell::RefMut;
 use std::collections::VecDeque;
 
 #[derive(Eq, PartialEq)]
@@ -43,6 +45,21 @@ impl PixelFetcher {
         }
         self.mode = mode;
     }
+
+    pub fn fetch(&mut self, vram: RefMut<Vram>) {
+        if self.internal_tick % 2 == 1 {
+            // the fetcher take 2 tick to process one step
+            match self.internal_tick / 2 {
+                0 => {}                         // get the tile index.
+                1 => {}                         // get the high data of the tile
+                2 => self.fetch_full_row(vram), // get the low data of the tile, the pixels are ready after this step
+                _ => {}                         // idle on the last step
+            }
+        }
+        self.internal_tick = (self.internal_tick + 1) % 8
+    }
+
+    fn fetch_full_row(&mut self, vram: RefMut<Vram>) {}
 
     pub fn push_to_fifo(&mut self, fifo: &mut PixelFIFO) {
         if self.pixels.len() >= 8 && self.internal_tick % 2 == 1 {
