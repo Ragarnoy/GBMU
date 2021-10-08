@@ -1,62 +1,65 @@
 mod gb_window;
+mod context;
+mod render;
 
-use glium::glutin;
-use glium::glutin::dpi::LogicalSize;
+
+
+
 use glium::implement_vertex;
 use glium::Surface;
+use glium::{glutin, Display};
+use crate::context::Context;
+
+#[derive(Copy, Clone)]
+struct Vertex {
+    pub position: [f32; 2],
+}
 
 fn main() {
-    let event_loop = glutin::event_loop::EventLoop::new();
-    let wb = glutin::window::WindowBuilder::new()
-        .with_title("GBMU")
-        .with_inner_size(LogicalSize::new(160, 144));
-    let cb = glutin::ContextBuilder::new();
-    let display = glium::Display::new(wb, cb, &event_loop).unwrap();
-
-    let mut egui = egui_glium::EguiGlium::new(&display);
-
-    #[derive(Copy, Clone)]
-    struct Vertex {
-        position: [f32; 2],
-    }
+    let gl_ctx = Context::new();
 
     implement_vertex!(Vertex, position);
 
-    let vertex1 = Vertex {
-        position: [-0.5, -0.5],
-    };
-    let vertex2 = Vertex {
-        position: [0.0, 0.5],
-    };
-    let vertex3 = Vertex {
-        position: [0.5, -0.25],
-    };
-    let shape = vec![vertex1, vertex2, vertex3];
+    let vertices: Vec<Vertex> = vec![
+        Vertex {
+            position: [-1.0, -1.0],
+        },
+        Vertex {
+            position: [-1.0, -1.0],
+        },
+        Vertex {
+            position: [-1.0, -1.0],
+        },
+        Vertex {
+            position: [-1.0, -1.0],
+        },
+        Vertex {
+            position: [-1.0, -1.0],
+        },
+        Vertex {
+            position: [-1.0, -1.0],
+        },
+    ];
 
-    let vertex_buffer = glium::VertexBuffer::new(&display, &shape).unwrap();
+    launch_event_loop(gl_ctx, vertices);
+}
+
+fn launch_event_loop(
+    mut context: Context,
+    shape: Vec<Vertex>,
+) {
+    let vertex_buffer = glium::VertexBuffer::new(&context.gbmu_window().display, &shape).unwrap();
     let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
+    let program = glium::Program::from_source(
+        &context.gbmu_window().display,
+        include_str!("render.vert"),
+        include_str!("render.frag"),
+        None,
+    )
+    .unwrap();
 
-    let vertex_shader_src = r#"
-        #version 140
-        in vec2 position;
-        void main() {
-            gl_Position = vec4(position, 0.0, 1.0);
-        }
-    "#;
 
-    let fragment_shader_src = r#"
-        #version 140
-        out vec4 color;
-        void main() {
-            color = vec4(1.0, 0.0, 0.0, 1.0);
-        }
-    "#;
-
-    let program =
-        glium::Program::from_source(&display, vertex_shader_src, fragment_shader_src, None)
-            .unwrap();
-
-    event_loop.run(move |event, _, control_flow| {
+    context.event_loop.run(move |event, _, control_flow| {
         let next_frame_time =
             std::time::Instant::now() + std::time::Duration::from_nanos(16_666_667);
         *control_flow = glutin::event_loop::ControlFlow::WaitUntil(next_frame_time);
@@ -65,14 +68,17 @@ fn main() {
             glutin::event::Event::WindowEvent { event, .. } => match event {
                 glutin::event::WindowEvent::CloseRequested => {
                     *control_flow = glutin::event_loop::ControlFlow::Exit;
-                    return;
+
                 }
-                _ => egui.on_event(&event),
+                _ => {
+                    context.gbmu_window().egui.on_event(&event);
+                    display.gl_window().window().request_redraw();
+                }
             },
             glutin::event::Event::NewEvents(cause) => match cause {
                 glutin::event::StartCause::ResumeTimeReached { .. } => (),
                 glutin::event::StartCause::Init => (),
-                _ => return,
+                _ => {},
             },
             glutin::event::Event::MainEventsCleared => {}
             glutin::event::Event::RedrawRequested(_id) => {
@@ -87,9 +93,12 @@ fn main() {
                     });
                 });
                 let (repaint_needed, shapes) = egui.end_frame(&display);
+                if repaint_needed {
+                    display.gl_window().window().request_redraw()
+                }
 
-                let mut target = display.draw();
-                target.clear_color(0.0, 0.0, 1.0, 1.0);
+                let mut target = context.draw();
+                target.clear_color(1.0, 1.0, 1.0, 1.0);
                 target
                     .draw(
                         &vertex_buffer,
@@ -102,9 +111,7 @@ fn main() {
                 egui.paint(&display, &mut target, shapes);
                 target.finish().unwrap();
             }
-            _ => return,
+            _ => {},
         }
     });
 }
-
-fn event_loop() {}
