@@ -1,8 +1,7 @@
-use std::error::Error;
-use glium::{Display, Program, VertexBuffer};
 use glium::index::NoIndices;
 use glium::pixel_buffer::PixelBuffer;
-
+use glium::{Display, Program, VertexBuffer};
+use std::error::Error;
 
 use glium::implement_vertex;
 
@@ -62,7 +61,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> RenderImage<WIDTH, HEIGHT> {
             texture_buffer: PixelBuffer::new_empty(gb_display, WIDTH * HEIGHT),
             scale: (1.0, 1.0),
             offset: (0.0, 0.0),
-            menu_bar_size: 0.0
+            menu_bar_size: 0.0,
         })
     }
 }

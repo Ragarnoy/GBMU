@@ -1,6 +1,6 @@
-use glium::glutin::event_loop::EventLoop;
-use glium::{Frame, glutin};
 use crate::gb_window::GBWindow;
+use glium::glutin::event_loop::EventLoop;
+use glium::{glutin, Frame};
 
 pub struct Context {
     pub event_loop: EventLoop<()>,
@@ -10,7 +10,7 @@ pub struct Context {
 pub struct Windows {
     pub gbmu: GBWindow,
     pub debugger: Option<GBWindow>,
-    pub input: Option<GBWindow>
+    pub input: Option<GBWindow>,
 }
 
 impl Context {

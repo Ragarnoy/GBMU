@@ -1,14 +1,10 @@
-mod gb_window;
 mod context;
+mod gb_window;
 mod render;
 
-
-
-
-use glium::implement_vertex;
-use glium::Surface;
-use glium::{glutin, Display};
 use crate::context::Context;
+use glium::implement_vertex;
+use glium::{glutin, Display};
 
 #[derive(Copy, Clone)]
 struct Vertex {
@@ -44,10 +40,7 @@ fn main() {
     launch_event_loop(gl_ctx, vertices);
 }
 
-fn launch_event_loop(
-    mut context: Context,
-    shape: Vec<Vertex>,
-) {
+fn launch_event_loop(mut context: Context, shape: Vec<Vertex>) {
     let vertex_buffer = glium::VertexBuffer::new(&context.gbmu_window().display, &shape).unwrap();
     let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
     let program = glium::Program::from_source(
@@ -58,7 +51,6 @@ fn launch_event_loop(
     )
     .unwrap();
 
-
     context.event_loop.run(move |event, _, control_flow| {
         let next_frame_time =
             std::time::Instant::now() + std::time::Duration::from_nanos(16_666_667);
@@ -68,7 +60,6 @@ fn launch_event_loop(
             glutin::event::Event::WindowEvent { event, .. } => match event {
                 glutin::event::WindowEvent::CloseRequested => {
                     *control_flow = glutin::event_loop::ControlFlow::Exit;
-
                 }
                 _ => {
                     context.gbmu_window().egui.on_event(&event);
@@ -78,7 +69,7 @@ fn launch_event_loop(
             glutin::event::Event::NewEvents(cause) => match cause {
                 glutin::event::StartCause::ResumeTimeReached { .. } => (),
                 glutin::event::StartCause::Init => (),
-                _ => {},
+                _ => {}
             },
             glutin::event::Event::MainEventsCleared => {}
             glutin::event::Event::RedrawRequested(_id) => {
@@ -111,7 +102,7 @@ fn launch_event_loop(
                 egui.paint(&display, &mut target, shapes);
                 target.finish().unwrap();
             }
-            _ => {},
+            _ => {}
         }
     });
 }
