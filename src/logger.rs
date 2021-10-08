@@ -1,18 +1,17 @@
 #[cfg(debug_assertions)]
-pub fn init_logger() {
-    use log::LevelFilter;
+pub fn init_logger(level: log::LevelFilter) {
     use simplelog::Config;
 
-    setup_terminal_logger(LevelFilter::Debug, Config::default());
+    setup_terminal_logger(level, Config::default());
 }
 
 #[cfg(not(debug_assertions))]
-pub fn init_logger() {
+pub fn init_logger(level: log::LevelFilter) {
     use log::LevelFilter;
     use simplelog::{Config, WriteLogger};
     use std::fs::File;
 
-    const LEVEL_FILTER: LevelFilter = LevelFilter::Warn;
+    const LEVEL_FILTER: LevelFilter = level;
     const LOG_FILE: &'static str = "/tmp/gbmu.log";
     let config: Config = Config::default();
     let file_res = File::create(LOG_FILE);
