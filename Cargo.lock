@@ -849,6 +849,7 @@ dependencies = [
 name = "gbmu"
 version = "0.1.0"
 dependencies = [
+ "clap",
  "egui 0.13.1",
  "gb-dbg",
  "gb-joypad",
