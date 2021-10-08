@@ -106,8 +106,12 @@ pub fn sla(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
 
 pub fn sra(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     let mut value = ctl.pop();
+    let top_bit = value >> 7;
     let lower_bit = value & 1;
     value >>= 1;
+    if top_bit == 1 {
+        value += 0x80;
+    }
 
     ctl.push(value);
 
