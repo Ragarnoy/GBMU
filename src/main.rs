@@ -1,8 +1,8 @@
 mod context;
 mod event;
 mod settings;
+mod ui;
 
-use native_dialog::FileDialog;
 #[cfg(feature = "debug_render")]
 use sdl2::keyboard::Scancode;
 
@@ -101,45 +101,11 @@ fn main() {
         context.display.draw();
 
         // set ui logic here
-        egui::containers::TopBottomPanel::top("Top menu").show(
-            context.windows.main.egui_ctx(),
-            |ui| {
-                egui::menu::bar(ui, |ui| {
-                    ui.set_height(render::MENU_BAR_SIZE);
-                    if ui.button("Load").clicked() {
-                        let files = FileDialog::new()
-                            .set_location(
-                                &std::env::current_dir()
-                                    .unwrap_or_else(|_| std::path::PathBuf::from("/")),
-                            )
-                            .add_filter("rom", &["gb", "gbc", "rom"])
-                            .show_open_single_file();
-                        log::debug!("picked file: {:?}", files);
-                    }
-                    if ui.button("Debug").clicked() && context.windows.debug.is_none() {
-                        context.windows.debug = Some(
-                            GBWindow::new("GBMU Debug", (800, 600), false, &context.video)
-                                .expect("Error while building debug window"),
-                        );
-                    }
-                    if ui.button("Input").clicked() && context.windows.input.is_none() {
-                        context.windows.input = Some(
-                            GBWindow::new(
-                                "GBMU Input Settings",
-                                (
-                                    GBWindow::dots_to_pixels(&context.video, 250.0)
-                                        .expect("error while computing widow size"),
-                                    GBWindow::dots_to_pixels(&context.video, 250.0)
-                                        .expect("error while computing widow size"),
-                                ),
-                                false,
-                                &context.video,
-                            )
-                            .expect("Error while building input window"),
-                        );
-                    }
-                })
-            },
+        ui::draw_egui(
+            &mut context.windows.main,
+            &mut context.windows.debug,
+            &context.video,
+            &mut context.windows.input,
         );
         context
             .windows
