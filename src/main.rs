@@ -1,10 +1,12 @@
+mod context;
+mod event;
 mod settings;
 mod ui;
 
 #[cfg(feature = "debug_render")]
 use sdl2::keyboard::Scancode;
-use sdl2::{event::Event, keyboard::Keycode};
 
+use context::{Context, Windows};
 use gb_dbg::*;
 use gb_lcd::{render, window::GBWindow};
 use gb_ppu::PPU;
@@ -52,14 +54,10 @@ fn main() {
         .set_minimum_size(width, height)
         .expect("Failed to configure main window");
 
-    let mut display = render::RenderImage::with_bar_size(bar_pixels_size as f32);
+    let display = render::RenderImage::with_bar_size(bar_pixels_size as f32);
     let mut ppu = PPU::new();
 
-    let mut debug_window = None;
-    // Regression for now
-    // let mut dbg_app = Debugger::new(gbm_mem, FlowController, Disassembler);
-
-    let mut joypad = match settings::load() {
+    let joypad = match settings::load() {
         Some(conf) => gb_joypad::Joypad::from_config(gb_window.sdl_window().id(), conf),
         None => {
             log::warn!("No settings found, using default input configuration");
@@ -68,34 +66,49 @@ fn main() {
             tmp
         }
     };
-    let mut input_window = None;
 
     #[cfg(feature = "debug_render")]
     let mut debug = false;
 
+    let windows = Windows {
+        main: gb_window,
+        debug: None,
+        input: None,
+    };
+    let mut context = Context {
+        sdl: sdl_context,
+        video: video_subsystem,
+        display,
+        joypad,
+        windows,
+    };
     'running: loop {
-        gb_window
+        context
+            .windows
+            .main
             .start_frame()
             .expect("Fail at the start for the main window");
 
         // render is updated just before drawing for now but we might want to change that later
         ppu.compute();
-        display.update_render(ppu.pixels());
+        context.display.update_render(ppu.pixels());
         // emulation render here
-        display.draw();
+        context.display.draw();
 
         // set ui logic here
         ui::draw_egui(
-            &mut gb_window,
-            &mut debug_window,
-            &video_subsystem,
-            &mut input_window,
+            &mut context.windows.main,
+            &mut context.windows.debug,
+            &context.video,
+            &mut context.windows.input,
         );
-        gb_window
+        context
+            .windows
+            .main
             .end_frame()
             .expect("Fail at the end for the main window");
 
-        if let Some(ref mut dgb_wind) = debug_window {
+        if let Some(ref mut dgb_wind) = context.windows.debug {
             dgb_wind
                 .start_frame()
                 .expect("Fail at the start for the debug window");
@@ -106,91 +119,18 @@ fn main() {
                 .expect("Fail at the end for the debug window");
         }
 
-        if let Some(ref mut input_wind) = input_window {
+        if let Some(ref mut input_wind) = context.windows.input {
             input_wind
                 .start_frame()
                 .expect("Fail at the start for the input window");
-            joypad.settings(input_wind.egui_ctx());
+            context.joypad.settings(input_wind.egui_ctx());
             input_wind
                 .end_frame()
                 .expect("Fail at the end for the input window");
         }
 
-        for event in event_pump.poll_iter() {
-            joypad.send_event(&event);
-            match event {
-                Event::Quit { .. }
-                | Event::KeyDown {
-                    // here for debug, maybe remove later ?
-                    keycode: Some(Keycode::Escape),
-                    ..
-                } => break 'running,
-                #[cfg(feature = "debug_render")]
-                sdl2::event::Event::KeyDown {
-                    window_id,
-                    scancode,
-                    ..
-                } => {
-                    if gb_window.sdl_window().id() == window_id && scancode == Some(Scancode::Grave)
-                    {
-                        debug = !debug;
-                        log::debug!("toggle debug ({})", debug);
-                        display.switch_draw_mode(debug);
-                        gb_window.set_debug(debug);
-                    }
-                }
-                Event::Window {
-                    win_event,
-                    window_id,
-                    ..
-                } => match win_event {
-                    sdl2::event::WindowEvent::SizeChanged(width, height) => {
-                        if gb_window.sdl_window().id() == window_id {
-                            gb_window
-                                .resize((width as u32, height as u32), &video_subsystem)
-                                .expect("Fail to resize GB window");
-                            display.resize(gb_window.sdl_window().size());
-                        } else if let Some(ref mut dbg_wind) = debug_window {
-                            if dbg_wind.sdl_window().id() == window_id {
-                                dbg_wind
-                                    .resize((width as u32, height as u32), &video_subsystem)
-                                    .expect("Fail to resize debug window");
-                            }
-                        } else if let Some(ref mut input_wind) = input_window {
-                            if input_wind.sdl_window().id() == window_id {
-                                input_wind
-                                    .resize((width as u32, height as u32), &video_subsystem)
-                                    .expect("Fail to resize input window");
-                            }
-                        }
-                    }
-                    sdl2::event::WindowEvent::Close => {
-                        if gb_window.sdl_window().id() == window_id {
-                            break 'running;
-                        } else if let Some(ref mut dbg_wind) = debug_window {
-                            if dbg_wind.sdl_window().id() == window_id {
-                                debug_window = None;
-                            }
-                        } else if let Some(ref mut input_wind) = input_window {
-                            if input_wind.sdl_window().id() == window_id {
-                                settings::save(joypad.get_config());
-                                input_window = None;
-                            }
-                        }
-                    }
-                    _ => {}
-                },
-                _ => {
-                    if !gb_window.send_event(&event, &sdl_context) {
-                        if let Some(ref mut dbg_wind) = debug_window {
-                            dbg_wind.send_event(&event, &sdl_context);
-                        }
-                        if let Some(ref mut input_wind) = input_window {
-                            input_wind.send_event(&event, &sdl_context);
-                        }
-                    }
-                }
-            }
+        if std::ops::ControlFlow::Break(()) == event::process_event(&mut context, &mut event_pump) {
+            break 'running;
         }
         // std::thread::sleep(::std::time::Duration::new(0, 1_000_000_000u32 / 60));
     }
