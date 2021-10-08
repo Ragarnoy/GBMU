@@ -1,6 +1,6 @@
 mod settings;
+mod ui;
 
-use native_dialog::FileDialog;
 #[cfg(feature = "debug_render")]
 use sdl2::keyboard::Scancode;
 use sdl2::{event::Event, keyboard::Keycode};
@@ -85,43 +85,12 @@ fn main() {
         display.draw();
 
         // set ui logic here
-        egui::containers::TopBottomPanel::top("Top menu").show(gb_window.egui_ctx(), |ui| {
-            egui::menu::bar(ui, |ui| {
-                ui.set_height(render::MENU_BAR_SIZE);
-                if ui.button("Load").clicked() {
-                    let files = FileDialog::new()
-                        .set_location(
-                            &std::env::current_dir()
-                                .unwrap_or_else(|_| std::path::PathBuf::from("/")),
-                        )
-                        .add_filter("rom", &["gb", "gbc", "rom"])
-                        .show_open_single_file();
-                    log::debug!("picked file: {:?}", files);
-                }
-                if ui.button("Debug").clicked() && debug_window.is_none() {
-                    debug_window = Some(
-                        GBWindow::new("GBMU Debug", (800, 600), false, &video_subsystem)
-                            .expect("Error while building debug window"),
-                    );
-                }
-                if ui.button("Input").clicked() && input_window.is_none() {
-                    input_window = Some(
-                        GBWindow::new(
-                            "GBMU Input Settings",
-                            (
-                                GBWindow::dots_to_pixels(&video_subsystem, 250.0)
-                                    .expect("error while computing widow size"),
-                                GBWindow::dots_to_pixels(&video_subsystem, 250.0)
-                                    .expect("error while computing widow size"),
-                            ),
-                            false,
-                            &video_subsystem,
-                        )
-                        .expect("Error while building input window"),
-                    );
-                }
-            })
-        });
+        ui::draw_egui(
+            &mut gb_window,
+            &mut debug_window,
+            &video_subsystem,
+            &mut input_window,
+        );
         gb_window
             .end_frame()
             .expect("Fail at the end for the main window");
