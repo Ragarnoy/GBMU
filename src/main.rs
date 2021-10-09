@@ -4,6 +4,7 @@ mod logger;
 mod settings;
 mod ui;
 
+use clap::{AppSettings, Clap};
 #[cfg(feature = "debug_render")]
 use sdl2::keyboard::Scancode;
 
@@ -31,8 +32,22 @@ impl dbg_interfaces::MemoryDebugOperations for Memory {
     }
 }
 
+#[derive(Clap, Debug)]
+#[clap(version = "0.1")]
+#[clap(setting = AppSettings::ColoredHelp)]
+struct Opts {
+    #[cfg(not(debug_assertions))]
+    #[clap(short = 'l', long = "log", default_value = "warn", possible_values = &["trace", "debug", "info", "warn", "error", "off"])]
+    log_level: log::LevelFilter,
+
+    #[cfg(debug_assertions)]
+    #[clap(short = 'l', long = "log", default_value = "debug", possible_values = &["trace", "debug", "info", "warn", "error", "off"])]
+    log_level: log::LevelFilter,
+}
+
 fn main() {
-    init_logger();
+    let opts: Opts = Opts::parse();
+    init_logger(opts.log_level);
 
     let (sdl_context, video_subsystem, mut event_pump) =
         gb_lcd::init().expect("Error while initializing LCD");
