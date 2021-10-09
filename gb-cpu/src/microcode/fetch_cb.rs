@@ -111,6 +111,17 @@ pub fn fetch_cb(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFl
                 }
                 OpcodeCB::RlcA => ctl.push_actions(&[read::a, bitwise::rlc, write::a]),
 
+                OpcodeCB::RrcB => ctl.push_actions(&[read::b, bitwise::rrc, write::b]),
+                OpcodeCB::RrcC => ctl.push_actions(&[read::c, bitwise::rrc, write::c]),
+                OpcodeCB::RrcD => ctl.push_actions(&[read::d, bitwise::rrc, write::d]),
+                OpcodeCB::RrcE => ctl.push_actions(&[read::e, bitwise::rrc, write::e]),
+                OpcodeCB::RrcH => ctl.push_actions(&[read::h, bitwise::rrc, write::h]),
+                OpcodeCB::RrcL => ctl.push_actions(&[read::l, bitwise::rrc, write::l]),
+                OpcodeCB::RrcHL => {
+                    ctl.push_actions(&[read::hl, read::ind, bitwise::rrc, read::hl, write::ind])
+                }
+                OpcodeCB::RrcA => ctl.push_actions(&[read::a, bitwise::rrc, write::a]),
+
                 OpcodeCB::RrB => ctl.push_actions(&[read::b, bitwise::rr, write::b]),
                 OpcodeCB::RrC => ctl.push_actions(&[read::c, bitwise::rr, write::c]),
                 OpcodeCB::RrD => ctl.push_actions(&[read::d, bitwise::rr, write::d]),
@@ -132,6 +143,28 @@ pub fn fetch_cb(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFl
                     ctl.push_actions(&[read::hl, read::ind, bitwise::srl, read::hl, write::ind])
                 }
                 OpcodeCB::SrlA => ctl.push_actions(&[read::a, bitwise::srl, write::a]),
+
+                OpcodeCB::SlaB => ctl.push_actions(&[read::b, bitwise::sla, write::b]),
+                OpcodeCB::SlaC => ctl.push_actions(&[read::c, bitwise::sla, write::c]),
+                OpcodeCB::SlaD => ctl.push_actions(&[read::d, bitwise::sla, write::d]),
+                OpcodeCB::SlaE => ctl.push_actions(&[read::e, bitwise::sla, write::e]),
+                OpcodeCB::SlaH => ctl.push_actions(&[read::h, bitwise::sla, write::h]),
+                OpcodeCB::SlaL => ctl.push_actions(&[read::l, bitwise::sla, write::l]),
+                OpcodeCB::SlaHL => {
+                    ctl.push_actions(&[read::hl, read::ind, bitwise::sla, read::hl, write::ind])
+                }
+                OpcodeCB::SlaA => ctl.push_actions(&[read::a, bitwise::sla, write::a]),
+
+                OpcodeCB::SraB => ctl.push_actions(&[read::b, bitwise::sra, write::b]),
+                OpcodeCB::SraC => ctl.push_actions(&[read::c, bitwise::sra, write::c]),
+                OpcodeCB::SraD => ctl.push_actions(&[read::d, bitwise::sra, write::d]),
+                OpcodeCB::SraE => ctl.push_actions(&[read::e, bitwise::sra, write::e]),
+                OpcodeCB::SraH => ctl.push_actions(&[read::h, bitwise::sra, write::h]),
+                OpcodeCB::SraL => ctl.push_actions(&[read::l, bitwise::sra, write::l]),
+                OpcodeCB::SraHL => {
+                    ctl.push_actions(&[read::hl, read::ind, bitwise::sra, read::hl, write::ind])
+                }
+                OpcodeCB::SraA => ctl.push_actions(&[read::a, bitwise::sra, write::a]),
 
                 _ => todo!("unimplemented opcode {:?}", opcode),
             };
