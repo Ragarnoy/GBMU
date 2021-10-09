@@ -44,7 +44,7 @@ pub fn bit_7(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
 }
 
 fn set_bit(ctl: &mut MicrocodeController, bit: u8) -> MicrocodeFlow {
-    let bit_to_set = (1 as u8) << bit;
+    let bit_to_set = 1_u8 << bit;
     let value = ctl.pop() | bit_to_set;
 
     ctl.push(value);
@@ -84,7 +84,7 @@ pub fn set_7(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow
 }
 
 fn res_bit(ctl: &mut MicrocodeController, bit: u8) -> MicrocodeFlow {
-    let bit_to_res = (1 as u8) << bit;
+    let bit_to_res = 1_u8 << bit;
     let value = !(!ctl.pop() & bit_to_res);
 
     ctl.push(value);
