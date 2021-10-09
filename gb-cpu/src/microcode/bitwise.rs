@@ -232,3 +232,16 @@ pub fn sra(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     state.regs.set_subtraction(false);
     OK_PLAY_NEXT_ACTION
 }
+
+pub fn swap(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
+    let value = ctl.pop();
+    let upper_to_lower = value >> 4;
+    let lower_to_upper = value << 4;
+
+    ctl.push(lower_to_upper + upper_to_lower);
+    state.regs.set_zero(value == 0);
+    state.regs.set_carry(false);
+    state.regs.set_half_carry(false);
+    state.regs.set_subtraction(false);
+    OK_PLAY_NEXT_ACTION
+}
