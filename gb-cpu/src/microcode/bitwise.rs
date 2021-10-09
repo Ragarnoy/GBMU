@@ -43,6 +43,21 @@ pub fn bit_7(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
     read_bit(ctl, state, 7)
 }
 
+pub fn rlc(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
+    let mut value = ctl.pop();
+    let top_bit = value >> 7;
+    value <<= 1;
+    value += top_bit;
+
+    ctl.push(value);
+
+    state.regs.set_zero(value == 0);
+    state.regs.set_carry(top_bit == 1);
+    state.regs.set_half_carry(false);
+    state.regs.set_subtraction(false);
+    OK_PLAY_NEXT_ACTION
+}
+
 pub fn rl(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     let mut value = ctl.pop();
     let top_bit = value >> 7;
@@ -58,16 +73,19 @@ pub fn rl(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     OK_PLAY_NEXT_ACTION
 }
 
-pub fn rlc(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
+pub fn rrc(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     let mut value = ctl.pop();
-    let top_bit = value >> 7;
-    value <<= 1;
-    value += top_bit;
+    let lower_bit = value & 1;
+    value >>= 1;
+    if lower_bit == 1 {
+        value += 0x80;
+    }
 
     ctl.push(value);
 
     state.regs.set_zero(value == 0);
-    state.regs.set_carry(top_bit == 1);
+
+    state.regs.set_carry(lower_bit == 1);
     state.regs.set_half_carry(false);
     state.regs.set_subtraction(false);
     OK_PLAY_NEXT_ACTION
@@ -90,6 +108,20 @@ pub fn rr(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     OK_PLAY_NEXT_ACTION
 }
 
+pub fn srl(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
+    let mut value = ctl.pop();
+    let lower_bit = value & 1;
+    value >>= 1;
+
+    ctl.push(value);
+
+    state.regs.set_zero(value == 0);
+    state.regs.set_carry(lower_bit == 1);
+    state.regs.set_half_carry(false);
+    state.regs.set_subtraction(false);
+    OK_PLAY_NEXT_ACTION
+}
+
 pub fn sla(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     let mut value = ctl.pop();
     let top_bit = value >> 7;
@@ -100,24 +132,6 @@ pub fn sla(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     state.regs.set_zero(value == 0);
 
     state.regs.set_carry(top_bit == 1);
-    state.regs.set_half_carry(false);
-    state.regs.set_subtraction(false);
-    OK_PLAY_NEXT_ACTION
-}
-
-pub fn rrc(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
-    let mut value = ctl.pop();
-    let lower_bit = value & 1;
-    value >>= 1;
-    if lower_bit == 1 {
-        value += 0x80;
-    }
-
-    ctl.push(value);
-
-    state.regs.set_zero(value == 0);
-
-    state.regs.set_carry(lower_bit == 1);
     state.regs.set_half_carry(false);
     state.regs.set_subtraction(false);
     OK_PLAY_NEXT_ACTION
