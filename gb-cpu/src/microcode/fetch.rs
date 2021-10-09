@@ -438,6 +438,7 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                 Opcode::RlcA => ctl.push_actions(&[read::a, bitwise::rlc, write::a]),
 
                 Opcode::Scf => ctl.push_actions(&[logic::scf]),
+                Opcode::Cpl => ctl.push_actions(&[read::a, logic::cpl, write::a]),
 
                 Opcode::Nop => &mut ctl,
                 Opcode::PrefixCb => ctl.push_action(fetch_cb),
