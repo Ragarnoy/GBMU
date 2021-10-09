@@ -119,11 +119,22 @@ fn test_slice_byte() {
 }
 
 pub fn adc(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
-    let value = ctl.pop();
-    let (mut value, flag) = math::add_components(ctl.pop(), value);
-    value += state.regs.carry() as u8;
+    let value = ctl.pop() + (state.regs.carry() as u8);
+    let (value, flag) = math::add_components(ctl.pop(), value);
 
     state.regs.set_subtraction(false);
+    state.regs.set_zero(flag.zero);
+    state.regs.set_half_carry(flag.half_carry);
+    state.regs.set_carry(flag.carry);
+    ctl.push(value);
+    OK_PLAY_NEXT_ACTION
+}
+
+pub fn sbc(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
+    let value = ctl.pop() + (state.regs.carry() as u8);
+    let (value, flag) = math::sub_components(ctl.pop(), value);
+
+    state.regs.set_subtraction(true);
     state.regs.set_zero(flag.zero);
     state.regs.set_half_carry(flag.half_carry);
     state.regs.set_carry(flag.carry);

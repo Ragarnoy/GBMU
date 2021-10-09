@@ -103,6 +103,20 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                     ctl.push_actions(&[read::byte, read::a, arithmetic::sub, write::a])
                 }
 
+                Opcode::SbcAA => ctl.push_actions(&[read::a, read::a, arithmetic::sbc, write::a]),
+                Opcode::SbcAB => ctl.push_actions(&[read::b, read::a, arithmetic::sbc, write::a]),
+                Opcode::SbcAC => ctl.push_actions(&[read::c, read::a, arithmetic::sbc, write::a]),
+                Opcode::SbcAD => ctl.push_actions(&[read::d, read::a, arithmetic::sbc, write::a]),
+                Opcode::SbcAE => ctl.push_actions(&[read::e, read::a, arithmetic::sbc, write::a]),
+                Opcode::SbcAH => ctl.push_actions(&[read::h, read::a, arithmetic::sbc, write::a]),
+                Opcode::SbcAL => ctl.push_actions(&[read::l, read::a, arithmetic::sbc, write::a]),
+                Opcode::SbcAHL => {
+                    ctl.push_actions(&[read::hl, read::ind, read::a, arithmetic::sbc, write::a])
+                }
+                Opcode::SbcA8 => {
+                    ctl.push_actions(&[read::byte, read::a, arithmetic::sbc, write::a])
+                }
+
                 Opcode::AddAA => ctl.push_actions(&[read::a, read::a, arithmetic::add, write::a]),
                 Opcode::AddAB => ctl.push_actions(&[read::b, read::a, arithmetic::add, write::a]),
                 Opcode::AddAC => ctl.push_actions(&[read::c, read::a, arithmetic::add, write::a]),
