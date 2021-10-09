@@ -83,6 +83,46 @@ pub fn set_7(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow
     set_bit(ctl, 7)
 }
 
+fn res_bit(ctl: &mut MicrocodeController, bit: u8) -> MicrocodeFlow {
+    let bit_to_res = (1 as u8) << bit;
+    let value = !(!ctl.pop() & bit_to_res);
+
+    ctl.push(value);
+    OK_PLAY_NEXT_ACTION
+}
+
+pub fn res_0(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow {
+    res_bit(ctl, 0)
+}
+
+pub fn res_1(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow {
+    res_bit(ctl, 1)
+}
+
+pub fn res_2(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow {
+    res_bit(ctl, 2)
+}
+
+pub fn res_3(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow {
+    res_bit(ctl, 3)
+}
+
+pub fn res_4(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow {
+    res_bit(ctl, 4)
+}
+
+pub fn res_5(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow {
+    res_bit(ctl, 5)
+}
+
+pub fn res_6(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow {
+    res_bit(ctl, 6)
+}
+
+pub fn res_7(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow {
+    res_bit(ctl, 7)
+}
+
 pub fn rlc(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     let mut value = ctl.pop();
     let top_bit = value >> 7;
