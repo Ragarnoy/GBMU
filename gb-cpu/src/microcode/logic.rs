@@ -1,5 +1,5 @@
 use super::{math::sub_components, MicrocodeController, MicrocodeFlow, State, OK_PLAY_NEXT_ACTION};
-use crate::interfaces::WriteFlagReg;
+use crate::interfaces::{ReadFlagReg, WriteFlagReg};
 
 pub fn cp(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     let value = ctl.pop();
@@ -33,5 +33,12 @@ pub fn cpl(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     ctl.push(!value);
     state.regs.set_half_carry(true);
     state.regs.set_subtraction(true);
+    OK_PLAY_NEXT_ACTION
+}
+
+pub fn ccf(_ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
+    state.regs.set_carry(!state.regs.carry());
+    state.regs.set_half_carry(false);
+    state.regs.set_subtraction(false);
     OK_PLAY_NEXT_ACTION
 }
