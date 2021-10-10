@@ -1,6 +1,6 @@
 use super::Register;
-use crate::color::Color;
 use crate::error::{PPUError, PPUResult};
+use crate::Color;
 use modular_bitfield::{bitfield, specifiers::B2};
 
 #[bitfield]
@@ -15,13 +15,19 @@ struct MapField {
 #[derive(Clone, Copy, Default, Debug)]
 pub struct Palette {
     map: MapField,
+    is_sprite: bool,
 }
 
 impl Palette {
-    pub fn new() -> Self {
+    pub fn new(is_sprite: bool) -> Self {
         Palette {
             map: MapField::new(),
+            is_sprite,
         }
+    }
+
+    pub fn is_sprite(&self) -> bool {
+        self.is_sprite
     }
 
     /// Get the color value associated to the given index.
@@ -53,7 +59,10 @@ impl From<u8> for MapField {
 
 impl From<u8> for Palette {
     fn from(byte: u8) -> Palette {
-        Palette { map: byte.into() }
+        Palette {
+            map: byte.into(),
+            is_sprite: false,
+        }
     }
 }
 
@@ -69,4 +78,8 @@ impl From<Palette> for u8 {
     }
 }
 
-impl Register for Palette {}
+impl Register for Palette {
+    fn write(&mut self, v: u8) {
+        self.map = v.into();
+    }
+}

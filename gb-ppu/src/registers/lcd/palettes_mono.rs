@@ -13,9 +13,9 @@ impl PalettesMono {
 
     pub fn new() -> Self {
         PalettesMono {
-            bg: Palette::new(),
-            obj_0: Palette::new(),
-            obj_1: Palette::new(),
+            bg: Palette::new(false),
+            obj_0: Palette::new(true),
+            obj_1: Palette::new(true),
         }
     }
 
