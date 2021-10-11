@@ -89,6 +89,7 @@ impl PPU {
                     image[y * 8 + j][x * 8 + i] = lcd_reg
                         .pal_mono
                         .bg()
+                        .get()
                         .get_color(*pixel)
                         .unwrap_or_default()
                         .into();
@@ -130,6 +131,7 @@ impl PPU {
                     image[y * 8 + j][x * 8 + i] = lcd_reg
                         .pal_mono
                         .bg()
+                        .get()
                         .get_color(*pixel)
                         .unwrap_or_default()
                         .into();
@@ -297,27 +299,31 @@ impl PPU {
     }
 
     fn pixel_drawing(&mut self) {
-        if let Ok(mut vram) = self.vram.try_borrow_mut() {
-            let lock = vram.get_lock();
-
-            if lock.is_none() {
-                vram.lock(Lock::Ppu);
-                self.pixel_fetcher.clear();
-                self.pixel_fifo.clear();
-                self.state.clear_pixel_count();
-            }
-            if self.pixel_fifo.enabled && self.state.pixel_drawn() < SCREEN_WIDTH as u8 {
-                if let Some(pixel) = self.pixel_fifo.pop() {
-                    self.next_pixels[self.state.line() as usize]
-                        [self.state.pixel_drawn() as usize] = Color::from(pixel).into();
-                    self.state.draw_pixel();
-                };
-                self.pixel_fetcher.fetch(vram);
-                // the fetcher try to push its pixel to the FIFO after each of its steps
-                self.pixel_fetcher.push_to_fifo(&mut self.pixel_fifo);
+        if let Ok(lcd_reg) = self.lcd_reg.try_borrow() {
+            if let Ok(mut vram) = self.vram.try_borrow_mut() {
+                let lock = vram.get_lock();
+                if lock.is_none() {
+                    vram.lock(Lock::Ppu);
+                    self.pixel_fetcher.clear();
+                    self.pixel_fifo.clear();
+                    self.state.clear_pixel_count();
+                }
+                let x = self.state.pixel_drawn() as usize;
+                if self.pixel_fifo.enabled && x < SCREEN_WIDTH {
+                    let y = self.state.line() as usize;
+                    if let Some(pixel) = self.pixel_fifo.pop() {
+                        self.next_pixels[y][x] = Color::from(pixel).into();
+                        self.state.draw_pixel();
+                    };
+                    self.pixel_fetcher.fetch(&vram, &lcd_reg, y, x);
+                    // the fetcher try to push its pixel to the FIFO after each of its steps
+                    self.pixel_fetcher.push_to_fifo(&mut self.pixel_fifo);
+                }
+            } else {
+                log::error!("Vram borrow failed for ppu in mode 3");
             }
         } else {
-            log::error!("Vram borrow failed for ppu in mode 3");
+            log::error!("Lcd_reg borrow failed for ppu in mode 3");
         }
     }
 }
