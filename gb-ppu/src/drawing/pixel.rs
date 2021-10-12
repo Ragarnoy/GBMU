@@ -3,6 +3,7 @@ use crate::Color;
 use std::cell::Cell;
 use std::rc::Rc;
 
+#[derive(Clone)]
 pub struct Pixel {
     pub color: u8,
     pub palette: Rc<Cell<Palette>>,
