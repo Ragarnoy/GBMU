@@ -2,6 +2,7 @@ use super::{Pixel, PixelFIFO};
 use crate::memory::Vram;
 use crate::registers::LcdReg;
 use crate::Sprite;
+use gb_lcd::render::SCREEN_WIDTH;
 use std::collections::VecDeque;
 use std::ops::Deref;
 
@@ -59,13 +60,45 @@ impl PixelFetcher {
         if self.internal_tick % 2 == 1 {
             // the fetcher take 2 tick to process one step
             match self.internal_tick / 2 {
-                0 => {}                                         // get the tile index.
-                1 => {}                                         // get the high data of the tile
+                0 => self.get_tile_index(vram, lcd_reg, y / 8, x / 8), // get the tile index.
+                1 => {} // get the high data of the tile
                 2 => self.fetch_full_row(vram, lcd_reg, y % 8), // get the low data of the tile, the pixels are ready after this step
                 _ => {}                                         // idle on the last step
             }
         }
         self.internal_tick = (self.internal_tick + 1) % 8
+    }
+
+    fn get_tile_index(
+        &mut self,
+        vram: &dyn Deref<Target = Vram>,
+        lcd_reg: &dyn Deref<Target = LcdReg>,
+        y: usize,
+        x: usize,
+    ) {
+        self.tile = match self.mode {
+            FetchMode::Background => vram
+                .get_map_tile_index(
+                    x + y * SCREEN_WIDTH,
+                    lcd_reg.control.bg_tilemap_area(),
+                    lcd_reg.control.bg_win_tiledata_area(),
+                )
+                .unwrap_or_else(|err| {
+                    log::error!("Failed to get background tile index: {}", err);
+                    0xFF
+                }),
+            FetchMode::Window => vram
+                .get_map_tile_index(
+                    x + y * SCREEN_WIDTH,
+                    lcd_reg.control.win_tilemap_area(),
+                    lcd_reg.control.bg_win_tiledata_area(),
+                )
+                .unwrap_or_else(|err| {
+                    log::error!("Failed to get window tile index: {}", err);
+                    0xFF
+                }),
+            FetchMode::Sprite(sprite) => sprite.tile_index() as usize,
+        };
     }
 
     fn fetch_full_row(

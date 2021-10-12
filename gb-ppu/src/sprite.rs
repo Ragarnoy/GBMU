@@ -60,6 +60,10 @@ impl<'r> Sprite {
         self.attributes.x_flip() != 0
     }
 
+    pub fn tile_index(&self) -> u8 {
+        self.tile_index
+    }
+
     pub fn get_palette(
         &self,
         palettes: (&'r Rc<Cell<Palette>>, &'r Rc<Cell<Palette>>),
