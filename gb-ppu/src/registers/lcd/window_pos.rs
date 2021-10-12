@@ -3,8 +3,8 @@ use std::ops::{Index, IndexMut};
 
 #[derive(Default, Clone, Copy, Debug)]
 pub struct WindowPos {
-    wy: u8,
-    wx: u8,
+    pub wy: u8,
+    pub wx: u8,
 }
 
 impl WindowPos {
