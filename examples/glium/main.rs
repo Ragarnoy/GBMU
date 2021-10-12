@@ -3,8 +3,8 @@ mod gb_window;
 mod render;
 
 use crate::context::Context;
-use glium::implement_vertex;
-use glium::{glutin, Display};
+use glium::glutin;
+use glium::{implement_vertex, Surface};
 
 #[derive(Copy, Clone)]
 struct Vertex {
@@ -12,7 +12,8 @@ struct Vertex {
 }
 
 fn main() {
-    let gl_ctx = Context::new();
+    let event_loop = glutin::event_loop::EventLoop::new();
+    let mut ctx = Context::new(&event_loop);
 
     implement_vertex!(Vertex, position);
 
@@ -36,22 +37,17 @@ fn main() {
             position: [-1.0, -1.0],
         },
     ];
-
-    launch_event_loop(gl_ctx, vertices);
-}
-
-fn launch_event_loop(mut context: Context, shape: Vec<Vertex>) {
-    let vertex_buffer = glium::VertexBuffer::new(&context.gbmu_window().display, &shape).unwrap();
+    let vertex_buffer = glium::VertexBuffer::new(&ctx.gbmu_window().display, &vertices).unwrap();
     let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
     let program = glium::Program::from_source(
-        &context.gbmu_window().display,
+        &ctx.gbmu_window().display,
         include_str!("render.vert"),
         include_str!("render.frag"),
         None,
     )
     .unwrap();
 
-    context.event_loop.run(move |event, _, control_flow| {
+    event_loop.run(move |event, _, control_flow| {
         let next_frame_time =
             std::time::Instant::now() + std::time::Duration::from_nanos(16_666_667);
         *control_flow = glutin::event_loop::ControlFlow::WaitUntil(next_frame_time);
@@ -62,8 +58,12 @@ fn launch_event_loop(mut context: Context, shape: Vec<Vertex>) {
                     *control_flow = glutin::event_loop::ControlFlow::Exit;
                 }
                 _ => {
-                    context.gbmu_window().egui.on_event(&event);
-                    display.gl_window().window().request_redraw();
+                    ctx.gbmu_window_mut().egui.on_event(&event);
+                    ctx.gbmu_window()
+                        .display
+                        .gl_window()
+                        .window()
+                        .request_redraw();
                 }
             },
             glutin::event::Event::NewEvents(cause) => match cause {
@@ -73,8 +73,10 @@ fn launch_event_loop(mut context: Context, shape: Vec<Vertex>) {
             },
             glutin::event::Event::MainEventsCleared => {}
             glutin::event::Event::RedrawRequested(_id) => {
-                egui.begin_frame(&display);
-                egui::TopBottomPanel::top("top").show(egui.ctx(), |ui| {
+                ctx.gbmu_window_mut()
+                    .egui
+                    .begin_frame(&ctx.gbmu_window().display);
+                egui::TopBottomPanel::top("top").show(ctx.gbmu_window().egui.ctx(), |ui| {
                     egui::menu::bar(ui, |ui| {
                         egui::menu::menu(ui, "hi", |ui| {
                             if ui.button("thing").clicked() {
@@ -83,12 +85,19 @@ fn launch_event_loop(mut context: Context, shape: Vec<Vertex>) {
                         });
                     });
                 });
-                let (repaint_needed, shapes) = egui.end_frame(&display);
+                let (repaint_needed, shapes) = ctx
+                    .gbmu_window_mut()
+                    .egui
+                    .end_frame(&ctx.gbmu_window().display);
                 if repaint_needed {
-                    display.gl_window().window().request_redraw()
+                    ctx.gbmu_window()
+                        .display
+                        .gl_window()
+                        .window()
+                        .request_redraw()
                 }
 
-                let mut target = context.draw();
+                let mut target = ctx.gbmu_window().display.draw();
                 target.clear_color(1.0, 1.0, 1.0, 1.0);
                 target
                     .draw(
@@ -99,7 +108,9 @@ fn launch_event_loop(mut context: Context, shape: Vec<Vertex>) {
                         &Default::default(),
                     )
                     .unwrap();
-                egui.paint(&display, &mut target, shapes);
+                ctx.gbmu_window_mut()
+                    .egui
+                    .paint(&ctx.gbmu_window().display, &mut target, shapes);
                 target.finish().unwrap();
             }
             _ => {}

@@ -3,31 +3,25 @@ use glium::glutin::event_loop::EventLoop;
 use glium::{glutin, Frame};
 
 pub struct Context {
-    pub event_loop: EventLoop<()>,
-    pub windows: Windows,
-}
-
-pub struct Windows {
     pub gbmu: GBWindow,
     pub debugger: Option<GBWindow>,
     pub input: Option<GBWindow>,
 }
 
 impl Context {
-    pub fn new() -> Self {
-        let event_loop = glutin::event_loop::EventLoop::new();
-
+    pub fn new(event_loop: &EventLoop<()>) -> Self {
         Self {
-            windows: Windows {
-                gbmu: GBWindow::new("GBMU", (160, 144), &event_loop),
-                debugger: None,
-                input: None,
-            },
-            event_loop,
+            gbmu: GBWindow::new("GBMU", (160, 144), event_loop),
+            debugger: None,
+            input: None,
         }
     }
 
     pub fn gbmu_window(&self) -> &GBWindow {
-        &self.windows.gbmu
+        &self.gbmu
+    }
+
+    pub fn gbmu_window_mut(&mut self) -> &mut GBWindow {
+        &mut self.gbmu
     }
 }
