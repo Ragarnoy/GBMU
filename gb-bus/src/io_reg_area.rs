@@ -1,8 +1,11 @@
+use crate::io_reg_constant::INTERRUPT_FLAG;
+
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum IORegArea {
     Controller,
     Communication,
     DivTimer,
+    InterruptFlag,
     Sound,
     WaveformRam,
     Lcd,
@@ -25,6 +28,7 @@ impl std::convert::From<IORegArea> for u16 {
             IORegArea::Controller => CONTROLLER_START,
             IORegArea::Communication => COMMUNICATION_START,
             IORegArea::DivTimer => DIV_TIMER_START,
+            IORegArea::InterruptFlag => INTERRUPT_FLAG,
             IORegArea::Sound => SOUND_START,
             IORegArea::WaveformRam => WAVEFORM_RAM_START,
             IORegArea::Lcd => LCD_START,

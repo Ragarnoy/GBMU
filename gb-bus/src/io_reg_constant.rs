@@ -3,6 +3,7 @@ pub const COMMUNICATION_START: u16 = 0xFF01;
 pub const COMMUNICATION_END: u16 = 0xFF02;
 pub const DIV_TIMER_START: u16 = 0xFF04;
 pub const DIV_TIMER_END: u16 = 0xFF07;
+pub const INTERRUPT_FLAG: u16 = 0xFF0F;
 pub const SOUND_START: u16 = 0xFF10;
 pub const SOUND_END: u16 = 0xFF26;
 pub const WAVEFORM_RAM_START: u16 = 0xFF30;
