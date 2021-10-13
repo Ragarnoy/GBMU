@@ -14,8 +14,13 @@ pub fn cp(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
 pub fn xor(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     let value = ctl.pop();
     let value = ctl.pop() ^ value;
+
     state.regs.set_raw(0);
     state.regs.set_zero(value == 0);
+    state.regs.set_subtraction(false);
+    state.regs.set_half_carry(false);
+    state.regs.set_carry(false);
+
     ctl.push(value);
     OK_PLAY_NEXT_ACTION
 }
@@ -32,8 +37,13 @@ pub fn cpl(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
 pub fn and(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     let value = ctl.pop();
     let value = ctl.pop() & value;
+
     state.regs.set_raw(0);
     state.regs.set_zero(value == 0);
+    state.regs.set_subtraction(false);
+    state.regs.set_half_carry(true);
+    state.regs.set_carry(false);
+
     ctl.push(value);
     OK_PLAY_NEXT_ACTION
 }
@@ -41,8 +51,13 @@ pub fn and(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
 pub fn or(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     let value = ctl.pop();
     let value = ctl.pop() | value;
+
     state.regs.set_raw(0);
     state.regs.set_zero(value == 0);
+    state.regs.set_subtraction(false);
+    state.regs.set_half_carry(false);
+    state.regs.set_carry(false);
+
     ctl.push(value);
     OK_PLAY_NEXT_ACTION
 }
