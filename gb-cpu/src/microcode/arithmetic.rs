@@ -94,7 +94,7 @@ fn daa_subtraction(value: u8, carry: bool, half_carry: bool) -> (u8, bool) {
 }
 
 /// return the upper/lower bound of a byte
-fn slice_byte(value: u8) -> (u8, u8) {
+pub fn slice_byte(value: u8) -> (u8, u8) {
     let upper = value >> 4;
     let lower = value & 0xf;
     (upper, lower)

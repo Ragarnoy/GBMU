@@ -1,4 +1,4 @@
-use super::{MicrocodeController, MicrocodeFlow, State, OK_PLAY_NEXT_ACTION};
+use super::{arithmetic, MicrocodeController, MicrocodeFlow, State, OK_PLAY_NEXT_ACTION};
 use crate::interfaces::{ReadFlagReg, WriteFlagReg};
 
 fn read_bit(ctl: &mut MicrocodeController, state: &mut State, bit: u8) -> MicrocodeFlow {
@@ -235,10 +235,10 @@ pub fn sra(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
 
 pub fn swap(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     let value = ctl.pop();
-    let upper_to_lower = value >> 4;
-    let lower_to_upper = value << 4;
+    let (upper, lower) = arithmetic::slice_byte(value);
+    let swapped_value = (lower << 4) + upper;
 
-    ctl.push(lower_to_upper + upper_to_lower);
+    ctl.push(swapped_value);
     state.regs.set_zero(value == 0);
     state.regs.set_carry(false);
     state.regs.set_half_carry(false);
