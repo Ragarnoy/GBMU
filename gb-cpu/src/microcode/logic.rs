@@ -15,7 +15,6 @@ pub fn xor(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     let value = ctl.pop();
     let value = ctl.pop() ^ value;
 
-    state.regs.set_raw(0);
     state.regs.set_zero(value == 0);
     state.regs.set_subtraction(false);
     state.regs.set_half_carry(false);
@@ -38,7 +37,6 @@ pub fn and(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     let value = ctl.pop();
     let value = ctl.pop() & value;
 
-    state.regs.set_raw(0);
     state.regs.set_zero(value == 0);
     state.regs.set_subtraction(false);
     state.regs.set_half_carry(true);
@@ -52,7 +50,6 @@ pub fn or(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     let value = ctl.pop();
     let value = ctl.pop() | value;
 
-    state.regs.set_raw(0);
     state.regs.set_zero(value == 0);
     state.regs.set_subtraction(false);
     state.regs.set_half_carry(false);
