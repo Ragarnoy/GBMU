@@ -27,6 +27,10 @@ impl PixelFIFO {
         self.pixels.clear();
     }
 
+    pub fn count(&self) -> usize {
+        self.pixels.len()
+    }
+
     pub fn append(&mut self, mut new_pixels: VecDeque<Pixel>) -> Option<VecDeque<Pixel>> {
         if self.pixels.len() <= 8 && new_pixels.len() == 8 {
             self.pixels.append(&mut new_pixels);

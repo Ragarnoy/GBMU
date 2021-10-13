@@ -172,7 +172,7 @@ impl PixelFetcher {
         }
     }
 
-    pub fn push_to_fifo(&mut self, fifo: &mut PixelFIFO) {
+    pub fn push_to_fifo(&mut self, fifo: &mut PixelFIFO) -> bool {
         if self.pixels.len() >= 8 && self.internal_tick % 2 == 1 {
             match self.mode {
                 FetchMode::Background => self.append_to_fifo(fifo),
@@ -182,15 +182,21 @@ impl PixelFetcher {
         }
     }
 
-    fn append_to_fifo(&mut self, fifo: &mut PixelFIFO) {
+    fn append_to_fifo(&mut self, fifo: &mut PixelFIFO) -> bool {
         if let Some(unused_pixels) = fifo.append(self.pixels.drain(0..).collect()) {
             self.pixels = unused_pixels;
+            false
+        } else {
+            true
         }
     }
 
-    fn mix_to_fifo(&mut self, fifo: &mut PixelFIFO) {
+    fn mix_to_fifo(&mut self, fifo: &mut PixelFIFO) -> bool {
         if let Some(unused_pixels) = fifo.mix(self.pixels.drain(0..).collect()) {
             self.pixels = unused_pixels;
+            false
+        } else {
+            true
         }
     }
 }
