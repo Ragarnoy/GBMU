@@ -377,11 +377,10 @@ impl PPU {
 
         if lcd_reg.window_pos.wy <= y && lcd_reg.window_pos.wx <= x {
             pixel_fetcher.set_mode(FetchMode::Window);
-            pixel_fifo.clear();
         } else {
             pixel_fetcher.set_mode(FetchMode::Background);
-            pixel_fifo.clear();
         }
+        pixel_fifo.clear();
     }
 
     fn check_for_sprite_mode(
