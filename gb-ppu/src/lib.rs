@@ -9,6 +9,7 @@ mod sprite;
 #[cfg(test)]
 mod test_tools;
 
+use color::Color;
 pub use memory::PPUMem;
 pub use ppu::PPU;
 pub use registers::PPURegisters;

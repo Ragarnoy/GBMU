@@ -1,7 +1,7 @@
-use crate::color::Color;
 use crate::error::{PPUError, PPUResult};
 use crate::memory::Vram;
 use crate::registers::Palette;
+use crate::Color;
 use modular_bitfield::{
     bitfield,
     specifiers::{B1, B3},

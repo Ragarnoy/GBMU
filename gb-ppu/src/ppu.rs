@@ -1,6 +1,7 @@
-use crate::drawing::{Mode, State};
+use crate::drawing::{Mode, PixelFIFO, State};
 use crate::memory::{Lock, Lockable, Oam, PPUMem, Vram};
 use crate::registers::{LcdReg, PPURegisters};
+use crate::Color;
 use crate::Sprite;
 use crate::{
     SPRITE_LIST_PER_LINE, SPRITE_LIST_RENDER_HEIGHT, SPRITE_LIST_RENDER_WIDTH,
@@ -22,6 +23,8 @@ pub struct PPU {
     oam: Rc<RefCell<Oam>>,
     lcd_reg: Rc<RefCell<LcdReg>>,
     pixels: RenderData<SCREEN_WIDTH, SCREEN_HEIGHT>,
+    next_pixels: RenderData<SCREEN_WIDTH, SCREEN_HEIGHT>,
+    pixel_fifo: PixelFIFO,
     state: State,
     scanline_sprites: Vec<Sprite>,
 }
@@ -33,6 +36,8 @@ impl PPU {
             oam: Rc::new(RefCell::new(Oam::new())),
             lcd_reg: Rc::new(RefCell::new(LcdReg::new())),
             pixels: [[[255; 3]; SCREEN_WIDTH]; SCREEN_HEIGHT],
+            next_pixels: [[[255; 3]; SCREEN_WIDTH]; SCREEN_HEIGHT],
+            pixel_fifo: PixelFIFO::new(),
             state: State::new(),
             scanline_sprites: Vec::with_capacity(10),
         }
@@ -217,6 +222,12 @@ impl PPU {
         image
     }
 
+    fn vblank(&mut self) {
+        if self.state.line() == State::LAST_LINE && self.state.step() == State::LAST_STEP {
+            std::mem::swap(&mut self.pixels, &mut self.next_pixels);
+        }
+    }
+
     fn hblank(&mut self) {
         if let Ok(mut oam) = self.oam.try_borrow_mut() {
             if let Some(Lock::Ppu) = oam.get_lock() {
@@ -224,6 +235,13 @@ impl PPU {
             }
         } else {
             log::error!("Oam borrow failed for ppu in mode 0");
+        }
+        if let Ok(mut vram) = self.vram.try_borrow_mut() {
+            if let Some(Lock::Ppu) = vram.get_lock() {
+                vram.unlock();
+            }
+        } else {
+            log::error!("Vram borrow failed for ppu in mode 0");
         }
     }
 
@@ -275,6 +293,27 @@ impl PPU {
             log::error!("Lcd reg borrow failed for ppu in mode 2");
         }
     }
+
+    fn pixel_drawing(&mut self) {
+        if let Ok(mut vram) = self.vram.try_borrow_mut() {
+            let lock = vram.get_lock();
+
+            if lock.is_none() {
+                vram.lock(Lock::Ppu);
+                self.pixel_fifo.clear();
+                self.state.clear_pixel_count();
+            }
+            if self.pixel_fifo.enabled && self.state.pixel_drawn() < SCREEN_WIDTH as u8 {
+                if let Some(pixel) = self.pixel_fifo.pop() {
+                    self.next_pixels[self.state.line() as usize]
+                        [self.state.pixel_drawn() as usize] = Color::from(pixel).into();
+                    self.state.draw_pixel();
+                };
+            }
+        } else {
+            log::error!("Vram borrow failed for ppu in mode 3");
+        }
+    }
 }
 
 impl Default for PPU {
@@ -294,9 +333,9 @@ impl Ticker for PPU {
     {
         match self.state.mode() {
             Mode::OAMFetch => self.oam_fetch(),
-            Mode::PixelDrawing => {}
+            Mode::PixelDrawing => self.pixel_drawing(),
             Mode::HBlank => self.hblank(),
-            Mode::VBlank => {}
+            Mode::VBlank => self.vblank(),
         }
         // update state after executing tick
         let lcd_reg = self.lcd_reg.try_borrow_mut().ok();

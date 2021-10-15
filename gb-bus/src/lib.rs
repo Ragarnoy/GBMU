@@ -8,12 +8,14 @@ pub mod generic;
 pub mod io_reg_area;
 mod io_reg_bus;
 pub mod io_reg_constant;
+mod working_ram;
 
 pub use address_bus::AddressBus;
 pub use area::Area;
 pub use error::Error;
 pub use file_operation::{Address, FileOperation};
 pub use io_reg_area::IORegArea;
+pub use working_ram::WorkingRam;
 
 pub trait Bus<N> {
     /// read `N` into the bus
