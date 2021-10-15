@@ -5,4 +5,4 @@ Feature: Test jump opcodes
     When the cpu has ticked 4 times
     Then the opcode was Jp
     And the cpu has no action left
-    And the PC register is set to DEAD
+    And the register PC is set to DEAD
