@@ -177,77 +177,93 @@ pub fn fetch_cb(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFl
                 }
                 OpcodeCB::Set7A => ctl.push_actions(&[read::a, bitwise::set_7, write::a]),
 
-                OpcodeCB::Res0B => ctl.push_actions(&[read::b, bitwise::res_0]),
-                OpcodeCB::Res0C => ctl.push_actions(&[read::c, bitwise::res_0]),
-                OpcodeCB::Res0D => ctl.push_actions(&[read::d, bitwise::res_0]),
-                OpcodeCB::Res0E => ctl.push_actions(&[read::e, bitwise::res_0]),
-                OpcodeCB::Res0H => ctl.push_actions(&[read::h, bitwise::res_0]),
-                OpcodeCB::Res0L => ctl.push_actions(&[read::l, bitwise::res_0]),
-                OpcodeCB::Res0HL => ctl.push_actions(&[read::hl, read::ind, bitwise::res_0]),
-                OpcodeCB::Res0A => ctl.push_actions(&[read::a, bitwise::res_0]),
+                OpcodeCB::Res0B => ctl.push_actions(&[read::b, bitwise::res_0, write::b]),
+                OpcodeCB::Res0C => ctl.push_actions(&[read::c, bitwise::res_0, write::c]),
+                OpcodeCB::Res0D => ctl.push_actions(&[read::d, bitwise::res_0, write::d]),
+                OpcodeCB::Res0E => ctl.push_actions(&[read::e, bitwise::res_0, write::e]),
+                OpcodeCB::Res0H => ctl.push_actions(&[read::h, bitwise::res_0, write::h]),
+                OpcodeCB::Res0L => ctl.push_actions(&[read::l, bitwise::res_0, write::l]),
+                OpcodeCB::Res0HL => {
+                    ctl.push_actions(&[read::hl, read::ind, bitwise::res_0, write::hl])
+                }
+                OpcodeCB::Res0A => ctl.push_actions(&[read::a, bitwise::res_0, write::a]),
 
-                OpcodeCB::Res1B => ctl.push_actions(&[read::b, bitwise::res_1]),
-                OpcodeCB::Res1C => ctl.push_actions(&[read::c, bitwise::res_1]),
-                OpcodeCB::Res1D => ctl.push_actions(&[read::d, bitwise::res_1]),
-                OpcodeCB::Res1E => ctl.push_actions(&[read::e, bitwise::res_1]),
-                OpcodeCB::Res1H => ctl.push_actions(&[read::h, bitwise::res_1]),
-                OpcodeCB::Res1L => ctl.push_actions(&[read::l, bitwise::res_1]),
-                OpcodeCB::Res1HL => ctl.push_actions(&[read::hl, read::ind, bitwise::res_1]),
-                OpcodeCB::Res1A => ctl.push_actions(&[read::a, bitwise::res_1]),
+                OpcodeCB::Res1B => ctl.push_actions(&[read::b, bitwise::res_1, write::b]),
+                OpcodeCB::Res1C => ctl.push_actions(&[read::c, bitwise::res_1, write::c]),
+                OpcodeCB::Res1D => ctl.push_actions(&[read::d, bitwise::res_1, write::d]),
+                OpcodeCB::Res1E => ctl.push_actions(&[read::e, bitwise::res_1, write::e]),
+                OpcodeCB::Res1H => ctl.push_actions(&[read::h, bitwise::res_1, write::h]),
+                OpcodeCB::Res1L => ctl.push_actions(&[read::l, bitwise::res_1, write::l]),
+                OpcodeCB::Res1HL => {
+                    ctl.push_actions(&[read::hl, read::ind, bitwise::res_1, write::hl])
+                }
+                OpcodeCB::Res1A => ctl.push_actions(&[read::a, bitwise::res_1, write::a]),
 
-                OpcodeCB::Res2B => ctl.push_actions(&[read::b, bitwise::res_2]),
-                OpcodeCB::Res2C => ctl.push_actions(&[read::c, bitwise::res_2]),
-                OpcodeCB::Res2D => ctl.push_actions(&[read::d, bitwise::res_2]),
-                OpcodeCB::Res2E => ctl.push_actions(&[read::e, bitwise::res_2]),
-                OpcodeCB::Res2H => ctl.push_actions(&[read::h, bitwise::res_2]),
-                OpcodeCB::Res2L => ctl.push_actions(&[read::l, bitwise::res_2]),
-                OpcodeCB::Res2HL => ctl.push_actions(&[read::hl, read::ind, bitwise::res_2]),
-                OpcodeCB::Res2A => ctl.push_actions(&[read::a, bitwise::res_2]),
+                OpcodeCB::Res2B => ctl.push_actions(&[read::b, bitwise::res_2, write::b]),
+                OpcodeCB::Res2C => ctl.push_actions(&[read::c, bitwise::res_2, write::c]),
+                OpcodeCB::Res2D => ctl.push_actions(&[read::d, bitwise::res_2, write::d]),
+                OpcodeCB::Res2E => ctl.push_actions(&[read::e, bitwise::res_2, write::e]),
+                OpcodeCB::Res2H => ctl.push_actions(&[read::h, bitwise::res_2, write::h]),
+                OpcodeCB::Res2L => ctl.push_actions(&[read::l, bitwise::res_2, write::l]),
+                OpcodeCB::Res2HL => {
+                    ctl.push_actions(&[read::hl, read::ind, bitwise::res_2, write::hl])
+                }
+                OpcodeCB::Res2A => ctl.push_actions(&[read::a, bitwise::res_2, write::a]),
 
-                OpcodeCB::Res3B => ctl.push_actions(&[read::b, bitwise::res_3]),
-                OpcodeCB::Res3C => ctl.push_actions(&[read::c, bitwise::res_3]),
-                OpcodeCB::Res3D => ctl.push_actions(&[read::d, bitwise::res_3]),
-                OpcodeCB::Res3E => ctl.push_actions(&[read::e, bitwise::res_3]),
-                OpcodeCB::Res3H => ctl.push_actions(&[read::h, bitwise::res_3]),
-                OpcodeCB::Res3L => ctl.push_actions(&[read::l, bitwise::res_3]),
-                OpcodeCB::Res3HL => ctl.push_actions(&[read::hl, read::ind, bitwise::res_3]),
-                OpcodeCB::Res3A => ctl.push_actions(&[read::a, bitwise::res_3]),
+                OpcodeCB::Res3B => ctl.push_actions(&[read::b, bitwise::res_3, write::b]),
+                OpcodeCB::Res3C => ctl.push_actions(&[read::c, bitwise::res_3, write::c]),
+                OpcodeCB::Res3D => ctl.push_actions(&[read::d, bitwise::res_3, write::d]),
+                OpcodeCB::Res3E => ctl.push_actions(&[read::e, bitwise::res_3, write::e]),
+                OpcodeCB::Res3H => ctl.push_actions(&[read::h, bitwise::res_3, write::h]),
+                OpcodeCB::Res3L => ctl.push_actions(&[read::l, bitwise::res_3, write::l]),
+                OpcodeCB::Res3HL => {
+                    ctl.push_actions(&[read::hl, read::ind, bitwise::res_3, write::hl])
+                }
+                OpcodeCB::Res3A => ctl.push_actions(&[read::a, bitwise::res_3, write::a]),
 
-                OpcodeCB::Res4B => ctl.push_actions(&[read::b, bitwise::res_4]),
-                OpcodeCB::Res4C => ctl.push_actions(&[read::c, bitwise::res_4]),
-                OpcodeCB::Res4D => ctl.push_actions(&[read::d, bitwise::res_4]),
-                OpcodeCB::Res4E => ctl.push_actions(&[read::e, bitwise::res_4]),
-                OpcodeCB::Res4H => ctl.push_actions(&[read::h, bitwise::res_4]),
-                OpcodeCB::Res4L => ctl.push_actions(&[read::l, bitwise::res_4]),
-                OpcodeCB::Res4HL => ctl.push_actions(&[read::hl, read::ind, bitwise::res_4]),
-                OpcodeCB::Res4A => ctl.push_actions(&[read::a, bitwise::res_4]),
+                OpcodeCB::Res4B => ctl.push_actions(&[read::b, bitwise::res_4, write::b]),
+                OpcodeCB::Res4C => ctl.push_actions(&[read::c, bitwise::res_4, write::c]),
+                OpcodeCB::Res4D => ctl.push_actions(&[read::d, bitwise::res_4, write::d]),
+                OpcodeCB::Res4E => ctl.push_actions(&[read::e, bitwise::res_4, write::e]),
+                OpcodeCB::Res4H => ctl.push_actions(&[read::h, bitwise::res_4, write::h]),
+                OpcodeCB::Res4L => ctl.push_actions(&[read::l, bitwise::res_4, write::l]),
+                OpcodeCB::Res4HL => {
+                    ctl.push_actions(&[read::hl, read::ind, bitwise::res_4, write::hl])
+                }
+                OpcodeCB::Res4A => ctl.push_actions(&[read::a, bitwise::res_4, write::a]),
 
-                OpcodeCB::Res5B => ctl.push_actions(&[read::b, bitwise::res_5]),
-                OpcodeCB::Res5C => ctl.push_actions(&[read::c, bitwise::res_5]),
-                OpcodeCB::Res5D => ctl.push_actions(&[read::d, bitwise::res_5]),
-                OpcodeCB::Res5E => ctl.push_actions(&[read::e, bitwise::res_5]),
-                OpcodeCB::Res5H => ctl.push_actions(&[read::h, bitwise::res_5]),
-                OpcodeCB::Res5L => ctl.push_actions(&[read::l, bitwise::res_5]),
-                OpcodeCB::Res5HL => ctl.push_actions(&[read::hl, read::ind, bitwise::res_5]),
-                OpcodeCB::Res5A => ctl.push_actions(&[read::a, bitwise::res_5]),
+                OpcodeCB::Res5B => ctl.push_actions(&[read::b, bitwise::res_5, write::b]),
+                OpcodeCB::Res5C => ctl.push_actions(&[read::c, bitwise::res_5, write::c]),
+                OpcodeCB::Res5D => ctl.push_actions(&[read::d, bitwise::res_5, write::d]),
+                OpcodeCB::Res5E => ctl.push_actions(&[read::e, bitwise::res_5, write::e]),
+                OpcodeCB::Res5H => ctl.push_actions(&[read::h, bitwise::res_5, write::h]),
+                OpcodeCB::Res5L => ctl.push_actions(&[read::l, bitwise::res_5, write::l]),
+                OpcodeCB::Res5HL => {
+                    ctl.push_actions(&[read::hl, read::ind, bitwise::res_5, write::hl])
+                }
+                OpcodeCB::Res5A => ctl.push_actions(&[read::a, bitwise::res_5, write::a]),
 
-                OpcodeCB::Res6B => ctl.push_actions(&[read::b, bitwise::res_6]),
-                OpcodeCB::Res6C => ctl.push_actions(&[read::c, bitwise::res_6]),
-                OpcodeCB::Res6D => ctl.push_actions(&[read::d, bitwise::res_6]),
-                OpcodeCB::Res6E => ctl.push_actions(&[read::e, bitwise::res_6]),
-                OpcodeCB::Res6H => ctl.push_actions(&[read::h, bitwise::res_6]),
-                OpcodeCB::Res6L => ctl.push_actions(&[read::l, bitwise::res_6]),
-                OpcodeCB::Res6HL => ctl.push_actions(&[read::hl, read::ind, bitwise::res_6]),
-                OpcodeCB::Res6A => ctl.push_actions(&[read::a, bitwise::res_6]),
+                OpcodeCB::Res6B => ctl.push_actions(&[read::b, bitwise::res_6, write::b]),
+                OpcodeCB::Res6C => ctl.push_actions(&[read::c, bitwise::res_6, write::c]),
+                OpcodeCB::Res6D => ctl.push_actions(&[read::d, bitwise::res_6, write::d]),
+                OpcodeCB::Res6E => ctl.push_actions(&[read::e, bitwise::res_6, write::e]),
+                OpcodeCB::Res6H => ctl.push_actions(&[read::h, bitwise::res_6, write::h]),
+                OpcodeCB::Res6L => ctl.push_actions(&[read::l, bitwise::res_6, write::l]),
+                OpcodeCB::Res6HL => {
+                    ctl.push_actions(&[read::hl, read::ind, bitwise::res_6, write::hl])
+                }
+                OpcodeCB::Res6A => ctl.push_actions(&[read::a, bitwise::res_6, write::a]),
 
-                OpcodeCB::Res7B => ctl.push_actions(&[read::b, bitwise::res_7]),
-                OpcodeCB::Res7C => ctl.push_actions(&[read::c, bitwise::res_7]),
-                OpcodeCB::Res7D => ctl.push_actions(&[read::d, bitwise::res_7]),
-                OpcodeCB::Res7E => ctl.push_actions(&[read::e, bitwise::res_7]),
-                OpcodeCB::Res7H => ctl.push_actions(&[read::h, bitwise::res_7]),
-                OpcodeCB::Res7L => ctl.push_actions(&[read::l, bitwise::res_7]),
-                OpcodeCB::Res7HL => ctl.push_actions(&[read::hl, read::ind, bitwise::res_7]),
-                OpcodeCB::Res7A => ctl.push_actions(&[read::a, bitwise::res_7]),
+                OpcodeCB::Res7B => ctl.push_actions(&[read::b, bitwise::res_7, write::b]),
+                OpcodeCB::Res7C => ctl.push_actions(&[read::c, bitwise::res_7, write::c]),
+                OpcodeCB::Res7D => ctl.push_actions(&[read::d, bitwise::res_7, write::d]),
+                OpcodeCB::Res7E => ctl.push_actions(&[read::e, bitwise::res_7, write::e]),
+                OpcodeCB::Res7H => ctl.push_actions(&[read::h, bitwise::res_7, write::h]),
+                OpcodeCB::Res7L => ctl.push_actions(&[read::l, bitwise::res_7, write::l]),
+                OpcodeCB::Res7HL => {
+                    ctl.push_actions(&[read::hl, read::ind, bitwise::res_7, write::hl])
+                }
+                OpcodeCB::Res7A => ctl.push_actions(&[read::a, bitwise::res_7, write::a]),
 
                 OpcodeCB::RlB => ctl.push_actions(&[read::b, bitwise::rl, write::b]),
                 OpcodeCB::RlC => ctl.push_actions(&[read::c, bitwise::rl, write::c]),
