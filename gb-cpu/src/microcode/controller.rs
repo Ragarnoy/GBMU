@@ -121,8 +121,8 @@ impl MicrocodeController {
     /// Push the value to the cache
     pub fn push_u16(&mut self, value: u16) {
         let bytes = value.to_be_bytes();
-        self.cache.push(bytes[0]);
         self.cache.push(bytes[1]);
+        self.cache.push(bytes[0]);
     }
 
     /// Pop the last pushed `byte` from the cache.
