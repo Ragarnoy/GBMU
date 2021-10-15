@@ -50,18 +50,6 @@ impl PixelFetcher {
         self.mode = mode;
     }
 
-    pub fn fetching_sprite(&self) -> bool {
-        matches!(self.mode, FetchMode::Sprite(_)) && self.internal_tick != 0
-    }
-
-    pub fn fetching_bg(&self) -> bool {
-        matches!(self.mode, FetchMode::Background)
-    }
-
-    pub fn fetching_win(&self) -> bool {
-        matches!(self.mode, FetchMode::Window)
-    }
-
     pub fn fetch(
         &mut self,
         vram: &dyn Deref<Target = Vram>,
@@ -179,6 +167,8 @@ impl PixelFetcher {
                 FetchMode::Window => self.append_to_fifo(fifo),
                 FetchMode::Sprite(_) => self.mix_to_fifo(fifo),
             }
+        } else {
+            false
         }
     }
 
