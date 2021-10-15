@@ -31,7 +31,7 @@ impl World for CpuWorld {
     }
 }
 
-#[given(regex = r"the bytes ((?:[A-F0-9]{2,2}(?:, )?)+) at the (\w\w) position")]
+#[given(regex = r"the bytes ((?:[A-F0-9]{2,2}(?:, )?)+) at the position (\w\w)")]
 async fn setup_bytes(world: &mut CpuWorld, bytes: String, reg: Reg16) {
     let bytes = bytes
         .split(", ")
@@ -45,7 +45,7 @@ async fn setup_bytes(world: &mut CpuWorld, bytes: String, reg: Reg16) {
     });
 }
 
-#[when(regex = r"the cpu as ticked (\d+) times?")]
+#[when(regex = r"the cpu has ticked (\d+) times?")]
 async fn tick_cpu(world: &mut CpuWorld, amount: usize) {
     let mut count = 0;
     for _ in 0..amount {
@@ -65,7 +65,7 @@ async fn check_parsed_opcode(world: &mut CpuWorld, opcode: String) {
     );
 }
 
-#[then(regex = r"the cpu as no action left")]
+#[then(regex = r"the cpu has no action left")]
 async fn check_no_action_left(world: &mut CpuWorld) {
     assert_eq!(world.cpu.controller.actions.len(), 0);
 }
