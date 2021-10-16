@@ -18,7 +18,11 @@ struct CpuWorld {
 
 impl Debug for CpuWorld {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "CpuWorld {{ cpu: {:x?}, bus: {:x?} }}", self.cpu, self.bus)
+        write!(
+            f,
+            "CpuWorld {{ cpu: {:x?}, bus: {:x?} }}",
+            self.cpu, self.bus
+        )
     }
 }
 
@@ -86,12 +90,22 @@ async fn check_reg16_value(world: &mut CpuWorld, reg: Reg16, value: String) {
 #[then(regex = r"the values written at ([A-F0-9]{1,4}) are ((?:[A-F0-9]{2,2}(:?, )?)+)")]
 async fn check_u16_in_bus(world: &mut CpuWorld, address: String, values: String) {
     let address = u16::from_str_radix(&address, 16).expect("valid hexa value");
-    let values = values.split(", ").map(|value| u8::from_str_radix(value, 16)).collect::<Result<Vec<u8>, _>>().expect("valid hexa values");
+    let values = values
+        .split(", ")
+        .map(|value| u8::from_str_radix(value, 16))
+        .collect::<Result<Vec<u8>, _>>()
+        .expect("valid hexa values");
 
     for index in 0..values.len() {
         let addr = address + index as u16;
         let res = world.bus.read(addr);
-        assert_eq!(Ok(values[index]), res, "invalid value for index {} (address: {:x})", index, addr);
+        assert_eq!(
+            Ok(values[index]),
+            res,
+            "invalid value for index {} (address: {:x})",
+            index,
+            addr
+        );
     }
 }
 
