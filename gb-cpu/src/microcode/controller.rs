@@ -1,4 +1,7 @@
-use super::{fetch::fetch, opcode::Opcode, opcode_cb::OpcodeCB, MicrocodeFlow, State};
+use super::{
+    dec, fetch::fetch, jump::jump, opcode::Opcode, opcode_cb::OpcodeCB, read, utils::sleep, write,
+    MicrocodeFlow, State,
+};
 use crate::registers::Registers;
 use gb_bus::Bus;
 
@@ -28,6 +31,8 @@ pub struct MicrocodeController {
     actions: Vec<ActionFn>,
     /// Cache use for microcode action
     cache: Vec<u8>,
+    /// The IME flag is used to disable all interrupts
+    interrupt_master_enable: bool,
 }
 
 type ActionFn = fn(controller: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow;
@@ -38,6 +43,7 @@ impl Default for MicrocodeController {
             opcode: None,
             actions: Vec::with_capacity(8),
             cache: Vec::with_capacity(4),
+            interrupt_master_enable: true,
         }
     }
 }
@@ -50,6 +56,7 @@ impl MicrocodeController {
         let mut state = State::new(regs, bus);
         let action = self.actions.pop().unwrap_or_else(|| {
             self.clear();
+            self.handle_interrupts(&mut state);
             fetch
         });
 
@@ -109,5 +116,46 @@ impl MicrocodeController {
     /// Pop the last u16 from the cache.
     pub fn pop_u16(&mut self) -> u16 {
         u16::from_be_bytes([self.pop(), self.pop()])
+    }
+
+    fn handle_interrupts(&mut self, state: &mut State) {
+        // TODO handle HALT
+
+        if self.interrupt_master_enable {
+            self.interrupt_master_enable = false;
+            let interrupt_flag = state.read_interrupt_flag();
+            let interrupt_enable = state.read_interrupt_enable();
+            let mut interrupt_ready = interrupt_flag & interrupt_enable;
+
+            if interrupt_ready != 0 {
+                let mut source_bit: u8 = 0;
+                while interrupt_ready & 0x1 == 0 {
+                    interrupt_ready <<= 1;
+                    source_bit += 1;
+                }
+                if source_bit <= 4 {
+                    let bit_to_res = 1_u8 << source_bit;
+                    let new_interrupt_flag = !(!interrupt_flag | bit_to_res);
+                    state.write_interrupt_flag(new_interrupt_flag);
+
+                    // Sleep 2 mcycles
+                    sleep(self, state);
+                    sleep(self, state);
+
+                    // Store pc into stack
+                    read::pc(self, state);
+                    dec::sp(self, state);
+                    read::sp(self, state);
+                    write::ind(self, state);
+                    dec::sp(self, state);
+                    read::sp(self, state);
+                    write::ind(self, state);
+
+                    // Jump to interrupt source address
+                    self.push_u16(0x0040 | ((source_bit as u16) << 3));
+                    jump(self, state);
+                }
+            }
+        }
     }
 }
