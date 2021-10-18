@@ -2,9 +2,9 @@ use crate::{
     address::Address,
     io_reg_constant::{
         BG_OBJ_PALETTES_END, BG_OBJ_PALETTES_START, BOOT_ROM_START, COMMUNICATION_END,
-        COMMUNICATION_START, CONTROLLER_START, DIV_TIMER_END, DIV_TIMER_START, LCD_END, LCD_START,
-        SOUND_END, SOUND_START, VRAM_BANK_START, VRAM_DMA_END, VRAM_DMA_START, WAVEFORM_RAM_END,
-        WAVEFORM_RAM_START, WRAM_BANK_START,
+        COMMUNICATION_START, CONTROLLER_START, DIV_TIMER_END, DIV_TIMER_START, INTERRUPT_FLAG,
+        LCD_END, LCD_START, SOUND_END, SOUND_START, VRAM_BANK_START, VRAM_DMA_END, VRAM_DMA_START,
+        WAVEFORM_RAM_END, WAVEFORM_RAM_START, WRAM_BANK_START,
     },
     Address as PseudoAddress, Area, Error, FileOperation, IORegArea,
 };
@@ -13,6 +13,7 @@ struct IORegBus {
     controller: Box<dyn FileOperation<IORegArea>>,
     communication: Box<dyn FileOperation<IORegArea>>,
     div_timer: Box<dyn FileOperation<IORegArea>>,
+    interrupt_flag: Box<dyn FileOperation<IORegArea>>,
     sound: Box<dyn FileOperation<IORegArea>>,
     waveform_ram: Box<dyn FileOperation<IORegArea>>,
     lcd: Box<dyn FileOperation<IORegArea>>,
@@ -39,6 +40,11 @@ impl FileOperation<Area> for IORegBus {
                 IORegArea::DivTimer,
                 addr,
                 DIV_TIMER_START,
+            ))),
+            INTERRUPT_FLAG => self.interrupt_flag.read(Box::new(Address::from_offset(
+                IORegArea::InterruptFlag,
+                addr,
+                INTERRUPT_FLAG,
             ))),
             SOUND_START..=SOUND_END => self.sound.read(Box::new(Address::from_offset(
                 IORegArea::Sound,
@@ -105,6 +111,14 @@ impl FileOperation<Area> for IORegBus {
                     IORegArea::DivTimer,
                     addr,
                     DIV_TIMER_START,
+                )),
+            ),
+            INTERRUPT_FLAG => self.interrupt_flag.write(
+                v,
+                Box::new(Address::from_offset(
+                    IORegArea::InterruptFlag,
+                    addr,
+                    INTERRUPT_FLAG,
                 )),
             ),
             SOUND_START..=SOUND_END => self.sound.write(

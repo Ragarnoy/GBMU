@@ -1,5 +1,3 @@
-use crate::io_reg_constant::INTERRUPT_FLAG;
-
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum IORegArea {
     Controller,
@@ -20,8 +18,8 @@ impl std::convert::From<IORegArea> for u16 {
     fn from(area: IORegArea) -> Self {
         use crate::io_reg_constant::{
             BG_OBJ_PALETTES_START, BOOT_ROM_START, COMMUNICATION_START, CONTROLLER_START,
-            DIV_TIMER_START, LCD_START, SOUND_START, VRAM_BANK_START, VRAM_DMA_START,
-            WAVEFORM_RAM_START, WRAM_BANK_START,
+            DIV_TIMER_START, INTERRUPT_FLAG, LCD_START, SOUND_START, VRAM_BANK_START,
+            VRAM_DMA_START, WAVEFORM_RAM_START, WRAM_BANK_START,
         };
 
         match area {
