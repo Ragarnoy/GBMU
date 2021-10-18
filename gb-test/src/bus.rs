@@ -58,8 +58,8 @@ pub mod binary {
             let res = self
                 .store
                 .get(&address)
-                .map(|v| *v)
-                .ok_or_else(|| Error::SegmentationFault(address));
+                .copied()
+                .ok_or(Error::SegmentationFault(address));
 
             res
         }
