@@ -36,8 +36,8 @@ impl Default for MicrocodeController {
     fn default() -> Self {
         Self {
             opcode: None,
-            actions: Vec::with_capacity(8),
-            cache: Vec::with_capacity(4),
+            actions: Vec::with_capacity(12),
+            cache: Vec::with_capacity(6),
         }
     }
 }
