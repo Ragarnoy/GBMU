@@ -9,7 +9,7 @@ pub fn is_interrupt_ready(ctl: &mut MicrocodeController, state: &mut State) -> b
     }
     let interrupt_flag = state.read_interrupt_flag();
     let interrupt_enable = state.read_interrupt_enable();
-    return interrupt_flag & interrupt_enable != 0;
+    interrupt_flag & interrupt_enable != 0
 }
 
 pub fn handle_interrupts(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
