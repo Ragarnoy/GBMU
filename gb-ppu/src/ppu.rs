@@ -1,4 +1,4 @@
-use crate::drawing::{Mode, PixelFIFO, State};
+use crate::drawing::{FetchMode, Mode, PixelFIFO, PixelFetcher, State};
 use crate::memory::{Lock, Lockable, Oam, PPUMem, Vram};
 use crate::registers::{LcdReg, PPURegisters};
 use crate::Color;
@@ -13,6 +13,7 @@ use gb_clock::{Tick, Ticker};
 use gb_lcd::render::{RenderData, SCREEN_HEIGHT, SCREEN_WIDTH};
 
 use std::cell::RefCell;
+use std::ops::Deref;
 use std::rc::Rc;
 
 /// The Pixel Process Unit is in charge of selecting the pixel to be displayed on the lcd screen.
@@ -25,6 +26,7 @@ pub struct PPU {
     pixels: RenderData<SCREEN_WIDTH, SCREEN_HEIGHT>,
     next_pixels: RenderData<SCREEN_WIDTH, SCREEN_HEIGHT>,
     pixel_fifo: PixelFIFO,
+    pixel_fetcher: PixelFetcher,
     state: State,
     scanline_sprites: Vec<Sprite>,
 }
@@ -38,6 +40,7 @@ impl PPU {
             pixels: [[[255; 3]; SCREEN_WIDTH]; SCREEN_HEIGHT],
             next_pixels: [[[255; 3]; SCREEN_WIDTH]; SCREEN_HEIGHT],
             pixel_fifo: PixelFIFO::new(),
+            pixel_fetcher: PixelFetcher::new(),
             state: State::new(),
             scanline_sprites: Vec::with_capacity(10),
         }
@@ -87,6 +90,7 @@ impl PPU {
                     image[y * 8 + j][x * 8 + i] = lcd_reg
                         .pal_mono
                         .bg()
+                        .get()
                         .get_color(*pixel)
                         .unwrap_or_default()
                         .into();
@@ -128,6 +132,7 @@ impl PPU {
                     image[y * 8 + j][x * 8 + i] = lcd_reg
                         .pal_mono
                         .bg()
+                        .get()
                         .get_color(*pixel)
                         .unwrap_or_default()
                         .into();
@@ -252,6 +257,7 @@ impl PPU {
                 let step = self.state.step();
 
                 if lock.is_none() {
+                    // init mode 2
                     oam.lock(Lock::Ppu);
                     self.scanline_sprites.clear();
                 }
@@ -295,23 +301,107 @@ impl PPU {
     }
 
     fn pixel_drawing(&mut self) {
-        if let Ok(mut vram) = self.vram.try_borrow_mut() {
-            let lock = vram.get_lock();
+        if let Ok(lcd_reg) = self.lcd_reg.try_borrow() {
+            if let Ok(mut vram) = self.vram.try_borrow_mut() {
+                let lock = vram.get_lock();
+                let x = self.state.pixel_drawn();
+                let y = self.state.line();
 
-            if lock.is_none() {
-                vram.lock(Lock::Ppu);
-                self.pixel_fifo.clear();
-                self.state.clear_pixel_count();
-            }
-            if self.pixel_fifo.enabled && self.state.pixel_drawn() < SCREEN_WIDTH as u8 {
-                if let Some(pixel) = self.pixel_fifo.pop() {
-                    self.next_pixels[self.state.line() as usize]
-                        [self.state.pixel_drawn() as usize] = Color::from(pixel).into();
-                    self.state.draw_pixel();
-                };
+                if lock.is_none() {
+                    // init mode 3
+                    vram.lock(Lock::Ppu);
+                    self.pixel_fetcher.clear();
+                    self.pixel_fifo.clear();
+                    self.state.clear_pixel_count();
+                    // reverse the sprites order so the ones on the left of the viewport are the first to pop
+                    self.scanline_sprites = self.scanline_sprites.drain(0..).rev().collect();
+                    Self::check_next_pixel_mode(
+                        &lcd_reg,
+                        &mut self.pixel_fetcher,
+                        &mut self.pixel_fifo,
+                        &mut self.scanline_sprites,
+                        (x, y),
+                    );
+                }
+                if let Some(Lock::Ppu) = lock {
+                    if self.pixel_fifo.enabled && x < SCREEN_WIDTH as u8 {
+                        if let Some(pixel) = self.pixel_fifo.pop() {
+                            self.next_pixels[y as usize][x as usize] = Color::from(pixel).into();
+                            self.state.draw_pixel();
+                        };
+                    }
+                    self.pixel_fetcher
+                        .fetch(&vram, &lcd_reg, y as usize, x as usize);
+                    self.pixel_fetcher.push_to_fifo(&mut self.pixel_fifo);
+                    if self.pixel_fetcher.push_to_fifo(&mut self.pixel_fifo)
+                        || x < self.state.pixel_drawn()
+                    {
+                        Self::check_next_pixel_mode(
+                            &lcd_reg,
+                            &mut self.pixel_fetcher,
+                            &mut self.pixel_fifo,
+                            &mut self.scanline_sprites,
+                            (x, y),
+                        );
+                    }
+                }
+            } else {
+                log::error!("Vram borrow failed for ppu in mode 3");
             }
         } else {
-            log::error!("Vram borrow failed for ppu in mode 3");
+            log::error!("Lcd_reg borrow failed for ppu in mode 3");
+        }
+    }
+
+    fn check_next_pixel_mode(
+        lcd_reg: &dyn Deref<Target = LcdReg>,
+        pixel_fetcher: &mut PixelFetcher,
+        pixel_fifo: &mut PixelFIFO,
+        sprites: &mut Vec<Sprite>,
+        cursor: (u8, u8),
+    ) {
+        if pixel_fifo.count() < 8 {
+            Self::check_for_bg_win_mode(lcd_reg, pixel_fetcher, pixel_fifo, cursor);
+        } else {
+            Self::check_for_sprite_mode(lcd_reg, pixel_fetcher, pixel_fifo, sprites, cursor);
+        }
+    }
+
+    fn check_for_bg_win_mode(
+        lcd_reg: &dyn Deref<Target = LcdReg>,
+        pixel_fetcher: &mut PixelFetcher,
+        pixel_fifo: &mut PixelFIFO,
+        cursor: (u8, u8),
+    ) {
+        let (x, y) = cursor;
+
+        if lcd_reg.window_pos.wy <= y && lcd_reg.window_pos.wx <= x {
+            pixel_fetcher.set_mode(FetchMode::Window);
+        } else {
+            pixel_fetcher.set_mode(FetchMode::Background);
+        }
+        pixel_fifo.clear();
+    }
+
+    fn check_for_sprite_mode(
+        lcd_reg: &dyn Deref<Target = LcdReg>,
+        pixel_fetcher: &mut PixelFetcher,
+        pixel_fifo: &mut PixelFIFO,
+        sprites: &mut Vec<Sprite>,
+        cursor: (u8, u8),
+    ) {
+        let (x, _) = cursor;
+
+        if let Some(sprite) = sprites.pop() {
+            if sprite.x_pos() == x {
+                pixel_fetcher.set_mode(FetchMode::Sprite(sprite));
+                pixel_fifo.enabled = false;
+            } else {
+                sprites.push(sprite);
+                Self::check_for_bg_win_mode(lcd_reg, pixel_fetcher, pixel_fifo, cursor);
+            }
+        } else {
+            Self::check_for_bg_win_mode(lcd_reg, pixel_fetcher, pixel_fifo, cursor);
         }
     }
 }

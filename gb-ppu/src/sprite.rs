@@ -6,9 +6,12 @@ use modular_bitfield::{
     bitfield,
     specifiers::{B1, B3},
 };
+use std::cell::Cell;
+use std::ops::Deref;
+use std::rc::Rc;
 
 #[bitfield]
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 struct Attributes {
     #[skip]
     pub palette_cgb_nb: B3,
@@ -21,7 +24,7 @@ struct Attributes {
     pub bg_win_priority: B1,
 }
 
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct Sprite {
     y_pos: u8,
     x_pos: u8,
@@ -29,7 +32,7 @@ pub struct Sprite {
     attributes: Attributes,
 }
 
-impl Sprite {
+impl<'r> Sprite {
     pub fn new() -> Self {
         Sprite {
             y_pos: 0,
@@ -57,6 +60,21 @@ impl Sprite {
         self.attributes.x_flip() != 0
     }
 
+    pub fn tile_index(&self) -> u8 {
+        self.tile_index
+    }
+
+    pub fn get_palette(
+        &self,
+        palettes: (&'r Rc<Cell<Palette>>, &'r Rc<Cell<Palette>>),
+    ) -> &'r Rc<Cell<Palette>> {
+        if self.attributes.palette_nb() == 0 {
+            palettes.0
+        } else {
+            palettes.1
+        }
+    }
+
     /// Read the row of 8 pixels values for this sprite.
     ///
     /// ### Parameters
@@ -66,19 +84,15 @@ impl Sprite {
     pub fn get_pixels_row(
         &self,
         line: usize,
-        vram: &Vram,
+        vram: &dyn Deref<Target = Vram>,
         size_16: bool,
-        palettes: (&Palette, &Palette),
+        palettes: (&Rc<Cell<Palette>>, &Rc<Cell<Palette>>),
     ) -> PPUResult<[(u8, Color); 8]> {
-        let palette = if self.attributes.palette_nb() == 0 {
-            &palettes.0
-        } else {
-            &palettes.1
-        };
+        let palette = self.get_palette(palettes);
         if !size_16 {
-            self.get_pixels_row_8x8(line, vram, palette)
+            self.get_pixels_row_8x8(line, vram, &palette.get())
         } else {
-            self.get_pixels_row_8x16(line, vram, palette)
+            self.get_pixels_row_8x16(line, vram, &palette.get())
         }
     }
 
