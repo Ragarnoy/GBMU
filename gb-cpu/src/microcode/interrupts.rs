@@ -1,6 +1,6 @@
 use super::{
-    dec, jump::jump, read, utils::sleep, write, MicrocodeController, MicrocodeFlow, State,
-    OK_PLAY_NEXT_ACTION,
+    controller::OpcodeType, dec, jump::jump, opcode::Opcode, read, utils::sleep, write,
+    MicrocodeController, MicrocodeFlow, State, OK_PLAY_NEXT_ACTION,
 };
 
 pub fn is_interrupt_ready(ctl: &mut MicrocodeController) -> bool {
@@ -51,5 +51,15 @@ pub fn handle_interrupts(ctl: &mut MicrocodeController, _state: &mut State) -> M
         // Jump to interrupt source address (1 mcycle)
         jump,
     ]);
+    OK_PLAY_NEXT_ACTION
+}
+
+pub fn toggle_ime(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow {
+    ctl.interrupt_master_enable = match ctl.opcode {
+        Some(OpcodeType::Unprefixed(Opcode::Di)) => false,
+        Some(OpcodeType::Unprefixed(Opcode::Ei)) => true,
+        Some(OpcodeType::Unprefixed(Opcode::Reti)) => true,
+        _ => panic!("toggle_ime action should not be used during this instruction."),
+    };
     OK_PLAY_NEXT_ACTION
 }

@@ -1,4 +1,4 @@
-use crate::microcode::{bitwise, flag, push, utils};
+use crate::microcode::{bitwise, flag, interrupts, push, utils};
 
 use super::{
     arithmetic,
@@ -581,6 +581,19 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                 Opcode::Scf => ctl.push_actions(&[flag::scf]),
                 Opcode::Cpl => ctl.push_actions(&[read::a, logic::cpl, write::a]),
                 Opcode::Ccf => ctl.push_actions(&[flag::ccf]),
+
+                Opcode::Ei => ctl.push_action(interrupts::toggle_ime),
+                Opcode::Di => ctl.push_action(interrupts::toggle_ime),
+                Opcode::Reti => ctl.push_actions(&[
+                    read::sp,
+                    read::ind,
+                    inc::sp,
+                    read::sp,
+                    read::ind,
+                    inc::sp,
+                    jump::jump,
+                    interrupts::toggle_ime,
+                ]),
 
                 Opcode::Nop => &mut ctl,
                 Opcode::PrefixCb => ctl.push_action(fetch_cb),
