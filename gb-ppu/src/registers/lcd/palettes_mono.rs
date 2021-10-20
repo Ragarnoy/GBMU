@@ -1,11 +1,12 @@
-use super::{super::Palette, RegisterArray};
-use std::ops::{Index, IndexMut};
+use super::super::Palette;
+use std::cell::Cell;
+use std::rc::Rc;
 
-#[derive(Default, Clone, Copy, Debug)]
+#[derive(Default, Clone, Debug)]
 pub struct PalettesMono {
-    bg: Palette,
-    obj_0: Palette,
-    obj_1: Palette,
+    bg: Rc<Cell<Palette>>,
+    obj_0: Rc<Cell<Palette>>,
+    obj_1: Rc<Cell<Palette>>,
 }
 
 impl PalettesMono {
@@ -13,27 +14,45 @@ impl PalettesMono {
 
     pub fn new() -> Self {
         PalettesMono {
-            bg: Palette::new(false),
-            obj_0: Palette::new(true),
-            obj_1: Palette::new(true),
+            bg: Rc::new(Cell::new(Palette::new(false))),
+            obj_0: Rc::new(Cell::new(Palette::new(true))),
+            obj_1: Rc::new(Cell::new(Palette::new(true))),
         }
     }
 
-    pub fn bg(&self) -> &Palette {
+    pub fn bg(&self) -> &Rc<Cell<Palette>> {
         &self.bg
     }
 
-    pub fn obj(&self) -> (&Palette, &Palette) {
+    pub fn obj(&self) -> (&Rc<Cell<Palette>>, &Rc<Cell<Palette>>) {
         (&self.obj_0, &self.obj_1)
+    }
+
+    pub fn read(&self, pos: usize) -> u8 {
+        match pos {
+            0 => self.bg.get().into(),
+            1 => self.obj_0.get().into(),
+            2 => self.obj_1.get().into(),
+            _ => 0xFF,
+        }
+    }
+
+    pub fn write(&mut self, pos: usize, val: u8) {
+        match pos {
+            0 => self.bg.set(val.into()),
+            1 => self.obj_0.set(val.into()),
+            2 => self.obj_1.set(val.into()),
+            _ => {}
+        }
     }
 }
 
 impl From<[u8; 3]> for PalettesMono {
     fn from(bytes: [u8; 3]) -> PalettesMono {
         PalettesMono {
-            bg: bytes[0].into(),
-            obj_0: bytes[1].into(),
-            obj_1: bytes[2].into(),
+            bg: Rc::new(Cell::new(bytes[0].into())),
+            obj_0: Rc::new(Cell::new(bytes[1].into())),
+            obj_1: Rc::new(Cell::new(bytes[2].into())),
         }
     }
 }
@@ -41,35 +60,9 @@ impl From<[u8; 3]> for PalettesMono {
 impl From<PalettesMono> for [u8; 3] {
     fn from(register: PalettesMono) -> [u8; 3] {
         [
-            register.bg.into(),
-            register.obj_0.into(),
-            register.obj_1.into(),
+            register.bg.get().into(),
+            register.obj_0.get().into(),
+            register.obj_1.get().into(),
         ]
     }
 }
-
-impl Index<usize> for PalettesMono {
-    type Output = Palette;
-
-    fn index(&self, id: usize) -> &Self::Output {
-        match id {
-            0 => &self.bg,
-            1 => &self.obj_0,
-            2 => &self.obj_1,
-            _ => panic!("Out of bound index for PaletteMono register"),
-        }
-    }
-}
-
-impl IndexMut<usize> for PalettesMono {
-    fn index_mut(&mut self, id: usize) -> &mut Self::Output {
-        match id {
-            0 => &mut self.bg,
-            1 => &mut self.obj_0,
-            2 => &mut self.obj_1,
-            _ => panic!("Out of bound index for PaletteMono register"),
-        }
-    }
-}
-
-impl RegisterArray<Palette, 3> for PalettesMono {}

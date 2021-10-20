@@ -27,7 +27,10 @@ impl PixelFIFO {
         self.pixels.clear();
     }
 
-    #[allow(dead_code)]
+    pub fn count(&self) -> usize {
+        self.pixels.len()
+    }
+
     pub fn append(&mut self, mut new_pixels: VecDeque<Pixel>) -> Option<VecDeque<Pixel>> {
         if self.pixels.len() <= 8 && new_pixels.len() == 8 {
             self.pixels.append(&mut new_pixels);
@@ -37,7 +40,6 @@ impl PixelFIFO {
         }
     }
 
-    #[allow(dead_code)]
     pub fn mix(&mut self, mix_pixels: VecDeque<Pixel>) -> Option<VecDeque<Pixel>> {
         if self.pixels.len() >= 8 && mix_pixels.len() == 8 {
             for (in_place, mix_pixel) in self.pixels.iter_mut().zip(mix_pixels) {
