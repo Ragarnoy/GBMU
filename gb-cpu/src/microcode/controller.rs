@@ -3,7 +3,7 @@ use crate::{
     microcode::interrupts::{handle_interrupts, is_interrupt_ready},
     registers::Registers,
 };
-use gb_bus::Bus;
+use gb_bus::{Area, Bus, FileOperation, IORegArea};
 
 pub enum OpcodeType {
     Unprefixed(Opcode),
@@ -33,6 +33,8 @@ pub struct MicrocodeController {
     cache: Vec<u8>,
     /// The IME flag is used to disable all interrupts
     pub interrupt_master_enable: bool,
+    pub interrupt_flag: u8,
+    pub interrupt_enable: u8,
 }
 
 type ActionFn = fn(controller: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow;
@@ -44,6 +46,8 @@ impl Default for MicrocodeController {
             actions: Vec::with_capacity(12),
             cache: Vec::with_capacity(6),
             interrupt_master_enable: true,
+            interrupt_flag: 0,
+            interrupt_enable: 0,
         }
     }
 }
@@ -55,7 +59,7 @@ impl MicrocodeController {
         let mut state = State::new(regs, bus);
         let action = self.actions.pop().unwrap_or_else(|| {
             self.clear();
-            if is_interrupt_ready(self, &mut state) {
+            if is_interrupt_ready(self) {
                 handle_interrupts
             } else {
                 fetch
@@ -118,5 +122,29 @@ impl MicrocodeController {
     /// Pop the last u16 from the cache.
     pub fn pop_u16(&mut self) -> u16 {
         u16::from_be_bytes([self.pop(), self.pop()])
+    }
+}
+
+impl FileOperation<Area> for MicrocodeController {
+    fn read(&self, _addr: Box<dyn gb_bus::Address<Area>>) -> Result<u8, gb_bus::Error> {
+        Ok(self.interrupt_enable)
+    }
+    fn write(&mut self, v: u8, _addr: Box<dyn gb_bus::Address<Area>>) -> Result<(), gb_bus::Error> {
+        self.interrupt_enable = v;
+        Ok(())
+    }
+}
+
+impl FileOperation<IORegArea> for MicrocodeController {
+    fn read(&self, _addr: Box<dyn gb_bus::Address<IORegArea>>) -> Result<u8, gb_bus::Error> {
+        Ok(self.interrupt_flag)
+    }
+    fn write(
+        &mut self,
+        v: u8,
+        _addr: Box<dyn gb_bus::Address<IORegArea>>,
+    ) -> Result<(), gb_bus::Error> {
+        self.interrupt_flag = v;
+        Ok(())
     }
 }

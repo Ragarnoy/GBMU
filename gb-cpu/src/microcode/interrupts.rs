@@ -3,18 +3,18 @@ use super::{
     OK_PLAY_NEXT_ACTION,
 };
 
-pub fn is_interrupt_ready(ctl: &mut MicrocodeController, state: &mut State) -> bool {
+pub fn is_interrupt_ready(ctl: &mut MicrocodeController) -> bool {
     if !ctl.interrupt_master_enable {
         return false;
     }
-    let interrupt_flag = state.read_interrupt_flag();
-    let interrupt_enable = state.read_interrupt_enable();
+    let interrupt_flag = ctl.interrupt_flag;
+    let interrupt_enable = ctl.interrupt_enable;
     interrupt_flag & interrupt_enable != 0
 }
 
-pub fn handle_interrupts(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
-    let interrupt_flag = state.read_interrupt_flag();
-    let interrupt_enable = state.read_interrupt_enable();
+pub fn handle_interrupts(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow {
+    let interrupt_flag = ctl.interrupt_flag;
+    let interrupt_enable = ctl.interrupt_enable;
     let mut interrupt_match = interrupt_flag & interrupt_enable;
 
     // Shift to right until first bit is set
@@ -31,9 +31,7 @@ pub fn handle_interrupts(ctl: &mut MicrocodeController, state: &mut State) -> Mi
 
     // Reset bit from source in interrupt flag
     let bit_to_res = 1_u8 << source_bit;
-    let interrupt_flag = state.read_interrupt_flag();
-    let new_interrupt_flag = interrupt_flag & !bit_to_res;
-    state.write_interrupt_flag(new_interrupt_flag);
+    ctl.interrupt_flag &= !bit_to_res;
 
     // Push interrupt source address to cache
     ctl.push_u16(0x0040 | ((source_bit as u16) << 3));
