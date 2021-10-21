@@ -1053,6 +1053,7 @@ dependencies = [
 name = "gbmu"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "clap",
  "egui 0.13.1",
  "gb-bus",

@@ -18,15 +18,16 @@ pub struct Windows {
 }
 
 pub struct GameContext {
-    pub romname: String,
+    romname: String,
+    header: Header,
 }
 
 impl GameContext {
-    pub fn new(romname: String) -> Result<GameContext, std::io::Error> {
+    pub fn new(romname: String) -> Result<GameContext, anyhow::Error> {
         use std::fs::File;
 
         let file = File::open(romname)?;
-        let header = Header::from_file(file);
+        let header = Header::from_file(file)?;
 
         log::debug!("header: {:?}", header);
         todo!("store header");
@@ -36,6 +37,6 @@ impl GameContext {
         todo!("store clock");
         todo!("store timer");
         todo!("store address bus");
-        Ok(Self { romname })
+        Ok(Self { romname, header })
     }
 }
