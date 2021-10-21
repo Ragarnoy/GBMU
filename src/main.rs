@@ -37,12 +37,22 @@ impl dbg_interfaces::MemoryDebugOperations for Memory {
 #[clap(setting = AppSettings::ColoredHelp)]
 struct Opts {
     #[cfg(not(debug_assertions))]
-    #[clap(short = 'l', long = "log", default_value = "warn", possible_values = &["trace", "debug", "info", "warn", "error", "off"])]
+    #[clap(short = 'l', long = "log", default_value = "warn", about = "change log level", possible_values = &["trace", "debug", "info", "warn", "error", "off"])]
     log_level: log::LevelFilter,
 
     #[cfg(debug_assertions)]
-    #[clap(short = 'l', long = "log", default_value = "debug", possible_values = &["trace", "debug", "info", "warn", "error", "off"])]
+    #[clap(short = 'l', long = "log", default_value = "debug", about = "change log level", possible_values = &["trace", "debug", "info", "warn", "error", "off"])]
     log_level: log::LevelFilter,
+
+    #[clap(about = "rom file to be loaded by the gameboy")]
+    rom: Option<String>,
+
+    #[clap(
+        long = "debug",
+        about = "enable debug mode at the start of the rom",
+        requires = "rom"
+    )]
+    debug: bool,
 }
 
 fn main() {
