@@ -59,7 +59,7 @@ fn main() {
     let opts: Opts = Opts::parse();
     init_logger(opts.log_level);
 
-    let (mut context, mut ppu, mut event_pump) = init_gbmu();
+    let (mut context, mut ppu, mut event_pump) = init_gbmu(&opts);
 
     'running: loop {
         context
@@ -117,6 +117,7 @@ fn main() {
 }
 
 fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
+    opts: &Opts,
 ) -> (Context<WIDTH, HEIGHT>, PPU, sdl2::EventPump) {
     let (sdl_context, video_subsystem, event_pump) =
         gb_lcd::init().expect("Error while initializing LCD");
@@ -160,6 +161,11 @@ fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
         debug: None,
         input: None,
     };
+    let game_context = opts
+        .rom
+        .as_ref()
+        .map(|romname| context::GameContext::new(romname.clone()));
+
     (
         Context {
             sdl: sdl_context,
