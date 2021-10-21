@@ -73,7 +73,7 @@ impl TryFrom<u8> for CartridgeType {
 }
 
 #[derive(PartialEq, Eq, Debug)]
-pub enum AutoSaveType {
+pub enum AutoSave {
     Ram,
     RamTimer,
 }
@@ -81,13 +81,13 @@ pub enum AutoSaveType {
 impl CartridgeType {
     /// return the type of auto save the cartridge type require
     /// ```
-    /// # use gb_roms::header::{CartridgeType, AutoSaveType};
+    /// # use gb_roms::header::{CartridgeType, AutoSave};
     ///
-    /// assert_eq!(CartridgeType::Mbc1RamBattery.auto_save_type(), Some(AutoSaveType::Ram));
+    /// assert_eq!(CartridgeType::Mbc1RamBattery.auto_save_type(), Some(AutoSave::Ram));
     /// assert_eq!(CartridgeType::Mbc1.auto_save_type(), None);
-    /// assert_eq!(CartridgeType::Mbc3TimerBattery.auto_save_type(), Some(AutoSaveType::RamTimer));
+    /// assert_eq!(CartridgeType::Mbc3TimerBattery.auto_save_type(), Some(AutoSave::RamTimer));
     /// ```
-    pub fn auto_save_type(&self) -> Option<AutoSaveType> {
+    pub fn auto_save_type(&self) -> Option<AutoSave> {
         use CartridgeType::*;
 
         match self {
@@ -98,8 +98,8 @@ impl CartridgeType {
             | Mbc5RamBattery
             | Mbc5RumbleRamBattery
             | Mbc7SensorRumbleRamBattery
-            | HuC1RamBattery => Some(AutoSaveType::Ram),
-            Mbc3TimerBattery | Mbc3TimerRamBattery2 => Some(AutoSaveType::RamTimer),
+            | HuC1RamBattery => Some(AutoSave::Ram),
+            Mbc3TimerBattery | Mbc3TimerRamBattery2 => Some(AutoSave::RamTimer),
             _ => None,
         }
     }

@@ -7,7 +7,7 @@ pub mod size;
 
 use std::convert::{From, TryFrom, TryInto};
 
-pub use cartridge_type::{AutoSaveType, CartridgeType};
+pub use cartridge_type::{AutoSave, CartridgeType};
 use destination_code::DestinationCode;
 pub use error::Error;
 use flag::{CgbFlag, SgbFlag};
