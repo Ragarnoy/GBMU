@@ -80,10 +80,9 @@ impl AddressBus {
                 v,
                 Box::new(Address::from_offset(Area::HighRam, addr, HRAM_START)),
             ),
-            IE_REG_START => self.ie_reg.write(
-                v,
-                Box::new(Address::from_offset(Area::IEReg, addr, IE_REG_START)),
-            ),
+            IE_REG_START => self
+                .ie_reg
+                .write(v, Box::new(Address::byte_reg(Area::IEReg, addr))),
             _ => Err(Error::BusError(addr)),
         }
     }
@@ -128,11 +127,9 @@ impl AddressBus {
                 addr,
                 HRAM_START,
             ))),
-            IE_REG_START => self.ie_reg.read(Box::new(Address::from_offset(
-                Area::IEReg,
-                addr,
-                IE_REG_START,
-            ))),
+            IE_REG_START => self
+                .ie_reg
+                .read(Box::new(Address::byte_reg(Area::IEReg, addr))),
             _ => Err(Error::BusError(addr)),
         }
     }
