@@ -35,7 +35,7 @@ bios: $(BIOS)
 
 $(BIOS_DIR)/%: $(ASSETS_DIR)/bios.zip
 	# curl --create-dirs --output $@ $(addprefix $(BIOS_LINK_ROOT)/, $*)
-	unzip -n $< "$*" -d $(ASSETS_DIR)
+	unzip -n $< "$*" -d $(BIOS_DIR)
 	touch "$@"
 
 roms: $(ROMS)
