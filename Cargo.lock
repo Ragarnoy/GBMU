@@ -846,6 +846,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "gb-timer"
+version = "0.1.0"
+dependencies = [
+ "gb-bus",
+ "gb-clock",
+]
+
+[[package]]
 name = "gbmu"
 version = "0.1.0"
 dependencies = [
