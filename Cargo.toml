@@ -26,6 +26,10 @@ gb-lcd = { path= "./gb-lcd" }
 gb-ppu = { path = "./gb-ppu" }
 gb-dbg = { path = "./gb-dbg" }
 gb-joypad = { path = "./gb-joypad" }
+gb-bus = { path = "./gb-bus" }
+gb-cpu = { path = "./gb-cpu" }
+gb-roms = { path = "./gb-roms" }
+gb-clock = { path = "./gb-clock" }
 
 [workspace]
 members = [
