@@ -13,6 +13,10 @@ impl Timer {
     pub fn div(&self) -> u8 {
         self.system_clock.to_be_bytes()[1]
     }
+
+    fn edge_detector_timer(&self) -> bool {
+        false
+    }
 }
 
 impl Ticker for Timer {
@@ -24,7 +28,19 @@ impl Ticker for Timer {
     where
         B: Bus<u8> + Bus<u16>,
     {
+        let old_bit = self.edge_detector_timer();
         self.system_clock += u16::from(self.cycle_count() as u8);
+        let new_bit = self.edge_detector_timer();
+
+        if (self.tac & 0b100) != 0 && old_bit && !new_bit {
+            let (new_tima, overflowing) = self.tima.overflowing_add(1);
+            self.tima = if overflowing {
+                todo!("send timer interrupt");
+                self.tma
+            } else {
+                new_tima
+            };
+        }
     }
 }
 
