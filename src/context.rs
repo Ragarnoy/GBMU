@@ -1,7 +1,7 @@
 use gb_bus::{Area, FileOperation};
 use gb_joypad::Joypad;
 use gb_lcd::{render::RenderImage, window::GBWindow};
-use gb_roms::Header;
+use gb_roms::{header::AutoSave, Header};
 
 pub struct Context<const WIDTH: usize, const HEIGHT: usize> {
     pub sdl: sdl2::Sdl,
@@ -20,6 +20,7 @@ pub struct Windows {
 pub struct GameContext {
     romname: String,
     header: Header,
+    auto_save: Option<AutoSave>,
 }
 
 impl GameContext {
@@ -30,13 +31,16 @@ impl GameContext {
         let header = Header::from_file(file)?;
 
         log::debug!("header: {:?}", header);
-        todo!("store header");
-        todo!("indicate if the ext ram need to be saved");
+
         todo!("store mbc controller");
         todo!("store cpu");
         todo!("store clock");
         todo!("store timer");
         todo!("store address bus");
-        Ok(Self { romname, header })
+        Ok(Self {
+            romname,
+            header,
+            auto_save: header.cartridge_type.auto_save_type(),
+        })
     }
 }
