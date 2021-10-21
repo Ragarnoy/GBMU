@@ -1,10 +1,21 @@
 use super::{fetch::fetch, opcode::Opcode, opcode_cb::OpcodeCB, MicrocodeFlow, State};
 use crate::registers::Registers;
 use gb_bus::Bus;
+use std::fmt::{self, Debug, Display};
 
+#[derive(Clone, Debug)]
 pub enum OpcodeType {
     Unprefixed(Opcode),
     CBPrefixed(OpcodeCB),
+}
+
+impl Display for OpcodeType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            OpcodeType::Unprefixed(opcode) => write!(f, "{:?}", opcode),
+            OpcodeType::CBPrefixed(cb_opcode) => write!(f, "{:?}", cb_opcode),
+        }
+    }
 }
 
 impl From<Opcode> for OpcodeType {
@@ -19,15 +30,28 @@ impl From<OpcodeCB> for OpcodeType {
     }
 }
 
+#[derive(Clone)]
 pub struct MicrocodeController {
     /// current opcode
     pub opcode: Option<OpcodeType>,
     /// Microcode actions, their role is to execute one step of an Opcode
     /// Each Actions take at most 1 `M-Cycle`
     /// Used like a LOFI queue
-    actions: Vec<ActionFn>,
+    pub actions: Vec<ActionFn>,
     /// Cache use for microcode action
     cache: Vec<u8>,
+}
+
+impl Debug for MicrocodeController {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "MicrocodeController {{ opcode: {:?}, actions: {}, cache: {:?} }}",
+            self.opcode,
+            self.actions.len(),
+            self.cache
+        )
+    }
 }
 
 type ActionFn = fn(controller: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow;
@@ -97,8 +121,8 @@ impl MicrocodeController {
     /// Push the value to the cache
     pub fn push_u16(&mut self, value: u16) {
         let bytes = value.to_be_bytes();
-        self.cache.push(bytes[0]);
         self.cache.push(bytes[1]);
+        self.cache.push(bytes[0]);
     }
 
     /// Pop the last pushed `byte` from the cache.
