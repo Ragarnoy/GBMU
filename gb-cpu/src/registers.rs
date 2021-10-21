@@ -7,7 +7,7 @@ pub const SUBTRACTION_MASK: u16 = 0b100_0000;
 pub const HALF_CARRY_MASK: u16 = 0b10_0000;
 pub const CARRY_MASK: u16 = 0b1_0000;
 
-#[derive(Default)]
+#[derive(Default, Debug, Clone)]
 pub struct Registers {
     /// Accumulator & Flags
     pub af: u16,

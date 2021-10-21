@@ -2,10 +2,10 @@ use crate::{microcode::controller::MicrocodeController, registers::Registers};
 use gb_bus::Bus;
 use gb_clock::Ticker;
 
-#[derive(Default)]
+#[derive(Default, Debug, Clone)]
 pub struct Cpu {
-    registers: Registers,
-    controller: MicrocodeController,
+    pub registers: Registers,
+    pub controller: MicrocodeController,
 }
 
 impl Ticker for Cpu {

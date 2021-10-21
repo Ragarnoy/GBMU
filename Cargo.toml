@@ -38,5 +38,6 @@ members = [
   "gb-bus",
   "gb-rtc",
   "gb-joypad",
-  "gb-timer"
+  "gb-timer",
+  "gb-test"
 ]
