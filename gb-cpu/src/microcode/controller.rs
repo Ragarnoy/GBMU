@@ -1,8 +1,11 @@
-use super::{fetch::fetch, opcode::Opcode, opcode_cb::OpcodeCB, CycleDigest, MicrocodeFlow, State};
-use crate::{
-    microcode::interrupts::{handle_interrupts, is_interrupt_ready},
-    registers::Registers,
+use super::{
+    fetch::fetch,
+    interrupts::{handle_interrupts, is_interrupt_ready},
+    opcode::Opcode,
+    opcode_cb::OpcodeCB,
+    CycleDigest, MicrocodeFlow, State,
 };
+use crate::registers::Registers;
 use gb_bus::{Area, Bus, FileOperation, IORegArea};
 
 pub enum OpcodeType {
