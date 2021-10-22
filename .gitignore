@@ -5,6 +5,7 @@ assets/bios
 
 # Rust
 target
+.cargo
 
 # packaged app
 build/
