@@ -1,4 +1,6 @@
-use gb_bus::{Area, FileOperation};
+use gb_bus::{AddressBus, Area, FileOperation};
+use gb_clock::Clock;
+use gb_cpu::cpu::Cpu;
 use gb_joypad::Joypad;
 use gb_lcd::{render::RenderImage, window::GBWindow};
 use gb_roms::{
@@ -26,6 +28,8 @@ pub struct GameContext {
     header: Header,
     auto_save: Option<AutoSave>,
     mbc: MbcController,
+    cpu: Cpu,
+    clock: Clock<AddressBus>,
 }
 
 impl GameContext {
@@ -40,8 +44,6 @@ impl GameContext {
         file.rewind()?;
         let mbc = generate_rom_controller(file, header)?;
 
-        todo!("store cpu");
-        todo!("store clock");
         todo!("store timer");
         todo!("store address bus");
         Ok(Self {
@@ -49,6 +51,8 @@ impl GameContext {
             header,
             auto_save: header.cartridge_type.auto_save_type(),
             mbc,
+            cpu: Cpu::default(),
+            clock: Clock::default(),
         })
     }
 }
