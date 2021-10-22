@@ -1,7 +1,7 @@
 use crate::error::{PPUError, PPUResult};
 use std::convert::TryFrom;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Mode {
     HBlank,
     VBlank,
