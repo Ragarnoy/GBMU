@@ -1,6 +1,6 @@
 use gb_bus::{
     generic::{CharDevice, SimpleRW},
-    AddressBus, Area, FileOperation, IORegBus,
+    AddressBus, Area, FileOperation, IORegBus, WorkingRam,
 };
 use gb_clock::Clock;
 use gb_cpu::cpu::Cpu;
@@ -54,19 +54,20 @@ impl GameContext {
         let ppu_mem = ppu.memory();
         let ppu_reg = ppu.registers();
         let cpu = Cpu::default();
+        let wram = WorkingRam::new(false);
 
         let io_bus = IORegBus {
             controller: Box::new(CharDevice::default()),
-            // communication: Box<dyn FileOperation<IORegArea>>,
+            communication: Box::new(SimpleRW::<2>::default()),
             div_timer: Box::new(SimpleRW::<3>::default()),
-            // sound: Box<dyn FileOperation<IORegArea>>,
-            // waveform_ram: Box<dyn FileOperation<IORegArea>>,
+            sound: Box::new(SimpleRW::<0x16>::default()),
+            waveform_ram: Box::new(SimpleRW::<0xF>::default()),
             lcd: Box::new(ppu_reg),
             vram_bank: Box::new(ppu_reg),
-            // boot_rom: Box<dyn FileOperation<IORegArea>>,
-            // vram_dma: Box<dyn FileOperation<IORegArea>>,
+            boot_rom: Box::new(CharDevice::default()),
+            vram_dma: Box::new(SimpleRW::<4>::default()),
             bg_obj_palettes: Box::new(ppu_reg),
-            // wram_bank: Box<dyn FileOperation<IORegArea>>,
+            wram_bank: Box::new(wram),
         };
 
         // TODO: store timer
