@@ -201,21 +201,22 @@ impl FileOperation<IORegArea> for AddressBus {
 mod test_address_bus {
     use super::AddressBus;
     use crate::generic::CharDevice;
+    use std::{cell::RefCell, rc::Rc};
 
     #[test]
     fn read() {
         let addr_bus = AddressBus {
             bios_enabling_reg: 1,
-            bios: Box::new(CharDevice(0)),
-            rom: Box::new(CharDevice(1)),
-            vram: Box::new(CharDevice(2)),
-            ext_ram: Box::new(CharDevice(3)),
-            ram: Box::new(CharDevice(4)),
-            eram: Box::new(CharDevice(5)),
-            oam: Box::new(CharDevice(6)),
-            io_reg: Box::new(CharDevice(7)),
-            hram: Box::new(CharDevice(8)),
-            ie_reg: Box::new(CharDevice(9)),
+            bios: Rc::new(RefCell::new(CharDevice(0))),
+            rom: Rc::new(RefCell::new(CharDevice(1))),
+            vram: Rc::new(RefCell::new(CharDevice(2))),
+            ext_ram: Rc::new(RefCell::new(CharDevice(3))),
+            ram: Rc::new(RefCell::new(CharDevice(4))),
+            eram: Rc::new(RefCell::new(CharDevice(5))),
+            oam: Rc::new(RefCell::new(CharDevice(6))),
+            io_reg: Rc::new(RefCell::new(CharDevice(7))),
+            hram: Rc::new(RefCell::new(CharDevice(8))),
+            ie_reg: Rc::new(RefCell::new(CharDevice(9))),
         };
 
         assert_eq!(addr_bus.read_byte(0x10), Ok(1));
@@ -233,16 +234,16 @@ mod test_address_bus {
     fn write() {
         let mut addr_bus = AddressBus {
             bios_enabling_reg: 1,
-            bios: Box::new(CharDevice(0)),
-            rom: Box::new(CharDevice(1)),
-            vram: Box::new(CharDevice(2)),
-            ext_ram: Box::new(CharDevice(3)),
-            ram: Box::new(CharDevice(4)),
-            eram: Box::new(CharDevice(5)),
-            oam: Box::new(CharDevice(6)),
-            io_reg: Box::new(CharDevice(7)),
-            hram: Box::new(CharDevice(8)),
-            ie_reg: Box::new(CharDevice(9)),
+            bios: Rc::new(RefCell::new(CharDevice(0))),
+            rom: Rc::new(RefCell::new(CharDevice(1))),
+            vram: Rc::new(RefCell::new(CharDevice(2))),
+            ext_ram: Rc::new(RefCell::new(CharDevice(3))),
+            ram: Rc::new(RefCell::new(CharDevice(4))),
+            eram: Rc::new(RefCell::new(CharDevice(5))),
+            oam: Rc::new(RefCell::new(CharDevice(6))),
+            io_reg: Rc::new(RefCell::new(CharDevice(7))),
+            hram: Rc::new(RefCell::new(CharDevice(8))),
+            ie_reg: Rc::new(RefCell::new(CharDevice(9))),
         };
 
         assert_eq!(addr_bus.write_byte(0x11, 0x30), Ok(()));
