@@ -2,6 +2,7 @@ use crate::{
     area::Area,
     error::Error,
     file_operation::{Address, FileOperation},
+    io_reg_area::IORegArea,
 };
 
 pub struct SimpleRW<const SIZE: usize> {
@@ -18,5 +19,24 @@ impl<const SIZE: usize> FileOperation<Area> for SimpleRW<SIZE> {
     fn read(&self, addr: Box<dyn Address<Area>>) -> Result<u8, Error> {
         let address = addr.get_address();
         Ok(self.store[address])
+    }
+}
+
+impl<const SIZE: usize> FileOperation<IORegArea> for SimpleRW<SIZE> {
+    fn write(&mut self, v: u8, addr: Box<dyn Address<IORegArea>>) -> Result<(), Error> {
+        let address = addr.get_address();
+        self.store[address] = v;
+        Ok(())
+    }
+
+    fn read(&self, addr: Box<dyn Address<IORegArea>>) -> Result<u8, Error> {
+        let address = addr.get_address();
+        Ok(self.store[address])
+    }
+}
+
+impl<const SIZE: usize> Default for SimpleRW<SIZE> {
+    fn default() -> Self {
+        Self { store: [0; SIZE] }
     }
 }

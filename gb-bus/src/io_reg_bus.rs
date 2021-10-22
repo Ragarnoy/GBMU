@@ -9,18 +9,18 @@ use crate::{
     Address as PseudoAddress, Area, Error, FileOperation, IORegArea,
 };
 
-struct IORegBus {
-    controller: Box<dyn FileOperation<IORegArea>>,
-    communication: Box<dyn FileOperation<IORegArea>>,
-    div_timer: Box<dyn FileOperation<IORegArea>>,
-    sound: Box<dyn FileOperation<IORegArea>>,
-    waveform_ram: Box<dyn FileOperation<IORegArea>>,
-    lcd: Box<dyn FileOperation<IORegArea>>,
-    vram_bank: Box<dyn FileOperation<IORegArea>>,
-    boot_rom: Box<dyn FileOperation<IORegArea>>,
-    vram_dma: Box<dyn FileOperation<IORegArea>>,
-    bg_obj_palettes: Box<dyn FileOperation<IORegArea>>,
-    wram_bank: Box<dyn FileOperation<IORegArea>>,
+pub struct IORegBus {
+    pub controller: Box<dyn FileOperation<IORegArea>>,
+    pub communication: Box<dyn FileOperation<IORegArea>>,
+    pub div_timer: Box<dyn FileOperation<IORegArea>>,
+    pub sound: Box<dyn FileOperation<IORegArea>>,
+    pub waveform_ram: Box<dyn FileOperation<IORegArea>>,
+    pub lcd: Box<dyn FileOperation<IORegArea>>,
+    pub vram_bank: Box<dyn FileOperation<IORegArea>>,
+    pub boot_rom: Box<dyn FileOperation<IORegArea>>,
+    pub vram_dma: Box<dyn FileOperation<IORegArea>>,
+    pub bg_obj_palettes: Box<dyn FileOperation<IORegArea>>,
+    pub wram_bank: Box<dyn FileOperation<IORegArea>>,
 }
 
 impl FileOperation<Area> for IORegBus {
