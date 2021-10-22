@@ -1,6 +1,7 @@
 use gb_bus::{Address, Bus, Error, FileOperation, IORegArea};
 use gb_clock::Ticker;
 
+#[derive(Default)]
 pub struct Timer {
     system_clock: u16,
 }

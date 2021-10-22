@@ -12,6 +12,7 @@ use gb_roms::{
     header::AutoSave,
     Header,
 };
+use gb_timer::Timer;
 use std::{cell::RefCell, rc::Rc};
 
 pub struct Context<const WIDTH: usize, const HEIGHT: usize> {
@@ -37,6 +38,7 @@ pub struct GameContext {
     clock: Clock<AddressBus>,
     ppu: Rc<RefCell<PPU>>,
     io_bus: Rc<RefCell<IORegBus>>,
+    timer: Rc<RefCell<Timer>>,
 }
 
 impl GameContext {
@@ -57,22 +59,22 @@ impl GameContext {
         let ppu = Rc::new(RefCell::new(ppu));
         let cpu = Rc::new(RefCell::new(Cpu::default()));
         let wram = Rc::new(RefCell::new(WorkingRam::new(false)));
+        let timer = Rc::new(RefCell::new(Timer::default()));
 
         let io_bus = Rc::new(RefCell::new(IORegBus {
             controller: Rc::new(RefCell::new(CharDevice::default())),
             communication: Rc::new(RefCell::new(SimpleRW::<2>::default())), // We don't handle communication
-            div_timer: Rc::new(RefCell::new(SimpleRW::<3>::default())), // TODO: use timer to handle timer register
-            sound: Rc::new(RefCell::new(SimpleRW::<0x16>::default())),
-            waveform_ram: Rc::new(RefCell::new(SimpleRW::<0xF>::default())),
+            div_timer: timer,
+            sound: Rc::new(RefCell::new(SimpleRW::<0x16>::default())), // We don't handle sound
+            waveform_ram: Rc::new(RefCell::new(SimpleRW::<0xF>::default())), // We don't handle sound
             lcd: ppu_reg.clone(),
             vram_bank: ppu_reg.clone(),
-            boot_rom: Rc::new(RefCell::new(CharDevice::default())),
+            boot_rom: Rc::new(RefCell::new(CharDevice::default())), // TODO: togle between bios and ROM
             vram_dma: Rc::new(RefCell::new(SimpleRW::<4>::default())), // TODO: link the part that handle the DMA
             bg_obj_palettes: ppu_reg,
             wram_bank: wram,
         }));
 
-        // TODO: store timer
         todo!("store address bus");
         Ok(Self {
             romname,
@@ -83,6 +85,7 @@ impl GameContext {
             clock: Clock::default(),
             ppu,
             io_bus,
+            timer,
         })
     }
 }
