@@ -1072,6 +1072,7 @@ dependencies = [
  "gb-lcd",
  "gb-ppu",
  "gb-roms",
+ "gb-timer",
  "log",
  "native-dialog",
  "sdl2",
