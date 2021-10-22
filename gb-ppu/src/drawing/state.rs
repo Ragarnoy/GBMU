@@ -55,10 +55,7 @@ impl State {
         self.pixel_drawn = 0;
     }
 
-    pub fn update<B>(&mut self, lcd_reg: Option<RefMut<LcdReg>>, adr_bus: &mut B)
-    where
-        B: Bus<u8> + Bus<u16>,
-    {
+    pub fn update(&mut self, lcd_reg: Option<RefMut<LcdReg>>, adr_bus: &mut dyn Bus<u8>) {
         match self.mode {
             Mode::HBlank => self.update_hblank(),
             Mode::VBlank => self.update_vblank(),
@@ -141,13 +138,12 @@ impl State {
         }
     }
 
-    fn update_registers<B>(&self, mut lcd_reg: RefMut<LcdReg>, adr_bus: &mut B)
-    where
-        B: Bus<u8> + Bus<u16>,
-    {
+    fn update_registers(&self, mut lcd_reg: RefMut<LcdReg>, adr_bus: &mut dyn Bus<u8>) {
         lcd_reg.scrolling.ly = self.line;
         lcd_reg.stat.set_mode(self.mode);
         let lyc_eq_ly = self.line == lcd_reg.scrolling.lyc;
         lcd_reg.stat.set_lyc_eq_ly(lyc_eq_ly);
+
+        if let Ok(interrupts_val) = adr_bus.read(0xFF0F) {}
     }
 }
