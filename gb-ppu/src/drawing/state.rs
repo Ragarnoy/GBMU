@@ -174,15 +174,11 @@ impl State {
                 || (self.mode == Mode::HBlank && lcd_reg.stat.mode_0_interrupt()))
             || line_updated && lcd_reg.stat.lyc_eq_ly_interrupt() && lcd_reg.stat.lyc_eq_ly()
         {
-            match adr_bus.read(0xFF0F) {
-                Ok(interrupts_val) => {
-                    if let Err(err) = adr_bus.write(0xFF0F, interrupts_val | 0b10) {
-                        log::error!("Failed to write interrupt value for lcd stat: {:?}", err)
-                    }
-                }
-                Err(err) => {
-                    log::error!("Failed to read interrupt value for lcd stat: {:?}", err)
-                }
+            let interrupts_val = adr_bus
+                .read(0xFF0F)
+                .expect("Failed to read interrupt value for lcd stat");
+            if let Err(err) = adr_bus.write(0xFF0F, interrupts_val | 0b10) {
+                log::error!("Failed to write interrupt value for lcd stat: {:?}", err)
             }
         }
     }
