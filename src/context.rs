@@ -39,6 +39,7 @@ pub struct GameContext {
     ppu: Rc<RefCell<PPU>>,
     io_bus: Rc<RefCell<IORegBus>>,
     timer: Rc<RefCell<Timer>>,
+    addr_bus: AddressBus,
 }
 
 impl GameContext {
@@ -72,8 +73,22 @@ impl GameContext {
             boot_rom: Rc::new(RefCell::new(CharDevice::default())), // TODO: togle between bios and ROM
             vram_dma: Rc::new(RefCell::new(SimpleRW::<4>::default())), // TODO: link the part that handle the DMA
             bg_obj_palettes: ppu_reg,
-            wram_bank: wram,
+            wram_bank: wram.clone(),
         }));
+
+        let bus = AddressBus {
+            bios_enabling_reg: 0,
+            bios: _TODO_,
+            rom: mbc,
+            vram: ppu_mem,
+            ext_ram: mbc,
+            ram: wram.clone(),
+            eram: wram,
+            oam: ppu_mem,
+            io_reg: io_bus.clone(),
+            hram: Rc::new(RefCell::new(SimpleRW::<0x80>::default())),
+            ie_reg: Rc::new(RefCell::new(CharDevice::default()), // TODO: link the part that handle the IE
+        };
 
         todo!("store address bus");
         Ok(Self {
@@ -86,6 +101,7 @@ impl GameContext {
             ppu,
             io_bus,
             timer,
+            bus
         })
     }
 }
