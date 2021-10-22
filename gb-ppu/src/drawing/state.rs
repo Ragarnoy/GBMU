@@ -162,12 +162,15 @@ impl State {
         let lyc_eq_ly = self.line == lcd_reg.scrolling.lyc;
         lcd_reg.stat.set_lyc_eq_ly(lyc_eq_ly);
 
-        if state_updated
-            && ((self.mode == Mode::OAMFetch && lcd_reg.stat.mode_2_interrupt())
+        if state_updated {
+            lcd_reg.stat.set_mode(self.mode);
+
+            if (self.mode == Mode::OAMFetch && lcd_reg.stat.mode_2_interrupt())
                 || (self.mode == Mode::VBlank && lcd_reg.stat.mode_1_interrupt())
-                || (self.mode == Mode::HBlank && lcd_reg.stat.mode_0_interrupt()))
-        {
-            if let Ok(interrupts_val) = adr_bus.read(0xFF0F) {}
+                || (self.mode == Mode::HBlank && lcd_reg.stat.mode_0_interrupt())
+            {
+                if let Ok(interrupts_val) = adr_bus.read(0xFF0F) {}
+            }
         }
     }
 }
