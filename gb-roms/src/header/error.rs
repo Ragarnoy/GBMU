@@ -36,3 +36,5 @@ impl std::convert::From<std::string::FromUtf8Error> for Error {
         Self::InvalidUtf8(v)
     }
 }
+
+impl std::error::Error for Error {}
