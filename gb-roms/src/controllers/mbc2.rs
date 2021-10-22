@@ -150,7 +150,6 @@ impl Controller for MBC2 {
         D: serde::Deserializer<'de>,
     {
         use serde::de::Error;
-        use std::convert::TryFrom;
 
         let data = Mbc2Data::deserialize(deserializer)?;
 
