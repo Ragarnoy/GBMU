@@ -65,6 +65,7 @@ fn main() {
 
     let mut cpu = FakeCPU { tick_count: 0 };
     let mut ppu = FakePPU { tick_count: 0 };
+    let mut timer = FakeCPU { tick_count: 0 };
     let mut bus = FakeBus::default();
     let mut clock = Clock::default();
     let one_sec = Duration::from_secs(1);
@@ -77,7 +78,7 @@ fn main() {
         cpu.tick_count = 0;
         ppu.tick_count = 0;
         while Instant::now() < t_stop {
-            clock.frame(&mut bus, None, &mut cpu, &mut ppu);
+            clock.frame(&mut bus, None, &mut cpu, &mut ppu, &mut timer);
             frames += 1;
         }
         log::info!(

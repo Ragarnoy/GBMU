@@ -1,4 +1,4 @@
-use super::{MicrocodeController, MicrocodeFlow, State, OK_PLAY_NEXT_ACTION};
+use super::{arithmetic, MicrocodeController, MicrocodeFlow, State, OK_PLAY_NEXT_ACTION};
 use crate::interfaces::{ReadFlagReg, WriteFlagReg};
 
 fn read_bit(ctl: &mut MicrocodeController, state: &mut State, bit: u8) -> MicrocodeFlow {
@@ -41,6 +41,86 @@ pub fn bit_6(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
 
 pub fn bit_7(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     read_bit(ctl, state, 7)
+}
+
+fn set_bit(ctl: &mut MicrocodeController, bit: u8) -> MicrocodeFlow {
+    let bit_to_set = 1_u8 << bit;
+    let value = ctl.pop() | bit_to_set;
+
+    ctl.push(value);
+    OK_PLAY_NEXT_ACTION
+}
+
+pub fn set_0(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow {
+    set_bit(ctl, 0)
+}
+
+pub fn set_1(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow {
+    set_bit(ctl, 1)
+}
+
+pub fn set_2(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow {
+    set_bit(ctl, 2)
+}
+
+pub fn set_3(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow {
+    set_bit(ctl, 3)
+}
+
+pub fn set_4(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow {
+    set_bit(ctl, 4)
+}
+
+pub fn set_5(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow {
+    set_bit(ctl, 5)
+}
+
+pub fn set_6(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow {
+    set_bit(ctl, 6)
+}
+
+pub fn set_7(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow {
+    set_bit(ctl, 7)
+}
+
+fn res_bit(ctl: &mut MicrocodeController, bit: u8) -> MicrocodeFlow {
+    let bit_to_res = 1_u8 << bit;
+    let value = ctl.pop() & !bit_to_res;
+
+    ctl.push(value);
+    OK_PLAY_NEXT_ACTION
+}
+
+pub fn res_0(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow {
+    res_bit(ctl, 0)
+}
+
+pub fn res_1(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow {
+    res_bit(ctl, 1)
+}
+
+pub fn res_2(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow {
+    res_bit(ctl, 2)
+}
+
+pub fn res_3(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow {
+    res_bit(ctl, 3)
+}
+
+pub fn res_4(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow {
+    res_bit(ctl, 4)
+}
+
+pub fn res_5(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow {
+    res_bit(ctl, 5)
+}
+
+pub fn res_6(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow {
+    res_bit(ctl, 6)
+}
+
+pub fn res_7(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow {
+    res_bit(ctl, 7)
 }
 
 pub fn rlc(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
@@ -148,6 +228,19 @@ pub fn sra(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
 
     state.regs.set_zero(value == 0);
     state.regs.set_carry(lower_bit == 1);
+    state.regs.set_half_carry(false);
+    state.regs.set_subtraction(false);
+    OK_PLAY_NEXT_ACTION
+}
+
+pub fn swap(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
+    let value = ctl.pop();
+    let (upper, lower) = arithmetic::slice_byte(value);
+    let swapped_value = (lower << 4) + upper;
+
+    ctl.push(swapped_value);
+    state.regs.set_zero(value == 0);
+    state.regs.set_carry(false);
     state.regs.set_half_carry(false);
     state.regs.set_subtraction(false);
     OK_PLAY_NEXT_ACTION

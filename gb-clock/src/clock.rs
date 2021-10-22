@@ -13,14 +13,16 @@ impl<B: Bus<u8> + Bus<u16>> Clock<B> {
     pub const CYCLES_PER_FRAME: usize = 17556;
 
     /// A single clock cycle, during which each [Ticker] will tick 1 or 4 times depending on their [Tick](crate::Tick) type.
-    pub fn cycle<CPU: Ticker, PPU: Ticker>(
+    pub fn cycle<CPU: Ticker, PPU: Ticker, TIMER: Ticker>(
         &mut self,
-        adr_bus: &mut B,
+        addr_bus: &mut B,
         cpu: &mut CPU,
         ppu: &mut PPU,
+        timer: &mut TIMER,
     ) {
-        cycle(cpu, adr_bus);
-        cycle(ppu, adr_bus);
+        cycle(cpu, addr_bus);
+        cycle(ppu, addr_bus);
+        cycle(timer, addr_bus);
         self.curr_frame_cycle += 1;
     }
 
@@ -33,26 +35,27 @@ impl<B: Bus<u8> + Bus<u16>> Clock<B> {
     /// Execute enough cycles to complete the current frame.
     ///
     /// if a [Debuger] is given, it will check breakpoints after each clock cycle and interrupt the execution if needed.
-    pub fn frame<CPU: Ticker, PPU: Ticker>(
+    pub fn frame<CPU: Ticker, PPU: Ticker, TIMER: Ticker>(
         &mut self,
-        adr_bus: &mut B,
+        addr_bus: &mut B,
         dbg: Option<&dyn Debuger<B>>,
         cpu: &mut CPU,
         ppu: &mut PPU,
+        timer: &mut TIMER,
     ) {
         self.curr_frame_cycle %= Self::CYCLES_PER_FRAME;
         match dbg {
             Some(dbg) => {
                 while self.curr_frame_cycle < Self::CYCLES_PER_FRAME {
-                    self.cycle(adr_bus, cpu, ppu);
-                    if dbg.breakpoints(adr_bus) {
+                    self.cycle(addr_bus, cpu, ppu, timer);
+                    if dbg.breakpoints(addr_bus) {
                         return;
                     }
                 }
             }
             None => {
                 while self.curr_frame_cycle < Self::CYCLES_PER_FRAME {
-                    self.cycle(adr_bus, cpu, ppu);
+                    self.cycle(addr_bus, cpu, ppu, timer);
                 }
             }
         }
