@@ -1,5 +1,6 @@
 use super::Mode;
 use crate::registers::LcdReg;
+use gb_bus::Bus;
 use std::cell::RefMut;
 
 pub struct State {
@@ -54,7 +55,10 @@ impl State {
         self.pixel_drawn = 0;
     }
 
-    pub fn update(&mut self, lcd_reg: Option<RefMut<LcdReg>>) {
+    pub fn update<B>(&mut self, lcd_reg: Option<RefMut<LcdReg>>, adr_bus: &mut B)
+    where
+        B: Bus<u8> + Bus<u16>,
+    {
         match self.mode {
             Mode::HBlank => self.update_hblank(),
             Mode::VBlank => self.update_vblank(),
@@ -67,7 +71,7 @@ impl State {
             self.pixel_drawn = 0;
         }
         if let Some(lcd) = lcd_reg {
-            self.update_registers(lcd);
+            self.update_registers(lcd, adr_bus);
         } else {
             log::error!("PPU state failed to update registers");
         }
@@ -137,7 +141,10 @@ impl State {
         }
     }
 
-    fn update_registers(&self, mut lcd_reg: RefMut<LcdReg>) {
+    fn update_registers<B>(&self, mut lcd_reg: RefMut<LcdReg>, adr_bus: &mut B)
+    where
+        B: Bus<u8> + Bus<u16>,
+    {
         lcd_reg.scrolling.ly = self.line;
         lcd_reg.stat.set_mode(self.mode);
         let lyc_eq_ly = self.line == lcd_reg.scrolling.lyc;
