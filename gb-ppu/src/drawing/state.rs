@@ -176,7 +176,7 @@ impl State {
         {
             match adr_bus.read(0xFF0F) {
                 Ok(interrupts_val) => {
-                    if let Err(err) = adr_bus.write(0xFF0F, interrupts_val | 0b0000_0010) {
+                    if let Err(err) = adr_bus.write(0xFF0F, interrupts_val | 0b10) {
                         log::error!("Failed to write interrupt value for lcd stat: {:?}", err)
                     }
                 }
