@@ -23,7 +23,7 @@ impl<A> Address<A> {
     ///
     /// ```
     /// # use gb_bus::{address::Address, Area};
-    /// let pos = Address::from_offset(Area::Bios, 0x42, 0x10);
+    /// let pos = Address::from_offset(Area::Rom, 0x42, 0x10);
     ///
     /// assert_eq!(pos.absolute, 0x42);
     /// assert_eq!(pos.relative, 0x32);
