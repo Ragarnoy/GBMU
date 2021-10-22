@@ -1,8 +1,12 @@
-use gb_bus::{AddressBus, Area, FileOperation};
+use gb_bus::{
+    generic::{CharDevice, SimpleRW},
+    AddressBus, Area, FileOperation, IORegBus,
+};
 use gb_clock::Clock;
 use gb_cpu::cpu::Cpu;
 use gb_joypad::Joypad;
 use gb_lcd::{render::RenderImage, window::GBWindow};
+use gb_ppu::PPU;
 use gb_roms::{
     controllers::{generate_rom_controller, MbcController},
     header::AutoSave,
@@ -30,6 +34,8 @@ pub struct GameContext {
     mbc: MbcController,
     cpu: Cpu,
     clock: Clock<AddressBus>,
+    ppu: PPU,
+    io_bus: IORegBus,
 }
 
 impl GameContext {
@@ -44,15 +50,36 @@ impl GameContext {
         file.rewind()?;
         let mbc = generate_rom_controller(file, header)?;
 
-        todo!("store timer");
+        let ppu = PPU::new();
+        let ppu_mem = ppu.memory();
+        let ppu_reg = ppu.registers();
+        let cpu = Cpu::default();
+
+        let io_bus = IORegBus {
+            controller: Box::new(CharDevice::default()),
+            // communication: Box<dyn FileOperation<IORegArea>>,
+            div_timer: Box::new(SimpleRW::<3>::default()),
+            // sound: Box<dyn FileOperation<IORegArea>>,
+            // waveform_ram: Box<dyn FileOperation<IORegArea>>,
+            lcd: Box::new(ppu_reg),
+            vram_bank: Box::new(ppu_reg),
+            // boot_rom: Box<dyn FileOperation<IORegArea>>,
+            // vram_dma: Box<dyn FileOperation<IORegArea>>,
+            bg_obj_palettes: Box::new(ppu_reg),
+            // wram_bank: Box<dyn FileOperation<IORegArea>>,
+        };
+
+        // TODO: store timer
         todo!("store address bus");
         Ok(Self {
             romname,
             header,
             auto_save: header.cartridge_type.auto_save_type(),
             mbc,
-            cpu: Cpu::default(),
+            cpu,
             clock: Clock::default(),
+            ppu,
+            io_bus,
         })
     }
 }
