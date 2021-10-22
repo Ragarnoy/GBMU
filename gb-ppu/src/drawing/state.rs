@@ -56,7 +56,7 @@ impl State {
     }
 
     pub fn update(&mut self, lcd_reg: Option<RefMut<LcdReg>>, adr_bus: &mut dyn Bus<u8>) {
-        let updated = match self.mode {
+        let state_updated = match self.mode {
             Mode::HBlank => self.update_hblank(),
             Mode::VBlank => self.update_vblank(),
             Mode::OAMFetch => self.update_oam_fetch(),
@@ -68,7 +68,7 @@ impl State {
             self.pixel_drawn = 0;
         }
         if let Some(lcd) = lcd_reg {
-            self.update_registers(lcd, adr_bus, updated);
+            self.update_registers(lcd, adr_bus, state_updated, self.step == 0);
         } else {
             log::error!("PPU state failed to update registers");
         }
@@ -156,28 +156,32 @@ impl State {
         mut lcd_reg: RefMut<LcdReg>,
         adr_bus: &mut dyn Bus<u8>,
         state_updated: bool,
+        line_updated: bool,
     ) {
-        lcd_reg.scrolling.ly = self.line;
-        lcd_reg.stat.set_mode(self.mode);
-        let lyc_eq_ly = self.line == lcd_reg.scrolling.lyc;
-        lcd_reg.stat.set_lyc_eq_ly(lyc_eq_ly);
+        if line_updated {
+            lcd_reg.scrolling.ly = self.line;
+            let lyc_eq_ly = self.line == lcd_reg.scrolling.lyc;
+            lcd_reg.stat.set_lyc_eq_ly(lyc_eq_ly);
+        }
 
         if state_updated {
             lcd_reg.stat.set_mode(self.mode);
+        }
 
-            if (self.mode == Mode::OAMFetch && lcd_reg.stat.mode_2_interrupt())
+        if state_updated
+            && ((self.mode == Mode::OAMFetch && lcd_reg.stat.mode_2_interrupt())
                 || (self.mode == Mode::VBlank && lcd_reg.stat.mode_1_interrupt())
-                || (self.mode == Mode::HBlank && lcd_reg.stat.mode_0_interrupt())
-            {
-                match adr_bus.read(0xFF0F) {
-                    Ok(interrupts_val) => {
-                        if let Err(err) = adr_bus.write(0xFF0F, interrupts_val | 0b0000_0010) {
-                            log::error!("Failed to write interrupt value for lcd stat: {:?}", err)
-                        }
+                || (self.mode == Mode::HBlank && lcd_reg.stat.mode_0_interrupt()))
+            || line_updated && lcd_reg.stat.lyc_eq_ly_interrupt() && lcd_reg.stat.lyc_eq_ly()
+        {
+            match adr_bus.read(0xFF0F) {
+                Ok(interrupts_val) => {
+                    if let Err(err) = adr_bus.write(0xFF0F, interrupts_val | 0b0000_0010) {
+                        log::error!("Failed to write interrupt value for lcd stat: {:?}", err)
                     }
-                    Err(err) => {
-                        log::error!("Failed to read interrupt value for lcd stat: {:?}", err)
-                    }
+                }
+                Err(err) => {
+                    log::error!("Failed to read interrupt value for lcd stat: {:?}", err)
                 }
             }
         }
