@@ -32,15 +32,14 @@ pub struct Header {
 }
 
 impl Header {
-    pub fn from_file(file: std::fs::File) -> Result<Self, Error> {
+    pub fn from_file(file: &mut std::fs::File) -> Result<Self, Error> {
         use std::io::{Read, Seek, SeekFrom};
 
-        let mut f = file;
         let mut chunk = [0_u8; 80];
 
-        f.seek(SeekFrom::Start(0x100))
+        file.seek(SeekFrom::Start(0x100))
             .expect("cannot seek file to header");
-        f.read_exact(&mut chunk).expect("cannot read header");
+        file.read_exact(&mut chunk).expect("cannot read header");
         Header::from_chunk(chunk)
     }
 
