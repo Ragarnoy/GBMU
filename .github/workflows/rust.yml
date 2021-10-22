@@ -32,7 +32,7 @@ jobs:
             ${{ runner.os }}-build-
             ${{ runner.os }}-
 
-      - name: Install latest nightly
+      - name: Install rust 1.55
         uses: actions-rs/toolchain@v1
         with:
             toolchain: 1.55.0
@@ -40,7 +40,7 @@ jobs:
             components: rustfmt, clippy
 
       - name: install linux requirements
-        run: sudo sh -c "apt-get update && apt-get install -y cmake libgtk-3-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libspeechd-dev libxkbcommon-dev libssl-dev"
+        run: sudo sh -c "apt-get update && apt-get install -y cmake libgtk-3-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libspeechd-dev libxkbcommon-dev libssl-dev unzip zip"
 
       - uses: actions/checkout@v2
 

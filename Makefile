@@ -33,8 +33,10 @@ requirement: roms bios
 
 bios: $(BIOS)
 
-$(BIOS_DIR)/%:
-	curl --create-dirs --output $@ $(addprefix $(BIOS_LINK_ROOT)/, $*)
+$(BIOS_DIR)/%: $(ASSETS_DIR)/bios.zip
+	# curl --create-dirs --output $@ $(addprefix $(BIOS_LINK_ROOT)/, $*)
+	unzip -n $< "$*" -d $(BIOS_DIR)
+	touch "$@"
 
 roms: $(ROMS)
 
