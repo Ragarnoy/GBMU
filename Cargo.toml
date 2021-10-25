@@ -14,9 +14,16 @@ edition = "2018"
 [features]
 debug_render = ["gb-lcd/debug_render"]
 
-[dependencies]
+
+[dev-dependencies]
 glium = "0.30"
+wgpu = "0.11.0"
+winit = "0.25.0"
 egui_glium = "0.14"
+egui_wgpu_backend = "0.13.0"
+egui_winit_platform = "0.10.0"
+
+[dependencies]
 sdl2 = { version = "0.34", features = ["bundled", "static-link"] }
 egui = { version = "0.14" }
 native-dialog = { version ="0.5" }
@@ -29,6 +36,7 @@ gb-dbg = { path = "./gb-dbg" }
 gb-joypad = { path = "./gb-joypad" }
 
 [workspace]
+resolver = "2"
 members = [
   "gb-clock",
   "gb-roms",
