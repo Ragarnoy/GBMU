@@ -35,6 +35,7 @@ gb-timer = { path = "./gb-timer" }
 
 [workspace]
 members = [
+  "gb-dma",
   "gb-clock",
   "gb-roms",
   "gb-ppu",

@@ -959,6 +959,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "gb-dma"
+version = "0.1.0"
+dependencies = [
+ "gb-bus",
+ "gb-clock",
+ "log",
+]
+
+[[package]]
 name = "gb-joypad"
 version = "0.0.0"
 dependencies = [
