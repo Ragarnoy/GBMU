@@ -16,7 +16,7 @@ pub fn handle_interrupts(ctl: &mut MicrocodeController, _state: &mut State) -> M
         source_bit += 1;
     }
     if source_bit > 4 {
-        panic!("Trying to access an interrupt source that doesn't exist.")
+        return OK_PLAY_NEXT_ACTION;
     }
     // Reset IME to avoid any new interrupt while processing current one
     ctl.interrupt_master_enable = false;
