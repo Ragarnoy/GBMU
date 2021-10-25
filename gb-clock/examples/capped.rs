@@ -1,6 +1,6 @@
 use simplelog::{ColorChoice, Config, LevelFilter, TermLogger, TerminalMode};
 
-use gb_bus::Bus;
+use gb_bus::{Area, Bus, Lock, MemoryLock};
 use gb_clock::{Clock, Tick, Ticker};
 
 use std::time::{Duration, Instant};
@@ -9,20 +9,40 @@ use std::time::{Duration, Instant};
 struct FakeBus {}
 
 impl Bus<u8> for FakeBus {
-    fn read(&self, _adr: u16) -> Result<u8, gb_bus::Error> {
+    fn read(&self, _adr: u16, _lock_key: Option<Lock>) -> Result<u8, gb_bus::Error> {
         Ok(0xff)
     }
-    fn write(&mut self, _adr: u16, _data: u8) -> Result<(), gb_bus::Error> {
+    fn write(
+        &mut self,
+        _adr: u16,
+        _data: u8,
+        _lock_key: Option<Lock>,
+    ) -> Result<(), gb_bus::Error> {
         Ok(())
     }
 }
 
 impl Bus<u16> for FakeBus {
-    fn read(&self, _adr: u16) -> Result<u16, gb_bus::Error> {
+    fn read(&self, _adr: u16, _lock_key: Option<Lock>) -> Result<u16, gb_bus::Error> {
         Ok(0xffff)
     }
-    fn write(&mut self, _adr: u16, _data: u16) -> Result<(), gb_bus::Error> {
+    fn write(
+        &mut self,
+        _adr: u16,
+        _data: u16,
+        _lock_key: Option<Lock>,
+    ) -> Result<(), gb_bus::Error> {
         Ok(())
+    }
+}
+
+impl MemoryLock for FakeBus {
+    fn lock(&mut self, _area: Area, _lock: Lock) {}
+
+    fn unlock(&mut self, _area: Area) {}
+
+    fn is_available(&self, _address: u16, _lock_key: Option<Lock>) -> bool {
+        true
     }
 }
 
