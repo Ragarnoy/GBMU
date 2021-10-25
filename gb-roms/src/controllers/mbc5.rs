@@ -207,7 +207,6 @@ impl Controller for MBC5 {
         D: Deserializer<'de>,
     {
         use serde::de::Error;
-        use std::convert::TryFrom;
 
         let ram_data = Mbc5RamData::deserialize(deserializer)?;
         if self.ram_banks.len() != ram_data.ram_banks.len() {

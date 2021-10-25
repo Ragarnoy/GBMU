@@ -198,7 +198,6 @@ impl Controller for MBC3 {
         D: serde::Deserializer<'de>,
     {
         use serde::de::Error;
-        use std::convert::TryFrom;
 
         let data = Mbc3Data::deserialize(deserializer)?;
 

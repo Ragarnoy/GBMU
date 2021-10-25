@@ -2,9 +2,9 @@ use crate::{
     address::Address,
     io_reg_constant::{
         BG_OBJ_PALETTES_END, BG_OBJ_PALETTES_START, BOOT_ROM_START, COMMUNICATION_END,
-        COMMUNICATION_START, CONTROLLER_START, DIV_TIMER_END, DIV_TIMER_START, LCD_END, LCD_START,
-        SOUND_END, SOUND_START, VRAM_BANK_START, VRAM_DMA_END, VRAM_DMA_START, WAVEFORM_RAM_END,
-        WAVEFORM_RAM_START, WRAM_BANK_START,
+        COMMUNICATION_START, CONTROLLER_START, DIV_TIMER_START, LCD_END, LCD_START, SOUND_END,
+        SOUND_START, TIMER_CONTROL_START, TIMER_COUNTER_START, TIMER_MODULO_START, VRAM_BANK_START,
+        VRAM_DMA_END, VRAM_DMA_START, WAVEFORM_RAM_END, WAVEFORM_RAM_START, WRAM_BANK_START,
     },
     Address as PseudoAddress, Area, Error, FileOperation, IORegArea,
 };
@@ -45,6 +45,23 @@ impl FileOperation<Area> for IORegBus {
             DIV_TIMER_START..=DIV_TIMER_END => self.div_timer.borrow().read(Box::new(
                 Address::from_offset(IORegArea::DivTimer, addr, DIV_TIMER_START),
             )),
+            DIV_TIMER_START => self.div_timer.borrow().read(Box::new(Address::from_offset(
+                IORegArea::DivTimer,
+                addr,
+                DIV_TIMER_START,
+            ))),
+            TIMER_COUNTER_START => self
+                .tima
+                .borrow()
+                .read(Box::new(Address::byte_reg(IORegArea::TimerCounter, addr))),
+            TIMER_MODULO_START => self
+                .tma
+                .borrow()
+                .read(Box::new(Address::byte_reg(IORegArea::TimerModulo, addr))),
+            TIMER_CONTROL_START => self
+                .tac
+                .borrow()
+                .read(Box::new(Address::byte_reg(IORegArea::TimerControl, addr))),
             SOUND_START..=SOUND_END => self.sound.borrow().read(Box::new(Address::from_offset(
                 IORegArea::Sound,
                 addr,
@@ -114,13 +131,21 @@ impl FileOperation<Area> for IORegBus {
                     COMMUNICATION_START,
                 )),
             ),
-            DIV_TIMER_START..=DIV_TIMER_END => self.div_timer.borrow_mut().write(
+            DIV_TIMER_START => self
+                .div_timer
+                .borrow_mut()
+                .write(v, Box::new(Address::byte_reg(IORegArea::DivTimer, addr))),
+            TIMER_COUNTER_START => self.tima.borrow_mut().write(
                 v,
-                Box::new(Address::from_offset(
-                    IORegArea::DivTimer,
-                    addr,
-                    DIV_TIMER_START,
-                )),
+                Box::new(Address::byte_reg(IORegArea::TimerCounter, addr)),
+            ),
+            TIMER_MODULO_START => self
+                .tma
+                .borrow_mut()
+                .write(v, Box::new(Address::byte_reg(IORegArea::TimerModulo, addr))),
+            TIMER_CONTROL_START => self.tac.borrow_mut().write(
+                v,
+                Box::new(Address::byte_reg(IORegArea::TimerControl, addr)),
             ),
             SOUND_START..=SOUND_END => self.sound.borrow_mut().write(
                 v,
