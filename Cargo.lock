@@ -1055,6 +1055,7 @@ version = "0.1.0"
 dependencies = [
  "gb-bus",
  "gb-clock",
+ "log",
 ]
 
 [[package]]
