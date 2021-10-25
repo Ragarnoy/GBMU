@@ -12,114 +12,117 @@ use crate::{
     Area, Error, FileOperation,
 };
 
+use std::{cell::RefCell, rc::Rc};
+
 /// AddressBus map specific range address to specific area like ROM/RAM.
 /// This Implementation of an AddressBus will be limited to 16-bit address
 pub struct AddressBus {
-    rom: Box<dyn FileOperation<Area>>,
+   /// Rom from the cartridge
+    rom: Rc<RefCell<dyn FileOperation<Area>>>,
     /// Video Ram
-    vram: Box<dyn FileOperation<Area>>,
+    vram: Rc<RefCell<dyn FileOperation<Area>>>,
     /// Ram from the cartridge
-    ext_ram: Box<dyn FileOperation<Area>>,
+    ext_ram: Rc<RefCell<dyn FileOperation<Area>>>,
     /// Internal gameboy ram
-    ram: Box<dyn FileOperation<Area>>,
+    ram: Rc<RefCell<dyn FileOperation<Area>>>,
     /// Echo Ram area, usually a mirror of ram
-    eram: Box<dyn FileOperation<Area>>,
+    eram: Rc<RefCell<dyn FileOperation<Area>>>,
     /// Sprite attribute table
-    oam: Box<dyn FileOperation<Area>>,
+    oam: Rc<RefCell<dyn FileOperation<Area>>>,
     /// io registers table
-    io_reg: Box<dyn FileOperation<Area>>,
+    io_reg: Rc<RefCell<dyn FileOperation<Area>>>,
     /// high ram
     /// allow for faster access in gameboy
-    hram: Box<dyn FileOperation<Area>>,
+    hram: Rc<RefCell<dyn FileOperation<Area>>>,
     /// register to enable/disable all interrupts
-    ie_reg: Box<dyn FileOperation<Area>>,
+    ie_reg: Rc<RefCell<dyn FileOperation<Area>>>,
 }
 
 impl AddressBus {
     pub fn write_byte(&mut self, addr: u16, v: u8) -> Result<(), Error> {
         match addr {
-            ROM_START..=ROM_STOP => self.rom.write(
+          ROM_START..=ROM_STOP => self.rom.borrow_mut().write(
                 v,
                 Box::new(Address::from_offset(Area::Rom, addr, ROM_START)),
             ),
-            VRAM_START..=VRAM_STOP => self.vram.write(
+            VRAM_START..=VRAM_STOP => self.vram.borrow_mut().write(
                 v,
                 Box::new(Address::from_offset(Area::Vram, addr, VRAM_START)),
             ),
-            EXT_RAM_START..=EXT_RAM_STOP => self.ext_ram.write(
+            EXT_RAM_START..=EXT_RAM_STOP => self.ext_ram.borrow_mut().write(
                 v,
                 Box::new(Address::from_offset(Area::ExtRam, addr, EXT_RAM_START)),
             ),
-            RAM_START..=RAM_STOP => self.ram.write(
+            RAM_START..=RAM_STOP => self.ram.borrow_mut().write(
                 v,
                 Box::new(Address::from_offset(Area::Ram, addr, RAM_START)),
             ),
-            ERAM_START..=ERAM_STOP => self.eram.write(
+            ERAM_START..=ERAM_STOP => self.eram.borrow_mut().write(
                 v,
                 Box::new(Address::from_offset(Area::ERam, addr, ERAM_START)),
             ),
-            OAM_START..=OAM_STOP => self.oam.write(
+            OAM_START..=OAM_STOP => self.oam.borrow_mut().write(
                 v,
                 Box::new(Address::from_offset(Area::Oam, addr, OAM_START)),
             ),
-            IO_REG_START..=IO_REG_STOP => self.io_reg.write(
+            IO_REG_START..=IO_REG_STOP => self.io_reg.borrow_mut().write(
                 v,
                 Box::new(Address::from_offset(Area::IoReg, addr, IO_REG_START)),
             ),
-            HRAM_START..=HRAM_STOP => self.hram.write(
+            HRAM_START..=HRAM_STOP => self.hram.borrow_mut().write(
                 v,
                 Box::new(Address::from_offset(Area::HighRam, addr, HRAM_START)),
             ),
-            IE_REG_START => self.ie_reg.write(
-                v,
-                Box::new(Address::from_offset(Area::IEReg, addr, IE_REG_START)),
-            ),
+            IE_REG_START => self
+                .ie_reg
+                .borrow_mut()
+                .write(v, Box::new(Address::byte_reg(Area::IEReg, addr))),
             _ => Err(Error::BusError(addr)),
         }
     }
 
     pub fn read_byte(&self, addr: u16) -> Result<u8, Error> {
         match addr {
-            ROM_START..=ROM_STOP => {
+           ROM_START..=ROM_STOP => {
                 self.rom
+                    .borrow()
                     .read(Box::new(Address::from_offset(Area::Rom, addr, ROM_START)))
             }
-            VRAM_START..=VRAM_STOP => {
-                self.vram
-                    .read(Box::new(Address::from_offset(Area::Vram, addr, VRAM_START)))
-            }
-            EXT_RAM_START..=EXT_RAM_STOP => self.ext_ram.read(Box::new(Address::from_offset(
-                Area::ExtRam,
+            VRAM_START..=VRAM_STOP => self.vram.borrow().read(Box::new(Address::from_offset(
+                Area::Vram,
                 addr,
-                EXT_RAM_START,
+                VRAM_START,
             ))),
+            EXT_RAM_START..=EXT_RAM_STOP => self.ext_ram.borrow().read(Box::new(
+                Address::from_offset(Area::ExtRam, addr, EXT_RAM_START),
+            )),
             RAM_START..=RAM_STOP => {
                 self.ram
+                    .borrow()
                     .read(Box::new(Address::from_offset(Area::Ram, addr, RAM_START)))
             }
-            ERAM_START..=ERAM_STOP => {
-                self.eram
-                    .read(Box::new(Address::from_offset(Area::ERam, addr, ERAM_START)))
-            }
+            ERAM_START..=ERAM_STOP => self.eram.borrow().read(Box::new(Address::from_offset(
+                Area::ERam,
+                addr,
+                ERAM_START,
+            ))),
             OAM_START..=OAM_STOP => {
                 self.oam
+                    .borrow()
                     .read(Box::new(Address::from_offset(Area::Oam, addr, OAM_START)))
             }
-            IO_REG_START..=IO_REG_STOP => self.io_reg.read(Box::new(Address::from_offset(
-                Area::IoReg,
-                addr,
-                IO_REG_START,
-            ))),
-            HRAM_START..=HRAM_STOP => self.hram.read(Box::new(Address::from_offset(
+            IO_REG_START..=IO_REG_STOP => self.io_reg.borrow().read(Box::new(
+                Address::from_offset(Area::IoReg, addr, IO_REG_START),
+            )),
+            HRAM_START..=HRAM_STOP => self.hram.borrow().read(Box::new(Address::from_offset(
                 Area::HighRam,
                 addr,
                 HRAM_START,
             ))),
-            IE_REG_START => self.ie_reg.read(Box::new(Address::from_offset(
-                Area::IEReg,
-                addr,
-                IE_REG_START,
-            ))),
+            IE_REG_START => self
+                .ie_reg
+                .borrow()
+                .read(Box::new(Address::byte_reg(Area::IEReg, addr))),
             _ => Err(Error::BusError(addr)),
         }
     }
@@ -159,10 +162,12 @@ impl crate::Bus<u16> for AddressBus {
 mod test_address_bus {
     use super::AddressBus;
     use crate::generic::CharDevice;
+    use std::{cell::RefCell, rc::Rc};
 
     #[test]
     fn read() {
         let addr_bus = AddressBus {
+<<<<<<< HEAD
             rom: Box::new(CharDevice(1)),
             vram: Box::new(CharDevice(2)),
             ext_ram: Box::new(CharDevice(3)),
@@ -172,6 +177,19 @@ mod test_address_bus {
             io_reg: Box::new(CharDevice(7)),
             hram: Box::new(CharDevice(8)),
             ie_reg: Box::new(CharDevice(9)),
+=======
+            bios_enabling_reg: 1,
+            bios: Rc::new(RefCell::new(CharDevice(0))),
+            rom: Rc::new(RefCell::new(CharDevice(1))),
+            vram: Rc::new(RefCell::new(CharDevice(2))),
+            ext_ram: Rc::new(RefCell::new(CharDevice(3))),
+            ram: Rc::new(RefCell::new(CharDevice(4))),
+            eram: Rc::new(RefCell::new(CharDevice(5))),
+            oam: Rc::new(RefCell::new(CharDevice(6))),
+            io_reg: Rc::new(RefCell::new(CharDevice(7))),
+            hram: Rc::new(RefCell::new(CharDevice(8))),
+            ie_reg: Rc::new(RefCell::new(CharDevice(9))),
+>>>>>>> origin/develop
         };
 
         assert_eq!(addr_bus.read_byte(0x10), Ok(1));
@@ -188,6 +206,7 @@ mod test_address_bus {
     #[test]
     fn write() {
         let mut addr_bus = AddressBus {
+<<<<<<< HEAD
             rom: Box::new(CharDevice(1)),
             vram: Box::new(CharDevice(2)),
             ext_ram: Box::new(CharDevice(3)),
@@ -197,6 +216,19 @@ mod test_address_bus {
             io_reg: Box::new(CharDevice(7)),
             hram: Box::new(CharDevice(8)),
             ie_reg: Box::new(CharDevice(9)),
+=======
+            bios_enabling_reg: 1,
+            bios: Rc::new(RefCell::new(CharDevice(0))),
+            rom: Rc::new(RefCell::new(CharDevice(1))),
+            vram: Rc::new(RefCell::new(CharDevice(2))),
+            ext_ram: Rc::new(RefCell::new(CharDevice(3))),
+            ram: Rc::new(RefCell::new(CharDevice(4))),
+            eram: Rc::new(RefCell::new(CharDevice(5))),
+            oam: Rc::new(RefCell::new(CharDevice(6))),
+            io_reg: Rc::new(RefCell::new(CharDevice(7))),
+            hram: Rc::new(RefCell::new(CharDevice(8))),
+            ie_reg: Rc::new(RefCell::new(CharDevice(9))),
+>>>>>>> origin/develop
         };
 
         assert_eq!(addr_bus.write_byte(0x11, 0x30), Ok(()));
