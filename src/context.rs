@@ -13,6 +13,7 @@ use gb_roms::{
     Header,
 };
 use gb_timer::Timer;
+use std::collections::HashMap;
 use std::{cell::RefCell, rc::Rc};
 
 pub struct Context<const WIDTH: usize, const HEIGHT: usize> {
@@ -90,6 +91,7 @@ impl Game {
             io_reg: io_bus.clone(),
             hram: Rc::new(RefCell::new(SimpleRW::<0x80>::default())),
             ie_reg: Rc::new(RefCell::new(CharDevice::default())), // TODO: link the part that handle the IE
+            area_locks: HashMap::new(),
         };
 
         Ok(Self {
