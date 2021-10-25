@@ -1,7 +1,7 @@
-use super::{Lockable, Oam, Vram};
+use super::{Lock, Lockable, Oam, Vram};
 use crate::error::{PPUError, PPUResult};
 use crate::UNDEFINED_VALUE;
-use gb_bus::{Address, Area, Error, FileOperation};
+use gb_bus::{Address, Area, Error, FileOperation, InternalLock, MemoryLock};
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -51,6 +51,42 @@ impl PPUMem {
                 mem_name: String::from("oam"),
             }),
         }
+    }
+}
+
+impl InternalLock<Area> for PPUMem {}
+
+impl MemoryLock for PPUMem {
+    fn lock(&mut self, area: Area, lock: Lock) {
+        match area {
+            Area::Vram => self.vram.borrow_mut().lock(lock),
+            Area::Oam => self.oam.borrow_mut().lock(lock),
+            _ => {}
+        }
+    }
+
+    fn unlock(&mut self, area: Area) {
+        match area {
+            Area::Vram => self.vram.borrow_mut().unlock(),
+            Area::Oam => self.oam.borrow_mut().unlock(),
+            _ => {}
+        }
+    }
+
+    fn is_available(&self, area: Area, lock_key: Option<Lock>) -> bool {
+        let current_lock = match area {
+            Area::Vram => self.vram.borrow().get_lock(),
+            Area::Oam => self.oam.borrow().get_lock(),
+            _ => None,
+        };
+        if let Some(lock) = current_lock {
+            if let Some(key) = lock_key {
+                return lock == key;
+            }
+        } else {
+            return true;
+        }
+        false
     }
 }
 
