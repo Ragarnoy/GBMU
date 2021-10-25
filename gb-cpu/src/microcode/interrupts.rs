@@ -3,15 +3,6 @@ use super::{
     OK_PLAY_NEXT_ACTION,
 };
 
-pub fn is_interrupt_ready(ctl: &mut MicrocodeController) -> bool {
-    if !ctl.interrupt_master_enable {
-        return false;
-    }
-    let interrupt_flag = ctl.interrupt_flag;
-    let interrupt_enable = ctl.interrupt_enable;
-    interrupt_flag & interrupt_enable != 0
-}
-
 pub fn handle_interrupts(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow {
     let interrupt_flag = ctl.interrupt_flag;
     let interrupt_enable = ctl.interrupt_enable;

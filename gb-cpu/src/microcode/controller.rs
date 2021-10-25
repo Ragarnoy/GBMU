@@ -1,9 +1,6 @@
 use super::{
-    fetch::fetch,
-    interrupts::{handle_interrupts, is_interrupt_ready},
-    opcode::Opcode,
-    opcode_cb::OpcodeCB,
-    CycleDigest, MicrocodeFlow, State,
+    fetch::fetch, interrupts::handle_interrupts, opcode::Opcode, opcode_cb::OpcodeCB, CycleDigest,
+    MicrocodeFlow, State,
 };
 use crate::registers::Registers;
 use gb_bus::{Area, Bus, FileOperation, IORegArea};
@@ -62,7 +59,7 @@ impl MicrocodeController {
         let mut state = State::new(regs, bus);
         let action = self.actions.pop().unwrap_or_else(|| {
             self.clear();
-            if is_interrupt_ready(self) {
+            if self.is_interrupt_ready() {
                 handle_interrupts
             } else {
                 fetch
@@ -125,6 +122,15 @@ impl MicrocodeController {
     /// Pop the last u16 from the cache.
     pub fn pop_u16(&mut self) -> u16 {
         u16::from_be_bytes([self.pop(), self.pop()])
+    }
+
+    fn is_interrupt_ready(&self) -> bool {
+        if !self.interrupt_master_enable {
+            return false;
+        }
+        let interrupt_flag = self.interrupt_flag;
+        let interrupt_enable = self.interrupt_enable;
+        interrupt_flag & interrupt_enable != 0
     }
 }
 
