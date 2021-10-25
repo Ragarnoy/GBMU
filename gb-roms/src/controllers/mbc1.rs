@@ -199,7 +199,6 @@ impl Controller for MBC1 {
         D: serde::Deserializer<'de>,
     {
         use serde::de::Error;
-        use std::convert::TryFrom;
 
         let data = Mbc1Data::deserialize(deserializer)?;
         self.ram_bank = data

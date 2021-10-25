@@ -19,6 +19,15 @@ impl<A> Address<A> {
         }
     }
 
+    /// Create an address for single byte registry
+    pub fn byte_reg(area: A, absolute_addr: u16) -> Self {
+        Self {
+            relative: 0,
+            absolute: absolute_addr,
+            area,
+        }
+    }
+
     /// Create an Address from an absolute adress and an offset
     ///
     /// ```
