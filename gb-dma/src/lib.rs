@@ -1,4 +1,4 @@
-use gb_bus::{Address, Bus, Error, FileOperation, IORegArea};
+use gb_bus::{Address, Area, Bus, Error, FileOperation, IORegArea, Lock};
 use gb_clock::{Tick, Ticker};
 
 pub struct Dma {
@@ -36,10 +36,13 @@ impl Ticker for Dma {
         B: Bus<u8> + Bus<u16>,
     {
         if let Some(step) = self.oam_transfer {
+            if step == 0 {
+                adr_bus.lock(Area::Oam, Lock::Dma);
+            }
             let src: u8 = adr_bus
-                .read(((self.oam_register as u16) << 8) + step)
+                .read(((self.oam_register as u16) << 8) + step, Some(Lock::Dma))
                 .expect("memory unavailable during OAM DMA");
-            if adr_bus.write(0xFE00 + step, src).is_err() {
+            if adr_bus.write(0xFE00 + step, src, Some(Lock::Dma)).is_err() {
                 log::error!("failed to write data during OAM DMA");
             }
             let next_step = step + 1;
@@ -47,6 +50,7 @@ impl Ticker for Dma {
                 self.oam_transfer = Some(next_step);
             } else {
                 self.oam_transfer = None;
+                adr_bus.unlock(Area::Oam);
             }
         }
     }
