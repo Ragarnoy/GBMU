@@ -45,7 +45,7 @@ pub mod array {
 
         fn unlock(&mut self, _area: Area) {}
 
-        fn is_available(&self, _address: u16, _lock_key: Option<Lock>) -> bool {
+        fn is_available(&self, _area: Area, _lock_key: Option<Lock>) -> bool {
             true
         }
     }
@@ -105,7 +105,7 @@ pub mod binary {
 
         fn unlock(&mut self, _area: Area) {}
 
-        fn is_available(&self, _address: u16, _lock_key: Option<Lock>) -> bool {
+        fn is_available(&self, _area: Area, _lock_key: Option<Lock>) -> bool {
             true
         }
     }

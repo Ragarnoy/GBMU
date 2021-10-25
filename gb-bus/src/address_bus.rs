@@ -11,7 +11,7 @@ use crate::{
         IO_REG_START, IO_REG_STOP, OAM_START, OAM_STOP, RAM_START, RAM_STOP, ROM_START, ROM_STOP,
         UNDEFINED_VALUE, VRAM_START, VRAM_STOP,
     },
-    Area, Error, FileOperation, Lock,
+    Area, Error, FileOperation, InternalLock, Lock, MemoryLock,
 };
 
 use std::{cell::RefCell, rc::Rc};
@@ -22,7 +22,7 @@ pub struct AddressBus {
     /// Rom from the cartridge
     pub rom: Rc<RefCell<dyn FileOperation<Area>>>,
     /// Video Ram
-    pub vram: Rc<RefCell<dyn FileOperation<Area>>>,
+    pub vram: Rc<RefCell<dyn InternalLock<Area>>>,
     /// Ram from the cartridge
     pub ext_ram: Rc<RefCell<dyn FileOperation<Area>>>,
     /// Internal gameboy ram
@@ -30,7 +30,7 @@ pub struct AddressBus {
     /// Echo Ram area, usually a mirror of ram
     pub eram: Rc<RefCell<dyn FileOperation<Area>>>,
     /// Sprite attribute table
-    pub oam: Rc<RefCell<dyn FileOperation<Area>>>,
+    pub oam: Rc<RefCell<dyn InternalLock<Area>>>,
     /// io registers table
     pub io_reg: Rc<RefCell<dyn FileOperation<Area>>>,
     /// high ram
@@ -136,17 +136,27 @@ impl AddressBus {
     }
 }
 
-impl crate::MemoryLock for AddressBus {
+impl MemoryLock for AddressBus {
     fn lock(&mut self, area: Area, lock: Lock) {
         self.area_locks.insert(area, lock);
+        match area {
+            Area::Vram => self.vram.borrow_mut().lock(area, lock),
+            Area::Oam => self.oam.borrow_mut().lock(area, lock),
+            _ => {}
+        }
     }
 
     fn unlock(&mut self, area: Area) {
         self.area_locks.remove(&area);
+        match area {
+            Area::Vram => self.vram.borrow_mut().unlock(area),
+            Area::Oam => self.oam.borrow_mut().unlock(area),
+            _ => {}
+        }
     }
 
-    fn is_available(&self, address: u16, lock_key: Option<Lock>) -> bool {
-        if let Some(lock) = self.area_locks.get(&address.into()) {
+    fn is_available(&self, area: Area, lock_key: Option<Lock>) -> bool {
+        if let Some(lock) = self.area_locks.get(&area) {
             if let Some(key) = lock_key {
                 return *lock == key;
             }
@@ -159,7 +169,7 @@ impl crate::MemoryLock for AddressBus {
 
 impl crate::Bus<u8> for AddressBus {
     fn read(&self, address: u16, lock_key: Option<Lock>) -> Result<u8, Error> {
-        if (self as &dyn crate::MemoryLock).is_available(address, lock_key) {
+        if self.is_available(address.into(), lock_key) {
             self.read_byte(address)
         } else {
             Ok(UNDEFINED_VALUE)
@@ -167,7 +177,7 @@ impl crate::Bus<u8> for AddressBus {
     }
 
     fn write(&mut self, address: u16, data: u8, lock_key: Option<Lock>) -> Result<(), Error> {
-        if (self as &dyn crate::MemoryLock).is_available(address, lock_key) {
+        if self.is_available(address.into(), lock_key) {
             self.write_byte(address, data)
         } else {
             Ok(())
@@ -177,7 +187,7 @@ impl crate::Bus<u8> for AddressBus {
 
 impl crate::Bus<u16> for AddressBus {
     fn read(&self, address: u16, lock_key: Option<Lock>) -> Result<u16, Error> {
-        if (self as &dyn crate::MemoryLock).is_available(address, lock_key) {
+        if self.is_available(address.into(), lock_key) {
             let lower = self.read_byte(address)?;
             let upper = self.read_byte(address + 1)?;
 
@@ -188,7 +198,7 @@ impl crate::Bus<u16> for AddressBus {
     }
 
     fn write(&mut self, address: u16, data: u16, lock_key: Option<Lock>) -> Result<(), Error> {
-        if (self as &dyn crate::MemoryLock).is_available(address, lock_key) {
+        if self.is_available(address.into(), lock_key) {
             let [lower, upper] = data.to_le_bytes();
 
             self.write_byte(address, lower)?;

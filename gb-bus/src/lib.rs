@@ -17,7 +17,7 @@ pub use error::Error;
 pub use file_operation::{Address, FileOperation};
 pub use io_reg_area::IORegArea;
 pub use io_reg_bus::IORegBus;
-pub use lock::{Lock, MemoryLock};
+pub use lock::{InternalLock, Lock, MemoryLock};
 pub use working_ram::WorkingRam;
 
 pub trait Bus<N>: MemoryLock {
