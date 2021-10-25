@@ -23,7 +23,7 @@ pub fn handle_interrupts(ctl: &mut MicrocodeController, _state: &mut State) -> M
 
     // Reset bit from source in interrupt flag
     let bit_to_res = 1_u8 << source_bit;
-    ctl.interrupt_flag &= !bit_to_res;
+    ctl.interrupt_flag ^= bit_to_res;
 
     // Push interrupt source address to cache
     ctl.push_u16(0x0040 | ((source_bit as u16) << 3));
