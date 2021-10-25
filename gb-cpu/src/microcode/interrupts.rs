@@ -10,6 +10,7 @@ pub fn handle_interrupts(ctl: &mut MicrocodeController, _state: &mut State) -> M
 
     // Shift to right until first bit is set
     let mut source_bit: u8 = 0;
+    assert!(interrupt_match != 0);
     while interrupt_match & 0x1 == 0 {
         interrupt_match >>= 1;
         source_bit += 1;
