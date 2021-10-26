@@ -11,7 +11,6 @@ use sdl2::keyboard::Scancode;
 use context::{Context, Game, Windows};
 use gb_dbg::*;
 use gb_lcd::{render, window::GBWindow};
-use gb_ppu::Ppu;
 use logger::init_logger;
 
 pub struct Memory {
@@ -59,7 +58,7 @@ fn main() {
     let opts: Opts = Opts::parse();
     init_logger(opts.log_level);
 
-    let (mut context, mut game, mut ppu, mut event_pump) = init_gbmu(&opts);
+    let (mut context, mut game, mut event_pump) = init_gbmu(&opts);
 
     'running: loop {
         context
@@ -69,16 +68,12 @@ fn main() {
             .expect("Fail at the start for the main window");
 
         if let Some(ref mut game) = game {
-            while game.cycle(&mut ppu) {
-                log::debug!("cycling the game");
+            while game.cycle() {
+                log::trace!("cycling the game");
             }
-            log::debug!("frame ready")
+            log::trace!("frame ready");
+            game.draw(&mut context);
         }
-
-        // render is updated just before drawing for now but we might want to change that later
-        context.display.update_render(ppu.pixels());
-        // emulation render here
-        context.display.draw();
 
         // set ui logic here
         ui::draw_egui(
@@ -124,7 +119,7 @@ fn main() {
 
 fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
     opts: &Opts,
-) -> (Context<WIDTH, HEIGHT>, Option<Game>, Ppu, sdl2::EventPump) {
+) -> (Context<WIDTH, HEIGHT>, Option<Game>, sdl2::EventPump) {
     let (sdl_context, video_subsystem, event_pump) =
         gb_lcd::init().expect("Error while initializing LCD");
 
@@ -165,9 +160,8 @@ fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
         input: None,
     };
 
-    let ppu = Ppu::new();
     let game_context: Option<Game> = opts.rom.as_ref().and_then(|romname| {
-        Game::new(romname.clone(), &ppu).map_or_else(
+        Game::new(romname.clone()).map_or_else(
             |e| {
                 log::error!("while creating game context for {}: {:?}", romname, e);
                 None
@@ -185,7 +179,6 @@ fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
             windows,
         },
         game_context,
-        ppu,
         event_pump,
     )
 }

@@ -5,7 +5,10 @@ use gb_bus::{
 use gb_clock::Clock;
 use gb_cpu::cpu::Cpu;
 use gb_joypad::Joypad;
-use gb_lcd::{render::RenderImage, window::GBWindow};
+use gb_lcd::{
+    render::{RenderImage, SCREEN_HEIGHT, SCREEN_WIDTH},
+    window::GBWindow,
+};
 use gb_ppu::Ppu;
 use gb_roms::{
     controllers::{bios, generate_rom_controller, BiosWrapper, MbcController},
@@ -36,6 +39,7 @@ pub struct Game {
     pub auto_save: Option<AutoSave>,
     pub mbc: Rc<RefCell<MbcController>>,
     pub cpu: Rc<RefCell<Cpu>>,
+    pub ppu: Ppu,
     pub clock: Clock<AddressBus>,
     pub io_bus: Rc<RefCell<IORegBus>>,
     pub timer: Rc<RefCell<Timer>>,
@@ -43,7 +47,7 @@ pub struct Game {
 }
 
 impl Game {
-    pub fn new(romname: String, ppu: &Ppu) -> Result<Game, anyhow::Error> {
+    pub fn new(romname: String) -> Result<Game, anyhow::Error> {
         use std::{fs::File, io::Seek};
 
         let mut file = File::open(romname.clone())?;
@@ -55,6 +59,7 @@ impl Game {
         let mbc = generate_rom_controller(file, header.clone())?;
         let mbc = Rc::new(RefCell::new(mbc));
 
+        let ppu = Ppu::new();
         let ppu_mem = Rc::new(RefCell::new(ppu.memory()));
         let ppu_reg = Rc::new(RefCell::new(ppu.registers()));
         let cpu = Rc::new(RefCell::new(Cpu::default()));
@@ -100,6 +105,7 @@ impl Game {
             auto_save: header.cartridge_type.auto_save_type(),
             mbc,
             cpu,
+            ppu,
             clock: Clock::default(),
             io_bus,
             timer,
@@ -107,12 +113,17 @@ impl Game {
         })
     }
 
-    pub fn cycle(&mut self, ppu: &mut Ppu) -> bool {
+    pub fn cycle(&mut self) -> bool {
         self.clock.cycle(
             &mut self.addr_bus,
             self.cpu.borrow_mut(),
-            ppu,
+            &mut self.ppu,
             self.timer.borrow_mut(),
         )
+    }
+
+    pub fn draw(&self, context: &mut Context<SCREEN_WIDTH, SCREEN_HEIGHT>) {
+        context.display.update_render(self.ppu.pixels());
+        context.display.draw();
     }
 }
