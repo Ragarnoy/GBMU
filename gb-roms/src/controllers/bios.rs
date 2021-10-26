@@ -6,7 +6,7 @@ pub enum BiosType {
 }
 
 pub struct Bios {
-    container: Vec<u8>,
+    pub(crate) container: Vec<u8>,
     pub bios_type: BiosType,
 }
 
