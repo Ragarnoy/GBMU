@@ -5,11 +5,11 @@ use iter::Iter;
 use crate::{
     address::Address,
     constant::{
-        BIOS_START, BIOS_STOP, ERAM_START, ERAM_STOP, EXT_RAM_START, EXT_RAM_STOP, HRAM_START,
-        HRAM_STOP, IE_REG_START, IO_REG_START, IO_REG_STOP, OAM_START, OAM_STOP, RAM_START,
-        RAM_STOP, ROM_START, ROM_STOP, VRAM_START, VRAM_STOP,
+        ERAM_START, ERAM_STOP, EXT_RAM_START, EXT_RAM_STOP, HRAM_START, HRAM_STOP, IE_REG_START,
+        IO_REG_START, IO_REG_STOP, OAM_START, OAM_STOP, RAM_START, RAM_STOP, ROM_START, ROM_STOP,
+        VRAM_START, VRAM_STOP,
     },
-    Address as PseudoAddress, Area, Error, FileOperation, IORegArea,
+    Area, Error, FileOperation,
 };
 
 use std::{cell::RefCell, rc::Rc};
@@ -17,11 +17,6 @@ use std::{cell::RefCell, rc::Rc};
 /// AddressBus map specific range address to specific area like ROM/RAM.
 /// This Implementation of an AddressBus will be limited to 16-bit address
 pub struct AddressBus {
-    /// Register to disable / enable the bios mapping.
-    /// Set to non-zero to disable the bios mapping.
-    bios_enabling_reg: u8,
-    /// BIOS Rom
-    bios: Rc<RefCell<dyn FileOperation<Area>>>,
     /// Rom from the cartridge
     rom: Rc<RefCell<dyn FileOperation<Area>>>,
     /// Video Ram
@@ -46,10 +41,6 @@ pub struct AddressBus {
 impl AddressBus {
     pub fn write_byte(&mut self, addr: u16, v: u8) -> Result<(), Error> {
         match addr {
-            BIOS_START..=BIOS_STOP if self.bios_is_enabled() => self.bios.borrow_mut().write(
-                v,
-                Box::new(Address::from_offset(Area::Bios, addr, BIOS_START)),
-            ),
             ROM_START..=ROM_STOP => self.rom.borrow_mut().write(
                 v,
                 Box::new(Address::from_offset(Area::Rom, addr, ROM_START)),
@@ -92,10 +83,6 @@ impl AddressBus {
 
     pub fn read_byte(&self, addr: u16) -> Result<u8, Error> {
         match addr {
-            BIOS_START..=BIOS_STOP if self.bios_is_enabled() => self
-                .bios
-                .borrow()
-                .read(Box::new(Address::from_offset(Area::Bios, addr, BIOS_START))),
             ROM_START..=ROM_STOP => {
                 self.rom
                     .borrow()
@@ -140,10 +127,6 @@ impl AddressBus {
         }
     }
 
-    pub fn bios_is_enabled(&self) -> bool {
-        self.bios_enabling_reg == 0
-    }
-
     pub fn iter(&self) -> Iter {
         Iter::new(self)
     }
@@ -175,27 +158,6 @@ impl crate::Bus<u16> for AddressBus {
     }
 }
 
-impl FileOperation<IORegArea> for AddressBus {
-    fn read(&self, address: Box<dyn PseudoAddress<IORegArea>>) -> Result<u8, Error> {
-        let addr: u16 = address.into();
-        if addr == 0 {
-            Ok(self.bios_enabling_reg)
-        } else {
-            Err(Error::BusError(addr))
-        }
-    }
-
-    fn write(&mut self, v: u8, address: Box<dyn PseudoAddress<IORegArea>>) -> Result<(), Error> {
-        let addr: u16 = address.into();
-        if addr == 0 {
-            self.bios_enabling_reg = v;
-            Ok(())
-        } else {
-            Err(Error::BusError(addr))
-        }
-    }
-}
-
 #[cfg(test)]
 mod test_address_bus {
     use super::AddressBus;
@@ -205,8 +167,6 @@ mod test_address_bus {
     #[test]
     fn read() {
         let addr_bus = AddressBus {
-            bios_enabling_reg: 1,
-            bios: Rc::new(RefCell::new(CharDevice(0))),
             rom: Rc::new(RefCell::new(CharDevice(1))),
             vram: Rc::new(RefCell::new(CharDevice(2))),
             ext_ram: Rc::new(RefCell::new(CharDevice(3))),
@@ -232,8 +192,6 @@ mod test_address_bus {
     #[test]
     fn write() {
         let mut addr_bus = AddressBus {
-            bios_enabling_reg: 1,
-            bios: Rc::new(RefCell::new(CharDevice(0))),
             rom: Rc::new(RefCell::new(CharDevice(1))),
             vram: Rc::new(RefCell::new(CharDevice(2))),
             ext_ram: Rc::new(RefCell::new(CharDevice(3))),

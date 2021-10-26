@@ -35,15 +35,15 @@ fn test_chardev_fileop() {
     let mut op: Box<dyn FileOperation<Area>> = Box::new(dev);
 
     assert_eq!(
-        op.read(Box::new(Address::from_offset(Area::Bios, 35, 24))),
+        op.read(Box::new(Address::from_offset(Area::Rom, 35, 24))),
         Ok(42)
     );
     assert_eq!(
-        op.write(5, Box::new(Address::from_offset(Area::Bios, 4, 4))),
+        op.write(5, Box::new(Address::from_offset(Area::Rom, 4, 4))),
         Ok(())
     );
     assert_eq!(
-        op.read(Box::new(Address::from_offset(Area::Bios, 5, 2))),
+        op.read(Box::new(Address::from_offset(Area::Rom, 5, 2))),
         Ok(5)
     );
 }
