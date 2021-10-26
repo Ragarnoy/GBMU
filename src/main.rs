@@ -158,9 +158,6 @@ fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
         }
     };
 
-    #[cfg(feature = "debug_render")]
-    let mut debug = false;
-
     let windows = Windows {
         main: gb_window,
         debug: None,
