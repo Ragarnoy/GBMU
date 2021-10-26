@@ -12,22 +12,24 @@ use crate::{
 use std::{cell::RefCell, rc::Rc};
 
 macro_rules! write_area {
-    ($start:expr, $field:expr, $area_type:ident, $value:expr, $addr:expr) => {
+    ($start:expr, $field:expr, $area_type:ident, $value:expr, $addr:expr) => {{
+        log::trace!("writing at {:4x} the value {:2x} in area {:?}", $addr, $value, IORegArea::$area_type);
         $field.borrow_mut().write(
             $value,
             Box::new(Address::from_offset(IORegArea::$area_type, $addr, $start)),
         )
-    };
+    }};
 }
 
 macro_rules! read_area {
-    ($start:expr, $field:expr, $area_type:ident, $addr: expr) => {
+    ($start:expr, $field:expr, $area_type:ident, $addr: expr) => {{
+        log::trace!("reading at {:4x} in area {:?}", $addr, IORegArea::$area_type);
         $field.borrow().read(Box::new(Address::from_offset(
             IORegArea::$area_type,
             $addr,
             $start,
         )))
-    };
+    }};
 }
 
 pub struct IORegBus {

@@ -15,22 +15,24 @@ use crate::{
 use std::{cell::RefCell, rc::Rc};
 
 macro_rules! write_area {
-    ($start:expr, $field:expr, $area_type:ident, $value:expr, $addr:expr) => {
+    ($start:expr, $field:expr, $area_type:ident, $value:expr, $addr:expr) => {{
+        log::trace!("writing at {:4x} the value {:2x} in area {:?}", $addr, $value, Area::$area_type);
         $field.borrow_mut().write(
             $value,
             Box::new(Address::from_offset(Area::$area_type, $addr, $start)),
         )
-    };
+    }};
 }
 
 macro_rules! read_area {
-    ($start:expr, $field:expr, $area_type:ident, $addr: expr) => {
+    ($start:expr, $field:expr, $area_type:ident, $addr: expr) => {{
+        log::trace!("reading at {:4x} in area {:?}", $addr, Area::$area_type);
         $field.borrow().read(Box::new(Address::from_offset(
             Area::$area_type,
             $addr,
             $start,
         )))
-    };
+    }};
 }
 
 /// AddressBus map specific range address to specific area like ROM/RAM.
