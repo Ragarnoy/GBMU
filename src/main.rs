@@ -11,7 +11,7 @@ use sdl2::keyboard::Scancode;
 use context::{Context, Game, Windows};
 use gb_dbg::*;
 use gb_lcd::{render, window::GBWindow};
-use gb_ppu::PPU;
+use gb_ppu::Ppu;
 use logger::init_logger;
 
 pub struct Memory {
@@ -124,7 +124,7 @@ fn main() {
 
 fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
     opts: &Opts,
-) -> (Context<WIDTH, HEIGHT>, Option<Game>, PPU, sdl2::EventPump) {
+) -> (Context<WIDTH, HEIGHT>, Option<Game>, Ppu, sdl2::EventPump) {
     let (sdl_context, video_subsystem, event_pump) =
         gb_lcd::init().expect("Error while initializing LCD");
 
@@ -165,7 +165,7 @@ fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
         input: None,
     };
 
-    let ppu = PPU::new();
+    let ppu = Ppu::new();
     let game_context: Option<Game> = opts.rom.as_ref().and_then(|romname| {
         Game::new(romname.clone(), &ppu).map_or_else(
             |e| {

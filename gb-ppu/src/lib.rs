@@ -11,7 +11,7 @@ mod test_tools;
 
 use color::Color;
 pub use memory::PPUMem;
-pub use ppu::PPU;
+pub use ppu::Ppu;
 pub use registers::PPURegisters;
 use sprite::Sprite;
 

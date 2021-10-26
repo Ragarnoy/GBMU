@@ -6,7 +6,7 @@ use gb_clock::Clock;
 use gb_cpu::cpu::Cpu;
 use gb_joypad::Joypad;
 use gb_lcd::{render::RenderImage, window::GBWindow};
-use gb_ppu::PPU;
+use gb_ppu::Ppu;
 use gb_roms::{
     controllers::{bios, generate_rom_controller, BiosWrapper, MbcController},
     header::AutoSave,
@@ -42,7 +42,7 @@ pub struct Game {
 }
 
 impl Game {
-    pub fn new(romname: String, ppu: &PPU) -> Result<Game, anyhow::Error> {
+    pub fn new(romname: String, ppu: &Ppu) -> Result<Game, anyhow::Error> {
         use std::{fs::File, io::Seek};
 
         let mut file = File::open(romname.clone())?;
@@ -105,7 +105,7 @@ impl Game {
         })
     }
 
-    pub fn cycle(&mut self, ppu: &mut PPU) -> bool {
+    pub fn cycle(&mut self, ppu: &mut Ppu) -> bool {
         self.clock.cycle(
             &mut self.addr_bus,
             self.cpu.borrow_mut(),
