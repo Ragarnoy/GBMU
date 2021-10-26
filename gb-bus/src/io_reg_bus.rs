@@ -72,7 +72,7 @@ impl FileOperation<Area> for IORegBus {
             TIMER_COUNTER_START => read_area!(TIMER_COUNTER_START, self.tima, TimerCounter, addr),
             TIMER_MODULO_START => read_area!(TIMER_MODULO_START, self.tma, TimerModulo, addr),
             TIMER_CONTROL_START => read_area!(TIMER_CONTROL_START, self.tac, TimerControl, addr),
-            INTERRUPT_FLAG => read_area!(INTERRUPT_FLAG, self.interrup_flag, InterruptFlag, addr),
+            INTERRUPT_FLAG => read_area!(INTERRUPT_FLAG, self.interrupt_flag, InterruptFlag, addr),
             SOUND_START..=SOUND_END => read_area!(SOUND_START, self.sound, Sound, addr),
             WAVEFORM_RAM_START..=WAVEFORM_RAM_END => {
                 read_area!(WAVEFORM_RAM_START, self.waveform_ram, WaveformRam, addr)
