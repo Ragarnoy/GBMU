@@ -54,11 +54,7 @@ impl FileOperation<Area> for IORegBus {
             INTERRUPT_FLAG => self
                 .interrupt_flag
                 .borrow()
-                .read(Box::new(Address::from_offset(
-                    IORegArea::InterruptFlag,
-                    addr,
-                    INTERRUPT_FLAG,
-                ))),
+                .read(Box::new(Address::byte_reg(IORegArea::InterruptFlag, addr))),
             TIMER_COUNTER_START => self
                 .tima
                 .borrow()
@@ -158,11 +154,7 @@ impl FileOperation<Area> for IORegBus {
             ),
             INTERRUPT_FLAG => self.interrupt_flag.borrow_mut().write(
                 v,
-                Box::new(Address::from_offset(
-                    IORegArea::InterruptFlag,
-                    addr,
-                    INTERRUPT_FLAG,
-                )),
+                Box::new(Address::byte_reg(IORegArea::InterruptFlag, addr)),
             ),
             SOUND_START..=SOUND_END => self.sound.borrow_mut().write(
                 v,
