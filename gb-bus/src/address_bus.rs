@@ -17,7 +17,7 @@ use std::{cell::RefCell, rc::Rc};
 /// AddressBus map specific range address to specific area like ROM/RAM.
 /// This Implementation of an AddressBus will be limited to 16-bit address
 pub struct AddressBus {
-   /// Rom from the cartridge
+    /// Rom from the cartridge
     rom: Rc<RefCell<dyn FileOperation<Area>>>,
     /// Video Ram
     vram: Rc<RefCell<dyn FileOperation<Area>>>,
@@ -41,7 +41,7 @@ pub struct AddressBus {
 impl AddressBus {
     pub fn write_byte(&mut self, addr: u16, v: u8) -> Result<(), Error> {
         match addr {
-          ROM_START..=ROM_STOP => self.rom.borrow_mut().write(
+            ROM_START..=ROM_STOP => self.rom.borrow_mut().write(
                 v,
                 Box::new(Address::from_offset(Area::Rom, addr, ROM_START)),
             ),
@@ -83,7 +83,7 @@ impl AddressBus {
 
     pub fn read_byte(&self, addr: u16) -> Result<u8, Error> {
         match addr {
-           ROM_START..=ROM_STOP => {
+            ROM_START..=ROM_STOP => {
                 self.rom
                     .borrow()
                     .read(Box::new(Address::from_offset(Area::Rom, addr, ROM_START)))
@@ -167,19 +167,6 @@ mod test_address_bus {
     #[test]
     fn read() {
         let addr_bus = AddressBus {
-<<<<<<< HEAD
-            rom: Box::new(CharDevice(1)),
-            vram: Box::new(CharDevice(2)),
-            ext_ram: Box::new(CharDevice(3)),
-            ram: Box::new(CharDevice(4)),
-            eram: Box::new(CharDevice(5)),
-            oam: Box::new(CharDevice(6)),
-            io_reg: Box::new(CharDevice(7)),
-            hram: Box::new(CharDevice(8)),
-            ie_reg: Box::new(CharDevice(9)),
-=======
-            bios_enabling_reg: 1,
-            bios: Rc::new(RefCell::new(CharDevice(0))),
             rom: Rc::new(RefCell::new(CharDevice(1))),
             vram: Rc::new(RefCell::new(CharDevice(2))),
             ext_ram: Rc::new(RefCell::new(CharDevice(3))),
@@ -189,7 +176,6 @@ mod test_address_bus {
             io_reg: Rc::new(RefCell::new(CharDevice(7))),
             hram: Rc::new(RefCell::new(CharDevice(8))),
             ie_reg: Rc::new(RefCell::new(CharDevice(9))),
->>>>>>> origin/develop
         };
 
         assert_eq!(addr_bus.read_byte(0x10), Ok(1));
@@ -206,19 +192,6 @@ mod test_address_bus {
     #[test]
     fn write() {
         let mut addr_bus = AddressBus {
-<<<<<<< HEAD
-            rom: Box::new(CharDevice(1)),
-            vram: Box::new(CharDevice(2)),
-            ext_ram: Box::new(CharDevice(3)),
-            ram: Box::new(CharDevice(4)),
-            eram: Box::new(CharDevice(5)),
-            oam: Box::new(CharDevice(6)),
-            io_reg: Box::new(CharDevice(7)),
-            hram: Box::new(CharDevice(8)),
-            ie_reg: Box::new(CharDevice(9)),
-=======
-            bios_enabling_reg: 1,
-            bios: Rc::new(RefCell::new(CharDevice(0))),
             rom: Rc::new(RefCell::new(CharDevice(1))),
             vram: Rc::new(RefCell::new(CharDevice(2))),
             ext_ram: Rc::new(RefCell::new(CharDevice(3))),
@@ -228,7 +201,6 @@ mod test_address_bus {
             io_reg: Rc::new(RefCell::new(CharDevice(7))),
             hram: Rc::new(RefCell::new(CharDevice(8))),
             ie_reg: Rc::new(RefCell::new(CharDevice(9))),
->>>>>>> origin/develop
         };
 
         assert_eq!(addr_bus.write_byte(0x11, 0x30), Ok(()));
