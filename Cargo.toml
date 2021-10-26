@@ -7,7 +7,7 @@ authors = [
   "Tiago Lernould <tlernoul@student.42.fr>",
   "Cedric M'Passi <cedricmpassi@gmail.com>"
 ]
-edition = "2018"
+edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -37,5 +37,7 @@ members = [
   "gb-dbg",
   "gb-bus",
   "gb-rtc",
-  "gb-joypad"
+  "gb-joypad",
+  "gb-timer",
+  "gb-test"
 ]
