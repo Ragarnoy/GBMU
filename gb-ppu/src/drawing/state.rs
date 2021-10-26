@@ -1,4 +1,5 @@
 use super::Mode;
+use crate::memory::Lock;
 use crate::registers::LcdReg;
 use gb_bus::Bus;
 use std::cell::RefMut;
@@ -175,9 +176,9 @@ impl State {
             || line_updated && lcd_reg.stat.lyc_eq_ly_interrupt() && lcd_reg.stat.lyc_eq_ly()
         {
             let interrupts_val = adr_bus
-                .read(0xFF0F)
+                .read(0xFF0F, Some(Lock::Ppu))
                 .expect("Failed to read interrupt value for lcd stat");
-            if let Err(err) = adr_bus.write(0xFF0F, interrupts_val | 0b10) {
+            if let Err(err) = adr_bus.write(0xFF0F, interrupts_val | 0b10, Some(Lock::Ppu)) {
                 log::error!("Failed to write interrupt value for lcd stat: {:?}", err)
             }
         }
