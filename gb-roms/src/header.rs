@@ -14,7 +14,7 @@ use flag::{CgbFlag, SgbFlag};
 use license_code::{NewLicenseCode, OldLicenseCode};
 use size::{RamSize, RomSize};
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Header {
     pub entry_point: [u8; 4],
     pub nitendo_logo: [u8; 48],
@@ -183,7 +183,7 @@ impl TryFrom<RawHeader> for Header {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Title {
     Simple(String),
     Advanced {

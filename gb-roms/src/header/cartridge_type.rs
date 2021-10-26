@@ -2,7 +2,7 @@ use std::convert::TryFrom;
 
 use super::error::Error;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum CartridgeType {
     RomOnly,
     Mbc1,
