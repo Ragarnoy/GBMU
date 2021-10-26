@@ -69,7 +69,7 @@ impl Game {
             tima: timer.clone(),
             tma: timer.clone(),
             tac: timer.clone(),
-            sound: Rc::new(RefCell::new(SimpleRW::<0x16>::default())), // We don't handle sound
+            sound: Rc::new(RefCell::new(SimpleRW::<0x17>::default())), // We don't handle sound
             waveform_ram: Rc::new(RefCell::new(SimpleRW::<0xF>::default())), // We don't handle sound
             lcd: ppu_reg.clone(),
             vram_bank: ppu_reg.clone(),
