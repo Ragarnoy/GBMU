@@ -7,7 +7,6 @@ mod ui;
 use clap::{AppSettings, Clap};
 #[cfg(feature = "debug_render")]
 use sdl2::keyboard::Scancode;
-use std::{cell::RefCell, rc::Rc};
 
 use context::{Context, Game, Windows};
 use gb_dbg::*;
@@ -71,12 +70,12 @@ fn main() {
 
         if let Some(ref mut game) = game {
             log::trace!("cycling the game");
-            game.cycle(&mut ppu.borrow_mut());
+            game.cycle(&mut ppu);
         }
 
         // render is updated just before drawing for now but we might want to change that later
-        ppu.borrow_mut().compute();
-        context.display.update_render(ppu.borrow().pixels());
+        ppu.compute();
+        context.display.update_render(ppu.pixels());
         // emulation render here
         context.display.draw();
 
@@ -124,12 +123,7 @@ fn main() {
 
 fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
     opts: &Opts,
-) -> (
-    Context<WIDTH, HEIGHT>,
-    Option<Game>,
-    Rc<RefCell<PPU>>,
-    sdl2::EventPump,
-) {
+) -> (Context<WIDTH, HEIGHT>, Option<Game>, PPU, sdl2::EventPump) {
     let (sdl_context, video_subsystem, event_pump) =
         gb_lcd::init().expect("Error while initializing LCD");
 
@@ -173,9 +167,9 @@ fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
         input: None,
     };
 
-    let ppu = Rc::new(RefCell::new(PPU::new()));
+    let ppu = PPU::new();
     let game_context: Option<Game> = opts.rom.as_ref().and_then(|romname| {
-        Game::new(romname.clone(), ppu.clone()).map_or_else(
+        Game::new(romname.clone(), &ppu).map_or_else(
             |e| {
                 log::error!("while creating game context for {}: {:?}", romname, e);
                 None

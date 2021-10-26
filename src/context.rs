@@ -1,6 +1,6 @@
 use gb_bus::{
     generic::{CharDevice, SimpleRW},
-    AddressBus, Area, FileOperation, IORegBus, WorkingRam,
+    AddressBus, IORegBus, WorkingRam,
 };
 use gb_clock::Clock;
 use gb_cpu::cpu::Cpu;
@@ -30,19 +30,19 @@ pub struct Windows {
 }
 
 pub struct Game {
-    romname: String,
-    header: Header,
-    auto_save: Option<AutoSave>,
-    mbc: Rc<RefCell<MbcController>>,
-    cpu: Rc<RefCell<Cpu>>,
-    clock: Clock<AddressBus>,
-    io_bus: Rc<RefCell<IORegBus>>,
-    timer: Rc<RefCell<Timer>>,
-    addr_bus: AddressBus,
+    pub romname: String,
+    pub header: Header,
+    pub auto_save: Option<AutoSave>,
+    pub mbc: Rc<RefCell<MbcController>>,
+    pub cpu: Rc<RefCell<Cpu>>,
+    pub clock: Clock<AddressBus>,
+    pub io_bus: Rc<RefCell<IORegBus>>,
+    pub timer: Rc<RefCell<Timer>>,
+    pub addr_bus: AddressBus,
 }
 
 impl Game {
-    pub fn new(romname: String, ppu: Rc<RefCell<PPU>>) -> Result<Game, anyhow::Error> {
+    pub fn new(romname: String, ppu: &PPU) -> Result<Game, anyhow::Error> {
         use std::{fs::File, io::Seek};
 
         let mut file = File::open(romname.clone())?;
@@ -54,9 +54,8 @@ impl Game {
         let mbc = generate_rom_controller(file, header.clone())?;
         let mbc = Rc::new(RefCell::new(mbc));
 
-        let ppu_mem = Rc::new(RefCell::new(ppu.borrow().memory()));
-        let ppu_reg = Rc::new(RefCell::new(ppu.borrow().registers()));
-        let ppu = Rc::new(RefCell::new(ppu));
+        let ppu_mem = Rc::new(RefCell::new(ppu.memory()));
+        let ppu_reg = Rc::new(RefCell::new(ppu.registers()));
         let cpu = Rc::new(RefCell::new(Cpu::default()));
         let wram = Rc::new(RefCell::new(WorkingRam::new(false)));
         let timer = Rc::new(RefCell::new(Timer::default()));
