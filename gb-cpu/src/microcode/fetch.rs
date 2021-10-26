@@ -22,6 +22,7 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
         },
         |opcode| {
             let mut ctl = ctl_ref.borrow_mut();
+            log::debug!("new opcode: {:?}", opcode);
             ctl.opcode = Some(opcode.into());
             match opcode {
                 Opcode::Jp => ctl.push_actions(&[read::byte, read::byte, jump::jump]),
