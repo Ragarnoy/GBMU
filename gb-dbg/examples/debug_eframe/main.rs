@@ -6,6 +6,9 @@ use crate::registers::Registers;
 use eframe::egui::CtxRef;
 use eframe::epi::*;
 use egui::Vec2;
+use gb_dbg::dbg_interfaces::{
+    DebugOperations, MemoryDebugOperations, RegisterDebugOperations, RegisterMap, RegisterValue,
+};
 use gb_dbg::debugger::{Debugger, DebuggerBuilder};
 use gb_dbg::run_duration::RunDuration;
 use std::ops::ControlFlow;

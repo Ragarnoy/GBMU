@@ -435,14 +435,14 @@ impl Ticker for Ppu {
 
 #[cfg(test)]
 mod mem_lock {
-    use super::PPU;
+    use super::Ppu;
     use crate::memory::{Lock, Lockable};
     use crate::test_tools::TestAddress;
     use gb_bus::FileOperation;
 
     #[test]
     fn vram() {
-        let ppu = PPU::new();
+        let ppu = Ppu::new();
         let mut ppu_mem = ppu.memory();
         {
             ppu.vram.borrow_mut().lock(Lock::Ppu);
@@ -464,7 +464,7 @@ mod mem_lock {
 
     #[test]
     fn oam() {
-        let ppu = PPU::new();
+        let ppu = Ppu::new();
         let mut ppu_mem = ppu.memory();
         {
             ppu.oam.borrow_mut().lock(Lock::Ppu);
