@@ -14,6 +14,9 @@ pub struct IORegBus {
     pub controller: Rc<RefCell<dyn FileOperation<IORegArea>>>,
     pub communication: Rc<RefCell<dyn FileOperation<IORegArea>>>,
     pub div_timer: Rc<RefCell<dyn FileOperation<IORegArea>>>,
+    pub tima: Rc<RefCell<dyn FileOperation<IORegArea>>>,
+    pub tma: Rc<RefCell<dyn FileOperation<IORegArea>>>,
+    pub tac: Rc<RefCell<dyn FileOperation<IORegArea>>>,
     pub sound: Rc<RefCell<dyn FileOperation<IORegArea>>>,
     pub waveform_ram: Rc<RefCell<dyn FileOperation<IORegArea>>>,
     pub lcd: Rc<RefCell<dyn FileOperation<IORegArea>>>,
@@ -42,9 +45,6 @@ impl FileOperation<Area> for IORegBus {
                         COMMUNICATION_START,
                     )))
             }
-            DIV_TIMER_START..=DIV_TIMER_END => self.div_timer.borrow().read(Box::new(
-                Address::from_offset(IORegArea::DivTimer, addr, DIV_TIMER_START),
-            )),
             DIV_TIMER_START => self.div_timer.borrow().read(Box::new(Address::from_offset(
                 IORegArea::DivTimer,
                 addr,
