@@ -667,19 +667,10 @@ version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5aeeebd536f1a2737661be42819ed58a7aac69a4bf061610b373467f886574e6"
 dependencies = [
- "egui 0.14.2",
+ "egui",
  "egui_glium",
  "egui_web",
  "epi",
-]
-
-[[package]]
-name = "egui"
-version = "0.13.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "77f9b394ccacc0cccb30f6de7371038a116931aa3186acd908b9ec61f405f15c"
-dependencies = [
- "epaint 0.13.0",
 ]
 
 [[package]]
@@ -688,7 +679,7 @@ version = "0.14.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b403f29d592b5c2267279bfdf2cd3fe3ba0e7a8738d03203a6f1536e8e9d26bd"
 dependencies = [
- "epaint 0.14.0",
+ "epaint",
 ]
 
 [[package]]
@@ -698,7 +689,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "972b1882ae98f7dd2f5dcbf5efeb35448c158a8f6ba80d6cc3b8073eae1fae4f"
 dependencies = [
  "copypasta",
- "egui 0.14.2",
+ "egui",
  "epi",
  "glium",
  "webbrowser",
@@ -709,7 +700,7 @@ name = "egui_memory_editor"
 version = "0.1.4"
 source = "git+https://github.com/Ragarnoy/egui_memory_editor?branch=master#6590a4737f7d9a9c774072fdb6a52bf4c694233f"
 dependencies = [
- "egui 0.14.2",
+ "egui",
 ]
 
 [[package]]
@@ -717,7 +708,7 @@ name = "egui_sdl2_gl"
 version = "0.14.1"
 source = "git+https://github.com/luxtorpeda-dev/egui_sdl2_gl#17b784f706c5f8738f212d24955092a726715714"
 dependencies = [
- "egui 0.14.2",
+ "egui",
  "gl",
  "sdl2",
 ]
@@ -728,7 +719,7 @@ version = "0.14.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a70a7eee03a31589660cbfefa5ac529b9740b008d94075c46fd29f80abfad9de"
 dependencies = [
- "egui 0.14.2",
+ "egui",
  "epi",
  "js-sys",
  "wasm-bindgen",
@@ -741,12 +732,6 @@ name = "either"
 version = "1.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e78d4f1cc4ae33bbfc157ed5d5a5ef3bc29227303d595861deb238fcec4e9457"
-
-[[package]]
-name = "emath"
-version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "80eea7508c08a7b4e2a041adcdca6f400d8606622c6bb980ecbbdc5f1aff9a4c"
 
 [[package]]
 name = "emath"
@@ -771,19 +756,6 @@ dependencies = [
 
 [[package]]
 name = "epaint"
-version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "132e30d483d9fa252fe06aa112de777d068503c379fa51bc5834204ee3258fce"
-dependencies = [
- "ab_glyph",
- "ahash",
- "atomic_refcell",
- "emath 0.13.0",
- "ordered-float",
-]
-
-[[package]]
-name = "epaint"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "136e7d88da926182bcfdb8217137dd347dfe5dc03b8988eaba3ef8becf83394a"
@@ -791,7 +763,7 @@ dependencies = [
  "ab_glyph",
  "ahash",
  "atomic_refcell",
- "emath 0.14.0",
+ "emath",
  "ordered-float",
 ]
 
@@ -801,7 +773,7 @@ version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e3c033c9b4d921566a98b8831b63af5ba2a0ad7ffa62d22b897698f36c22a28a"
 dependencies = [
- "egui 0.14.2",
+ "egui",
 ]
 
 [[package]]
@@ -981,7 +953,7 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "eframe",
- "egui 0.14.2",
+ "egui",
  "egui_memory_editor",
  "gb-roms",
 ]
@@ -990,7 +962,7 @@ dependencies = [
 name = "gb-joypad"
 version = "0.0.0"
 dependencies = [
- "egui 0.14.2",
+ "egui",
  "log",
  "modular-bitfield",
  "sdl2",
@@ -1001,7 +973,7 @@ dependencies = [
 name = "gb-lcd"
 version = "0.1.0"
 dependencies = [
- "egui 0.14.2",
+ "egui",
  "egui_sdl2_gl",
  "gl",
  "sdl2",
@@ -1011,7 +983,7 @@ dependencies = [
 name = "gb-ppu"
 version = "0.1.0"
 dependencies = [
- "egui 0.13.1",
+ "egui",
  "gb-bus",
  "gb-clock",
  "gb-lcd",
@@ -1064,7 +1036,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap",
- "egui 0.14.2",
+ "egui",
  "gb-bus",
  "gb-clock",
  "gb-cpu",

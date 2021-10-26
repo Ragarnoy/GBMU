@@ -2,7 +2,7 @@ use sdl2::{event::Event, keyboard::Keycode};
 
 use gb_lcd::{render, window::GBWindow};
 use gb_ppu::{
-    PPUMem, PPURegisters, PPU, SPRITE_LIST_RENDER_HEIGHT, SPRITE_LIST_RENDER_WIDTH,
+    PPUMem, PPURegisters, Ppu, SPRITE_LIST_RENDER_HEIGHT, SPRITE_LIST_RENDER_WIDTH,
     SPRITE_RENDER_HEIGHT, SPRITE_RENDER_WIDTH,
 };
 
@@ -51,7 +51,7 @@ pub fn main() {
         render::RenderImage::<SPRITE_LIST_RENDER_WIDTH, SPRITE_LIST_RENDER_HEIGHT>::with_bar_size(
             bar_pixels_size as f32,
         );
-    let ppu = PPU::new();
+    let ppu = Ppu::new();
     let ppu_mem = ppu.memory();
     let ppu_reg = ppu.registers();
     let dumps = [
@@ -129,11 +129,9 @@ pub fn main() {
                     window_id,
                     ..
                 } => match win_event {
-                    sdl2::event::WindowEvent::SizeChanged(width, height) => {
+                    sdl2::event::WindowEvent::SizeChanged(_width, _height) => {
                         if gb_window.sdl_window().id() == window_id {
-                            gb_window
-                                .resize((width as u32, height as u32), &video_subsystem)
-                                .expect("Fail to resize example window");
+                            gb_window.resize().expect("Fail to resize example window");
                             view_display.resize(gb_window.sdl_window().size());
                             list_display.resize(gb_window.sdl_window().size());
                         }
