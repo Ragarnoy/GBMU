@@ -1,5 +1,3 @@
-pub const BIOS_START: u16 = 0x0000;
-pub const BIOS_STOP: u16 = 0x00ff;
 pub const ROM_START: u16 = 0x0000;
 pub const ROM_STOP: u16 = 0x7fff;
 pub const VRAM_START: u16 = 0x8000;

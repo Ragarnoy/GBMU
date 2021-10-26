@@ -1,4 +1,5 @@
 pub mod bios;
+pub mod bios_wrapper;
 pub mod mbc1;
 pub mod mbc2;
 pub mod mbc3;
@@ -7,6 +8,7 @@ pub mod rom_only;
 
 use crate::Header;
 pub use bios::Bios;
+pub use bios_wrapper::BiosWrapper;
 use gb_bus::{Address, Area, Error, FileOperation};
 pub use mbc1::MBC1;
 pub use mbc2::MBC2;
