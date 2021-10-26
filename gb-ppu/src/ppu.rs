@@ -376,11 +376,14 @@ impl Ppu {
         let (x, y) = cursor;
 
         if lcd_reg.window_pos.wy <= y && lcd_reg.window_pos.wx <= x {
-            pixel_fetcher.set_mode(FetchMode::Window);
-        } else {
+            if pixel_fetcher.mode() == FetchMode::Background {
+                pixel_fetcher.set_mode(FetchMode::Window);
+                pixel_fifo.clear();
+            }
+        } else if pixel_fetcher.mode() == FetchMode::Window {
             pixel_fetcher.set_mode(FetchMode::Background);
+            pixel_fifo.clear();
         }
-        pixel_fifo.clear();
     }
 
     fn check_for_sprite_mode(
