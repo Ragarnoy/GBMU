@@ -69,12 +69,13 @@ fn main() {
             .expect("Fail at the start for the main window");
 
         if let Some(ref mut game) = game {
-            log::trace!("cycling the game");
-            game.cycle(&mut ppu);
+            while game.cycle(&mut ppu) {
+                log::debug!("cycling the game");
+            }
+            log::debug!("frame ready")
         }
 
         // render is updated just before drawing for now but we might want to change that later
-        ppu.compute();
         context.display.update_render(ppu.pixels());
         // emulation render here
         context.display.draw();

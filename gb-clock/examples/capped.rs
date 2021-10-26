@@ -78,8 +78,9 @@ fn main() {
         cpu.tick_count = 0;
         ppu.tick_count = 0;
         while Instant::now() < t_stop {
-            clock.frame(&mut bus, None, &mut cpu, &mut ppu, &mut timer);
-            frames += 1;
+            if !clock.cycle(&mut bus, &mut cpu, &mut ppu, &mut timer) {
+                frames += 1;
+            }
         }
         log::info!(
             "loop {}:\t\t{} cpu ticks,\t\t{} ppu ticks",
