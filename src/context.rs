@@ -8,7 +8,7 @@ use gb_joypad::Joypad;
 use gb_lcd::{render::RenderImage, window::GBWindow};
 use gb_ppu::PPU;
 use gb_roms::{
-    controllers::{generate_rom_controller, MbcController},
+    controllers::{bios, generate_rom_controller, BiosWrapper, MbcController},
     header::AutoSave,
     Header,
 };
@@ -33,7 +33,7 @@ pub struct GameContext {
     romname: String,
     header: Header,
     auto_save: Option<AutoSave>,
-    mbc: MbcController,
+    mbc: Rc<RefCell<MbcController>>,
     cpu: Rc<RefCell<Cpu>>,
     clock: Clock<AddressBus>,
     ppu: Rc<RefCell<PPU>>,
@@ -53,6 +53,7 @@ impl GameContext {
 
         file.rewind()?;
         let mbc = generate_rom_controller(file, header)?;
+        let mbc = Rc::new(RefCell::new(mbc));
 
         let ppu = PPU::new();
         let ppu_mem = Rc::new(RefCell::new(ppu.memory()));
@@ -61,36 +62,38 @@ impl GameContext {
         let cpu = Rc::new(RefCell::new(Cpu::default()));
         let wram = Rc::new(RefCell::new(WorkingRam::new(false)));
         let timer = Rc::new(RefCell::new(Timer::default()));
+        let bios = Rc::new(RefCell::new(bios::dmg()));
+        let bios_wrapper = Rc::new(RefCell::new(BiosWrapper::new(bios, mbc.clone())));
 
         let io_bus = Rc::new(RefCell::new(IORegBus {
             controller: Rc::new(RefCell::new(CharDevice::default())),
             communication: Rc::new(RefCell::new(SimpleRW::<2>::default())), // We don't handle communication
-            div_timer: timer,
+            div_timer: timer.clone(),
+            tima: timer.clone(),
+            tma: timer.clone(),
+            tac: timer.clone(),
             sound: Rc::new(RefCell::new(SimpleRW::<0x16>::default())), // We don't handle sound
             waveform_ram: Rc::new(RefCell::new(SimpleRW::<0xF>::default())), // We don't handle sound
             lcd: ppu_reg.clone(),
             vram_bank: ppu_reg.clone(),
-            boot_rom: Rc::new(RefCell::new(CharDevice::default())), // TODO: togle between bios and ROM
+            boot_rom: bios_wrapper.clone(),
             vram_dma: Rc::new(RefCell::new(SimpleRW::<4>::default())), // TODO: link the part that handle the DMA
             bg_obj_palettes: ppu_reg,
             wram_bank: wram.clone(),
         }));
 
         let bus = AddressBus {
-            bios_enabling_reg: 0,
-            bios: _TODO_,
-            rom: mbc,
-            vram: ppu_mem,
-            ext_ram: mbc,
+            rom: bios_wrapper,
+            vram: ppu_mem.clone(),
+            ext_ram: mbc.clone(),
             ram: wram.clone(),
             eram: wram,
             oam: ppu_mem,
             io_reg: io_bus.clone(),
             hram: Rc::new(RefCell::new(SimpleRW::<0x80>::default())),
-            ie_reg: Rc::new(RefCell::new(CharDevice::default()), // TODO: link the part that handle the IE
+            ie_reg: Rc::new(RefCell::new(CharDevice::default())), // TODO: link the part that handle the IE
         };
 
-        todo!("store address bus");
         Ok(Self {
             romname,
             header,
@@ -101,7 +104,7 @@ impl GameContext {
             ppu,
             io_bus,
             timer,
-            bus
+            addr_bus: bus,
         })
     }
 }
