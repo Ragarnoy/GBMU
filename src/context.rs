@@ -77,6 +77,7 @@ impl Game {
             vram_dma: Rc::new(RefCell::new(SimpleRW::<4>::default())), // TODO: link the part that handle the DMA
             bg_obj_palettes: ppu_reg,
             wram_bank: wram.clone(),
+            interrupt_flag: cpu.clone(),
         }));
 
         let bus = AddressBus {

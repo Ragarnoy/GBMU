@@ -7,6 +7,7 @@ mod fetch;
 mod fetch_cb;
 mod flag;
 mod inc;
+mod interrupts;
 mod jump;
 mod logic;
 mod math;

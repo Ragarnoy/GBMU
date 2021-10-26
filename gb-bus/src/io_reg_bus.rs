@@ -2,9 +2,10 @@ use crate::{
     address::Address,
     io_reg_constant::{
         BG_OBJ_PALETTES_END, BG_OBJ_PALETTES_START, BOOT_ROM_START, COMMUNICATION_END,
-        COMMUNICATION_START, CONTROLLER_START, DIV_TIMER_START, LCD_END, LCD_START, SOUND_END,
-        SOUND_START, TIMER_CONTROL_START, TIMER_COUNTER_START, TIMER_MODULO_START, VRAM_BANK_START,
-        VRAM_DMA_END, VRAM_DMA_START, WAVEFORM_RAM_END, WAVEFORM_RAM_START, WRAM_BANK_START,
+        COMMUNICATION_START, CONTROLLER_START, DIV_TIMER_START, INTERRUPT_FLAG, LCD_END, LCD_START,
+        SOUND_END, SOUND_START, TIMER_CONTROL_START, TIMER_COUNTER_START, TIMER_MODULO_START,
+        VRAM_BANK_START, VRAM_DMA_END, VRAM_DMA_START, WAVEFORM_RAM_END, WAVEFORM_RAM_START,
+        WRAM_BANK_START,
     },
     Address as PseudoAddress, Area, Error, FileOperation, IORegArea,
 };
@@ -14,6 +15,7 @@ pub struct IORegBus {
     pub controller: Rc<RefCell<dyn FileOperation<IORegArea>>>,
     pub communication: Rc<RefCell<dyn FileOperation<IORegArea>>>,
     pub div_timer: Rc<RefCell<dyn FileOperation<IORegArea>>>,
+    pub interrupt_flag: Rc<RefCell<dyn FileOperation<IORegArea>>>,
     pub tima: Rc<RefCell<dyn FileOperation<IORegArea>>>,
     pub tma: Rc<RefCell<dyn FileOperation<IORegArea>>>,
     pub tac: Rc<RefCell<dyn FileOperation<IORegArea>>>,
@@ -60,6 +62,10 @@ impl FileOperation<Area> for IORegBus {
                 .tac
                 .borrow()
                 .read(Box::new(Address::byte_reg(IORegArea::TimerControl, addr))),
+            INTERRUPT_FLAG => self
+                .interrupt_flag
+                .borrow()
+                .read(Box::new(Address::byte_reg(IORegArea::InterruptFlag, addr))),
             SOUND_START..=SOUND_END => self.sound.borrow().read(Box::new(Address::from_offset(
                 IORegArea::Sound,
                 addr,
@@ -137,6 +143,10 @@ impl FileOperation<Area> for IORegBus {
             TIMER_CONTROL_START => self.tac.borrow_mut().write(
                 v,
                 Box::new(Address::byte_reg(IORegArea::TimerControl, addr)),
+            ),
+            INTERRUPT_FLAG => self.interrupt_flag.borrow_mut().write(
+                v,
+                Box::new(Address::byte_reg(IORegArea::InterruptFlag, addr)),
             ),
             SOUND_START..=SOUND_END => self.sound.borrow_mut().write(
                 v,
