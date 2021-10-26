@@ -417,7 +417,7 @@ impl Ticker for PPU {
         Tick::TCycle
     }
 
-    fn tick<B>(&mut self, _adr_bus: &mut B)
+    fn tick<B>(&mut self, adr_bus: &mut B)
     where
         B: Bus<u8> + Bus<u16>,
     {
@@ -429,7 +429,7 @@ impl Ticker for PPU {
         }
         // update state after executing tick
         let lcd_reg = self.lcd_reg.try_borrow_mut().ok();
-        self.state.update(lcd_reg);
+        self.state.update(lcd_reg, adr_bus);
     }
 }
 
