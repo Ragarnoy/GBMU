@@ -107,9 +107,12 @@ impl Game {
         })
     }
 
-    pub fn cycle(&mut self, ppu: &mut PPU) {
-        let cpu: &mut Cpu = &mut self.cpu.borrow_mut();
-        let timer: &mut Timer = &mut self.timer.borrow_mut();
-        self.clock.cycle(&mut self.addr_bus, cpu, ppu, timer);
+    pub fn cycle(&mut self, ppu: &mut PPU) -> bool {
+        self.clock.cycle(
+            &mut self.addr_bus,
+            self.cpu.borrow_mut(),
+            ppu,
+            self.timer.borrow_mut(),
+        )
     }
 }
