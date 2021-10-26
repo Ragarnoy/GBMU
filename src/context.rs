@@ -46,13 +46,13 @@ impl GameContext {
     pub fn new(romname: String) -> Result<GameContext, anyhow::Error> {
         use std::{fs::File, io::Seek};
 
-        let mut file = File::open(romname)?;
+        let mut file = File::open(romname.clone())?;
         let header = Header::from_file(&mut file)?;
 
         log::debug!("header: {:?}", header);
 
         file.rewind()?;
-        let mbc = generate_rom_controller(file, header)?;
+        let mbc = generate_rom_controller(file, header.clone())?;
         let mbc = Rc::new(RefCell::new(mbc));
 
         let ppu = PPU::new();
@@ -96,7 +96,7 @@ impl GameContext {
 
         Ok(Self {
             romname,
-            header,
+            header: header.clone(),
             auto_save: header.cartridge_type.auto_save_type(),
             mbc,
             cpu,
