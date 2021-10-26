@@ -7,8 +7,9 @@ mod ui;
 use clap::{AppSettings, Clap};
 #[cfg(feature = "debug_render")]
 use sdl2::keyboard::Scancode;
+use std::{cell::RefCell, rc::Rc};
 
-use context::{Context, Windows};
+use context::{Context, Game, Windows};
 use gb_dbg::*;
 use gb_lcd::{render, window::GBWindow};
 use gb_ppu::PPU;
@@ -59,7 +60,7 @@ fn main() {
     let opts: Opts = Opts::parse();
     init_logger(opts.log_level);
 
-    let (mut context, mut ppu, mut event_pump) = init_gbmu(&opts);
+    let (mut context, mut game, mut ppu, mut event_pump) = init_gbmu(&opts);
 
     'running: loop {
         context
@@ -69,8 +70,8 @@ fn main() {
             .expect("Fail at the start for the main window");
 
         // render is updated just before drawing for now but we might want to change that later
-        ppu.compute();
-        context.display.update_render(ppu.pixels());
+        ppu.borrow_mut().compute();
+        context.display.update_render(ppu.borrow().pixels());
         // emulation render here
         context.display.draw();
 
@@ -118,7 +119,12 @@ fn main() {
 
 fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
     opts: &Opts,
-) -> (Context<WIDTH, HEIGHT>, PPU, sdl2::EventPump) {
+) -> (
+    Context<WIDTH, HEIGHT>,
+    Option<Game>,
+    Rc<RefCell<PPU>>,
+    sdl2::EventPump,
+) {
     let (sdl_context, video_subsystem, event_pump) =
         gb_lcd::init().expect("Error while initializing LCD");
 
@@ -161,10 +167,17 @@ fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
         debug: None,
         input: None,
     };
-    let game_context = opts
-        .rom
-        .as_ref()
-        .map(|romname| context::GameContext::new(romname.clone()));
+
+    let ppu = Rc::new(RefCell::new(PPU::new()));
+    let game_context: Option<Game> = opts.rom.as_ref().and_then(|romname| {
+        Game::new(romname.clone(), ppu.clone()).map_or_else(
+            |e| {
+                log::error!("while creating game context for {}: {:?}", romname, e);
+                None
+            },
+            Option::Some,
+        )
+    });
 
     (
         Context {
@@ -174,7 +187,8 @@ fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
             joypad,
             windows,
         },
-        PPU::new(),
+        game_context,
+        ppu,
         event_pump,
     )
 }

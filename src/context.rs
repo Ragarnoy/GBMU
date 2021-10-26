@@ -29,21 +29,20 @@ pub struct Windows {
     pub input: Option<GBWindow>,
 }
 
-pub struct GameContext {
+pub struct Game {
     romname: String,
     header: Header,
     auto_save: Option<AutoSave>,
     mbc: Rc<RefCell<MbcController>>,
     cpu: Rc<RefCell<Cpu>>,
     clock: Clock<AddressBus>,
-    ppu: Rc<RefCell<PPU>>,
     io_bus: Rc<RefCell<IORegBus>>,
     timer: Rc<RefCell<Timer>>,
     addr_bus: AddressBus,
 }
 
-impl GameContext {
-    pub fn new(romname: String) -> Result<GameContext, anyhow::Error> {
+impl Game {
+    pub fn new(romname: String, ppu: Rc<RefCell<PPU>>) -> Result<Game, anyhow::Error> {
         use std::{fs::File, io::Seek};
 
         let mut file = File::open(romname.clone())?;
@@ -55,9 +54,8 @@ impl GameContext {
         let mbc = generate_rom_controller(file, header.clone())?;
         let mbc = Rc::new(RefCell::new(mbc));
 
-        let ppu = PPU::new();
-        let ppu_mem = Rc::new(RefCell::new(ppu.memory()));
-        let ppu_reg = Rc::new(RefCell::new(ppu.registers()));
+        let ppu_mem = Rc::new(RefCell::new(ppu.borrow().memory()));
+        let ppu_reg = Rc::new(RefCell::new(ppu.borrow().registers()));
         let ppu = Rc::new(RefCell::new(ppu));
         let cpu = Rc::new(RefCell::new(Cpu::default()));
         let wram = Rc::new(RefCell::new(WorkingRam::new(false)));
@@ -101,7 +99,6 @@ impl GameContext {
             mbc,
             cpu,
             clock: Clock::default(),
-            ppu,
             io_bus,
             timer,
             addr_bus: bus,
