@@ -19,7 +19,7 @@ use std::rc::Rc;
 /// The Pixel Process Unit is in charge of selecting the pixel to be displayed on the lcd screen.
 ///
 /// It owns the VRAM and the OAM, as well as a few registers.
-pub struct PPU {
+pub struct Ppu {
     vram: Rc<RefCell<Vram>>,
     oam: Rc<RefCell<Oam>>,
     lcd_reg: Rc<RefCell<LcdReg>>,
@@ -31,9 +31,9 @@ pub struct PPU {
     scanline_sprites: Vec<Sprite>,
 }
 
-impl PPU {
+impl Ppu {
     pub fn new() -> Self {
-        Self {
+        Ppu {
             vram: Rc::new(RefCell::new(Vram::new())),
             oam: Rc::new(RefCell::new(Oam::new())),
             lcd_reg: Rc::new(RefCell::new(LcdReg::new())),
@@ -406,13 +406,13 @@ impl PPU {
     }
 }
 
-impl Default for PPU {
-    fn default() -> PPU {
-        PPU::new()
+impl Default for Ppu {
+    fn default() -> Ppu {
+        Ppu::new()
     }
 }
 
-impl Ticker for PPU {
+impl Ticker for Ppu {
     fn cycle_count(&self) -> Tick {
         Tick::TCycle
     }
