@@ -69,6 +69,11 @@ fn main() {
             .start_frame()
             .expect("Fail at the start for the main window");
 
+        if let Some(ref mut game) = game {
+            log::trace!("cycling the game");
+            game.cycle(&mut ppu.borrow_mut());
+        }
+
         // render is updated just before drawing for now but we might want to change that later
         ppu.borrow_mut().compute();
         context.display.update_render(ppu.borrow().pixels());
