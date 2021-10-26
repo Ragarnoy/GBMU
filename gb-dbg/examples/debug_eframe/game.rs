@@ -1,10 +1,11 @@
-use crate::registers;
 use anyhow::anyhow;
-use gb_dbg::dbg_interfaces::{RegisterDebugOperations, RegisterMap, RegisterValue};
+use gb_dbg::dbg_interfaces::{
+    DebugOperations, MemoryDebugOperations, RegisterDebugOperations, RegisterMap, RegisterValue,
+};
 
 pub struct Iter<'a> {
     count: u32,
-    registers: &'a Registers,
+    registers: &'a Game,
 }
 
 impl<'a> Iterator for Iter<'a> {
@@ -27,7 +28,7 @@ impl<'a> Iterator for Iter<'a> {
 }
 
 #[derive(Debug)]
-pub struct Registers {
+pub struct Game {
     pub a: u8,
     pub b: u8,
     pub c: u8,
@@ -35,9 +36,18 @@ pub struct Registers {
     pub e: u8,
     pub f: u8,
     pub pc: u16,
+    pub memory: Vec<u8>,
 }
 
-impl Default for Registers {
+impl DebugOperations for Game {}
+
+impl MemoryDebugOperations for Game {
+    fn read(&self, index: u16) -> u8 {
+        *self.memory.get(index as usize).unwrap()
+    }
+}
+
+impl Default for Game {
     fn default() -> Self {
         Self {
             a: 0xFF,
@@ -47,11 +57,12 @@ impl Default for Registers {
             e: 4,
             f: 8,
             pc: 500,
+            memory: vec![0xFFu8; u16::MAX as usize],
         }
     }
 }
 
-impl Registers {
+impl Game {
     pub fn iter(&self) -> Iter<'_> {
         Iter {
             count: 0,
@@ -61,8 +72,8 @@ impl Registers {
 }
 
 //TODO Temporary for now it looks like ass
-impl From<&Registers> for Vec<RegisterMap> {
-    fn from(registers: &registers::Registers) -> Self {
+impl From<&Game> for Vec<RegisterMap> {
+    fn from(registers: &Game) -> Self {
         vec![
             ("A".to_owned(), RegisterValue::from(registers.a)),
             ("B".to_owned(), RegisterValue::from(registers.b)),
@@ -75,7 +86,7 @@ impl From<&Registers> for Vec<RegisterMap> {
     }
 }
 
-impl RegisterDebugOperations for Registers {
+impl RegisterDebugOperations for Game {
     fn cpu_get(&self, key: &str) -> anyhow::Result<RegisterValue> {
         match key.to_uppercase().as_str() {
             "A" => Ok(RegisterValue::from(self.a)),
