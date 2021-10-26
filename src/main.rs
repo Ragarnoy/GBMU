@@ -9,27 +9,9 @@ use clap::{AppSettings, Clap};
 use sdl2::keyboard::Scancode;
 
 use context::{Context, Game, Windows};
-use gb_dbg::*;
+use gb_dbg::debugger::{Debugger, DebuggerBuilder};
 use gb_lcd::{render, window::GBWindow};
 use logger::init_logger;
-
-pub struct Memory {
-    pub memory: Vec<u8>,
-}
-
-impl Default for Memory {
-    fn default() -> Self {
-        Self {
-            memory: vec![0xFFu8; u16::MAX as usize],
-        }
-    }
-}
-
-impl dbg_interfaces::MemoryDebugOperations for Memory {
-    fn read(&self, index: u16) -> u8 {
-        *self.memory.get(index as usize).unwrap()
-    }
-}
 
 #[derive(Clap, Debug)]
 #[clap(version = "0.1")]
@@ -58,7 +40,7 @@ fn main() {
     let opts: Opts = Opts::parse();
     init_logger(opts.log_level);
 
-    let (mut context, mut game, mut event_pump) = init_gbmu(&opts);
+    let (mut context, mut game, mut debugger, mut event_pump) = init_gbmu(&opts);
 
     'running: loop {
         context
@@ -66,7 +48,6 @@ fn main() {
             .main
             .start_frame()
             .expect("Fail at the start for the main window");
-
         if let Some(ref mut game) = game {
             while game.cycle() {
                 log::trace!("cycling the game");
@@ -74,8 +55,6 @@ fn main() {
             log::trace!("frame ready");
             game.draw(&mut context);
         }
-
-        // set ui logic here
         ui::draw_egui(
             &mut context.windows.main,
             &mut context.windows.debug,
@@ -88,15 +67,16 @@ fn main() {
             .end_frame()
             .expect("Fail at the end for the main window");
 
-        if let Some(ref mut dgb_wind) = context.windows.debug {
-            dgb_wind
-                .start_frame()
-                .expect("Fail at the start for the debug window");
-            // dbg_app.draw(dgb_wind.egui_ctx());
-            // Regression for now
-            dgb_wind
-                .end_frame()
-                .expect("Fail at the end for the debug window");
+        if let Some(ref mut game) = game {
+            if let Some(ref mut dgb_wind) = context.windows.debug {
+                dgb_wind
+                    .start_frame()
+                    .expect("Fail at the start for the debug window");
+                debugger.draw(dgb_wind.egui_ctx(), game);
+                dgb_wind
+                    .end_frame()
+                    .expect("Fail at the end for the debug window");
+            }
         }
 
         if let Some(ref mut input_wind) = context.windows.input {
@@ -112,14 +92,18 @@ fn main() {
         if std::ops::ControlFlow::Break(()) == event::process_event(&mut context, &mut event_pump) {
             break 'running;
         }
-        // std::thread::sleep(::std::time::Duration::new(0, 1_000_000_000u32 / 60));
     }
     log::info!("quitting");
 }
 
 fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
     opts: &Opts,
-) -> (Context<WIDTH, HEIGHT>, Option<Game>, sdl2::EventPump) {
+) -> (
+    Context<WIDTH, HEIGHT>,
+    Option<Game>,
+    Debugger<Game>,
+    sdl2::EventPump,
+) {
     let (sdl_context, video_subsystem, event_pump) =
         gb_lcd::init().expect("Error while initializing LCD");
 
@@ -170,6 +154,8 @@ fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
         )
     });
 
+    let dbg = DebuggerBuilder::new().build();
+
     (
         Context {
             sdl: sdl_context,
@@ -179,6 +165,7 @@ fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
             windows,
         },
         game_context,
+        dbg,
         event_pump,
     )
 }

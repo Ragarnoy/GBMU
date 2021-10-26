@@ -1,6 +1,6 @@
 use crate::error::Error;
-use egui::{vec2, CtxRef, Pos2, Rect};
-use egui_sdl2_gl::{EguiInputState, Painter};
+use egui::CtxRef;
+use egui_sdl2_gl::{painter::Painter, DpiScaling, EguiStateHandler};
 use sdl2::{
     event::Event,
     video::{GLContext, Window as SdlWindow},
@@ -15,7 +15,7 @@ pub struct GBWindow {
     gl_ctx: GLContext,
     egui_ctx: CtxRef,
     egui_painter: Painter,
-    egui_input_state: EguiInputState,
+    egui_state: EguiStateHandler,
     pixels_per_point: f32,
     start_time: Instant,
     #[cfg(feature = "debug_render")]
@@ -42,20 +42,11 @@ impl GBWindow {
             .gl_create_context()
             .map_err(Error::GBWindowInit)?;
 
-        let egui_painter = Painter::new(video_sys, dim.0, dim.1);
+        let (egui_painter, egui_state) = egui_sdl2_gl::with_sdl2(&sdl_window, DpiScaling::Default);
         let egui_ctx = CtxRef::default();
 
         let native_pixels_per_point =
             RESOLUTION_DOT / video_sys.display_dpi(0).map_err(Error::GBWindowInit)?.0;
-
-        let egui_input_state = EguiInputState::new(egui::RawInput {
-            screen_rect: Some(Rect::from_min_size(
-                Pos2::new(0f32, 0f32),
-                vec2(dim.0 as f32, dim.1 as f32) / native_pixels_per_point,
-            )),
-            pixels_per_point: Some(native_pixels_per_point),
-            ..Default::default()
-        });
 
         let start_time = Instant::now();
         Ok(Self {
@@ -63,7 +54,7 @@ impl GBWindow {
             gl_ctx,
             egui_painter,
             egui_ctx,
-            egui_input_state,
+            egui_state,
             pixels_per_point: native_pixels_per_point,
             start_time,
             #[cfg(feature = "debug_render")]
@@ -92,10 +83,9 @@ impl GBWindow {
         self.sdl_window
             .gl_make_current(&self.gl_ctx)
             .map_err(Error::GBWindowFrame)?;
-        self.egui_input_state.input.time = Some(self.start_time.elapsed().as_secs_f64());
-        self.egui_ctx
-            .begin_frame(self.egui_input_state.input.take());
-        self.egui_input_state.input.pixels_per_point = Some(self.pixels_per_point);
+        self.egui_state.input.time = Some(self.start_time.elapsed().as_secs_f64());
+        self.egui_ctx.begin_frame(self.egui_state.input.take());
+        self.egui_state.input.pixels_per_point = Some(self.pixels_per_point);
         unsafe {
             // Clear the screen to black
             gl::ClearColor(0.0, 0.0, 0.0, 1.0);
@@ -116,30 +106,21 @@ impl GBWindow {
 
         let paint_jobs = self.egui_ctx.tessellate(paint_cmds);
 
-        self.egui_painter.paint_jobs(
-            None,
-            paint_jobs,
-            &self.egui_ctx.texture(),
-            self.pixels_per_point,
-        );
+        self.egui_painter
+            .paint_jobs(None, paint_jobs, &self.egui_ctx.texture());
 
         self.sdl_window.gl_swap_window();
         Ok(())
     }
 
-    pub fn resize(&mut self, dim: (u32, u32), video_sys: &VideoSubsystem) -> Result<(), Error> {
+    pub fn resize(&mut self) -> Result<(), Error> {
         self.sdl_window
             .gl_make_current(&self.gl_ctx)
             .map_err(Error::GBWindowFrame)?;
-        self.egui_painter = Painter::new(video_sys, dim.0, dim.1);
-        self.egui_input_state = EguiInputState::new(egui::RawInput {
-            screen_rect: Some(Rect::from_min_size(
-                Pos2::new(0f32, 0f32),
-                vec2(dim.0 as f32, dim.1 as f32) / self.pixels_per_point,
-            )),
-            pixels_per_point: Some(self.pixels_per_point),
-            ..Default::default()
-        });
+        let (egui_painter, egui_state) =
+            egui_sdl2_gl::with_sdl2(&self.sdl_window, DpiScaling::Default);
+        self.egui_painter = egui_painter;
+        self.egui_state = egui_state;
         Ok(())
     }
 
@@ -150,7 +131,11 @@ impl GBWindow {
         ) {
             let id = self.sdl_window.id();
             if id_mouse_focus == id || id_keyboard_focus == id {
-                egui_sdl2_gl::input_to_egui(event.clone(), &mut self.egui_input_state);
+                self.egui_state.process_input(
+                    &self.sdl_window,
+                    event.clone(),
+                    &mut self.egui_painter,
+                );
                 return true;
             }
         }

@@ -5,7 +5,7 @@ pub mod memory;
 mod options;
 pub mod registers;
 
-use crate::dbg_interfaces::{MemoryDebugOperations, RegisterDebugOperations};
+use crate::dbg_interfaces::{DebugOperations, MemoryDebugOperations, RegisterDebugOperations};
 use crate::debugger::breakpoints::BreakpointEditor;
 use crate::debugger::disassembler::DisassemblyViewer;
 use crate::debugger::flow_control::FlowController;
@@ -25,13 +25,8 @@ pub struct Debugger<MEM> {
     flow_status: Option<ControlFlow<(), RunDuration>>,
 }
 
-impl<MEM: MemoryDebugOperations> Debugger<MEM> {
-    pub fn draw<REG: RegisterDebugOperations>(
-        &mut self,
-        ctx: &CtxRef,
-        mut memory: &mut MEM,
-        registers: &REG,
-    ) {
+impl<MEM: DebugOperations> Debugger<MEM> {
+    pub fn draw(&mut self, ctx: &CtxRef, mut memory: &mut MEM) {
         // ctx.set_debug_on_hover(true);
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             self.flow_status = self.flow_controller.draw(ui);
@@ -43,7 +38,7 @@ impl<MEM: MemoryDebugOperations> Debugger<MEM> {
             .show(ctx, |ui| {
                 ui.vertical(|ui| {
                     self.disassembler
-                        .draw(ui, registers.cpu_get("PC").unwrap().into(), memory);
+                        .draw(ui, memory.cpu_get("PC").unwrap().into(), memory);
                     ui.separator();
                     self.memory_editor.draw(ui, &mut memory);
                 });
@@ -55,11 +50,11 @@ impl<MEM: MemoryDebugOperations> Debugger<MEM> {
             .show(ctx, |ui| {
                 self.flow_status = self
                     .breakpoint_editor
-                    .draw(ui, registers.cpu_get("PC").unwrap().into());
+                    .draw(ui, memory.cpu_get("PC").unwrap().into());
             });
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            self.register_editor.draw(ui, registers);
+            self.register_editor.draw(ui, memory);
         });
     }
 

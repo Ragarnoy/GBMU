@@ -1,9 +1,13 @@
+use anyhow::Result;
 use gb_bus::{
     generic::{CharDevice, SimpleRW},
-    AddressBus, IORegBus, WorkingRam,
+    AddressBus, Bus, IORegBus, WorkingRam,
 };
 use gb_clock::Clock;
 use gb_cpu::cpu::Cpu;
+use gb_dbg::dbg_interfaces::{
+    DebugOperations, MemoryDebugOperations, RegisterDebugOperations, RegisterMap, RegisterValue,
+};
 use gb_joypad::Joypad;
 use gb_lcd::{
     render::{RenderImage, SCREEN_HEIGHT, SCREEN_WIDTH},
@@ -123,5 +127,42 @@ impl Game {
     pub fn draw(&self, context: &mut Context<SCREEN_WIDTH, SCREEN_HEIGHT>) {
         context.display.update_render(self.ppu.pixels());
         context.display.draw();
+    }
+}
+
+impl DebugOperations for Game {}
+
+impl MemoryDebugOperations for Game {
+    fn read(&self, index: u16) -> u8 {
+        self.addr_bus.read(index).unwrap_or_else(|err| {
+            log::error!("[DBG-OPS] bus read error at {}: {:?}", index, err);
+            0xff
+        })
+    }
+}
+
+impl RegisterDebugOperations for Game {
+    fn cpu_get(&self, _key: &str) -> Result<RegisterValue> {
+        Ok(RegisterValue::U8(0xff))
+    }
+
+    fn ppu_get(&self, _key: &str) -> Result<RegisterValue> {
+        Ok(RegisterValue::U8(0xff))
+    }
+
+    fn io_get(&self, _key: &str) -> Result<RegisterValue> {
+        Ok(RegisterValue::U8(0xff))
+    }
+
+    fn cpu_registers(&self) -> Vec<RegisterMap> {
+        Vec::new()
+    }
+
+    fn ppu_registers(&self) -> Vec<RegisterMap> {
+        Vec::new()
+    }
+
+    fn io_registers(&self) -> Vec<RegisterMap> {
+        Vec::new()
     }
 }

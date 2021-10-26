@@ -714,11 +714,10 @@ dependencies = [
 
 [[package]]
 name = "egui_sdl2_gl"
-version = "0.13.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "04b985886645edf53cdefa632d6b3fce45452a545a28d9a6b87f303b322f384c"
+version = "0.14.1"
+source = "git+https://github.com/luxtorpeda-dev/egui_sdl2_gl#17b784f706c5f8738f212d24955092a726715714"
 dependencies = [
- "egui 0.13.1",
+ "egui 0.14.2",
  "gl",
  "sdl2",
 ]
@@ -990,7 +989,7 @@ dependencies = [
 name = "gb-joypad"
 version = "0.0.0"
 dependencies = [
- "egui 0.13.1",
+ "egui 0.14.2",
  "log",
  "modular-bitfield",
  "sdl2",
@@ -1001,7 +1000,7 @@ dependencies = [
 name = "gb-lcd"
 version = "0.1.0"
 dependencies = [
- "egui 0.13.1",
+ "egui 0.14.2",
  "egui_sdl2_gl",
  "gl",
  "sdl2",
@@ -1064,7 +1063,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap",
- "egui 0.13.1",
+ "egui 0.14.2",
  "gb-bus",
  "gb-clock",
  "gb-cpu",

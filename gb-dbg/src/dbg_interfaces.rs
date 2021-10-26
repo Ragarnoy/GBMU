@@ -29,6 +29,8 @@ impl From<u16> for RegisterValue {
     }
 }
 
+pub trait DebugOperations: MemoryDebugOperations + RegisterDebugOperations {}
+
 pub trait MemoryDebugOperations {
     fn read(&self, index: u16) -> u8;
 }
