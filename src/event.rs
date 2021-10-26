@@ -32,27 +32,23 @@ pub fn process_event<const WIDTH: usize, const HEIGHT: usize>(
                 window_id,
                 ..
             } => match win_event {
-                sdl2::event::WindowEvent::SizeChanged(width, height) => {
+                sdl2::event::WindowEvent::SizeChanged(_width, _height) => {
                     if context.windows.main.sdl_window().id() == window_id {
                         context
                             .windows
                             .main
-                            .resize((width as u32, height as u32), &context.video)
+                            .resize()
                             .expect("Fail to resize GB window");
                         context
                             .display
                             .resize(context.windows.main.sdl_window().size());
                     } else if let Some(ref mut dbg_wind) = context.windows.debug {
                         if dbg_wind.sdl_window().id() == window_id {
-                            dbg_wind
-                                .resize((width as u32, height as u32), &context.video)
-                                .expect("Fail to resize debug window");
+                            dbg_wind.resize().expect("Fail to resize debug window");
                         }
                     } else if let Some(ref mut input_wind) = context.windows.input {
                         if input_wind.sdl_window().id() == window_id {
-                            input_wind
-                                .resize((width as u32, height as u32), &context.video)
-                                .expect("Fail to resize input window");
+                            input_wind.resize().expect("Fail to resize input window");
                         }
                     }
                 }
