@@ -1,6 +1,9 @@
-use super::{fetch::fetch, opcode::Opcode, opcode_cb::OpcodeCB, MicrocodeFlow, State};
+use super::{
+    fetch::fetch, interrupts::handle_interrupts, opcode::Opcode, opcode_cb::OpcodeCB, CycleDigest,
+    MicrocodeFlow, State,
+};
 use crate::registers::Registers;
-use gb_bus::Bus;
+use gb_bus::{Area, Bus, FileOperation, IORegArea};
 use std::fmt::{self, Debug, Display};
 
 #[derive(Clone, Debug)]
@@ -40,6 +43,10 @@ pub struct MicrocodeController {
     pub actions: Vec<ActionFn>,
     /// Cache use for microcode action
     cache: Vec<u8>,
+    /// The IME flag is used to disable all interrupts
+    pub interrupt_master_enable: bool,
+    pub interrupt_flag: u8,
+    pub interrupt_enable: u8,
 }
 
 impl Debug for MicrocodeController {
@@ -62,19 +69,25 @@ impl Default for MicrocodeController {
             opcode: None,
             actions: Vec::with_capacity(12),
             cache: Vec::with_capacity(6),
+            interrupt_master_enable: true,
+            interrupt_flag: 0,
+            interrupt_enable: 0,
         }
     }
 }
 
 impl MicrocodeController {
     pub fn step(&mut self, regs: &mut Registers, bus: &mut impl Bus<u8>) {
-        use super::CycleDigest;
         use std::ops::ControlFlow;
 
         let mut state = State::new(regs, bus);
         let action = self.actions.pop().unwrap_or_else(|| {
             self.clear();
-            fetch
+            if self.is_interrupt_ready() {
+                handle_interrupts
+            } else {
+                fetch
+            }
         });
 
         match action(self, &mut state) {
@@ -133,5 +146,38 @@ impl MicrocodeController {
     /// Pop the last u16 from the cache.
     pub fn pop_u16(&mut self) -> u16 {
         u16::from_be_bytes([self.pop(), self.pop()])
+    }
+
+    fn is_interrupt_ready(&self) -> bool {
+        if !self.interrupt_master_enable {
+            return false;
+        }
+        let interrupt_flag = self.interrupt_flag;
+        let interrupt_enable = self.interrupt_enable;
+        interrupt_flag & interrupt_enable != 0
+    }
+}
+
+impl FileOperation<Area> for MicrocodeController {
+    fn read(&self, _addr: Box<dyn gb_bus::Address<Area>>) -> Result<u8, gb_bus::Error> {
+        Ok(self.interrupt_enable)
+    }
+    fn write(&mut self, v: u8, _addr: Box<dyn gb_bus::Address<Area>>) -> Result<(), gb_bus::Error> {
+        self.interrupt_enable = v;
+        Ok(())
+    }
+}
+
+impl FileOperation<IORegArea> for MicrocodeController {
+    fn read(&self, _addr: Box<dyn gb_bus::Address<IORegArea>>) -> Result<u8, gb_bus::Error> {
+        Ok(self.interrupt_flag)
+    }
+    fn write(
+        &mut self,
+        v: u8,
+        _addr: Box<dyn gb_bus::Address<IORegArea>>,
+    ) -> Result<(), gb_bus::Error> {
+        self.interrupt_flag = v;
+        Ok(())
     }
 }
