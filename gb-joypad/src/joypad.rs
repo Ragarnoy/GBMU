@@ -1,6 +1,7 @@
 use crate::{register::JoypadRegister, Config, InputType};
 use egui::{CtxRef, Direction, Layout, Separator, Ui};
-use gb_bus::{Address, Error, FileOperation, IORegArea};
+use gb_bus::{Address, Bus, Error, FileOperation, IORegArea};
+use gb_clock::{Tick, Ticker};
 use sdl2::event::Event;
 use sdl2::keyboard::Scancode;
 use std::collections::HashMap;
@@ -235,6 +236,22 @@ impl FileOperation<IORegArea> for Joypad {
         match (addr.area_type(), addr.get_address()) {
             (IORegArea::Controller, 0x00) => Ok(self.register.into()),
             _ => Err(Error::SegmentationFault(addr.into())),
+        }
+    }
+}
+
+impl Ticker for Joypad {
+    fn cycle_count(&self) -> Tick {
+        Tick::MCycle
+    }
+    fn tick<B>(&mut self, adr_bus: &mut B)
+    where
+        B: Bus<u8> + Bus<u16>,
+    {
+        match self.refresh {
+            Some(0) => {}                          // update register
+            Some(n) => self.refresh = Some(n - 1), // decrease delay
+            None => {}                             // idle
         }
     }
 }
