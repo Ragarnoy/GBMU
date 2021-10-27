@@ -86,8 +86,20 @@ impl State {
             (line, Self::LAST_STEP) => {
                 if line == Self::VBLANK_START - 1 {
                     self.mode = Mode::VBlank;
+                    log::trace!(
+                        "start VBlank (mode 1) at line {}, step {}, {} pixel drawn",
+                        self.line,
+                        self.step,
+                        self.pixel_drawn()
+                    );
                 } else {
                     self.mode = Mode::OAMFetch;
+                    log::trace!(
+                        "start OAM fetch (mode 2) at line {}, step {}, {} pixel drawn",
+                        self.line,
+                        self.step,
+                        self.pixel_drawn()
+                    );
                 }
                 return true;
             }
@@ -101,6 +113,12 @@ impl State {
             (line, _) if line < Self::VBLANK_START => log::error!("VBlank reached on draw line"),
             (Self::LAST_LINE, Self::LAST_STEP) => {
                 self.mode = Mode::OAMFetch;
+                log::trace!(
+                    "start OAM fetch (mode 2) at line {}, step {}, {} pixel drawn",
+                    self.line,
+                    self.step,
+                    self.pixel_drawn()
+                );
                 return true;
             }
             _ => {}
@@ -118,6 +136,12 @@ impl State {
             }
             (_, Self::LAST_OAM_FETCH_STEP) => {
                 self.mode = Mode::PixelDrawing;
+                log::trace!(
+                    "start pixel drawing (mode 3) at line {}, step {}, {} pixel drawn",
+                    self.line,
+                    self.step,
+                    self.pixel_drawn()
+                );
                 return true;
             }
             _ => {}
@@ -133,14 +157,31 @@ impl State {
             (_, step) if step < Self::PIXEL_DRAWING_START => {
                 log::error!("PixelDrawing reached on OAMFetch period")
             }
-            (_, step) if step >= Self::HBLANK_MAX_START => {
+            (line, step) if step >= Self::HBLANK_MAX_START => {
                 self.mode = Mode::HBlank;
-                log::error!("PixelDrawing reached on HBlank period");
+                log::trace!(
+                    "start HBlank (mode 0) at line {}, step {}, {} pixel drawn",
+                    self.line,
+                    self.step,
+                    self.pixel_drawn()
+                );
+                log::error!(
+                    "PixelDrawing reached on HBlank period at: l{}; s{}; p{}",
+                    line,
+                    step,
+                    self.pixel_drawn()
+                );
                 return true;
             }
             (_, step) if step >= Self::HBLANK_MIN_START => {
                 if self.pixel_drawn >= 160 {
                     self.mode = Mode::HBlank;
+                    log::trace!(
+                        "start HBlank (mode 0) at line {}, step {}, {} pixel drawn",
+                        self.line,
+                        self.step,
+                        self.pixel_drawn()
+                    );
                     if self.pixel_drawn > 160 {
                         log::error!("Too many pixel drawn before switching to HBlank");
                     }
