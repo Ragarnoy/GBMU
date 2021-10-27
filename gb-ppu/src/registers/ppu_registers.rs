@@ -64,7 +64,6 @@ impl FileOperation<IORegArea> for PPURegisters {
     }
 
     fn write(&mut self, v: u8, addr: Box<dyn Address<IORegArea>>) -> Result<(), Error> {
-        log::warn!("missing ppu registers write");
         match addr.area_type() {
             IORegArea::Lcd => match self.lcd.try_borrow_mut() {
                 Ok(mut lcd) => lcd.write(addr, v),
