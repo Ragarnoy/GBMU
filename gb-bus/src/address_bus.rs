@@ -18,24 +18,24 @@ use std::{cell::RefCell, rc::Rc};
 /// This Implementation of an AddressBus will be limited to 16-bit address
 pub struct AddressBus {
     /// Rom from the cartridge
-    rom: Rc<RefCell<dyn FileOperation<Area>>>,
+    pub rom: Rc<RefCell<dyn FileOperation<Area>>>,
     /// Video Ram
-    vram: Rc<RefCell<dyn FileOperation<Area>>>,
+    pub vram: Rc<RefCell<dyn FileOperation<Area>>>,
     /// Ram from the cartridge
-    ext_ram: Rc<RefCell<dyn FileOperation<Area>>>,
+    pub ext_ram: Rc<RefCell<dyn FileOperation<Area>>>,
     /// Internal gameboy ram
-    ram: Rc<RefCell<dyn FileOperation<Area>>>,
+    pub ram: Rc<RefCell<dyn FileOperation<Area>>>,
     /// Echo Ram area, usually a mirror of ram
-    eram: Rc<RefCell<dyn FileOperation<Area>>>,
+    pub eram: Rc<RefCell<dyn FileOperation<Area>>>,
     /// Sprite attribute table
-    oam: Rc<RefCell<dyn FileOperation<Area>>>,
+    pub oam: Rc<RefCell<dyn FileOperation<Area>>>,
     /// io registers table
-    io_reg: Rc<RefCell<dyn FileOperation<Area>>>,
+    pub io_reg: Rc<RefCell<dyn FileOperation<Area>>>,
     /// high ram
     /// allow for faster access in gameboy
-    hram: Rc<RefCell<dyn FileOperation<Area>>>,
+    pub hram: Rc<RefCell<dyn FileOperation<Area>>>,
     /// register to enable/disable all interrupts
-    ie_reg: Rc<RefCell<dyn FileOperation<Area>>>,
+    pub ie_reg: Rc<RefCell<dyn FileOperation<Area>>>,
 }
 
 impl AddressBus {

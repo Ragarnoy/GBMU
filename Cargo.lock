@@ -1062,12 +1062,18 @@ dependencies = [
 name = "gbmu"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "clap",
  "egui 0.13.1",
+ "gb-bus",
+ "gb-clock",
+ "gb-cpu",
  "gb-dbg",
  "gb-joypad",
  "gb-lcd",
  "gb-ppu",
+ "gb-roms",
+ "gb-timer",
  "log",
  "native-dialog",
  "sdl2",

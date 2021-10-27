@@ -20,7 +20,7 @@ impl BiosWrapper {
     }
 
     fn bios_enabled(&self) -> bool {
-        self.bios_enabling_reg != 0
+        self.bios_enabling_reg == 0
     }
 }
 

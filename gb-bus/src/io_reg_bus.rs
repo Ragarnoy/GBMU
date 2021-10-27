@@ -33,11 +33,10 @@ impl FileOperation<Area> for IORegBus {
     fn read(&self, address: Box<dyn PseudoAddress<Area>>) -> Result<u8, Error> {
         let addr: u16 = address.into();
         match addr {
-            CONTROLLER_START => self.controller.borrow().read(Box::new(Address::from_offset(
-                IORegArea::Controller,
-                addr,
-                COMMUNICATION_START,
-            ))),
+            CONTROLLER_START => self
+                .controller
+                .borrow()
+                .read(Box::new(Address::byte_reg(IORegArea::Controller, addr))),
             COMMUNICATION_START..=COMMUNICATION_END => {
                 self.communication
                     .borrow()
@@ -47,15 +46,10 @@ impl FileOperation<Area> for IORegBus {
                         COMMUNICATION_START,
                     )))
             }
-            DIV_TIMER_START => self.div_timer.borrow().read(Box::new(Address::from_offset(
-                IORegArea::DivTimer,
-                addr,
-                DIV_TIMER_START,
-            ))),
-            INTERRUPT_FLAG => self
-                .interrupt_flag
+            DIV_TIMER_START => self
+                .div_timer
                 .borrow()
-                .read(Box::new(Address::byte_reg(IORegArea::InterruptFlag, addr))),
+                .read(Box::new(Address::byte_reg(IORegArea::DivTimer, addr))),
             TIMER_COUNTER_START => self
                 .tima
                 .borrow()
@@ -68,6 +62,10 @@ impl FileOperation<Area> for IORegBus {
                 .tac
                 .borrow()
                 .read(Box::new(Address::byte_reg(IORegArea::TimerControl, addr))),
+            INTERRUPT_FLAG => self
+                .interrupt_flag
+                .borrow()
+                .read(Box::new(Address::byte_reg(IORegArea::InterruptFlag, addr))),
             SOUND_START..=SOUND_END => self.sound.borrow().read(Box::new(Address::from_offset(
                 IORegArea::Sound,
                 addr,
@@ -87,16 +85,14 @@ impl FileOperation<Area> for IORegBus {
                 addr,
                 LCD_START,
             ))),
-            VRAM_BANK_START => self.vram_bank.borrow().read(Box::new(Address::from_offset(
-                IORegArea::VRamBank,
-                addr,
-                VRAM_BANK_START,
-            ))),
-            BOOT_ROM_START => self.boot_rom.borrow().read(Box::new(Address::from_offset(
-                IORegArea::BootRom,
-                addr,
-                BOOT_ROM_START,
-            ))),
+            VRAM_BANK_START => self
+                .vram_bank
+                .borrow()
+                .read(Box::new(Address::byte_reg(IORegArea::VRamBank, addr))),
+            BOOT_ROM_START => self
+                .boot_rom
+                .borrow()
+                .read(Box::new(Address::byte_reg(IORegArea::BootRom, addr))),
             VRAM_DMA_START..=VRAM_DMA_END => self.vram_dma.borrow().read(Box::new(
                 Address::from_offset(IORegArea::VramDma, addr, VRAM_DMA_START),
             )),
@@ -109,11 +105,10 @@ impl FileOperation<Area> for IORegBus {
                         BG_OBJ_PALETTES_START,
                     )))
             }
-            WRAM_BANK_START => self.wram_bank.borrow().read(Box::new(Address::from_offset(
-                IORegArea::WRamBank,
-                addr,
-                WRAM_BANK_START,
-            ))),
+            WRAM_BANK_START => self
+                .wram_bank
+                .borrow()
+                .read(Box::new(Address::byte_reg(IORegArea::WRamBank, addr))),
             _ => Err(Error::BusError(addr)),
         }
     }
@@ -121,14 +116,10 @@ impl FileOperation<Area> for IORegBus {
     fn write(&mut self, v: u8, address: Box<dyn PseudoAddress<Area>>) -> Result<(), Error> {
         let addr: u16 = address.into();
         match addr {
-            CONTROLLER_START => self.controller.borrow_mut().write(
-                v,
-                Box::new(Address::from_offset(
-                    IORegArea::Controller,
-                    addr,
-                    CONTROLLER_START,
-                )),
-            ),
+            CONTROLLER_START => self
+                .controller
+                .borrow_mut()
+                .write(v, Box::new(Address::byte_reg(IORegArea::Controller, addr))),
             COMMUNICATION_START..=COMMUNICATION_END => self.communication.borrow_mut().write(
                 v,
                 Box::new(Address::from_offset(
@@ -173,22 +164,14 @@ impl FileOperation<Area> for IORegBus {
                 v,
                 Box::new(Address::from_offset(IORegArea::Lcd, addr, LCD_START)),
             ),
-            VRAM_BANK_START => self.vram_bank.borrow_mut().write(
-                v,
-                Box::new(Address::from_offset(
-                    IORegArea::VRamBank,
-                    addr,
-                    VRAM_BANK_START,
-                )),
-            ),
-            BOOT_ROM_START => self.boot_rom.borrow_mut().write(
-                v,
-                Box::new(Address::from_offset(
-                    IORegArea::BootRom,
-                    addr,
-                    BOOT_ROM_START,
-                )),
-            ),
+            VRAM_BANK_START => self
+                .vram_bank
+                .borrow_mut()
+                .write(v, Box::new(Address::byte_reg(IORegArea::VRamBank, addr))),
+            BOOT_ROM_START => self
+                .boot_rom
+                .borrow_mut()
+                .write(v, Box::new(Address::byte_reg(IORegArea::BootRom, addr))),
             VRAM_DMA_START..=VRAM_DMA_END => self.vram_dma.borrow_mut().write(
                 v,
                 Box::new(Address::from_offset(
@@ -205,14 +188,10 @@ impl FileOperation<Area> for IORegBus {
                     BG_OBJ_PALETTES_START,
                 )),
             ),
-            WRAM_BANK_START => self.wram_bank.borrow_mut().write(
-                v,
-                Box::new(Address::from_offset(
-                    IORegArea::WRamBank,
-                    addr,
-                    WRAM_BANK_START,
-                )),
-            ),
+            WRAM_BANK_START => self
+                .wram_bank
+                .borrow_mut()
+                .write(v, Box::new(Address::byte_reg(IORegArea::WRamBank, addr))),
             _ => Err(Error::BusError(addr)),
         }
     }

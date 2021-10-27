@@ -19,6 +19,7 @@ impl<'a> State<'a> {
     }
 
     pub fn read_bus(&self, addr: u16) -> u8 {
+        log::trace!("[micrococe] reading bus at {:x}", addr);
         self.bus.read(addr).unwrap_or(0xff)
     }
 

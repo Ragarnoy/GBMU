@@ -19,14 +19,14 @@ impl Bios {
     }
 }
 
-pub fn dmg_bios() -> Bios {
+pub fn dmg() -> Bios {
     Bios::from_bytes(
         BiosType::Dmg,
         include_bytes!("../../../assets/bios/dmg_boot.bin"),
     )
 }
 
-pub fn cgb_bios() -> Bios {
+pub fn cgb() -> Bios {
     Bios::from_bytes(
         BiosType::Cgb,
         include_bytes!("../../../assets/bios/cgb_boot.bin"),
