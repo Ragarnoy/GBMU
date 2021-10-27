@@ -32,6 +32,51 @@ pub struct JoypadRegister {
     mode: RegisterMode,
 }
 
+impl RegisterBits {
+    fn update(
+        &mut self,
+        values: [InputType; 4],
+        state: &mut HashMap<InputType, bool>,
+        addr_bus: &mut dyn Bus<u8>,
+    ) {
+        let old = self.p10();
+        self.set_p10((!state[&values[0]]).into());
+        if old != 0 && self.p10() == 0 {
+            trigger_interrupt(addr_bus);
+        };
+
+        let old = self.p11();
+        self.set_p11((!state[&values[1]]).into());
+        if old != 0 && self.p11() == 0 {
+            trigger_interrupt(addr_bus);
+        };
+
+        let old = self.p12();
+        self.set_p12((!state[&values[2]]).into());
+        if old != 0 && self.p12() == 0 {
+            trigger_interrupt(addr_bus);
+        };
+
+        let old = self.p13();
+        self.set_p13((!state[&values[3]]).into());
+        if old != 0 && self.p13() == 0 {
+            trigger_interrupt(addr_bus);
+        };
+    }
+}
+
+fn trigger_interrupt(addr_bus: &mut dyn Bus<u8>) {
+    let interrupts_val = addr_bus
+        .read(0xFF00)
+        .expect("Failed to read interrupt value for joypad interrupt");
+    if let Err(err) = addr_bus.write(0xFF00, interrupts_val | 0b10000) {
+        log::error!(
+            "Failed to write interrupt value for joypad interrupt: {:?}",
+            err
+        )
+    }
+}
+
 impl JoypadRegister {
     pub fn new() -> Self {
         JoypadRegister {
@@ -44,16 +89,28 @@ impl JoypadRegister {
         match self.mode {
             RegisterMode::Unset => {}
             RegisterMode::Direction => {
-                self.bits.set_p10(state[&InputType::Right].into());
-                self.bits.set_p11(state[&InputType::Left].into());
-                self.bits.set_p12(state[&InputType::Up].into());
-                self.bits.set_p13(state[&InputType::Down].into());
+                self.bits.update(
+                    [
+                        InputType::Right,
+                        InputType::Left,
+                        InputType::Up,
+                        InputType::Down,
+                    ],
+                    state,
+                    addr_bus,
+                );
             }
             RegisterMode::Action => {
-                self.bits.set_p10(state[&InputType::A].into());
-                self.bits.set_p11(state[&InputType::B].into());
-                self.bits.set_p12(state[&InputType::Select].into());
-                self.bits.set_p13(state[&InputType::Start].into());
+                self.bits.update(
+                    [
+                        InputType::A,
+                        InputType::B,
+                        InputType::Select,
+                        InputType::Start,
+                    ],
+                    state,
+                    addr_bus,
+                );
             }
         }
     }
