@@ -1,5 +1,6 @@
 use crate::{register::JoypadRegister, Config, InputType};
 use egui::{CtxRef, Direction, Layout, Separator, Ui};
+use gb_bus::{Address, Error, FileOperation, IORegArea};
 use sdl2::event::Event;
 use sdl2::keyboard::Scancode;
 use std::collections::HashMap;
@@ -212,6 +213,26 @@ impl Joypad {
                 }
             }
             _ => {}
+        }
+    }
+}
+
+impl FileOperation<IORegArea> for Joypad {
+    fn write(&mut self, v: u8, addr: Box<dyn Address<IORegArea>>) -> Result<(), Error> {
+        match (addr.area_type(), addr.get_address()) {
+            (IORegArea::Controller, 0x00) => {
+                self.register = (v & 0b0011_0000).into();
+                self.refresh = Some(1);
+                Ok(())
+            }
+            _ => Err(Error::SegmentationFault(addr.into())),
+        }
+    }
+
+    fn read(&self, addr: Box<dyn Address<IORegArea>>) -> Result<u8, Error> {
+        match (addr.area_type(), addr.get_address()) {
+            (IORegArea::Controller, 0x00) => Ok(self.register.into()),
+            _ => Err(Error::SegmentationFault(addr.into())),
         }
     }
 }

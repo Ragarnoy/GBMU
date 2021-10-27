@@ -4,7 +4,7 @@ use modular_bitfield::{
 };
 
 #[bitfield]
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone, Copy)]
 struct RegisterBits {
     p10: B1,
     p11: B1,
@@ -16,13 +16,13 @@ struct RegisterBits {
     void: B2,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 enum RegisterMode {
     Direction,
     Action,
 }
 
-#[derive(Debug)]
+#[derive(Default, Debug, Clone, Copy)]
 pub struct JoypadRegister {
     bits: RegisterBits,
     mode: RegisterMode,
@@ -31,14 +31,41 @@ pub struct JoypadRegister {
 impl JoypadRegister {
     pub fn new() -> Self {
         JoypadRegister {
-            bits: RegisterBits::default(),
+            bits: RegisterBits::new(),
             mode: RegisterMode::Direction,
         }
     }
 }
 
-impl Default for JoypadRegister {
-    fn default() -> JoypadRegister {
-        JoypadRegister::new()
+impl Default for RegisterMode {
+    fn default() -> RegisterMode {
+        RegisterMode::Direction
+    }
+}
+
+impl From<RegisterBits> for u8 {
+    fn from(bits: RegisterBits) -> u8 {
+        bits.into_bytes()[0]
+    }
+}
+
+impl From<JoypadRegister> for u8 {
+    fn from(register: JoypadRegister) -> u8 {
+        register.bits.into()
+    }
+}
+
+impl From<u8> for RegisterBits {
+    fn from(byte: u8) -> RegisterBits {
+        RegisterBits::from_bytes([byte])
+    }
+}
+
+impl From<u8> for JoypadRegister {
+    fn from(byte: u8) -> JoypadRegister {
+        JoypadRegister {
+            bits: byte.into(),
+            mode: RegisterMode::Direction,
+        }
     }
 }
