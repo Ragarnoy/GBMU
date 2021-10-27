@@ -244,12 +244,15 @@ impl Ticker for Joypad {
     fn cycle_count(&self) -> Tick {
         Tick::MCycle
     }
-    fn tick<B>(&mut self, adr_bus: &mut B)
+    fn tick<B>(&mut self, addr_bus: &mut B)
     where
         B: Bus<u8> + Bus<u16>,
     {
         match self.refresh {
-            Some(0) => {}                          // update register
+            Some(0) => {
+                self.refresh = None;
+                self.register.refresh(addr_bus, &mut self.input_states);
+            } // update register
             Some(n) => self.refresh = Some(n - 1), // decrease delay
             None => {}                             // idle
         }
