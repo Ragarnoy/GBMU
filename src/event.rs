@@ -6,7 +6,7 @@ pub fn process_event<const WIDTH: usize, const HEIGHT: usize>(
     events: &mut EventPump,
 ) -> std::ops::ControlFlow<()> {
     for event in events.poll_iter() {
-        context.joypad.send_event(&event);
+        context.joypad.borrow_mut().send_event(&event);
         match event {
             Event::Quit { .. }
             | Event::KeyDown {
@@ -61,7 +61,7 @@ pub fn process_event<const WIDTH: usize, const HEIGHT: usize>(
                         }
                     } else if let Some(ref mut input_wind) = context.windows.input {
                         if input_wind.sdl_window().id() == window_id {
-                            settings::save(context.joypad.get_config());
+                            settings::save(context.joypad.borrow().get_config());
                             context.windows.input = None;
                         }
                     }

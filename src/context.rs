@@ -33,7 +33,7 @@ pub struct Context<const WIDTH: usize, const HEIGHT: usize> {
     pub video: sdl2::VideoSubsystem,
     pub windows: Windows,
     pub display: RenderImage<WIDTH, HEIGHT>,
-    pub joypad: Joypad,
+    pub joypad: Rc<RefCell<Joypad>>,
 }
 
 pub struct Windows {
@@ -53,6 +53,7 @@ pub struct Game {
     pub io_bus: Rc<RefCell<IORegBus>>,
     pub timer: Rc<RefCell<Timer>>,
     pub dma: Rc<RefCell<Dma>>,
+    pub joypad: Rc<RefCell<Joypad>>,
     pub addr_bus: AddressBus,
     scheduled_stop: Option<ScheduledStop>,
     emulation_stopped: bool,
@@ -69,7 +70,11 @@ enum ScheduledStop {
 }
 
 impl Game {
-    pub fn new(romname: String, stopped: bool) -> Result<Game, anyhow::Error> {
+    pub fn new(
+        romname: String,
+        joypad: Rc<RefCell<Joypad>>,
+        stopped: bool,
+    ) -> Result<Game, anyhow::Error> {
         use std::{fs::File, io::Seek};
 
         let mut file = File::open(romname.clone())?;
@@ -92,7 +97,7 @@ impl Game {
         let dma = Rc::new(RefCell::new(Dma::new()));
 
         let io_bus = Rc::new(RefCell::new(IORegBus {
-            controller: Rc::new(RefCell::new(CharDevice::default())),
+            controller: joypad.clone(),
             communication: Rc::new(RefCell::new(SimpleRW::<2>::default())), // We don't handle communication
             div_timer: timer.clone(),
             tima: timer.clone(),
@@ -135,6 +140,7 @@ impl Game {
             io_bus,
             timer,
             dma,
+            joypad,
             addr_bus: bus,
             scheduled_stop: None,
             emulation_stopped: stopped,

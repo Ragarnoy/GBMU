@@ -12,6 +12,8 @@ use context::{Context, Game, Windows};
 use gb_dbg::debugger::{Debugger, DebuggerBuilder};
 use gb_lcd::{render, window::GBWindow};
 use logger::init_logger;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 #[derive(Clap, Debug)]
 #[clap(version = "0.1")]
@@ -86,7 +88,7 @@ fn main() {
             input_wind
                 .start_frame()
                 .expect("Fail at the start for the input window");
-            context.joypad.settings(input_wind.egui_ctx());
+            context.joypad.borrow_mut().settings(input_wind.egui_ctx());
             input_wind
                 .end_frame()
                 .expect("Fail at the end for the input window");
@@ -131,7 +133,7 @@ fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
 
     let display = render::RenderImage::with_bar_size(bar_pixels_size as f32);
 
-    let joypad = match settings::load() {
+    let joypad = Rc::new(RefCell::new(match settings::load() {
         Some(conf) => gb_joypad::Joypad::from_config(gb_window.sdl_window().id(), conf),
         None => {
             log::warn!("No settings found, using default input configuration");
@@ -139,10 +141,10 @@ fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
             settings::save(tmp.get_config());
             tmp
         }
-    };
+    }));
 
     let game_context: Option<Game> = opts.rom.as_ref().and_then(|romname| {
-        Game::new(romname.clone(), opts.debug).map_or_else(
+        Game::new(romname.clone(), joypad.clone(), opts.debug).map_or_else(
             |e| {
                 log::error!("while creating game context for {}: {:?}", romname, e);
                 None
