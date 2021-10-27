@@ -12,9 +12,9 @@ struct CliOpts {
 
 fn get_gb_header_from_file(name: &str) {
     println!("current file: \"{}\"", name);
-    let file = File::open(name).expect("cannot open file");
+    let mut file = File::open(name).expect("cannot open file");
 
-    let header = Header::from_file(file).expect("failed to read header");
+    let header = Header::from_file(&mut file).expect("failed to read header");
     println!("header      : {:02x?}", header);
 }
 

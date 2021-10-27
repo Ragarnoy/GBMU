@@ -81,7 +81,7 @@ impl FileOperation<IORegArea> for BiosWrapper {
 
 #[cfg(test)]
 mod test {
-    use super::{Address, Area, BiosWrapper, Error, FileOperation, IORegArea};
+    use super::{Area, BiosWrapper, FileOperation};
 
     #[test]
     fn overlap() {
@@ -91,7 +91,7 @@ mod test {
 
         let mbc_value = 42;
 
-        let bios = bios::dmg_bios();
+        let bios = bios::dmg();
         let bios = Rc::new(RefCell::new(bios));
 
         let mbc = Rc::new(RefCell::new(CharDevice(mbc_value)));

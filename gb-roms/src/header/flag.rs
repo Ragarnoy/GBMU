@@ -1,7 +1,7 @@
 use super::error::Error;
 use std::convert::TryFrom;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum CgbFlag {
     // Rom support Cgb + old Game Boys
     RetroCompatible,
@@ -27,7 +27,7 @@ fn test_convert_cgb_flag() {
     assert_eq!(CgbFlag::try_from(0xC0), Ok(CgbFlag::CgbOnly));
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum SgbFlag {
     Unsupported,
     Supported,

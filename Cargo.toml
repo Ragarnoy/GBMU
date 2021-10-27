@@ -22,10 +22,16 @@ log = "0.4"
 simplelog = "0.10"
 serde_yaml = { version = "0.8" }
 clap = "3.0.0-beta.4"
+anyhow = "1.0"
 gb-lcd = { path= "./gb-lcd" }
 gb-ppu = { path = "./gb-ppu" }
 gb-dbg = { path = "./gb-dbg" }
 gb-joypad = { path = "./gb-joypad" }
+gb-bus = { path = "./gb-bus" }
+gb-cpu = { path = "./gb-cpu" }
+gb-roms = { path = "./gb-roms" }
+gb-clock = { path = "./gb-clock" }
+gb-timer = { path = "./gb-timer" }
 
 [workspace]
 members = [

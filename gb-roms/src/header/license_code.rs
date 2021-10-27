@@ -1,7 +1,7 @@
 use super::error::Error;
 use std::convert::TryFrom;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum NewLicenseCode {
     Absolute,
     Acclaim,
@@ -285,7 +285,7 @@ fn test_convert_new_license_code() {
     assert_eq!(NewLicenseCode::try_from("A4"), Ok(NewLicenseCode::Konami));
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum OldLicenseCode {
     AWave,
     Absolute,

@@ -2,7 +2,6 @@ use crate::{ticker::cycle, Debuger, Ticker};
 use gb_bus::Bus;
 use std::marker::PhantomData;
 
-#[derive(Default)]
 /// Ensure that the various process unit execute their instructions in the right order.
 pub struct Clock<B: Bus<u8> + Bus<u16>> {
     curr_frame_cycle: usize,
@@ -61,5 +60,14 @@ impl<B: Bus<u8> + Bus<u16>> Clock<B> {
             }
         }
         self.curr_frame_cycle = 0;
+    }
+}
+
+impl<B: Bus<u8> + Bus<u16>> Default for Clock<B> {
+    fn default() -> Self {
+        Self {
+            curr_frame_cycle: 0,
+            phantom_bus: PhantomData,
+        }
     }
 }
