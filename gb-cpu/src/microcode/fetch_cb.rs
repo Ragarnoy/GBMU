@@ -15,6 +15,7 @@ pub fn fetch_cb(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFl
             );
         },
         |opcode| {
+            log::debug!("new cb opcode: {:?}", opcode);
             ctl.opcode = Some(opcode.into());
             match opcode {
                 OpcodeCB::Bit0B => ctl.push_actions(&[read::b, bitwise::bit_0]),
