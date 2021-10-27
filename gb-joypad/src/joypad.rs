@@ -1,4 +1,4 @@
-use crate::{Config, InputType};
+use crate::{register::JoypadRegister, Config, InputType};
 use egui::{CtxRef, Direction, Layout, Separator, Ui};
 use sdl2::event::Event;
 use sdl2::keyboard::Scancode;
@@ -12,6 +12,8 @@ pub struct Joypad {
     input_map: HashMap<Scancode, InputType>,
     input_states: HashMap<InputType, bool>,
     listening: Option<InputType>,
+    register: JoypadRegister,
+    refresh: Option<u8>,
 }
 
 const DEFAULT_UP: Scancode = Scancode::Up;
@@ -59,6 +61,8 @@ impl Joypad {
                 (InputType::A, false),
             ]),
             listening: None,
+            register: JoypadRegister::default(),
+            refresh: None,
         }
     }
 
@@ -77,6 +81,8 @@ impl Joypad {
                 (InputType::A, false),
             ]),
             listening: None,
+            register: JoypadRegister::default(),
+            refresh: None,
         }
     }
 

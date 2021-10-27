@@ -4,7 +4,7 @@ use modular_bitfield::{
 };
 
 #[bitfield]
-#[derive(Default)]
+#[derive(Default, Debug)]
 struct RegisterBits {
     p10: B1,
     p11: B1,
@@ -16,11 +16,13 @@ struct RegisterBits {
     void: B2,
 }
 
+#[derive(Debug)]
 enum RegisterMode {
     Direction,
     Action,
 }
 
+#[derive(Debug)]
 pub struct JoypadRegister {
     bits: RegisterBits,
     mode: RegisterMode,
