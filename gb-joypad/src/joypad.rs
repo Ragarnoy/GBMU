@@ -38,6 +38,8 @@ impl Joypad {
         InputType::A,
     ];
 
+    const REFRESH_DELAY: u8 = 5;
+
     pub fn new(window_id: u32) -> Self {
         Joypad {
             window_id,
@@ -222,7 +224,7 @@ impl FileOperation<IORegArea> for Joypad {
         match (addr.area_type(), addr.get_address()) {
             (IORegArea::Controller, 0x00) => {
                 self.register = (v & 0b0011_0000).into();
-                self.refresh = Some(1);
+                self.refresh = Some(Joypad::REFRESH_DELAY);
                 Ok(())
             }
             _ => Err(Error::SegmentationFault(addr.into())),
