@@ -38,7 +38,6 @@ impl PPURegisters {
 
 impl FileOperation<IORegArea> for PPURegisters {
     fn read(&self, addr: Box<dyn Address<IORegArea>>) -> Result<u8, Error> {
-        log::warn!("missing ppu registers read");
         match addr.area_type() {
             IORegArea::Lcd => match self.lcd.try_borrow() {
                 Ok(lcd) => lcd.read(addr),
