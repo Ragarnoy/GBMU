@@ -6,6 +6,15 @@ pub struct Dma {
     oam_transfer: Option<u16>,
 }
 
+impl Dma {
+    pub fn new() -> Dma {
+        Dma {
+            oam_register: 0,
+            oam_transfer: None,
+        }
+    }
+}
+
 impl FileOperation<IORegArea> for Dma {
     fn read(&self, addr: Box<dyn Address<IORegArea>>) -> Result<u8, Error> {
         if let IORegArea::OamDma = addr.area_type() {

@@ -1050,6 +1050,7 @@ dependencies = [
  "gb-clock",
  "gb-cpu",
  "gb-dbg",
+ "gb-dma",
  "gb-joypad",
  "gb-lcd",
  "gb-ppu",

@@ -8,6 +8,7 @@ use gb_cpu::cpu::Cpu;
 use gb_dbg::dbg_interfaces::{
     DebugOperations, MemoryDebugOperations, RegisterDebugOperations, RegisterMap, RegisterValue,
 };
+use gb_dma::Dma;
 use gb_joypad::Joypad;
 use gb_lcd::{
     render::{RenderImage, SCREEN_HEIGHT, SCREEN_WIDTH},
@@ -71,6 +72,7 @@ impl Game {
         let timer = Rc::new(RefCell::new(Timer::default()));
         let bios = Rc::new(RefCell::new(bios::dmg()));
         let bios_wrapper = Rc::new(RefCell::new(BiosWrapper::new(bios, mbc.clone())));
+        let dma = Rc::new(RefCell::new(Dma::new()));
 
         let io_bus = Rc::new(RefCell::new(IORegBus {
             controller: Rc::new(RefCell::new(CharDevice::default())),
@@ -82,6 +84,7 @@ impl Game {
             sound: Rc::new(RefCell::new(SimpleRW::<0x17>::default())), // We don't handle sound
             waveform_ram: Rc::new(RefCell::new(SimpleRW::<0xF>::default())), // We don't handle sound
             lcd: ppu_reg.clone(),
+            oam_dma: dma.clone(),
             vram_bank: ppu_reg.clone(),
             boot_rom: bios_wrapper.clone(),
             vram_dma: Rc::new(RefCell::new(SimpleRW::<4>::default())), // TODO: link the part that handle the DMA
