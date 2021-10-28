@@ -1,7 +1,7 @@
-use crate::{ticker::cycle, Ticker};
+use crate::ticker::{cycle, Ticker};
 use gb_bus::Bus;
+use std::iter::IntoIterator;
 use std::marker::PhantomData;
-use std::ops::DerefMut;
 
 /// Ensure that the various process unit execute their instructions in the right order.
 pub struct Clock<B: Bus<u8> + Bus<u16>> {
@@ -16,20 +16,10 @@ impl<B: Bus<u8> + Bus<u16>> Clock<B> {
     /// A single clock cycle, during which each [Ticker] will tick 1 or 4 times depending on their [Tick](crate::Tick) type.
     ///
     /// Its return value indicate if the current frame is incomplete.
-    pub fn cycle<
-        CPU: DerefMut<Target = impl Ticker>,
-        PPU: DerefMut<Target = impl Ticker>,
-        TIMER: DerefMut<Target = impl Ticker>,
-    >(
-        &mut self,
-        addr_bus: &mut B,
-        cpu: CPU,
-        ppu: PPU,
-        timer: TIMER,
-    ) -> bool {
-        cycle(timer, addr_bus);
-        cycle(cpu, addr_bus);
-        cycle(ppu, addr_bus);
+    pub fn cycle(&mut self, addr_bus: &mut B, tickers: Vec<&mut dyn Ticker>) -> bool {
+        for ticker in tickers.into_iter() {
+            cycle(ticker, addr_bus);
+        }
         self.curr_frame_cycle += 1;
         !self.frame_ready()
     }

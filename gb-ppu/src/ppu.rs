@@ -446,10 +446,7 @@ impl Ticker for Ppu {
         Tick::TCycle
     }
 
-    fn tick<B>(&mut self, adr_bus: &mut B)
-    where
-        B: Bus<u8> + Bus<u16>,
-    {
+    fn tick(&mut self, adr_bus: &mut dyn Bus<u8>) {
         match self.state.mode() {
             Mode::OAMFetch => self.oam_fetch(adr_bus),
             Mode::PixelDrawing => self.pixel_drawing(adr_bus),

@@ -26,10 +26,7 @@ impl Ticker for Timer {
         gb_clock::Tick::MCycle
     }
 
-    fn tick<B>(&mut self, addr_bus: &mut B)
-    where
-        B: Bus<u8> + Bus<u16>,
-    {
+    fn tick(&mut self, addr_bus: &mut dyn Bus<u8>) {
         let old_bit = self.edge_detector_timer();
         self.system_clock += u16::from(self.cycle_count() as u8);
         let new_bit = self.edge_detector_timer();

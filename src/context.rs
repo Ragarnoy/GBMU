@@ -1,6 +1,6 @@
 use anyhow::Result;
 use gb_bus::{generic::SimpleRW, AddressBus, Bus, IORegBus, Lock, WorkingRam};
-use gb_clock::Clock;
+use gb_clock::{Clock, Ticker};
 use gb_cpu::cpu::Cpu;
 use gb_dbg::dbg_interfaces::AudioRegs;
 use gb_dbg::{
@@ -24,7 +24,11 @@ use gb_roms::{
 };
 use gb_timer::Timer;
 use std::collections::HashMap;
-use std::{cell::RefCell, rc::Rc};
+use std::{
+    cell::{RefCell, RefMut},
+    ops::DerefMut,
+    rc::Rc,
+};
 
 pub struct Context<const WIDTH: usize, const HEIGHT: usize> {
     pub sdl: sdl2::Sdl,
@@ -147,12 +151,12 @@ impl Game {
 
     pub fn cycle(&mut self) -> bool {
         if !self.emulation_stopped {
-            let frame_not_finished = self.clock.cycle(
-                &mut self.addr_bus,
-                self.cpu.borrow_mut(),
-                &mut self.ppu,
-                self.timer.borrow_mut(),
-            );
+            let mut cpu: RefMut<dyn Ticker> = self.cpu.borrow_mut();
+            let mut timer: RefMut<dyn Ticker> = self.timer.borrow_mut();
+            let ppu: &mut dyn Ticker = &mut self.ppu;
+
+            let tickers: Vec<&mut dyn Ticker> = vec![cpu.deref_mut(), ppu, timer.deref_mut()];
+            let frame_not_finished = self.clock.cycle(&mut self.addr_bus, tickers);
             self.check_scheduled_stop(!frame_not_finished);
             frame_not_finished
         } else {
