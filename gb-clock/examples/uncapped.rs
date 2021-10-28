@@ -1,8 +1,11 @@
 use simplelog::{ColorChoice, Config, LevelFilter, TermLogger, TerminalMode};
 
 use gb_bus::{Area, Bus, Lock, MemoryLock};
-use gb_clock::{Clock, Tick, Ticker};
+use gb_clock::{cycle, Clock, Tick, Ticker};
 
+use std::cell::RefCell;
+use std::ops::DerefMut;
+use std::rc::Rc;
 use std::time::{Duration, Instant};
 
 #[derive(Default)]
@@ -69,38 +72,49 @@ fn main() {
     )
     .expect("cannot setup terminal logger");
 
-    let mut cpu = FakeCPU { tick_count: 0 };
+    let cpu = Rc::new(RefCell::new(FakeCPU { tick_count: 0 }));
     let mut ppu = FakePPU { tick_count: 0 };
-    let mut timer = FakeCPU { tick_count: 0 };
+    let timer = Rc::new(RefCell::new(FakeCPU { tick_count: 0 }));
     let mut bus = FakeBus::default();
     let mut clock = Clock::default();
     let one_sec = Duration::from_secs(1);
-
     log::info!("start 5s count example");
-
+    let mut frames = 0;
     for l in 0..5 {
+        let mut curr_frames = 0;
+        let mut cycle = 0;
         let t_stop = Instant::now() + one_sec;
-        let mut frames = 0;
-        cpu.tick_count = 0;
-        ppu.tick_count = 0;
+        let mut tmp_cpu = cpu.borrow_mut();
+        let ref_cpu = tmp_cpu.deref_mut();
+        let ref_ppu = &mut ppu;
+        let mut tmp_timer = timer.borrow_mut();
+        let ref_timer = tmp_timer.deref_mut();
         while Instant::now() < t_stop {
-            if !clock.cycle(&mut bus, vec![&mut cpu, &mut ppu, &mut timer]) {
-                frames += 1;
+            if !cycle!(clock, &mut bus, ref_cpu, ref_ppu, ref_timer) {
+                curr_frames += 1;
             }
+            cycle += 1;
         }
         log::info!(
-            "loop {}:\t\t{} cpu ticks,\t\t{} ppu ticks",
+            "Sec {}:\t\t{} cycles,\t\t\t{} frames",
             l,
-            cpu.tick_count,
-            ppu.tick_count
+            cycle,
+            curr_frames
         );
-        log::info!(
-            "  {} frames\t{:.1} cpu ticks/frame,\t{:.1} ppu ticks/frame",
-            frames,
-            cpu.tick_count as f64 / frames as f64,
-            ppu.tick_count as f64 / frames as f64
-        );
-        assert_eq!(cpu.tick_count * 4, ppu.tick_count);
+        frames += curr_frames;
     }
+    log::info!(
+        "Total:\t\t{} cpu ticks,\t\t{} ppu ticks",
+        cpu.borrow().tick_count,
+        ppu.tick_count
+    );
+    log::info!(
+        "{} frames:\t{:.1} cpu ticks/frame,\t{:.1} ppu ticks/frame",
+        frames,
+        cpu.borrow().tick_count as f64 / frames as f64,
+        ppu.tick_count as f64 / frames as f64
+    );
+    log::info!("{:.1} frames per seconds.", frames as f32 / 5.0);
+    assert_eq!(cpu.borrow().tick_count * 4, ppu.tick_count);
     log::info!("count example ended");
 }

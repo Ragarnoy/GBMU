@@ -1,3 +1,4 @@
+#[macro_use]
 mod clock;
 mod debuger;
 mod tick;
