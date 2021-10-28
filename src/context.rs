@@ -51,7 +51,7 @@ pub struct Game {
     pub mbc: Rc<RefCell<MbcController>>,
     pub cpu: Rc<RefCell<Cpu>>,
     pub ppu: Ppu,
-    pub clock: Clock<AddressBus>,
+    pub clock: Clock,
     pub io_bus: Rc<RefCell<IORegBus>>,
     pub timer: Rc<RefCell<Timer>>,
     pub dma: Rc<RefCell<Dma>>,

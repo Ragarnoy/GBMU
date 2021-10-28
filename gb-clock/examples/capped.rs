@@ -22,20 +22,6 @@ impl Bus<u8> for FakeBus {
     }
 }
 
-impl Bus<u16> for FakeBus {
-    fn read(&self, _adr: u16, _lock_key: Option<Lock>) -> Result<u16, gb_bus::Error> {
-        Ok(0xffff)
-    }
-    fn write(
-        &mut self,
-        _adr: u16,
-        _data: u16,
-        _lock_key: Option<Lock>,
-    ) -> Result<(), gb_bus::Error> {
-        Ok(())
-    }
-}
-
 impl MemoryLock for FakeBus {
     fn lock(&mut self, _area: Area, _lock: Lock) {}
 
@@ -55,7 +41,7 @@ impl Ticker for FakeCPU {
         Tick::MCycle
     }
 
-    fn tick<FakeBus>(&mut self, _adr_bus: &mut FakeBus) {
+    fn tick(&mut self, _adr_bus: &mut dyn Bus<u8>) {
         self.tick_count += 1;
     }
 }
@@ -69,7 +55,7 @@ impl Ticker for FakePPU {
         Tick::TCycle
     }
 
-    fn tick<FakeBus>(&mut self, _adr_bus: &mut FakeBus) {
+    fn tick(&mut self, _adr_bus: &mut dyn Bus<u8>) {
         self.tick_count += 1;
     }
 }
@@ -98,7 +84,7 @@ fn main() {
         cpu.tick_count = 0;
         ppu.tick_count = 0;
         while Instant::now() < t_stop {
-            if !clock.cycle(&mut bus, &mut cpu, &mut ppu, &mut timer) {
+            if !clock.cycle(&mut bus, vec![&mut cpu, &mut ppu, &mut timer]) {
                 frames += 1;
             }
         }
