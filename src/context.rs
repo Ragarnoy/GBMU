@@ -48,6 +48,7 @@ pub struct Game {
     pub clock: Clock<AddressBus>,
     pub io_bus: Rc<RefCell<IORegBus>>,
     pub timer: Rc<RefCell<Timer>>,
+    pub dma: Rc<RefCell<Dma>>,
     pub addr_bus: AddressBus,
 }
 
@@ -116,6 +117,7 @@ impl Game {
             clock: Clock::default(),
             io_bus,
             timer,
+            dma,
             addr_bus: bus,
         })
     }

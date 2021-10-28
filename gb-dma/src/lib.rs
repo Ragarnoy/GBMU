@@ -1,6 +1,7 @@
 use gb_bus::{Address, Area, Bus, Error, FileOperation, IORegArea, Lock};
 use gb_clock::{Tick, Ticker};
 
+#[derive(Default)]
 pub struct Dma {
     oam_register: u8,
     oam_transfer: Option<u16>,
