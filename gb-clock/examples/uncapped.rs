@@ -1,7 +1,7 @@
 use simplelog::{ColorChoice, Config, LevelFilter, TermLogger, TerminalMode};
 
 use gb_bus::{Area, Bus, Lock, MemoryLock};
-use gb_clock::{cycle, Clock, Tick, Ticker};
+use gb_clock::{cycles, Clock, Tick, Ticker};
 
 use std::cell::RefCell;
 use std::ops::DerefMut;
@@ -90,7 +90,7 @@ fn main() {
         let mut tmp_timer = timer.borrow_mut();
         let ref_timer = tmp_timer.deref_mut();
         while Instant::now() < t_stop {
-            if !cycle!(clock, &mut bus, ref_cpu, ref_ppu, ref_timer) {
+            if !cycles!(clock, &mut bus, ref_cpu, ref_ppu, ref_timer) {
                 curr_frames += 1;
             }
             cycle += 1;
