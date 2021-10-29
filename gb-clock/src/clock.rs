@@ -1,6 +1,7 @@
-use crate::{ticker::cycle, Debuger, Ticker};
+use crate::{ticker::cycle, Ticker};
 use gb_bus::Bus;
 use std::marker::PhantomData;
+use std::ops::DerefMut;
 
 /// Ensure that the various process unit execute their instructions in the right order.
 pub struct Clock<B: Bus<u8> + Bus<u16>> {
@@ -13,53 +14,30 @@ impl<B: Bus<u8> + Bus<u16>> Clock<B> {
     pub const CYCLES_PER_FRAME: usize = 17556;
 
     /// A single clock cycle, during which each [Ticker] will tick 1 or 4 times depending on their [Tick](crate::Tick) type.
-    pub fn cycle<CPU: Ticker, PPU: Ticker, TIMER: Ticker>(
+    ///
+    /// Its return value indicate if the current frame is incomplete.
+    pub fn cycle<
+        CPU: DerefMut<Target = impl Ticker>,
+        PPU: DerefMut<Target = impl Ticker>,
+        TIMER: DerefMut<Target = impl Ticker>,
+    >(
         &mut self,
         addr_bus: &mut B,
-        cpu: &mut CPU,
-        ppu: &mut PPU,
-        timer: &mut TIMER,
-    ) {
+        cpu: CPU,
+        ppu: PPU,
+        timer: TIMER,
+    ) -> bool {
         cycle(cpu, addr_bus);
         cycle(ppu, addr_bus);
         cycle(timer, addr_bus);
         self.curr_frame_cycle += 1;
+        !self.frame_ready()
     }
 
     /// Indicate if the current frame has been completed or not.
     pub fn frame_ready(&mut self) -> bool {
         self.curr_frame_cycle %= Self::CYCLES_PER_FRAME;
         self.curr_frame_cycle == 0
-    }
-
-    /// Execute enough cycles to complete the current frame.
-    ///
-    /// if a [Debuger] is given, it will check breakpoints after each clock cycle and interrupt the execution if needed.
-    pub fn frame<CPU: Ticker, PPU: Ticker, TIMER: Ticker>(
-        &mut self,
-        addr_bus: &mut B,
-        dbg: Option<&dyn Debuger<B>>,
-        cpu: &mut CPU,
-        ppu: &mut PPU,
-        timer: &mut TIMER,
-    ) {
-        self.curr_frame_cycle %= Self::CYCLES_PER_FRAME;
-        match dbg {
-            Some(dbg) => {
-                while self.curr_frame_cycle < Self::CYCLES_PER_FRAME {
-                    self.cycle(addr_bus, cpu, ppu, timer);
-                    if dbg.breakpoints(addr_bus) {
-                        return;
-                    }
-                }
-            }
-            None => {
-                while self.curr_frame_cycle < Self::CYCLES_PER_FRAME {
-                    self.cycle(addr_bus, cpu, ppu, timer);
-                }
-            }
-        }
-        self.curr_frame_cycle = 0;
     }
 }
 

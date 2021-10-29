@@ -8,7 +8,7 @@ use crate::{
     SPRITE_RENDER_HEIGHT, SPRITE_RENDER_WIDTH, TILEMAP_DIM, TILEMAP_TILE_COUNT, TILESHEET_HEIGHT,
     TILESHEET_TILE_COUNT, TILESHEET_WIDTH,
 };
-use gb_bus::Bus;
+use gb_bus::{Area, Bus};
 use gb_clock::{Tick, Ticker};
 use gb_lcd::render::{RenderData, SCREEN_HEIGHT, SCREEN_WIDTH};
 
@@ -19,7 +19,7 @@ use std::rc::Rc;
 /// The Pixel Process Unit is in charge of selecting the pixel to be displayed on the lcd screen.
 ///
 /// It owns the VRAM and the OAM, as well as a few registers.
-pub struct PPU {
+pub struct Ppu {
     vram: Rc<RefCell<Vram>>,
     oam: Rc<RefCell<Oam>>,
     lcd_reg: Rc<RefCell<LcdReg>>,
@@ -31,9 +31,9 @@ pub struct PPU {
     scanline_sprites: Vec<Sprite>,
 }
 
-impl PPU {
+impl Ppu {
     pub fn new() -> Self {
-        Self {
+        Ppu {
             vram: Rc::new(RefCell::new(Vram::new())),
             oam: Rc::new(RefCell::new(Oam::new())),
             lcd_reg: Rc::new(RefCell::new(LcdReg::new())),
@@ -227,38 +227,38 @@ impl PPU {
         image
     }
 
-    fn vblank(&mut self) {
+    fn vblank<B: Bus<u8>>(&mut self, _adr_bus: &mut B) {
         if self.state.line() == State::LAST_LINE && self.state.step() == State::LAST_STEP {
             std::mem::swap(&mut self.pixels, &mut self.next_pixels);
         }
     }
 
-    fn hblank(&mut self) {
-        if let Ok(mut oam) = self.oam.try_borrow_mut() {
+    fn hblank<B: Bus<u8>>(&mut self, adr_bus: &mut B) {
+        if let Ok(oam) = self.oam.try_borrow() {
             if let Some(Lock::Ppu) = oam.get_lock() {
-                oam.unlock();
+                adr_bus.unlock(Area::Oam);
             }
         } else {
             log::error!("Oam borrow failed for ppu in mode 0");
         }
-        if let Ok(mut vram) = self.vram.try_borrow_mut() {
+        if let Ok(vram) = self.vram.try_borrow() {
             if let Some(Lock::Ppu) = vram.get_lock() {
-                vram.unlock();
+                adr_bus.unlock(Area::Vram);
             }
         } else {
             log::error!("Vram borrow failed for ppu in mode 0");
         }
     }
 
-    fn oam_fetch(&mut self) {
+    fn oam_fetch<B: Bus<u8>>(&mut self, adr_bus: &mut B) {
         if let Ok(lcd_reg) = self.lcd_reg.try_borrow() {
-            if let Ok(mut oam) = self.oam.try_borrow_mut() {
+            if let Ok(oam) = self.oam.try_borrow() {
                 let lock = oam.get_lock();
                 let step = self.state.step();
 
                 if lock.is_none() {
                     // init mode 2
-                    oam.lock(Lock::Ppu);
+                    adr_bus.lock(Area::Oam, Lock::Ppu);
                     self.scanline_sprites.clear();
                 }
                 if let Some(Lock::Ppu) = lock {
@@ -300,16 +300,16 @@ impl PPU {
         }
     }
 
-    fn pixel_drawing(&mut self) {
+    fn pixel_drawing<B: Bus<u8>>(&mut self, adr_bus: &mut B) {
         if let Ok(lcd_reg) = self.lcd_reg.try_borrow() {
-            if let Ok(mut vram) = self.vram.try_borrow_mut() {
+            if let Ok(vram) = self.vram.try_borrow() {
                 let lock = vram.get_lock();
                 let x = self.state.pixel_drawn();
                 let y = self.state.line();
 
                 if lock.is_none() {
                     // init mode 3
-                    vram.lock(Lock::Ppu);
+                    adr_bus.lock(Area::Vram, Lock::Ppu);
                     self.pixel_fetcher.clear();
                     self.pixel_fifo.clear();
                     self.state.clear_pixel_count();
@@ -406,13 +406,13 @@ impl PPU {
     }
 }
 
-impl Default for PPU {
-    fn default() -> PPU {
-        PPU::new()
+impl Default for Ppu {
+    fn default() -> Ppu {
+        Ppu::new()
     }
 }
 
-impl Ticker for PPU {
+impl Ticker for Ppu {
     fn cycle_count(&self) -> Tick {
         Tick::TCycle
     }
@@ -422,65 +422,13 @@ impl Ticker for PPU {
         B: Bus<u8> + Bus<u16>,
     {
         match self.state.mode() {
-            Mode::OAMFetch => self.oam_fetch(),
-            Mode::PixelDrawing => self.pixel_drawing(),
-            Mode::HBlank => self.hblank(),
-            Mode::VBlank => self.vblank(),
+            Mode::OAMFetch => self.oam_fetch(adr_bus),
+            Mode::PixelDrawing => self.pixel_drawing(adr_bus),
+            Mode::HBlank => self.hblank(adr_bus),
+            Mode::VBlank => self.vblank(adr_bus),
         }
         // update state after executing tick
         let lcd_reg = self.lcd_reg.try_borrow_mut().ok();
         self.state.update(lcd_reg, adr_bus);
-    }
-}
-
-#[cfg(test)]
-mod mem_lock {
-    use super::PPU;
-    use crate::memory::{Lock, Lockable};
-    use crate::test_tools::TestAddress;
-    use gb_bus::FileOperation;
-
-    #[test]
-    fn vram() {
-        let ppu = PPU::new();
-        let mut ppu_mem = ppu.memory();
-        {
-            ppu.vram.borrow_mut().lock(Lock::Ppu);
-            ppu_mem
-                .write(0x42, Box::new(TestAddress::root_vram()))
-                .expect("Try write value into borrowed vram");
-            let res = ppu_mem
-                .read(Box::new(TestAddress::root_vram()))
-                .expect("Try reading mut borrowed value from vram");
-            assert_eq!(res, 0xFF, "invalid value from vram");
-
-            ppu.vram.borrow_mut().unlock();
-            let res = ppu_mem
-                .read(Box::new(TestAddress::root_vram()))
-                .expect("Try reading mut borrowed value from vram");
-            assert_eq!(res, 0x00, "invalid value from vram");
-        }
-    }
-
-    #[test]
-    fn oam() {
-        let ppu = PPU::new();
-        let mut ppu_mem = ppu.memory();
-        {
-            ppu.oam.borrow_mut().lock(Lock::Ppu);
-            ppu_mem
-                .write(0x42, Box::new(TestAddress::root_oam()))
-                .expect("Try write value into borrowed oam");
-            let res = ppu_mem
-                .read(Box::new(TestAddress::root_oam()))
-                .expect("Try reading mut borrowed value from oam");
-            assert_eq!(res, 0xFF, "invalid value from oam");
-
-            ppu.oam.borrow_mut().unlock();
-            let res = ppu_mem
-                .read(Box::new(TestAddress::root_oam()))
-                .expect("Try reading mut borrowed value from oam");
-            assert_eq!(res, 0x00, "invalid value from oam");
-        }
     }
 }

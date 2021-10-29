@@ -37,11 +37,11 @@ impl Ticker for Timer {
         if (self.tac & 0b100) != 0 && old_bit && !new_bit {
             let (new_tima, overflowing) = self.tima.overflowing_add(1);
             self.tima = if overflowing {
-                let int_mask = addr_bus.read(0xff0f).unwrap_or_else(|e| {
+                let int_mask = addr_bus.read(0xff0f, None).unwrap_or_else(|e| {
                     log::warn!("cannot read IF register: {:?}", e);
                     0
                 });
-                if let Err(err) = addr_bus.write(0xff0f, int_mask | Timer::TIMER_INT_MASK) {
+                if let Err(err) = addr_bus.write(0xff0f, int_mask | Timer::TIMER_INT_MASK, None) {
                     log::warn!("failed to update interrupt bitfield: {:?}", err);
                 }
                 self.tma

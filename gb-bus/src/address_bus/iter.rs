@@ -22,7 +22,7 @@ impl<'a> Iterator for Iter<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.stop {
-            let bit = self.bus.read(self.current_address).ok();
+            let bit = self.bus.read(self.current_address, None).ok();
             match self.current_address {
                 0xfea0..=0xfeff => self.current_address = 0xff00,
                 0xffff => self.stop = true,

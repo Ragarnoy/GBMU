@@ -1,5 +1,6 @@
 use crate::Tick;
 use gb_bus::Bus;
+use std::ops::DerefMut;
 
 /// Define the behavior of a process unit on a single tick.
 ///
@@ -15,9 +16,10 @@ pub trait Ticker {
 }
 
 /// Execute X cycle depending of [Tick] type of the implementation of [Ticker]
-pub fn cycle<T, B>(ticker: &mut T, adr_bus: &mut B)
+pub fn cycle<T, D, B>(mut ticker: D, adr_bus: &mut B)
 where
     T: Ticker,
+    D: DerefMut<Target = T>,
     B: Bus<u8> + Bus<u16>,
 {
     for _ in 0..ticker.cycle_count().into() {

@@ -44,7 +44,7 @@ async fn setup_bytes(world: &mut CpuWorld, bytes: String, reg: Reg16) {
         .expect("valid bytes in hexa format");
     let mut address = reg.read_corresponding_regs(&world.cpu.registers);
     bytes.iter().for_each(|byte| {
-        drop(world.bus.write(address, *byte));
+        drop(world.bus.write(address, *byte, None));
         address += 1;
     });
 }
@@ -98,7 +98,7 @@ async fn check_u16_in_bus(world: &mut CpuWorld, address: String, values: String)
 
     for index in 0..values.len() {
         let addr = address + index as u16;
-        let res = world.bus.read(addr);
+        let res = world.bus.read(addr, None);
         assert_eq!(
             Ok(values[index]),
             res,

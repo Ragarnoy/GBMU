@@ -20,7 +20,7 @@ impl<'a> State<'a> {
 
     pub fn read_bus(&self, addr: u16) -> u8 {
         log::trace!("[micrococe] reading bus at {:x}", addr);
-        self.bus.read(addr).unwrap_or(0xff)
+        self.bus.read(addr, None).unwrap_or(0xff)
     }
 
     /// read byte at the addr of `HL`
@@ -34,7 +34,7 @@ impl<'a> State<'a> {
     }
 
     pub fn write_bus(&mut self, addr: u16, v: u8) {
-        if let Err(e) = self.bus.write(addr, v) {
+        if let Err(e) = self.bus.write(addr, v, None) {
             log::error!(
                 "while writing the value {:x} in the bus at {:x} got the error: {:?}",
                 v,

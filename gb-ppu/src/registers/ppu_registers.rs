@@ -15,7 +15,7 @@ pub struct PPURegisters {
 impl PPURegisters {
     /// Build a PPURegisters from references counters of Vram and Oam.
     ///
-    /// This function is used by [PPU.registers()](crate::PPU::registers), you should not need to call this constructor yourself.
+    /// This function is used by [Ppu.registers()](crate::Ppu::registers), you should not need to call this constructor yourself.
     pub fn new(lcd: Rc<RefCell<LcdReg>>) -> Self {
         PPURegisters { lcd }
     }

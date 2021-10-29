@@ -1,4 +1,4 @@
-use crate::{Address, Area, Error, FileOperation, IORegArea};
+use crate::{Address, Area, Error, FileOperation, IORegArea, InternalLock, Lock, MemoryLock};
 
 /// A Char Device yield current setted byte
 #[derive(Default)]
@@ -25,6 +25,18 @@ impl FileOperation<IORegArea> for CharDevice {
         Ok(self.0)
     }
 }
+
+impl MemoryLock for CharDevice {
+    fn lock(&mut self, _area: Area, _lock: Lock) {}
+
+    fn unlock(&mut self, _area: Area) {}
+
+    fn is_available(&self, _area: Area, _lock_key: Option<Lock>) -> bool {
+        true
+    }
+}
+
+impl InternalLock<Area> for CharDevice {}
 
 #[test]
 fn test_chardev_fileop() {

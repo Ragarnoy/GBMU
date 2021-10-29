@@ -2,17 +2,45 @@ pub mod iter;
 
 use iter::Iter;
 
+use std::collections::HashMap;
+
 use crate::{
     address::Address,
     constant::{
         ERAM_START, ERAM_STOP, EXT_RAM_START, EXT_RAM_STOP, HRAM_START, HRAM_STOP, IE_REG_START,
         IO_REG_START, IO_REG_STOP, OAM_START, OAM_STOP, RAM_START, RAM_STOP, ROM_START, ROM_STOP,
-        VRAM_START, VRAM_STOP,
+        UNDEFINED_VALUE, VRAM_START, VRAM_STOP,
     },
-    Area, Error, FileOperation,
+    Area, Error, FileOperation, InternalLock, Lock, MemoryLock,
 };
 
 use std::{cell::RefCell, rc::Rc};
+
+macro_rules! write_area {
+    ($start:expr, $field:expr, $area_type:ident, $value:expr, $addr:expr) => {{
+        log::trace!(
+            "writing at {:4x} the value {:2x} in area {:?}",
+            $addr,
+            $value,
+            Area::$area_type
+        );
+        $field.borrow_mut().write(
+            $value,
+            Box::new(Address::from_offset(Area::$area_type, $addr, $start)),
+        )
+    }};
+}
+
+macro_rules! read_area {
+    ($start:expr, $field:expr, $area_type:ident, $addr: expr) => {{
+        log::trace!("reading at {:4x} in area {:?}", $addr, Area::$area_type);
+        $field.borrow().read(Box::new(Address::from_offset(
+            Area::$area_type,
+            $addr,
+            $start,
+        )))
+    }};
+}
 
 /// AddressBus map specific range address to specific area like ROM/RAM.
 /// This Implementation of an AddressBus will be limited to 16-bit address
@@ -20,7 +48,7 @@ pub struct AddressBus {
     /// Rom from the cartridge
     pub rom: Rc<RefCell<dyn FileOperation<Area>>>,
     /// Video Ram
-    pub vram: Rc<RefCell<dyn FileOperation<Area>>>,
+    pub vram: Rc<RefCell<dyn InternalLock<Area>>>,
     /// Ram from the cartridge
     pub ext_ram: Rc<RefCell<dyn FileOperation<Area>>>,
     /// Internal gameboy ram
@@ -28,7 +56,7 @@ pub struct AddressBus {
     /// Echo Ram area, usually a mirror of ram
     pub eram: Rc<RefCell<dyn FileOperation<Area>>>,
     /// Sprite attribute table
-    pub oam: Rc<RefCell<dyn FileOperation<Area>>>,
+    pub oam: Rc<RefCell<dyn InternalLock<Area>>>,
     /// io registers table
     pub io_reg: Rc<RefCell<dyn FileOperation<Area>>>,
     /// high ram
@@ -36,47 +64,24 @@ pub struct AddressBus {
     pub hram: Rc<RefCell<dyn FileOperation<Area>>>,
     /// register to enable/disable all interrupts
     pub ie_reg: Rc<RefCell<dyn FileOperation<Area>>>,
+    /// map a memory area to its current lock status
+    pub area_locks: HashMap<Area, Lock>,
 }
 
 impl AddressBus {
     pub fn write_byte(&mut self, addr: u16, v: u8) -> Result<(), Error> {
         match addr {
-            ROM_START..=ROM_STOP => self.rom.borrow_mut().write(
-                v,
-                Box::new(Address::from_offset(Area::Rom, addr, ROM_START)),
-            ),
-            VRAM_START..=VRAM_STOP => self.vram.borrow_mut().write(
-                v,
-                Box::new(Address::from_offset(Area::Vram, addr, VRAM_START)),
-            ),
-            EXT_RAM_START..=EXT_RAM_STOP => self.ext_ram.borrow_mut().write(
-                v,
-                Box::new(Address::from_offset(Area::ExtRam, addr, EXT_RAM_START)),
-            ),
-            RAM_START..=RAM_STOP => self.ram.borrow_mut().write(
-                v,
-                Box::new(Address::from_offset(Area::Ram, addr, RAM_START)),
-            ),
-            ERAM_START..=ERAM_STOP => self.eram.borrow_mut().write(
-                v,
-                Box::new(Address::from_offset(Area::ERam, addr, ERAM_START)),
-            ),
-            OAM_START..=OAM_STOP => self.oam.borrow_mut().write(
-                v,
-                Box::new(Address::from_offset(Area::Oam, addr, OAM_START)),
-            ),
-            IO_REG_START..=IO_REG_STOP => self.io_reg.borrow_mut().write(
-                v,
-                Box::new(Address::from_offset(Area::IoReg, addr, IO_REG_START)),
-            ),
-            HRAM_START..=HRAM_STOP => self.hram.borrow_mut().write(
-                v,
-                Box::new(Address::from_offset(Area::HighRam, addr, HRAM_START)),
-            ),
-            IE_REG_START => self
-                .ie_reg
-                .borrow_mut()
-                .write(v, Box::new(Address::byte_reg(Area::IEReg, addr))),
+            ROM_START..=ROM_STOP => write_area!(ROM_START, self.rom, Rom, v, addr),
+            VRAM_START..=VRAM_STOP => write_area!(VRAM_START, self.vram, Vram, v, addr),
+            EXT_RAM_START..=EXT_RAM_STOP => {
+                write_area!(EXT_RAM_START, self.ext_ram, ExtRam, v, addr)
+            }
+            RAM_START..=RAM_STOP => write_area!(RAM_START, self.ram, Ram, v, addr),
+            ERAM_START..=ERAM_STOP => write_area!(ERAM_START, self.eram, ERam, v, addr),
+            OAM_START..=OAM_STOP => write_area!(OAM_START, self.oam, Oam, v, addr),
+            IO_REG_START..=IO_REG_STOP => write_area!(IO_REG_START, self.io_reg, IoReg, v, addr),
+            HRAM_START..=HRAM_STOP => write_area!(HRAM_START, self.hram, HighRam, v, addr),
+            IE_REG_START => write_area!(IE_REG_START, self.ie_reg, IEReg, v, addr),
             _ => Err(Error::BusError(addr)),
         }
     }
@@ -84,45 +89,20 @@ impl AddressBus {
     pub fn read_byte(&self, addr: u16) -> Result<u8, Error> {
         match addr {
             ROM_START..=ROM_STOP => {
-                self.rom
-                    .borrow()
-                    .read(Box::new(Address::from_offset(Area::Rom, addr, ROM_START)))
+                read_area!(ROM_START, self.rom, Rom, addr)
             }
-            VRAM_START..=VRAM_STOP => self.vram.borrow().read(Box::new(Address::from_offset(
-                Area::Vram,
-                addr,
-                VRAM_START,
-            ))),
-            EXT_RAM_START..=EXT_RAM_STOP => self.ext_ram.borrow().read(Box::new(
-                Address::from_offset(Area::ExtRam, addr, EXT_RAM_START),
-            )),
+            VRAM_START..=VRAM_STOP => read_area!(VRAM_START, self.vram, Vram, addr),
+            EXT_RAM_START..=EXT_RAM_STOP => read_area!(EXT_RAM_START, self.ext_ram, ExtRam, addr),
             RAM_START..=RAM_STOP => {
-                self.ram
-                    .borrow()
-                    .read(Box::new(Address::from_offset(Area::Ram, addr, RAM_START)))
+                read_area!(RAM_START, self.ram, Ram, addr)
             }
-            ERAM_START..=ERAM_STOP => self.eram.borrow().read(Box::new(Address::from_offset(
-                Area::ERam,
-                addr,
-                ERAM_START,
-            ))),
+            ERAM_START..=ERAM_STOP => read_area!(ERAM_START, self.eram, ERam, addr),
             OAM_START..=OAM_STOP => {
-                self.oam
-                    .borrow()
-                    .read(Box::new(Address::from_offset(Area::Oam, addr, OAM_START)))
+                read_area!(OAM_START, self.oam, Oam, addr)
             }
-            IO_REG_START..=IO_REG_STOP => self.io_reg.borrow().read(Box::new(
-                Address::from_offset(Area::IoReg, addr, IO_REG_START),
-            )),
-            HRAM_START..=HRAM_STOP => self.hram.borrow().read(Box::new(Address::from_offset(
-                Area::HighRam,
-                addr,
-                HRAM_START,
-            ))),
-            IE_REG_START => self
-                .ie_reg
-                .borrow()
-                .read(Box::new(Address::byte_reg(Area::IEReg, addr))),
+            IO_REG_START..=IO_REG_STOP => read_area!(IO_REG_START, self.io_reg, IoReg, addr),
+            HRAM_START..=HRAM_STOP => read_area!(HRAM_START, self.hram, HighRam, addr),
+            IE_REG_START => read_area!(IE_REG_START, self.ie_reg, IEReg, addr),
             _ => Err(Error::BusError(addr)),
         }
     }
@@ -132,29 +112,76 @@ impl AddressBus {
     }
 }
 
-impl crate::Bus<u8> for AddressBus {
-    fn read(&self, address: u16) -> Result<u8, Error> {
-        self.read_byte(address)
+impl MemoryLock for AddressBus {
+    fn lock(&mut self, area: Area, lock: Lock) {
+        self.area_locks.insert(area, lock);
+        match area {
+            Area::Vram => self.vram.borrow_mut().lock(area, lock),
+            Area::Oam => self.oam.borrow_mut().lock(area, lock),
+            _ => {}
+        }
     }
 
-    fn write(&mut self, address: u16, data: u8) -> Result<(), Error> {
-        self.write_byte(address, data)
+    fn unlock(&mut self, area: Area) {
+        self.area_locks.remove(&area);
+        match area {
+            Area::Vram => self.vram.borrow_mut().unlock(area),
+            Area::Oam => self.oam.borrow_mut().unlock(area),
+            _ => {}
+        }
+    }
+
+    fn is_available(&self, area: Area, lock_key: Option<Lock>) -> bool {
+        if let Some(lock) = self.area_locks.get(&area) {
+            if let Some(key) = lock_key {
+                return *lock == key;
+            }
+        } else {
+            return true;
+        }
+        false
+    }
+}
+
+impl crate::Bus<u8> for AddressBus {
+    fn read(&self, address: u16, lock_key: Option<Lock>) -> Result<u8, Error> {
+        if self.is_available(address.into(), lock_key) {
+            self.read_byte(address)
+        } else {
+            Ok(UNDEFINED_VALUE)
+        }
+    }
+
+    fn write(&mut self, address: u16, data: u8, lock_key: Option<Lock>) -> Result<(), Error> {
+        if self.is_available(address.into(), lock_key) {
+            self.write_byte(address, data)
+        } else {
+            Ok(())
+        }
     }
 }
 
 impl crate::Bus<u16> for AddressBus {
-    fn read(&self, address: u16) -> Result<u16, Error> {
-        let lower = self.read_byte(address)?;
-        let upper = self.read_byte(address + 1)?;
+    fn read(&self, address: u16, lock_key: Option<Lock>) -> Result<u16, Error> {
+        if self.is_available(address.into(), lock_key) {
+            let lower = self.read_byte(address)?;
+            let upper = self.read_byte(address + 1)?;
 
-        Ok(u16::from_le_bytes([lower, upper]))
+            Ok(u16::from_le_bytes([lower, upper]))
+        } else {
+            Ok(u16::from_le_bytes([UNDEFINED_VALUE, UNDEFINED_VALUE]))
+        }
     }
 
-    fn write(&mut self, address: u16, data: u16) -> Result<(), Error> {
-        let [lower, upper] = data.to_le_bytes();
+    fn write(&mut self, address: u16, data: u16, lock_key: Option<Lock>) -> Result<(), Error> {
+        if self.is_available(address.into(), lock_key) {
+            let [lower, upper] = data.to_le_bytes();
 
-        self.write_byte(address, lower)?;
-        self.write_byte(address + 1, upper)
+            self.write_byte(address, lower)?;
+            self.write_byte(address + 1, upper)
+        } else {
+            Ok(())
+        }
     }
 }
 
@@ -162,6 +189,7 @@ impl crate::Bus<u16> for AddressBus {
 mod test_address_bus {
     use super::AddressBus;
     use crate::generic::CharDevice;
+    use std::collections::HashMap;
     use std::{cell::RefCell, rc::Rc};
 
     #[test]
@@ -176,6 +204,7 @@ mod test_address_bus {
             io_reg: Rc::new(RefCell::new(CharDevice(7))),
             hram: Rc::new(RefCell::new(CharDevice(8))),
             ie_reg: Rc::new(RefCell::new(CharDevice(9))),
+            area_locks: HashMap::new(),
         };
 
         assert_eq!(addr_bus.read_byte(0x10), Ok(1));
@@ -201,6 +230,7 @@ mod test_address_bus {
             io_reg: Rc::new(RefCell::new(CharDevice(7))),
             hram: Rc::new(RefCell::new(CharDevice(8))),
             ie_reg: Rc::new(RefCell::new(CharDevice(9))),
+            area_locks: HashMap::new(),
         };
 
         assert_eq!(addr_bus.write_byte(0x11, 0x30), Ok(()));
