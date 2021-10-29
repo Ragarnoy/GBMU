@@ -2,14 +2,16 @@ pub mod iter;
 
 use iter::Iter;
 
+use std::collections::HashMap;
+
 use crate::{
     address::Address,
     constant::{
         ERAM_START, ERAM_STOP, EXT_RAM_START, EXT_RAM_STOP, HRAM_START, HRAM_STOP, IE_REG_START,
         IO_REG_START, IO_REG_STOP, OAM_START, OAM_STOP, RAM_START, RAM_STOP, ROM_START, ROM_STOP,
-        VRAM_START, VRAM_STOP,
+        UNDEFINED_VALUE, VRAM_START, VRAM_STOP,
     },
-    Area, Error, FileOperation,
+    Area, Error, FileOperation, InternalLock, Lock, MemoryLock,
 };
 
 use std::{cell::RefCell, rc::Rc};
@@ -46,7 +48,7 @@ pub struct AddressBus {
     /// Rom from the cartridge
     pub rom: Rc<RefCell<dyn FileOperation<Area>>>,
     /// Video Ram
-    pub vram: Rc<RefCell<dyn FileOperation<Area>>>,
+    pub vram: Rc<RefCell<dyn InternalLock<Area>>>,
     /// Ram from the cartridge
     pub ext_ram: Rc<RefCell<dyn FileOperation<Area>>>,
     /// Internal gameboy ram
@@ -54,7 +56,7 @@ pub struct AddressBus {
     /// Echo Ram area, usually a mirror of ram
     pub eram: Rc<RefCell<dyn FileOperation<Area>>>,
     /// Sprite attribute table
-    pub oam: Rc<RefCell<dyn FileOperation<Area>>>,
+    pub oam: Rc<RefCell<dyn InternalLock<Area>>>,
     /// io registers table
     pub io_reg: Rc<RefCell<dyn FileOperation<Area>>>,
     /// high ram
@@ -62,6 +64,8 @@ pub struct AddressBus {
     pub hram: Rc<RefCell<dyn FileOperation<Area>>>,
     /// register to enable/disable all interrupts
     pub ie_reg: Rc<RefCell<dyn FileOperation<Area>>>,
+    /// map a memory area to its current lock status
+    pub area_locks: HashMap<Area, Lock>,
 }
 
 impl AddressBus {
@@ -108,29 +112,76 @@ impl AddressBus {
     }
 }
 
-impl crate::Bus<u8> for AddressBus {
-    fn read(&self, address: u16) -> Result<u8, Error> {
-        self.read_byte(address)
+impl MemoryLock for AddressBus {
+    fn lock(&mut self, area: Area, lock: Lock) {
+        self.area_locks.insert(area, lock);
+        match area {
+            Area::Vram => self.vram.borrow_mut().lock(area, lock),
+            Area::Oam => self.oam.borrow_mut().lock(area, lock),
+            _ => {}
+        }
     }
 
-    fn write(&mut self, address: u16, data: u8) -> Result<(), Error> {
-        self.write_byte(address, data)
+    fn unlock(&mut self, area: Area) {
+        self.area_locks.remove(&area);
+        match area {
+            Area::Vram => self.vram.borrow_mut().unlock(area),
+            Area::Oam => self.oam.borrow_mut().unlock(area),
+            _ => {}
+        }
+    }
+
+    fn is_available(&self, area: Area, lock_key: Option<Lock>) -> bool {
+        if let Some(lock) = self.area_locks.get(&area) {
+            if let Some(key) = lock_key {
+                return *lock == key;
+            }
+        } else {
+            return true;
+        }
+        false
+    }
+}
+
+impl crate::Bus<u8> for AddressBus {
+    fn read(&self, address: u16, lock_key: Option<Lock>) -> Result<u8, Error> {
+        if self.is_available(address.into(), lock_key) {
+            self.read_byte(address)
+        } else {
+            Ok(UNDEFINED_VALUE)
+        }
+    }
+
+    fn write(&mut self, address: u16, data: u8, lock_key: Option<Lock>) -> Result<(), Error> {
+        if self.is_available(address.into(), lock_key) {
+            self.write_byte(address, data)
+        } else {
+            Ok(())
+        }
     }
 }
 
 impl crate::Bus<u16> for AddressBus {
-    fn read(&self, address: u16) -> Result<u16, Error> {
-        let lower = self.read_byte(address)?;
-        let upper = self.read_byte(address + 1)?;
+    fn read(&self, address: u16, lock_key: Option<Lock>) -> Result<u16, Error> {
+        if self.is_available(address.into(), lock_key) {
+            let lower = self.read_byte(address)?;
+            let upper = self.read_byte(address + 1)?;
 
-        Ok(u16::from_le_bytes([lower, upper]))
+            Ok(u16::from_le_bytes([lower, upper]))
+        } else {
+            Ok(u16::from_le_bytes([UNDEFINED_VALUE, UNDEFINED_VALUE]))
+        }
     }
 
-    fn write(&mut self, address: u16, data: u16) -> Result<(), Error> {
-        let [lower, upper] = data.to_le_bytes();
+    fn write(&mut self, address: u16, data: u16, lock_key: Option<Lock>) -> Result<(), Error> {
+        if self.is_available(address.into(), lock_key) {
+            let [lower, upper] = data.to_le_bytes();
 
-        self.write_byte(address, lower)?;
-        self.write_byte(address + 1, upper)
+            self.write_byte(address, lower)?;
+            self.write_byte(address + 1, upper)
+        } else {
+            Ok(())
+        }
     }
 }
 
@@ -138,6 +189,7 @@ impl crate::Bus<u16> for AddressBus {
 mod test_address_bus {
     use super::AddressBus;
     use crate::generic::CharDevice;
+    use std::collections::HashMap;
     use std::{cell::RefCell, rc::Rc};
 
     #[test]
@@ -152,6 +204,7 @@ mod test_address_bus {
             io_reg: Rc::new(RefCell::new(CharDevice(7))),
             hram: Rc::new(RefCell::new(CharDevice(8))),
             ie_reg: Rc::new(RefCell::new(CharDevice(9))),
+            area_locks: HashMap::new(),
         };
 
         assert_eq!(addr_bus.read_byte(0x10), Ok(1));
@@ -177,6 +230,7 @@ mod test_address_bus {
             io_reg: Rc::new(RefCell::new(CharDevice(7))),
             hram: Rc::new(RefCell::new(CharDevice(8))),
             ie_reg: Rc::new(RefCell::new(CharDevice(9))),
+            area_locks: HashMap::new(),
         };
 
         assert_eq!(addr_bus.write_byte(0x11, 0x30), Ok(()));
