@@ -152,9 +152,11 @@ fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
 
     let windows = Windows {
         main: gb_window,
-        debug: game_context
-            .as_ref()
-            .map(|_| ui::new_debug_window(&video_subsystem)),
+        debug: if opts.debug && game_context.is_some() {
+            Some(ui::new_debug_window(&video_subsystem))
+        } else {
+            None
+        },
         input: None,
     };
 
