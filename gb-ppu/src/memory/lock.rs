@@ -1,7 +1,4 @@
-#[derive(Debug, Clone, Copy)]
-pub enum Lock {
-    Ppu,
-}
+pub type Lock = gb_bus::Lock;
 
 pub trait Lockable {
     fn lock(&mut self, owner: Lock);

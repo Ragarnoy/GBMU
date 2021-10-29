@@ -8,7 +8,7 @@ use crate::{
     SPRITE_RENDER_HEIGHT, SPRITE_RENDER_WIDTH, TILEMAP_DIM, TILEMAP_TILE_COUNT, TILESHEET_HEIGHT,
     TILESHEET_TILE_COUNT, TILESHEET_WIDTH,
 };
-use gb_bus::Bus;
+use gb_bus::{Area, Bus};
 use gb_clock::{Tick, Ticker};
 use gb_lcd::render::{RenderData, SCREEN_HEIGHT, SCREEN_WIDTH};
 
@@ -227,38 +227,38 @@ impl Ppu {
         image
     }
 
-    fn vblank(&mut self) {
+    fn vblank<B: Bus<u8>>(&mut self, _adr_bus: &mut B) {
         if self.state.line() == State::LAST_LINE && self.state.step() == State::LAST_STEP {
             std::mem::swap(&mut self.pixels, &mut self.next_pixels);
         }
     }
 
-    fn hblank(&mut self) {
-        if let Ok(mut oam) = self.oam.try_borrow_mut() {
+    fn hblank<B: Bus<u8>>(&mut self, adr_bus: &mut B) {
+        if let Ok(oam) = self.oam.try_borrow() {
             if let Some(Lock::Ppu) = oam.get_lock() {
-                oam.unlock();
+                adr_bus.unlock(Area::Oam);
             }
         } else {
             log::error!("Oam borrow failed for ppu in mode 0");
         }
-        if let Ok(mut vram) = self.vram.try_borrow_mut() {
+        if let Ok(vram) = self.vram.try_borrow() {
             if let Some(Lock::Ppu) = vram.get_lock() {
-                vram.unlock();
+                adr_bus.unlock(Area::Vram);
             }
         } else {
             log::error!("Vram borrow failed for ppu in mode 0");
         }
     }
 
-    fn oam_fetch(&mut self) {
+    fn oam_fetch<B: Bus<u8>>(&mut self, adr_bus: &mut B) {
         if let Ok(lcd_reg) = self.lcd_reg.try_borrow() {
-            if let Ok(mut oam) = self.oam.try_borrow_mut() {
+            if let Ok(oam) = self.oam.try_borrow() {
                 let lock = oam.get_lock();
                 let step = self.state.step();
 
                 if lock.is_none() {
                     // init mode 2
-                    oam.lock(Lock::Ppu);
+                    adr_bus.lock(Area::Oam, Lock::Ppu);
                     self.scanline_sprites.clear();
                 }
                 if let Some(Lock::Ppu) = lock {
@@ -300,16 +300,16 @@ impl Ppu {
         }
     }
 
-    fn pixel_drawing(&mut self) {
+    fn pixel_drawing<B: Bus<u8>>(&mut self, adr_bus: &mut B) {
         if let Ok(lcd_reg) = self.lcd_reg.try_borrow() {
-            if let Ok(mut vram) = self.vram.try_borrow_mut() {
+            if let Ok(vram) = self.vram.try_borrow() {
                 let lock = vram.get_lock();
                 let x = self.state.pixel_drawn();
                 let y = self.state.line();
 
                 if lock.is_none() {
                     // init mode 3
-                    vram.lock(Lock::Ppu);
+                    adr_bus.lock(Area::Vram, Lock::Ppu);
                     self.pixel_fetcher.clear();
                     self.pixel_fifo.clear();
                     self.state.clear_pixel_count();
@@ -422,10 +422,10 @@ impl Ticker for Ppu {
         B: Bus<u8> + Bus<u16>,
     {
         match self.state.mode() {
-            Mode::OAMFetch => self.oam_fetch(),
-            Mode::PixelDrawing => self.pixel_drawing(),
-            Mode::HBlank => self.hblank(),
-            Mode::VBlank => self.vblank(),
+            Mode::OAMFetch => self.oam_fetch(adr_bus),
+            Mode::PixelDrawing => self.pixel_drawing(adr_bus),
+            Mode::HBlank => self.hblank(adr_bus),
+            Mode::VBlank => self.vblank(adr_bus),
         }
         // update state after executing tick
         let lcd_reg = self.lcd_reg.try_borrow_mut().ok();

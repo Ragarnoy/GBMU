@@ -1,7 +1,7 @@
 use anyhow::Result;
 use gb_bus::{
     generic::{CharDevice, SimpleRW},
-    AddressBus, Bus, IORegBus, WorkingRam,
+    AddressBus, Bus, IORegBus, Lock, WorkingRam,
 };
 use gb_clock::Clock;
 use gb_cpu::cpu::Cpu;
@@ -20,6 +20,7 @@ use gb_roms::{
     Header,
 };
 use gb_timer::Timer;
+use std::collections::HashMap;
 use std::{cell::RefCell, rc::Rc};
 
 pub struct Context<const WIDTH: usize, const HEIGHT: usize> {
@@ -99,6 +100,7 @@ impl Game {
             io_reg: io_bus.clone(),
             hram: Rc::new(RefCell::new(SimpleRW::<0x80>::default())),
             ie_reg: Rc::new(RefCell::new(CharDevice::default())), // TODO: link the part that handle the IE
+            area_locks: HashMap::new(),
         };
 
         Ok(Self {
@@ -134,10 +136,12 @@ impl DebugOperations for Game {}
 
 impl MemoryDebugOperations for Game {
     fn read(&self, index: u16) -> u8 {
-        self.addr_bus.read(index).unwrap_or_else(|err| {
-            log::error!("[DBG-OPS] bus read error at {}: {:?}", index, err);
-            0xff
-        })
+        self.addr_bus
+            .read(index, Some(Lock::Debugger))
+            .unwrap_or_else(|err| {
+                log::error!("[DBG-OPS] bus read error at {}: {:?}", index, err);
+                0xff
+            })
     }
 }
 
