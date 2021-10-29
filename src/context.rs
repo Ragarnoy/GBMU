@@ -142,8 +142,16 @@ impl MemoryDebugOperations for Game {
 }
 
 impl RegisterDebugOperations for Game {
-    fn cpu_get(&self, _key: &str) -> Result<RegisterValue> {
-        Ok(RegisterValue::U8(0xff))
+    fn cpu_get(&self, key: &str) -> Result<RegisterValue> {
+        match key {
+            "AF" => Ok(self.cpu.borrow().registers.af.into()),
+            "BC" => Ok(self.cpu.borrow().registers.bc.into()),
+            "DE" => Ok(self.cpu.borrow().registers.de.into()),
+            "HL" => Ok(self.cpu.borrow().registers.hl.into()),
+            "SP" => Ok(self.cpu.borrow().registers.sp.into()),
+            "PC" => Ok(self.cpu.borrow().registers.pc.into()),
+            _ => Ok(0xffu8.into()),
+        }
     }
 
     fn ppu_get(&self, _key: &str) -> Result<RegisterValue> {
