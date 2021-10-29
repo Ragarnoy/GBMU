@@ -99,7 +99,8 @@ impl Game {
             oam: ppu_mem,
             io_reg: io_bus.clone(),
             hram: Rc::new(RefCell::new(SimpleRW::<0x80>::default())),
-            ie_reg: Rc::new(RefCell::new(CharDevice::default())), // TODO: link the part that handle the IE
+
+            ie_reg: cpu.clone(),
             area_locks: HashMap::new(),
         };
 
