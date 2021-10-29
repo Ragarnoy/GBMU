@@ -99,7 +99,8 @@ impl Game {
             oam: ppu_mem,
             io_reg: io_bus.clone(),
             hram: Rc::new(RefCell::new(SimpleRW::<0x80>::default())),
-            ie_reg: Rc::new(RefCell::new(CharDevice::default())), // TODO: link the part that handle the IE
+
+            ie_reg: cpu.clone(),
             area_locks: HashMap::new(),
         };
 
@@ -146,8 +147,16 @@ impl MemoryDebugOperations for Game {
 }
 
 impl RegisterDebugOperations for Game {
-    fn cpu_get(&self, _key: &str) -> Result<RegisterValue> {
-        Ok(RegisterValue::U8(0xff))
+    fn cpu_get(&self, key: &str) -> Result<RegisterValue> {
+        match key {
+            "AF" => Ok(self.cpu.borrow().registers.af.into()),
+            "BC" => Ok(self.cpu.borrow().registers.bc.into()),
+            "DE" => Ok(self.cpu.borrow().registers.de.into()),
+            "HL" => Ok(self.cpu.borrow().registers.hl.into()),
+            "SP" => Ok(self.cpu.borrow().registers.sp.into()),
+            "PC" => Ok(self.cpu.borrow().registers.pc.into()),
+            _ => Ok(0xffu8.into()),
+        }
     }
 
     fn ppu_get(&self, _key: &str) -> Result<RegisterValue> {
@@ -159,7 +168,14 @@ impl RegisterDebugOperations for Game {
     }
 
     fn cpu_registers(&self) -> Vec<RegisterMap> {
-        Vec::new()
+        vec![
+            ("AF".to_string(), self.cpu.borrow().registers.af.into()),
+            ("BC".to_string(), self.cpu.borrow().registers.bc.into()),
+            ("DE".to_string(), self.cpu.borrow().registers.de.into()),
+            ("HL".to_string(), self.cpu.borrow().registers.hl.into()),
+            ("SP".to_string(), self.cpu.borrow().registers.sp.into()),
+            ("PC".to_string(), self.cpu.borrow().registers.pc.into()),
+        ]
     }
 
     fn ppu_registers(&self) -> Vec<RegisterMap> {
