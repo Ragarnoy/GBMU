@@ -155,7 +155,14 @@ impl RegisterDebugOperations for Game {
     }
 
     fn cpu_registers(&self) -> Vec<RegisterMap> {
-        Vec::new()
+        vec![
+            ("AF".to_string(), self.cpu.borrow().registers.af.into()),
+            ("BC".to_string(), self.cpu.borrow().registers.bc.into()),
+            ("DE".to_string(), self.cpu.borrow().registers.de.into()),
+            ("HL".to_string(), self.cpu.borrow().registers.hl.into()),
+            ("SP".to_string(), self.cpu.borrow().registers.sp.into()),
+            ("PC".to_string(), self.cpu.borrow().registers.pc.into()),
+        ]
     }
 
     fn ppu_registers(&self) -> Vec<RegisterMap> {
