@@ -67,9 +67,9 @@ impl RegisterBits {
 
 fn trigger_interrupt(addr_bus: &mut dyn Bus<u8>) {
     let interrupts_val = addr_bus
-        .read(0xFF00)
+        .read(0xFF00, None)
         .expect("Failed to read interrupt value for joypad interrupt");
-    if let Err(err) = addr_bus.write(0xFF00, interrupts_val | 0b10000) {
+    if let Err(err) = addr_bus.write(0xFF00, interrupts_val | 0b10000, None) {
         log::error!(
             "Failed to write interrupt value for joypad interrupt: {:?}",
             err
