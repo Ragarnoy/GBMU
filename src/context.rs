@@ -1,7 +1,7 @@
 use anyhow::Result;
 use gb_bus::{
     generic::{CharDevice, SimpleRW},
-    AddressBus, Bus, IORegBus, WorkingRam,
+    AddressBus, Bus, IORegBus, Lock, WorkingRam,
 };
 use gb_clock::Clock;
 use gb_cpu::cpu::Cpu;
@@ -136,10 +136,12 @@ impl DebugOperations for Game {}
 
 impl MemoryDebugOperations for Game {
     fn read(&self, index: u16) -> u8 {
-        self.addr_bus.read(index).unwrap_or_else(|err| {
-            log::error!("[DBG-OPS] bus read error at {}: {:?}", index, err);
-            0xff
-        })
+        self.addr_bus
+            .read(index, Some(Lock::Debugger))
+            .unwrap_or_else(|err| {
+                log::error!("[DBG-OPS] bus read error at {}: {:?}", index, err);
+                0xff
+            })
     }
 }
 

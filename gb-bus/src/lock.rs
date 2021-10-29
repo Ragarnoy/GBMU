@@ -3,6 +3,7 @@ use crate::{Area, FileOperation};
 #[derive(Eq, PartialEq, Debug, Clone, Copy)]
 pub enum Lock {
     Ppu,
+    Debugger,
 }
 
 pub trait MemoryLock {
