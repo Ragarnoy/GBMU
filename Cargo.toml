@@ -39,6 +39,7 @@ members = [
   "gb-roms",
   "gb-ppu",
   "gb-lcd",
+  "gb-lcd-wgpu",
   "gb-cpu",
   "gb-dbg",
   "gb-bus",
