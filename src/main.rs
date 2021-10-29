@@ -138,12 +138,6 @@ fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
         }
     };
 
-    let windows = Windows {
-        main: gb_window,
-        debug: None,
-        input: None,
-    };
-
     let game_context: Option<Game> = opts.rom.as_ref().and_then(|romname| {
         Game::new(romname.clone()).map_or_else(
             |e| {
@@ -155,6 +149,14 @@ fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
     });
 
     let dbg = DebuggerBuilder::new().build();
+
+    let windows = Windows {
+        main: gb_window,
+        debug: game_context
+            .as_ref()
+            .map(|_| ui::new_debug_window(&video_subsystem)),
+        input: None,
+    };
 
     (
         Context {
