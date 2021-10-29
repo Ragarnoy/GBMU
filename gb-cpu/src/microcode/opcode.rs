@@ -42,7 +42,7 @@ pub enum Opcode {
     /// `LD DE, u16`: load `u16` into `DE`, 3m
     LdDE16 = 0x11,
     /// `LD (DE), A`: load `A` into `(DE)`, 2m
-    LdDEAInd = 0x12,
+    LdDEA = 0x12,
     /// `INC DE`: increment `DE`, 2m
     IncDE = 0x13,
     /// `INC D`: increment `D`, 1m
