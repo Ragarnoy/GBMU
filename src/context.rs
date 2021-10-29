@@ -1,12 +1,19 @@
+use anyhow::Result;
 use gb_bus::{
     generic::{CharDevice, SimpleRW},
-    AddressBus, IORegBus, WorkingRam,
+    AddressBus, Bus, IORegBus, Lock, WorkingRam,
 };
 use gb_clock::Clock;
 use gb_cpu::cpu::Cpu;
+use gb_dbg::dbg_interfaces::{
+    DebugOperations, MemoryDebugOperations, RegisterDebugOperations, RegisterMap, RegisterValue,
+};
 use gb_joypad::Joypad;
-use gb_lcd::{render::RenderImage, window::GBWindow};
-use gb_ppu::PPU;
+use gb_lcd::{
+    render::{RenderImage, SCREEN_HEIGHT, SCREEN_WIDTH},
+    window::GBWindow,
+};
+use gb_ppu::Ppu;
 use gb_roms::{
     controllers::{bios, generate_rom_controller, BiosWrapper, MbcController},
     header::AutoSave,
@@ -36,6 +43,7 @@ pub struct Game {
     pub auto_save: Option<AutoSave>,
     pub mbc: Rc<RefCell<MbcController>>,
     pub cpu: Rc<RefCell<Cpu>>,
+    pub ppu: Ppu,
     pub clock: Clock<AddressBus>,
     pub io_bus: Rc<RefCell<IORegBus>>,
     pub timer: Rc<RefCell<Timer>>,
@@ -43,7 +51,7 @@ pub struct Game {
 }
 
 impl Game {
-    pub fn new(romname: String, ppu: &PPU) -> Result<Game, anyhow::Error> {
+    pub fn new(romname: String) -> Result<Game, anyhow::Error> {
         use std::{fs::File, io::Seek};
 
         let mut file = File::open(romname.clone())?;
@@ -55,6 +63,7 @@ impl Game {
         let mbc = generate_rom_controller(file, header.clone())?;
         let mbc = Rc::new(RefCell::new(mbc));
 
+        let ppu = Ppu::new();
         let ppu_mem = Rc::new(RefCell::new(ppu.memory()));
         let ppu_reg = Rc::new(RefCell::new(ppu.registers()));
         let cpu = Rc::new(RefCell::new(Cpu::default()));
@@ -100,6 +109,7 @@ impl Game {
             auto_save: header.cartridge_type.auto_save_type(),
             mbc,
             cpu,
+            ppu,
             clock: Clock::default(),
             io_bus,
             timer,
@@ -107,9 +117,56 @@ impl Game {
         })
     }
 
-    pub fn cycle(&mut self, ppu: &mut PPU) {
-        let cpu: &mut Cpu = &mut self.cpu.borrow_mut();
-        let timer: &mut Timer = &mut self.timer.borrow_mut();
-        self.clock.cycle(&mut self.addr_bus, cpu, ppu, timer);
+    pub fn cycle(&mut self) -> bool {
+        self.clock.cycle(
+            &mut self.addr_bus,
+            self.cpu.borrow_mut(),
+            &mut self.ppu,
+            self.timer.borrow_mut(),
+        )
+    }
+
+    pub fn draw(&self, context: &mut Context<SCREEN_WIDTH, SCREEN_HEIGHT>) {
+        context.display.update_render(self.ppu.pixels());
+        context.display.draw();
+    }
+}
+
+impl DebugOperations for Game {}
+
+impl MemoryDebugOperations for Game {
+    fn read(&self, index: u16) -> u8 {
+        self.addr_bus
+            .read(index, Some(Lock::Debugger))
+            .unwrap_or_else(|err| {
+                log::error!("[DBG-OPS] bus read error at {}: {:?}", index, err);
+                0xff
+            })
+    }
+}
+
+impl RegisterDebugOperations for Game {
+    fn cpu_get(&self, _key: &str) -> Result<RegisterValue> {
+        Ok(RegisterValue::U8(0xff))
+    }
+
+    fn ppu_get(&self, _key: &str) -> Result<RegisterValue> {
+        Ok(RegisterValue::U8(0xff))
+    }
+
+    fn io_get(&self, _key: &str) -> Result<RegisterValue> {
+        Ok(RegisterValue::U8(0xff))
+    }
+
+    fn cpu_registers(&self) -> Vec<RegisterMap> {
+        Vec::new()
+    }
+
+    fn ppu_registers(&self) -> Vec<RegisterMap> {
+        Vec::new()
+    }
+
+    fn io_registers(&self) -> Vec<RegisterMap> {
+        Vec::new()
     }
 }
