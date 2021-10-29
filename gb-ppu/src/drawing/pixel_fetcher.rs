@@ -6,7 +6,7 @@ use gb_lcd::render::{SCREEN_HEIGHT, SCREEN_WIDTH};
 use std::collections::VecDeque;
 use std::ops::Deref;
 
-#[derive(Eq, PartialEq)]
+#[derive(Eq, PartialEq, Clone, Copy)]
 pub enum FetchMode {
     Background,
     Window,
@@ -21,7 +21,7 @@ impl Default for FetchMode {
 
 pub struct PixelFetcher {
     pixels: VecDeque<Pixel>,
-    pub mode: FetchMode,
+    mode: FetchMode,
     internal_tick: u8,
     tile: usize,
 }
@@ -48,6 +48,10 @@ impl PixelFetcher {
             self.pixels.clear();
         }
         self.mode = mode;
+    }
+
+    pub fn mode(&self) -> FetchMode {
+        self.mode
     }
 
     pub fn fetch(
