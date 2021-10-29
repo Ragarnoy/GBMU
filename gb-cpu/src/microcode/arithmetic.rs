@@ -1,4 +1,6 @@
-use super::{math, MicrocodeController, MicrocodeFlow, State, OK_PLAY_NEXT_ACTION};
+use super::{
+    math, MicrocodeController, MicrocodeFlow, State, OK_CONSUME_CYCLE, OK_PLAY_NEXT_ACTION,
+};
 use crate::interfaces::{ReadFlagReg, WriteFlagReg};
 
 pub fn sub(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
@@ -21,6 +23,17 @@ pub fn add(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     state.regs.set_carry(flag.carry);
     ctl.push(value);
     OK_PLAY_NEXT_ACTION
+}
+
+pub fn add_16(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
+    let b = ctl.pop_u16();
+    let a = ctl.pop_u16();
+    let (res, overflow) = a.overflowing_add(b);
+    state.regs.set_subtraction(false);
+    state.regs.set_half_carry((a & 0xf) + (b & 0xf) > 0xf);
+    state.regs.set_carry(overflow);
+    ctl.push_u16(res);
+    OK_CONSUME_CYCLE
 }
 
 /// Daa perform an operation on a byte to format it in Binary Coded Decimal number (BCD)
