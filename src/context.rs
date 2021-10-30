@@ -84,7 +84,7 @@ impl Game {
             lcd: ppu_reg.clone(),
             vram_bank: ppu_reg.clone(),
             boot_rom: bios_wrapper.clone(),
-            vram_dma: Rc::new(RefCell::new(SimpleRW::<4>::default())), // TODO: link the part that handle the DMA
+            vram_dma: Rc::new(RefCell::new(SimpleRW::<6>::default())), // TODO: link the part that handle the DMA
             bg_obj_palettes: ppu_reg,
             wram_bank: wram.clone(),
             interrupt_flag: cpu.clone(),
