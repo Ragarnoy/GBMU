@@ -58,11 +58,11 @@ pub struct Game {
 #[derive(Debug)]
 enum ScheduledStop {
     /// Schedule a stop after `usize` step
-    AfterStep(usize),
+    Step(usize),
     /// Schedule a stop after `usize` frame
-    AfterFrame(usize),
+    Frame(usize),
     /// Schedule a stop after `time` delay
-    AfterTimeout(std::time::Instant, std::time::Duration),
+    Timeout(std::time::Instant, std::time::Duration),
 }
 
 impl Game {
@@ -158,7 +158,7 @@ impl Game {
                 frame_ended
             );
             match scheduled {
-                ScheduledStop::AfterStep(count) => {
+                ScheduledStop::Step(count) => {
                     if *count == 1 {
                         self.emulation_stopped = true;
                         self.scheduled_stop = None;
@@ -166,7 +166,7 @@ impl Game {
                         *count -= 1;
                     }
                 }
-                ScheduledStop::AfterFrame(count) => {
+                ScheduledStop::Frame(count) => {
                     if frame_ended {
                         if *count == 1 {
                             self.emulation_stopped = true;
@@ -176,7 +176,7 @@ impl Game {
                         }
                     }
                 }
-                ScheduledStop::AfterTimeout(instant, timeout) => {
+                ScheduledStop::Timeout(instant, timeout) => {
                     if &instant.elapsed() > timeout {
                         self.emulation_stopped = true;
                         self.scheduled_stop = None;
@@ -200,15 +200,15 @@ impl Game {
             }
             Break(RunDuration::Step) => {
                 self.emulation_stopped = false;
-                self.scheduled_stop = Some(ScheduledStop::AfterStep(1));
+                self.scheduled_stop = Some(ScheduledStop::Step(1));
             }
             Break(RunDuration::RunFrame) => {
                 self.emulation_stopped = false;
-                self.scheduled_stop = Some(ScheduledStop::AfterFrame(1));
+                self.scheduled_stop = Some(ScheduledStop::Frame(1));
             }
             Break(RunDuration::RunSecond) => {
                 self.emulation_stopped = false;
-                self.scheduled_stop = Some(ScheduledStop::AfterTimeout(
+                self.scheduled_stop = Some(ScheduledStop::Timeout(
                     std::time::Instant::now(),
                     std::time::Duration::from_secs(1),
                 ));
