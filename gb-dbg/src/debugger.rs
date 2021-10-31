@@ -25,7 +25,7 @@ pub struct Debugger<MEM> {
     disassembler: DisassemblyViewer,
     #[cfg(feature = "breakpoints")]
     breakpoint_editor: BreakpointEditor,
-    flow_status: Option<ControlFlow<(), RunDuration>>,
+    flow_status: Option<ControlFlow<RunDuration>>,
 }
 
 impl<MEM: DebugOperations> Debugger<MEM> {
@@ -62,7 +62,7 @@ impl<MEM: DebugOperations> Debugger<MEM> {
         });
     }
 
-    pub fn flow_status(&self) -> Option<ControlFlow<(), RunDuration>> {
+    pub fn flow_status(&self) -> Option<ControlFlow<RunDuration>> {
         self.flow_status
     }
 }
