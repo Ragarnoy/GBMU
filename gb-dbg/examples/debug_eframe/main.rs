@@ -19,12 +19,12 @@ impl App for DebuggerApp {
 
         if let Some(flow) = self.debugger.flow_status() {
             match flow {
-                ControlFlow::Continue(x) => match x {
+                ControlFlow::Break(x) => match x {
                     RunDuration::Step => self.memory.pc += 1,
                     RunDuration::RunFrame => self.memory.pc += 2,
                     RunDuration::RunSecond => self.memory.pc += 3,
                 },
-                ControlFlow::Break(_) => self.memory.pc = 1,
+                ControlFlow::Continue(_) => self.memory.pc = 1,
             };
         }
     }
