@@ -5,8 +5,11 @@ use gb_bus::{
 };
 use gb_clock::Clock;
 use gb_cpu::cpu::Cpu;
-use gb_dbg::dbg_interfaces::{
-    DebugOperations, MemoryDebugOperations, RegisterDebugOperations, RegisterMap, RegisterValue,
+use gb_dbg::{
+    dbg_interfaces::{
+        DebugOperations, MemoryDebugOperations, RegisterDebugOperations, RegisterMap, RegisterValue,
+    },
+    run_duration::RunDuration,
 };
 use gb_joypad::Joypad;
 use gb_lcd::{
@@ -52,6 +55,7 @@ pub struct Game {
     emulation_stopped: bool,
 }
 
+#[derive(Debug)]
 enum ScheduledStop {
     /// Schedule a stop after `usize` step
     AfterStep(usize),
@@ -133,14 +137,14 @@ impl Game {
 
     pub fn cycle(&mut self) -> bool {
         if !self.emulation_stopped {
-            let frame_ended = self.clock.cycle(
+            let frame_not_finished = self.clock.cycle(
                 &mut self.addr_bus,
                 self.cpu.borrow_mut(),
                 &mut self.ppu,
                 self.timer.borrow_mut(),
             );
-            self.check_scheduled_stop(frame_ended);
-            frame_ended
+            self.check_scheduled_stop(!frame_not_finished);
+            frame_not_finished
         } else {
             false
         }
@@ -148,6 +152,11 @@ impl Game {
 
     fn check_scheduled_stop(&mut self, frame_ended: bool) {
         if let Some(ref mut scheduled) = self.scheduled_stop {
+            log::trace!(
+                "check for stop, scheduled={:?}, framed_ended={}",
+                scheduled,
+                frame_ended
+            );
             match scheduled {
                 ScheduledStop::AfterStep(count) => {
                     if *count == 1 {
@@ -180,6 +189,31 @@ impl Game {
     pub fn draw(&self, context: &mut Context<SCREEN_WIDTH, SCREEN_HEIGHT>) {
         context.display.update_render(self.ppu.pixels());
         context.display.draw();
+    }
+
+    pub fn update_scheduled_stop(&mut self, flow: std::ops::ControlFlow<RunDuration>) {
+        use std::ops::ControlFlow::{Break, Continue};
+        match flow {
+            Continue(()) => {
+                self.emulation_stopped = false;
+                self.scheduled_stop = None;
+            }
+            Break(RunDuration::Step) => {
+                self.emulation_stopped = false;
+                self.scheduled_stop = Some(ScheduledStop::AfterStep(1));
+            }
+            Break(RunDuration::RunFrame) => {
+                self.emulation_stopped = false;
+                self.scheduled_stop = Some(ScheduledStop::AfterFrame(1));
+            }
+            Break(RunDuration::RunSecond) => {
+                self.emulation_stopped = false;
+                self.scheduled_stop = Some(ScheduledStop::AfterTimeout(
+                    std::time::Instant::now(),
+                    std::time::Duration::from_secs(1),
+                ));
+            }
+        }
     }
 }
 
