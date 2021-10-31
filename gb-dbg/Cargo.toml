@@ -14,3 +14,6 @@ gb-roms = { path = "../gb-roms" }
 
 [dev-dependencies]
 eframe = "0.14.0"
+
+[features]
+breakpoints = []

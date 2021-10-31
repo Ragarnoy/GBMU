@@ -1,3 +1,4 @@
+#[cfg(feature = "breakpoints")]
 mod breakpoints;
 pub mod disassembler;
 pub mod flow_control;
@@ -6,6 +7,7 @@ mod options;
 pub mod registers;
 
 use crate::dbg_interfaces::{DebugOperations, MemoryDebugOperations};
+#[cfg(feature = "breakpoints")]
 use crate::debugger::breakpoints::BreakpointEditor;
 use crate::debugger::disassembler::DisassemblyViewer;
 use crate::debugger::flow_control::FlowController;
@@ -21,6 +23,7 @@ pub struct Debugger<MEM> {
     register_editor: RegisterEditor,
     flow_controller: FlowController,
     disassembler: DisassemblyViewer,
+    #[cfg(feature = "breakpoints")]
     breakpoint_editor: BreakpointEditor,
     flow_status: Option<ControlFlow<(), RunDuration>>,
 }
@@ -44,6 +47,7 @@ impl<MEM: DebugOperations> Debugger<MEM> {
                 });
             });
 
+        #[cfg(feature = "breakpoints")]
         egui::SidePanel::right("right_panel")
             .resizable(false)
             .default_width(170.0)
@@ -84,6 +88,7 @@ impl DebuggerBuilder {
             register_editor: RegisterEditor,
             flow_controller: FlowController,
             disassembler: DisassemblyViewer,
+            #[cfg(feature = "breakpoints")]
             breakpoint_editor: BreakpointEditor::default(),
             flow_status: None,
         }
