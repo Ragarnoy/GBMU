@@ -9,6 +9,7 @@ edition = "2021"
 egui_memory_editor = { git = "https://github.com/Ragarnoy/egui_memory_editor", branch = "master" }
 egui = "0.14"
 anyhow = "1.0.43"
+log = "0.4"
 gb-roms = { path = "../gb-roms" }
 
 [dev-dependencies]
