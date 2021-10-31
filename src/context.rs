@@ -48,7 +48,17 @@ pub struct Game {
     pub io_bus: Rc<RefCell<IORegBus>>,
     pub timer: Rc<RefCell<Timer>>,
     pub addr_bus: AddressBus,
+    scheduled_stop: Option<ScheduledStop>,
     emulation_stopped: bool,
+}
+
+enum ScheduledStop {
+    /// Schedule a stop after `usize` step
+    AfterStep(usize),
+    /// Schedule a stop after `usize` frame
+    AfterFrame(usize),
+    /// Schedule a stop after `time` delay
+    AfterTimeout(std::time::Instant, std::time::Duration),
 }
 
 impl Game {
@@ -116,20 +126,54 @@ impl Game {
             io_bus,
             timer,
             addr_bus: bus,
+            scheduled_stop: None,
             emulation_stopped: stopped,
         })
     }
 
     pub fn cycle(&mut self) -> bool {
         if !self.emulation_stopped {
-            self.clock.cycle(
+            let frame_ended = self.clock.cycle(
                 &mut self.addr_bus,
                 self.cpu.borrow_mut(),
                 &mut self.ppu,
                 self.timer.borrow_mut(),
-            )
+            );
+            self.check_scheduled_stop(frame_ended);
+            frame_ended
         } else {
             false
+        }
+    }
+
+    fn check_scheduled_stop(&mut self, frame_ended: bool) {
+        if let Some(ref mut scheduled) = self.scheduled_stop {
+            match scheduled {
+                ScheduledStop::AfterStep(count) => {
+                    if *count == 1 {
+                        self.emulation_stopped = true;
+                        self.scheduled_stop = None;
+                    } else {
+                        *count -= 1;
+                    }
+                }
+                ScheduledStop::AfterFrame(count) => {
+                    if frame_ended {
+                        if *count == 1 {
+                            self.emulation_stopped = true;
+                            self.scheduled_stop = None;
+                        } else {
+                            *count -= 1;
+                        }
+                    }
+                }
+                ScheduledStop::AfterTimeout(instant, timeout) => {
+                    if &instant.elapsed() > timeout {
+                        self.emulation_stopped = true;
+                        self.scheduled_stop = None;
+                    }
+                }
+            }
         }
     }
 
