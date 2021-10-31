@@ -139,7 +139,7 @@ fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
     };
 
     let game_context: Option<Game> = opts.rom.as_ref().and_then(|romname| {
-        Game::new(romname.clone()).map_or_else(
+        Game::new(romname.clone(), opts.debug).map_or_else(
             |e| {
                 log::error!("while creating game context for {}: {:?}", romname, e);
                 None

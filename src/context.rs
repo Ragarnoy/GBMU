@@ -48,10 +48,11 @@ pub struct Game {
     pub io_bus: Rc<RefCell<IORegBus>>,
     pub timer: Rc<RefCell<Timer>>,
     pub addr_bus: AddressBus,
+    emulation_stopped: bool,
 }
 
 impl Game {
-    pub fn new(romname: String) -> Result<Game, anyhow::Error> {
+    pub fn new(romname: String, stopped: bool) -> Result<Game, anyhow::Error> {
         use std::{fs::File, io::Seek};
 
         let mut file = File::open(romname.clone())?;
@@ -115,16 +116,21 @@ impl Game {
             io_bus,
             timer,
             addr_bus: bus,
+            emulation_stopped: stopped,
         })
     }
 
     pub fn cycle(&mut self) -> bool {
-        self.clock.cycle(
-            &mut self.addr_bus,
-            self.cpu.borrow_mut(),
-            &mut self.ppu,
-            self.timer.borrow_mut(),
-        )
+        if !self.emulation_stopped {
+            self.clock.cycle(
+                &mut self.addr_bus,
+                self.cpu.borrow_mut(),
+                &mut self.ppu,
+                self.timer.borrow_mut(),
+            )
+        } else {
+            false
+        }
     }
 
     pub fn draw(&self, context: &mut Context<SCREEN_WIDTH, SCREEN_HEIGHT>) {
