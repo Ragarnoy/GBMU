@@ -146,6 +146,17 @@ impl MemoryDebugOperations for Game {
     }
 }
 
+macro_rules! read_io_reg {
+    ($name:literal, $bus:expr, $addr:expr) => {
+        (
+            $name.to_string(),
+            $bus.read($addr, Some(Lock::Debugger))
+                .unwrap_or(0xffu8)
+                .into(),
+        )
+    };
+}
+
 impl RegisterDebugOperations for Game {
     fn cpu_get(&self, key: &str) -> Result<RegisterValue> {
         match key {
@@ -179,86 +190,63 @@ impl RegisterDebugOperations for Game {
     }
 
     fn ppu_registers(&self) -> Vec<RegisterMap> {
-        macro_rules! read_io_reg {
-            ($name:literal ,$addr:expr) => {
-                (
-                    $name.to_string(),
-                    self.addr_bus
-                        .read($addr, Some(Lock::Debugger))
-                        .unwrap_or(0xffu8)
-                        .into(),
-                )
-            };
-        }
         vec![
             // lcd regs
-            read_io_reg!("LCD CTL", 0xFF40),
-            read_io_reg!("LCD ST", 0xFF41),
-            read_io_reg!("SCY", 0xFF42),
-            read_io_reg!("SCX", 0xFF43),
-            read_io_reg!("LY", 0xFF44),
-            read_io_reg!("LYC", 0xFF45),
-            read_io_reg!("DMA", 0xFF46),
-            read_io_reg!("BGP", 0xFF47),
-            read_io_reg!("OBP0", 0xFF48),
-            read_io_reg!("OBP1", 0xFF49),
-            read_io_reg!("WY", 0xFF4A),
-            read_io_reg!("WX", 0xFF4B),
+            read_io_reg!("LCD CTL", self.addr_bus, 0xFF40),
+            read_io_reg!("LCD ST", self.addr_bus, 0xFF41),
+            read_io_reg!("SCY", self.addr_bus, 0xFF42),
+            read_io_reg!("SCX", self.addr_bus, 0xFF43),
+            read_io_reg!("LY", self.addr_bus, 0xFF44),
+            read_io_reg!("LYC", self.addr_bus, 0xFF45),
+            read_io_reg!("DMA", self.addr_bus, 0xFF46),
+            read_io_reg!("BGP", self.addr_bus, 0xFF47),
+            read_io_reg!("OBP0", self.addr_bus, 0xFF48),
+            read_io_reg!("OBP1", self.addr_bus, 0xFF49),
+            read_io_reg!("WY", self.addr_bus, 0xFF4A),
+            read_io_reg!("WX", self.addr_bus, 0xFF4B),
         ]
     }
 
     fn io_registers(&self) -> Vec<RegisterMap> {
-        macro_rules! read_io_reg {
-            ($name:literal ,$addr:expr) => {
-                (
-                    $name.to_string(),
-                    self.addr_bus
-                        .read($addr, Some(Lock::Debugger))
-                        .unwrap_or(0xffu8)
-                        .into(),
-                )
-            };
-        }
-
         vec![
             // joypad regs
-            read_io_reg!("JOY", 0xff00),
+            read_io_reg!("JOY", self.addr_bus, 0xff00),
             // serial regs
-            read_io_reg!("Serial", 0xff01),
-            read_io_reg!("Serial CTL", 0xff02),
+            read_io_reg!("Serial", self.addr_bus, 0xff01),
+            read_io_reg!("Serial CTL", self.addr_bus, 0xff02),
             // Timer regs
-            read_io_reg!("DIV", 0xff04),
-            read_io_reg!("TIMA", 0xff05),
-            read_io_reg!("TMA", 0xff06),
-            read_io_reg!("TAC", 0xff07),
+            read_io_reg!("DIV", self.addr_bus, 0xff04),
+            read_io_reg!("TIMA", self.addr_bus, 0xff05),
+            read_io_reg!("TMA", self.addr_bus, 0xff06),
+            read_io_reg!("TAC", self.addr_bus, 0xff07),
             // cpu int regs
-            read_io_reg!("IF", 0xff0f),
-            read_io_reg!("IE", 0xffff),
+            read_io_reg!("IF", self.addr_bus, 0xff0f),
+            read_io_reg!("IE", self.addr_bus, 0xffff),
             // audio regs
-            read_io_reg!("Audio channel 1 - SWEEP", 0xFF10),
-            read_io_reg!("Audio channel 1 - PWM", 0xFF11),
-            read_io_reg!("Audio channel 1 - envelope", 0xFF12),
-            read_io_reg!("Audio channel 1 - FREQ", 0xFF13),
-            read_io_reg!("Audio channel 1 - CTL", 0xFF14),
-            read_io_reg!("Audio channel 2 - PWD", 0xFF16),
-            read_io_reg!("Audio channel 2 - envelope", 0xFF17),
-            read_io_reg!("Audio channel 2 - FREQ", 0xFF18),
-            read_io_reg!("Audio channel 2 - CTL", 0xFF19),
-            read_io_reg!("Audio channel 3 - ENABLE", 0xFF1A),
-            read_io_reg!("Audio channel 3 - PWD", 0xFF1B),
-            read_io_reg!("Audio channel 3 - VOL", 0xFF1C),
-            read_io_reg!("Audio channel 3 - FREQ", 0xFF1D),
-            read_io_reg!("Audio channel 3 - CTL", 0xFF1E),
-            read_io_reg!("Audio channel 4 - PWD", 0xFF20),
-            read_io_reg!("Audio channel 4 - VOL", 0xFF21),
-            read_io_reg!("Audio channel 4 - FREQ", 0xFF22),
-            read_io_reg!("Audio channel 4 - CTL", 0xFF23),
-            read_io_reg!("Audio output mapping", 0xFF24),
-            read_io_reg!("Audio mapping", 0xFF25),
-            read_io_reg!("Audio channel control", 0xFF26),
-            read_io_reg!("Audio Wave", 0xFF30),
+            read_io_reg!("Audio channel 1 - SWEEP", self.addr_bus, 0xFF10),
+            read_io_reg!("Audio channel 1 - PWM", self.addr_bus, 0xFF11),
+            read_io_reg!("Audio channel 1 - envelope", self.addr_bus, 0xFF12),
+            read_io_reg!("Audio channel 1 - FREQ", self.addr_bus, 0xFF13),
+            read_io_reg!("Audio channel 1 - CTL", self.addr_bus, 0xFF14),
+            read_io_reg!("Audio channel 2 - PWD", self.addr_bus, 0xFF16),
+            read_io_reg!("Audio channel 2 - envelope", self.addr_bus, 0xFF17),
+            read_io_reg!("Audio channel 2 - FREQ", self.addr_bus, 0xFF18),
+            read_io_reg!("Audio channel 2 - CTL", self.addr_bus, 0xFF19),
+            read_io_reg!("Audio channel 3 - ENABLE", self.addr_bus, 0xFF1A),
+            read_io_reg!("Audio channel 3 - PWD", self.addr_bus, 0xFF1B),
+            read_io_reg!("Audio channel 3 - VOL", self.addr_bus, 0xFF1C),
+            read_io_reg!("Audio channel 3 - FREQ", self.addr_bus, 0xFF1D),
+            read_io_reg!("Audio channel 3 - CTL", self.addr_bus, 0xFF1E),
+            read_io_reg!("Audio channel 4 - PWD", self.addr_bus, 0xFF20),
+            read_io_reg!("Audio channel 4 - VOL", self.addr_bus, 0xFF21),
+            read_io_reg!("Audio channel 4 - FREQ", self.addr_bus, 0xFF22),
+            read_io_reg!("Audio channel 4 - CTL", self.addr_bus, 0xFF23),
+            read_io_reg!("Audio output mapping", self.addr_bus, 0xFF24),
+            read_io_reg!("Audio mapping", self.addr_bus, 0xFF25),
+            read_io_reg!("Audio channel control", self.addr_bus, 0xFF26),
+            read_io_reg!("Audio Wave", self.addr_bus, 0xFF30),
             // Boot ROM
-            read_io_reg!("Boot ROM", 0xFF50),
+            read_io_reg!("Boot ROM", self.addr_bus, 0xFF50),
         ]
     }
 }
