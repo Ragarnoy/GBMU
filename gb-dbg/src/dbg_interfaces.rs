@@ -3,15 +3,6 @@ use std::fmt::{self, Display};
 
 pub type RegisterMap = (String, RegisterValue);
 
-impl From<RegisterValue> for u16 {
-    fn from(input: RegisterValue) -> Self {
-        match input {
-            RegisterValue::U8(x) => x as u16,
-            RegisterValue::U16(x) => x,
-        }
-    }
-}
-
 #[derive(Clone, Copy)]
 pub enum RegisterValue {
     U8(u8),
@@ -27,6 +18,15 @@ impl From<u8> for RegisterValue {
 impl From<u16> for RegisterValue {
     fn from(input: u16) -> Self {
         Self::U16(input)
+    }
+}
+
+impl From<RegisterValue> for u16 {
+    fn from(input: RegisterValue) -> Self {
+        match input {
+            RegisterValue::U8(x) => x as u16,
+            RegisterValue::U16(x) => x,
+        }
     }
 }
 
