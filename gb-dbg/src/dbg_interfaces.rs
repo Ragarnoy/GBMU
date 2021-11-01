@@ -1,7 +1,7 @@
 use anyhow::Result;
 use std::fmt::{self, Display};
 
-pub type RegisterMap = (String, RegisterValue);
+pub struct RegisterMap<T: Display>(pub T, pub RegisterValue);
 
 #[derive(Clone, Copy)]
 pub enum RegisterValue {
@@ -37,17 +37,17 @@ pub trait MemoryDebugOperations {
 }
 
 pub trait RegisterDebugOperations {
-    fn cpu_get(&self, key: &str) -> Result<RegisterValue>;
+    fn cpu_get(&self, key: CpuRegs) -> Result<RegisterValue>;
 
-    fn ppu_get(&self, key: &str) -> Result<RegisterValue>;
+    fn ppu_get(&self, key: PpuRegs) -> Result<RegisterValue>;
 
-    fn io_get(&self, key: &str) -> Result<RegisterValue>;
+    fn io_get(&self, key: IORegs) -> Result<RegisterValue>;
 
-    fn cpu_registers(&self) -> Vec<RegisterMap>;
+    fn cpu_registers(&self) -> Vec<RegisterMap<CpuRegs>>;
 
-    fn ppu_registers(&self) -> Vec<RegisterMap>;
+    fn ppu_registers(&self) -> Vec<RegisterMap<PpuRegs>>;
 
-    fn io_registers(&self) -> Vec<RegisterMap>;
+    fn io_registers(&self) -> Vec<RegisterMap<IORegs>>;
 }
 
 pub enum CpuRegs {
@@ -117,7 +117,7 @@ pub enum IORegs {
     Div,
     Tima,
     Tma,
-    TAc,
+    Tac,
 
     If,
     Ie,
@@ -138,7 +138,7 @@ pub enum IORegs {
     A3Toggle,
     Pwm3,
     Vol3,
-    Freq3,
+    Af3,
     Ctl3,
 
     Pwm4,
@@ -161,7 +161,7 @@ impl Display for IORegs {
             IORegs::Div => "Div",
             IORegs::Tima => "Tima",
             IORegs::Tma => "Tma",
-            IORegs::TAc => "TAc",
+            IORegs::Tac => "TAc",
             IORegs::If => "Interrupt Flag",
             IORegs::Ie => "Interrupt Enable",
             IORegs::BootRom => "BootRom",
@@ -177,7 +177,7 @@ impl Display for IORegs {
             IORegs::A3Toggle => "Audio Channel 3 Toggle",
             IORegs::Pwm3 => "Aud 3 Wave Duty",
             IORegs::Vol3 => "Aud 3 Vol",
-            IORegs::Freq3 => "Aud 3 Freq",
+            IORegs::Af3 => "Aud 3 Freq",
             IORegs::Ctl3 => "Aud 3 Ctl",
             IORegs::Pwm4 => "Aud 4 Wave Duty",
             IORegs::Vol4 => "Aud 4 Vol",
