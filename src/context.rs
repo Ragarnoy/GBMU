@@ -149,12 +149,13 @@ impl MemoryDebugOperations for Game {
 
 macro_rules! read_bus_reg {
     ($type:expr, $bus:expr, $addr:expr) => {
-        RegisterMap(
-            $type,
-            $bus.read($addr, Some(Lock::Debugger))
-                .unwrap_or(0xffu8)
-                .into(),
-        )
+        RegisterMap($type, read_bus_reg!($bus, $addr))
+    };
+
+    ($bus:expr, $addr:expr) => {
+        $bus.read($addr, Some(Lock::Debugger))
+            .unwrap_or(0xffu8)
+            .into()
     };
 }
 
@@ -170,12 +171,64 @@ impl RegisterDebugOperations for Game {
         }
     }
 
-    fn ppu_get(&self, _key: PpuRegs) -> Result<RegisterValue> {
-        Ok(RegisterValue::U8(0xff))
+    fn ppu_get(&self, key: PpuRegs) -> Result<RegisterValue> {
+        match key {
+            PpuRegs::Control => Ok(read_bus_reg!(self.addr_bus, 0xFF40)),
+            PpuRegs::Status => Ok(read_bus_reg!(self.addr_bus, 0xFF41)),
+            PpuRegs::Scy => Ok(read_bus_reg!(self.addr_bus, 0xFF42)),
+            PpuRegs::Scx => Ok(read_bus_reg!(self.addr_bus, 0xFF43)),
+            PpuRegs::Ly => Ok(read_bus_reg!(self.addr_bus, 0xFF44)),
+            PpuRegs::Lyc => Ok(read_bus_reg!(self.addr_bus, 0xFF45)),
+            PpuRegs::Dma => Ok(read_bus_reg!(self.addr_bus, 0xFF46)),
+            PpuRegs::Bgp => Ok(read_bus_reg!(self.addr_bus, 0xFF47)),
+            PpuRegs::Obp0 => Ok(read_bus_reg!(self.addr_bus, 0xFF48)),
+            PpuRegs::Obp1 => Ok(read_bus_reg!(self.addr_bus, 0xFF49)),
+            PpuRegs::Wy => Ok(read_bus_reg!(self.addr_bus, 0xFF4A)),
+            PpuRegs::Wx => Ok(read_bus_reg!(self.addr_bus, 0xFF4B)),
+        }
     }
 
-    fn io_get(&self, _key: IORegs) -> Result<RegisterValue> {
-        Ok(RegisterValue::U8(0xff))
+    fn io_get(&self, key: IORegs) -> Result<RegisterValue> {
+        match key {
+            // joypad regs
+            IORegs::Joy => Ok(read_bus_reg!(self.addr_bus, 0xFF00)),
+            // serial regs
+            IORegs::SerialByte => Ok(read_bus_reg!(self.addr_bus, 0xFF01)),
+            IORegs::SerialControl => Ok(read_bus_reg!(self.addr_bus, 0xFF02)),
+            // Timer regs
+            IORegs::Div => Ok(read_bus_reg!(self.addr_bus, 0xFF04)),
+            IORegs::Tima => Ok(read_bus_reg!(self.addr_bus, 0xFF05)),
+            IORegs::Tma => Ok(read_bus_reg!(self.addr_bus, 0xFF06)),
+            IORegs::Tac => Ok(read_bus_reg!(self.addr_bus, 0xFF07)),
+            // cpu int regs
+            IORegs::If => Ok(read_bus_reg!(self.addr_bus, 0xFF0F)),
+            IORegs::Ie => Ok(read_bus_reg!(self.addr_bus, 0xFFFF)),
+            // Boot ROM
+            IORegs::BootRom => Ok(read_bus_reg!(self.addr_bus, 0xFF50)),
+            // audio regs
+            IORegs::Fs1 => Ok(read_bus_reg!(self.addr_bus, 0xFF10)),
+            IORegs::Pwm1 => Ok(read_bus_reg!(self.addr_bus, 0xFF11)),
+            IORegs::Env1 => Ok(read_bus_reg!(self.addr_bus, 0xFF12)),
+            IORegs::Af1 => Ok(read_bus_reg!(self.addr_bus, 0xFF13)),
+            IORegs::Ctl1 => Ok(read_bus_reg!(self.addr_bus, 0xFF14)),
+            IORegs::Pwm2 => Ok(read_bus_reg!(self.addr_bus, 0xFF16)),
+            IORegs::Env2 => Ok(read_bus_reg!(self.addr_bus, 0xFF17)),
+            IORegs::Af2 => Ok(read_bus_reg!(self.addr_bus, 0xFF18)),
+            IORegs::Ctl2 => Ok(read_bus_reg!(self.addr_bus, 0xFF19)),
+            IORegs::A3Toggle => Ok(read_bus_reg!(self.addr_bus, 0xFF1A)),
+            IORegs::Pwm3 => Ok(read_bus_reg!(self.addr_bus, 0xFF1B)),
+            IORegs::Vol3 => Ok(read_bus_reg!(self.addr_bus, 0xFF1C)),
+            IORegs::Af3 => Ok(read_bus_reg!(self.addr_bus, 0xFF1D)),
+            IORegs::Ctl3 => Ok(read_bus_reg!(self.addr_bus, 0xFF1E)),
+            IORegs::Pwm4 => Ok(read_bus_reg!(self.addr_bus, 0xFF20)),
+            IORegs::Vol4 => Ok(read_bus_reg!(self.addr_bus, 0xFF21)),
+            IORegs::Af4 => Ok(read_bus_reg!(self.addr_bus, 0xFF22)),
+            IORegs::Ctl4 => Ok(read_bus_reg!(self.addr_bus, 0xFF23)),
+            IORegs::AudOutMap => Ok(read_bus_reg!(self.addr_bus, 0xFF24)),
+            IORegs::AudMap => Ok(read_bus_reg!(self.addr_bus, 0xFF25)),
+            IORegs::AudChanCtl => Ok(read_bus_reg!(self.addr_bus, 0xFF26)),
+            IORegs::AudWave => Ok(read_bus_reg!(self.addr_bus, 0xFF30)),
+        }
     }
 
     fn cpu_registers(&self) -> Vec<RegisterMap<CpuRegs>> {
@@ -210,18 +263,18 @@ impl RegisterDebugOperations for Game {
     fn io_registers(&self) -> Vec<RegisterMap<IORegs>> {
         vec![
             // joypad regs
-            read_bus_reg!(IORegs::Joy, self.addr_bus, 0xff00),
+            read_bus_reg!(IORegs::Joy, self.addr_bus, 0xFF00),
             // serial regs
-            read_bus_reg!(IORegs::SerialByte, self.addr_bus, 0xff01),
-            read_bus_reg!(IORegs::SerialControl, self.addr_bus, 0xff02),
+            read_bus_reg!(IORegs::SerialByte, self.addr_bus, 0xFF01),
+            read_bus_reg!(IORegs::SerialControl, self.addr_bus, 0xFF02),
             // Timer regs
-            read_bus_reg!(IORegs::Div, self.addr_bus, 0xff04),
-            read_bus_reg!(IORegs::Tima, self.addr_bus, 0xff05),
-            read_bus_reg!(IORegs::Tma, self.addr_bus, 0xff06),
-            read_bus_reg!(IORegs::Tac, self.addr_bus, 0xff07),
+            read_bus_reg!(IORegs::Div, self.addr_bus, 0xFF04),
+            read_bus_reg!(IORegs::Tima, self.addr_bus, 0xFF05),
+            read_bus_reg!(IORegs::Tma, self.addr_bus, 0xFF06),
+            read_bus_reg!(IORegs::Tac, self.addr_bus, 0xFF07),
             // cpu int regs
-            read_bus_reg!(IORegs::If, self.addr_bus, 0xff0f),
-            read_bus_reg!(IORegs::Ie, self.addr_bus, 0xffff),
+            read_bus_reg!(IORegs::If, self.addr_bus, 0xFF0F),
+            read_bus_reg!(IORegs::Ie, self.addr_bus, 0xFFFF),
             // Boot ROM
             read_bus_reg!(IORegs::BootRom, self.addr_bus, 0xFF50),
             // audio regs
