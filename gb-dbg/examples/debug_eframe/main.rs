@@ -5,7 +5,7 @@ use eframe::epi::*;
 use egui::Vec2;
 use game::Game;
 use gb_dbg::debugger::{Debugger, DebuggerBuilder};
-use gb_dbg::run_duration::RunDuration;
+use gb_dbg::until::Until;
 use std::ops::ControlFlow;
 
 pub struct DebuggerApp {
@@ -20,9 +20,10 @@ impl App for DebuggerApp {
         if let Some(flow) = self.debugger.flow_status() {
             match flow {
                 ControlFlow::Break(x) => match x {
-                    RunDuration::Step => self.memory.pc += 1,
-                    RunDuration::RunFrame => self.memory.pc += 2,
-                    RunDuration::RunSecond => self.memory.pc += 3,
+                    Until::Step(n) => self.memory.pc += (n << 1) as u16,
+                    Until::Frame(n) => self.memory.pc += (n << 2) as u16,
+                    Until::Second(n) => self.memory.pc += (n << 3) as u16,
+                    Until::Null => self.memory.pc = 0,
                 },
                 ControlFlow::Continue(_) => self.memory.pc = 1,
             };

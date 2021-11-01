@@ -14,7 +14,7 @@ use crate::debugger::flow_control::FlowController;
 use crate::debugger::memory::MemoryViewer;
 use crate::debugger::options::DebuggerOptions;
 use crate::debugger::registers::RegisterEditor;
-use crate::run_duration::RunDuration;
+use crate::until::Until;
 use egui::CtxRef;
 use std::ops::ControlFlow;
 
@@ -25,7 +25,7 @@ pub struct Debugger<MEM> {
     disassembler: DisassemblyViewer,
     #[cfg(feature = "breakpoints")]
     breakpoint_editor: BreakpointEditor,
-    flow_status: Option<ControlFlow<RunDuration>>,
+    flow_status: Option<ControlFlow<Until>>,
 }
 
 impl<MEM: DebugOperations> Debugger<MEM> {
@@ -62,7 +62,7 @@ impl<MEM: DebugOperations> Debugger<MEM> {
         });
     }
 
-    pub fn flow_status(&self) -> Option<ControlFlow<RunDuration>> {
+    pub fn flow_status(&self) -> Option<ControlFlow<Until>> {
         self.flow_status
     }
 }

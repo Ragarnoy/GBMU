@@ -9,7 +9,7 @@ use gb_dbg::{
     dbg_interfaces::{
         DebugOperations, MemoryDebugOperations, RegisterDebugOperations, RegisterMap, RegisterValue,
     },
-    run_duration::RunDuration,
+    until::Until,
 };
 use gb_joypad::Joypad;
 use gb_lcd::{
@@ -191,26 +191,33 @@ impl Game {
         context.display.draw();
     }
 
-    pub fn update_scheduled_stop(&mut self, flow: std::ops::ControlFlow<RunDuration>) {
+    pub fn update_scheduled_stop(&mut self, flow: std::ops::ControlFlow<Until>) {
         use std::ops::ControlFlow::{Break, Continue};
         match flow {
             Continue(()) => {
                 self.emulation_stopped = false;
                 self.scheduled_stop = None;
             }
-            Break(RunDuration::Step) => {
-                self.emulation_stopped = false;
-                self.scheduled_stop = Some(ScheduledStop::Step(1));
+            Break(Until::Null | Until::Step(0) | Until::Frame(0) | Until::Second(0)) => {
+                self.emulation_stopped = true;
+                self.scheduled_stop = None;
             }
-            Break(RunDuration::RunFrame) => {
+            Break(Until::Step(count)) => {
                 self.emulation_stopped = false;
-                self.scheduled_stop = Some(ScheduledStop::Frame(1));
+                self.scheduled_stop = Some(ScheduledStop::Step(count));
             }
-            Break(RunDuration::RunSecond) => {
+            Break(Until::Frame(count)) => {
+                self.emulation_stopped = false;
+                self.scheduled_stop = Some(ScheduledStop::Frame(count));
+            }
+            Break(Until::Second(count)) => {
                 self.emulation_stopped = false;
                 self.scheduled_stop = Some(ScheduledStop::Timeout(
                     std::time::Instant::now(),
-                    std::time::Duration::from_secs(1),
+                    std::time::Duration::from_secs(count.try_into().unwrap_or_else(|e| {
+                        log::error!("cannot convert {}_usize to u64: {:?}", count, e);
+                        1_u64
+                    })),
                 ));
             }
         }
