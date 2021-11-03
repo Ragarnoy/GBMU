@@ -885,7 +885,7 @@ dependencies = [
 [[package]]
 name = "egui_wgpu_backend"
 version = "0.13.0"
-source = "git+https://github.com/hasenbanck/egui_wgpu_backend.git#961125e7bd2c71c5ead1d61a7ca7ffa8c0d17f48"
+source = "git+https://github.com/hasenbanck/egui_wgpu_backend#961125e7bd2c71c5ead1d61a7ca7ffa8c0d17f48"
 dependencies = [
  "bytemuck",
  "epi 0.15.0",
@@ -895,7 +895,7 @@ dependencies = [
 [[package]]
 name = "egui_winit_platform"
 version = "0.11.0"
-source = "git+https://github.com/hasenbanck/egui_winit_platform.git#7768c3e988fc402c0ae02202a89726282eee7721"
+source = "git+https://github.com/hasenbanck/egui_winit_platform#7768c3e988fc402c0ae02202a89726282eee7721"
 dependencies = [
  "egui 0.15.0",
  "winit",
@@ -2330,9 +2330,9 @@ dependencies = [
 
 [[package]]
 name = "profiling"
-version = "1.0.3"
+version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "87dfd5592a8eed7e74f56ad7b125f8234763b805c30f0c7c95c486920026a6ec"
+checksum = "9926767b8b8244d7b6b64546585121d193c3d0b4856ccd656b7bfa9deb91ab6a"
 
 [[package]]
 name = "quick-xml"
