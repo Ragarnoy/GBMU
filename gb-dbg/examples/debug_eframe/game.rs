@@ -1,6 +1,6 @@
-use anyhow::anyhow;
 use gb_dbg::dbg_interfaces::{
-    DebugOperations, MemoryDebugOperations, RegisterDebugOperations, RegisterMap, RegisterValue,
+    CpuRegs, DebugOperations, IORegs, MemoryDebugOperations, PpuRegs, RegisterDebugOperations,
+    RegisterMap, RegisterValue,
 };
 
 pub struct Iter<'a> {
@@ -9,19 +9,36 @@ pub struct Iter<'a> {
 }
 
 impl<'a> Iterator for Iter<'a> {
-    type Item = RegisterMap;
+    type Item = RegisterMap<CpuRegs>;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.count += 1;
 
         match self.count {
-            1 => Some(("A".to_owned(), RegisterValue::from(self.registers.a))),
-            2 => Some(("B".to_owned(), RegisterValue::from(self.registers.b))),
-            3 => Some(("C".to_owned(), RegisterValue::from(self.registers.c))),
-            4 => Some(("D".to_owned(), RegisterValue::from(self.registers.d))),
-            5 => Some(("E".to_owned(), RegisterValue::from(self.registers.e))),
-            6 => Some(("F".to_owned(), RegisterValue::from(self.registers.f))),
-            7 => Some(("PC".to_owned(), RegisterValue::from(self.registers.pc))),
+            1 => Some(RegisterMap(
+                CpuRegs::AF,
+                RegisterValue::from(self.registers.a),
+            )),
+            2 => Some(RegisterMap(
+                CpuRegs::BC,
+                RegisterValue::from(self.registers.b),
+            )),
+            3 => Some(RegisterMap(
+                CpuRegs::DE,
+                RegisterValue::from(self.registers.c),
+            )),
+            4 => Some(RegisterMap(
+                CpuRegs::HL,
+                RegisterValue::from(self.registers.d),
+            )),
+            5 => Some(RegisterMap(
+                CpuRegs::SP,
+                RegisterValue::from(self.registers.e),
+            )),
+            6 => Some(RegisterMap(
+                CpuRegs::PC,
+                RegisterValue::from(self.registers.pc),
+            )),
             _ => None,
         }
     }
@@ -72,51 +89,47 @@ impl Game {
 }
 
 //TODO Temporary for now it looks like ass
-impl From<&Game> for Vec<RegisterMap> {
+impl From<&Game> for Vec<RegisterMap<CpuRegs>> {
     fn from(registers: &Game) -> Self {
         vec![
-            ("A".to_owned(), RegisterValue::from(registers.a)),
-            ("B".to_owned(), RegisterValue::from(registers.b)),
-            ("C".to_owned(), RegisterValue::from(registers.c)),
-            ("D".to_owned(), RegisterValue::from(registers.d)),
-            ("E".to_owned(), RegisterValue::from(registers.e)),
-            ("F".to_owned(), RegisterValue::from(registers.f)),
-            ("PC".to_owned(), RegisterValue::from(registers.pc)),
+            RegisterMap(CpuRegs::AF, RegisterValue::from(registers.a)),
+            RegisterMap(CpuRegs::BC, RegisterValue::from(registers.b)),
+            RegisterMap(CpuRegs::DE, RegisterValue::from(registers.d)),
+            RegisterMap(CpuRegs::HL, RegisterValue::from(registers.f)),
+            RegisterMap(CpuRegs::PC, RegisterValue::from(registers.pc)),
         ]
     }
 }
 
 impl RegisterDebugOperations for Game {
-    fn cpu_get(&self, key: &str) -> anyhow::Result<RegisterValue> {
-        match key.to_uppercase().as_str() {
-            "A" => Ok(RegisterValue::from(self.a)),
-            "B" => Ok(RegisterValue::from(self.b)),
-            "C" => Ok(RegisterValue::from(self.c)),
-            "D" => Ok(RegisterValue::from(self.d)),
-            "E" => Ok(RegisterValue::from(self.e)),
-            "F" => Ok(RegisterValue::from(self.f)),
-            "PC" => Ok(RegisterValue::from(self.pc)),
-            _ => Err(anyhow!("Not a valid register!")),
+    fn cpu_get(&self, key: CpuRegs) -> anyhow::Result<RegisterValue> {
+        match key {
+            CpuRegs::AF => Ok(RegisterValue::from(self.a)),
+            CpuRegs::BC => Ok(RegisterValue::from(self.b)),
+            CpuRegs::DE => Ok(RegisterValue::from(self.d)),
+            CpuRegs::HL => Ok(RegisterValue::from(self.f)),
+            CpuRegs::SP => Ok(RegisterValue::from(self.c)),
+            CpuRegs::PC => Ok(RegisterValue::from(self.pc)),
         }
     }
 
-    fn ppu_get(&self, key: &str) -> anyhow::Result<RegisterValue> {
-        self.cpu_get(key)
+    fn ppu_get(&self, _key: PpuRegs) -> anyhow::Result<RegisterValue> {
+        unimplemented!("only testing with cpu")
     }
 
-    fn io_get(&self, key: &str) -> anyhow::Result<RegisterValue> {
-        self.cpu_get(key)
+    fn io_get(&self, _key: IORegs) -> anyhow::Result<RegisterValue> {
+        unimplemented!("only testing with cpu")
     }
 
-    fn cpu_registers(&self) -> Vec<RegisterMap> {
+    fn cpu_registers(&self) -> Vec<RegisterMap<CpuRegs>> {
         self.into()
     }
 
-    fn ppu_registers(&self) -> Vec<RegisterMap> {
-        self.into()
+    fn ppu_registers(&self) -> Vec<RegisterMap<PpuRegs>> {
+        unimplemented!("only testing with cpu")
     }
 
-    fn io_registers(&self) -> Vec<RegisterMap> {
-        self.into()
+    fn io_registers(&self) -> Vec<RegisterMap<IORegs>> {
+        unimplemented!("only testing with cpu")
     }
 }

@@ -4,6 +4,7 @@ use crate::{Area, FileOperation};
 pub enum Lock {
     Ppu,
     Debugger,
+    Dma,
 }
 
 pub trait MemoryLock {
