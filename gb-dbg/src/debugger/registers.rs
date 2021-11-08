@@ -25,7 +25,12 @@ impl RegisterEditor {
         ui.separator();
     }
 
-    fn draw_register_table(&self, registers: Vec<RegisterMap>, name: &str, ui: &mut Ui) {
+    fn draw_register_table<T: std::fmt::Display>(
+        &self,
+        registers: Vec<RegisterMap<T>>,
+        name: &str,
+        ui: &mut Ui,
+    ) {
         let layout = egui::Layout::top_down(egui::Align::LEFT);
         ui.allocate_ui_with_layout(Vec2::new(80.0, 150.0), layout, |ui| {
             ui.colored_label(Color32::WHITE, name);
