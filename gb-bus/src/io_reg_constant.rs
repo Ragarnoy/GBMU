@@ -10,6 +10,7 @@ pub const SOUND_START: u16 = 0xFF10;
 pub const SOUND_END: u16 = 0xFF26;
 pub const WAVEFORM_RAM_START: u16 = 0xFF30;
 pub const WAVEFORM_RAM_END: u16 = 0xFF3F;
+pub const OAM_DMA_START: u16 = 0xFF46;
 pub const LCD_START: u16 = 0xFF40;
 pub const LCD_END: u16 = 0xFF4B;
 pub const VRAM_BANK_START: u16 = 0xFF4F;
