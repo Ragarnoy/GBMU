@@ -27,9 +27,9 @@ impl<B: Bus<u8> + Bus<u16>> Clock<B> {
         ppu: PPU,
         timer: TIMER,
     ) -> bool {
+        cycle(timer, addr_bus);
         cycle(cpu, addr_bus);
         cycle(ppu, addr_bus);
-        cycle(timer, addr_bus);
         self.curr_frame_cycle += 1;
         !self.frame_ready()
     }
