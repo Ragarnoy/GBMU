@@ -5,7 +5,7 @@ pub mod memory;
 mod options;
 pub mod registers;
 
-use crate::dbg_interfaces::{DebugOperations, MemoryDebugOperations};
+use crate::dbg_interfaces::{CpuRegs, DebugOperations, MemoryDebugOperations};
 use crate::debugger::breakpoints::BreakpointEditor;
 use crate::debugger::disassembler::DisassemblyViewer;
 use crate::debugger::flow_control::FlowController;
@@ -38,7 +38,7 @@ impl<MEM: DebugOperations> Debugger<MEM> {
             .show(ctx, |ui| {
                 ui.vertical(|ui| {
                     self.disassembler
-                        .draw(ui, memory.cpu_get("PC").unwrap().into(), memory);
+                        .draw(ui, memory.cpu_get(CpuRegs::PC).unwrap().into(), memory);
                     ui.separator();
                     self.memory_editor.draw(ui, &mut memory);
                 });
@@ -51,7 +51,7 @@ impl<MEM: DebugOperations> Debugger<MEM> {
                 if Some(ControlFlow::Break(Until::Null))
                     == self
                         .breakpoint_editor
-                        .draw(ui, memory.cpu_get("PC").unwrap().into())
+                        .draw(ui, memory.cpu_get(CpuRegs::PC).unwrap().into())
                 {
                     self.flow_status = Some(ControlFlow::Break(Until::Null));
                 };

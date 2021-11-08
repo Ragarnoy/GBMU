@@ -98,7 +98,7 @@ mod read {
 
     #[test]
     fn lcd_control() {
-        let data: [u8; LcdReg::SIZE] = [0x42, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        let data: [u8; LcdReg::SIZE] = [0x42, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
         let lcd = Rc::new(RefCell::new(data.into()));
         let ppu_reg = PPURegisters::new(lcd);
 
@@ -110,19 +110,19 @@ mod read {
 
     #[test]
     fn lcd_dma() {
-        let data: [u8; LcdReg::SIZE] = [0, 0, 0, 0, 0, 0, 0x42, 0, 0, 0, 0, 0];
+        let data: [u8; LcdReg::SIZE] = [0, 0x42, 0, 0, 0, 0, 0, 0, 0, 0, 0];
         let lcd = Rc::new(RefCell::new(data.into()));
         let ppu_reg = PPURegisters::new(lcd);
 
         let res = ppu_reg
-            .read(Box::new(TestIORegAddress::dma()))
+            .read(Box::new(TestIORegAddress::stat()))
             .expect("Try reading value from lcd dma");
         assert_eq!(res, 0x42, "invalid value from lcd dma");
     }
 
     #[test]
     fn lcd_window_pos() {
-        let data: [u8; LcdReg::SIZE] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x42];
+        let data: [u8; LcdReg::SIZE] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x42];
         let lcd = Rc::new(RefCell::new(data.into()));
         let ppu_reg = PPURegisters::new(lcd);
 

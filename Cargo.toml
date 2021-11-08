@@ -32,9 +32,11 @@ gb-cpu = { path = "./gb-cpu" }
 gb-roms = { path = "./gb-roms" }
 gb-clock = { path = "./gb-clock" }
 gb-timer = { path = "./gb-timer" }
+gb-dma = { path = "./gb-dma" }
 
 [workspace]
 members = [
+  "gb-dma",
   "gb-clock",
   "gb-roms",
   "gb-ppu",
