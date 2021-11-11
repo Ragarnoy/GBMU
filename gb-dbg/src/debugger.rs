@@ -12,7 +12,7 @@ use crate::debugger::flow_control::FlowController;
 use crate::debugger::memory::MemoryViewer;
 use crate::debugger::options::DebuggerOptions;
 use crate::debugger::registers::RegisterEditor;
-use crate::run_duration::RunDuration;
+use crate::until::Until;
 use egui::CtxRef;
 use std::ops::ControlFlow;
 
@@ -22,7 +22,7 @@ pub struct Debugger<MEM> {
     flow_controller: FlowController,
     disassembler: DisassemblyViewer,
     breakpoint_editor: BreakpointEditor,
-    flow_status: Option<ControlFlow<(), RunDuration>>,
+    flow_status: Option<ControlFlow<Until>>,
 }
 
 impl<MEM: DebugOperations> Debugger<MEM> {
@@ -48,9 +48,13 @@ impl<MEM: DebugOperations> Debugger<MEM> {
             .resizable(false)
             .default_width(170.0)
             .show(ctx, |ui| {
-                self.flow_status = self
-                    .breakpoint_editor
-                    .draw(ui, memory.cpu_get(CpuRegs::PC).unwrap().into());
+                if Some(ControlFlow::Break(Until::Null))
+                    == self
+                        .breakpoint_editor
+                        .draw(ui, memory.cpu_get(CpuRegs::PC).unwrap().into())
+                {
+                    self.flow_status = Some(ControlFlow::Break(Until::Null));
+                };
             });
 
         egui::CentralPanel::default().show(ctx, |ui| {
@@ -58,7 +62,7 @@ impl<MEM: DebugOperations> Debugger<MEM> {
         });
     }
 
-    pub fn flow_status(&self) -> Option<ControlFlow<(), RunDuration>> {
+    pub fn flow_status(&self) -> Option<ControlFlow<Until>> {
         self.flow_status
     }
 }

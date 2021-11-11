@@ -956,6 +956,7 @@ dependencies = [
  "egui",
  "egui_memory_editor",
  "gb-roms",
+ "log",
 ]
 
 [[package]]

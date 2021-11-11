@@ -76,6 +76,9 @@ fn main() {
                 dgb_wind
                     .end_frame()
                     .expect("Fail at the end for the debug window");
+                if let Some(flow) = debugger.flow_status() {
+                    game.update_scheduled_stop(flow);
+                }
             }
         }
 
@@ -139,7 +142,7 @@ fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
     };
 
     let game_context: Option<Game> = opts.rom.as_ref().and_then(|romname| {
-        Game::new(romname.clone()).map_or_else(
+        Game::new(romname.clone(), opts.debug).map_or_else(
             |e| {
                 log::error!("while creating game context for {}: {:?}", romname, e);
                 None

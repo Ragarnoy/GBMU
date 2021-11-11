@@ -5,9 +5,12 @@ use gb_bus::{
 };
 use gb_clock::Clock;
 use gb_cpu::cpu::Cpu;
-use gb_dbg::dbg_interfaces::{
-    CpuRegs, DebugOperations, IORegs, MemoryDebugOperations, PpuRegs, RegisterDebugOperations,
-    RegisterMap, RegisterValue,
+use gb_dbg::{
+    dbg_interfaces::{
+        CpuRegs, DebugOperations, IORegs, MemoryDebugOperations, PpuRegs, RegisterDebugOperations,
+        RegisterMap, RegisterValue,
+    },
+    until::Until,
 };
 use gb_dma::Dma;
 use gb_joypad::Joypad;
@@ -51,10 +54,22 @@ pub struct Game {
     pub timer: Rc<RefCell<Timer>>,
     pub dma: Rc<RefCell<Dma>>,
     pub addr_bus: AddressBus,
+    scheduled_stop: Option<ScheduledStop>,
+    emulation_stopped: bool,
+}
+
+#[derive(Debug)]
+enum ScheduledStop {
+    /// Schedule a stop after `usize` step
+    Step(usize),
+    /// Schedule a stop after `usize` frame
+    Frame(usize),
+    /// Schedule a stop after `time` delay
+    Timeout(std::time::Instant, std::time::Duration),
 }
 
 impl Game {
-    pub fn new(romname: String) -> Result<Game, anyhow::Error> {
+    pub fn new(romname: String, stopped: bool) -> Result<Game, anyhow::Error> {
         use std::{fs::File, io::Seek};
 
         let mut file = File::open(romname.clone())?;
@@ -121,21 +136,97 @@ impl Game {
             timer,
             dma,
             addr_bus: bus,
+            scheduled_stop: None,
+            emulation_stopped: stopped,
         })
     }
 
     pub fn cycle(&mut self) -> bool {
-        self.clock.cycle(
-            &mut self.addr_bus,
-            self.cpu.borrow_mut(),
-            &mut self.ppu,
-            self.timer.borrow_mut(),
-        )
+        if !self.emulation_stopped {
+            let frame_not_finished = self.clock.cycle(
+                &mut self.addr_bus,
+                self.cpu.borrow_mut(),
+                &mut self.ppu,
+                self.timer.borrow_mut(),
+            );
+            self.check_scheduled_stop(!frame_not_finished);
+            frame_not_finished
+        } else {
+            false
+        }
+    }
+
+    fn check_scheduled_stop(&mut self, frame_ended: bool) {
+        if let Some(ref mut scheduled) = self.scheduled_stop {
+            log::trace!(
+                "check for stop, scheduled={:?}, framed_ended={}",
+                scheduled,
+                frame_ended
+            );
+            match scheduled {
+                ScheduledStop::Step(count) => {
+                    if *count == 1 {
+                        self.emulation_stopped = true;
+                        self.scheduled_stop = None;
+                    } else {
+                        *count -= 1;
+                    }
+                }
+                ScheduledStop::Frame(count) => {
+                    if frame_ended {
+                        if *count == 1 {
+                            self.emulation_stopped = true;
+                            self.scheduled_stop = None;
+                        } else {
+                            *count -= 1;
+                        }
+                    }
+                }
+                ScheduledStop::Timeout(instant, timeout) => {
+                    if &instant.elapsed() > timeout {
+                        self.emulation_stopped = true;
+                        self.scheduled_stop = None;
+                    }
+                }
+            }
+        }
     }
 
     pub fn draw(&self, context: &mut Context<SCREEN_WIDTH, SCREEN_HEIGHT>) {
         context.display.update_render(self.ppu.pixels());
         context.display.draw();
+    }
+
+    pub fn update_scheduled_stop(&mut self, flow: std::ops::ControlFlow<Until>) {
+        use std::ops::ControlFlow::{Break, Continue};
+        match flow {
+            Continue(()) => {
+                self.emulation_stopped = false;
+                self.scheduled_stop = None;
+            }
+            Break(Until::Null | Until::Step(0) | Until::Frame(0) | Until::Second(0)) => {
+                self.emulation_stopped = true;
+                self.scheduled_stop = None;
+            }
+            Break(Until::Step(count)) => {
+                self.emulation_stopped = false;
+                self.scheduled_stop = Some(ScheduledStop::Step(count));
+            }
+            Break(Until::Frame(count)) => {
+                self.emulation_stopped = false;
+                self.scheduled_stop = Some(ScheduledStop::Frame(count));
+            }
+            Break(Until::Second(count)) => {
+                self.emulation_stopped = false;
+                self.scheduled_stop = Some(ScheduledStop::Timeout(
+                    std::time::Instant::now(),
+                    std::time::Duration::from_secs(count.try_into().unwrap_or_else(|e| {
+                        log::error!("cannot convert {}_usize to u64: {:?}", count, e);
+                        1_u64
+                    })),
+                ));
+            }
+        }
     }
 }
 

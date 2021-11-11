@@ -114,11 +114,11 @@ impl RegisterDebugOperations for Game {
     }
 
     fn ppu_get(&self, _key: PpuRegs) -> anyhow::Result<RegisterValue> {
-        unimplemented!("only testing with cpu")
+        Ok(0xffu8.into())
     }
 
     fn io_get(&self, _key: IORegs) -> anyhow::Result<RegisterValue> {
-        unimplemented!("only testing with cpu")
+        Ok(0xffu8.into())
     }
 
     fn cpu_registers(&self) -> Vec<RegisterMap<CpuRegs>> {
@@ -126,10 +126,10 @@ impl RegisterDebugOperations for Game {
     }
 
     fn ppu_registers(&self) -> Vec<RegisterMap<PpuRegs>> {
-        unimplemented!("only testing with cpu")
+        Vec::new()
     }
 
     fn io_registers(&self) -> Vec<RegisterMap<IORegs>> {
-        unimplemented!("only testing with cpu")
+        Vec::new()
     }
 }
