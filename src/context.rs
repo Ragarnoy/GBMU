@@ -5,6 +5,7 @@ use gb_bus::{
 };
 use gb_clock::Clock;
 use gb_cpu::cpu::Cpu;
+use gb_dbg::dbg_interfaces::AudioRegs;
 use gb_dbg::{
     dbg_interfaces::{
         CpuRegs, DebugOperations, IORegs, MemoryDebugOperations, PpuRegs, RegisterDebugOperations,
@@ -27,7 +28,6 @@ use gb_roms::{
 use gb_timer::Timer;
 use std::collections::HashMap;
 use std::{cell::RefCell, rc::Rc};
-use gb_dbg::dbg_interfaces::AudioRegs;
 
 pub struct Context<const WIDTH: usize, const HEIGHT: usize> {
     pub sdl: sdl2::Sdl,
