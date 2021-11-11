@@ -1,7 +1,7 @@
 use anyhow::Result;
-use std::fmt::{self, Display, Formatter};
+use std::fmt::{self, Debug, Display, Formatter};
 
-pub struct RegisterMap<T: Display>(pub T, pub RegisterValue);
+pub struct RegisterMap<T: Display + Debug>(pub T, pub RegisterValue);
 
 #[derive(Clone, Copy)]
 pub enum RegisterValue {
@@ -54,6 +54,7 @@ pub trait RegisterDebugOperations {
     fn audio_registers(&self) -> Vec<RegisterMap<AudioRegs>>;
 }
 
+#[derive(Debug)]
 pub enum CpuRegs {
     AF,
     BC,
@@ -77,6 +78,7 @@ impl Display for CpuRegs {
     }
 }
 
+#[derive(Debug)]
 pub enum PpuRegs {
     Control,
     Status,
@@ -112,11 +114,12 @@ impl Display for PpuRegs {
     }
 }
 
+#[derive(Debug)]
 pub enum IORegs {
     Joy,
 
     SerialByte,
-    SerialControl,
+    SerialCtl,
 
     Div,
     Tima,
@@ -134,7 +137,7 @@ impl Display for IORegs {
         let name = match self {
             IORegs::Joy => "Joypad",
             IORegs::SerialByte => "Serial Byte",
-            IORegs::SerialControl => "Serial Control",
+            IORegs::SerialCtl => "Serial Control",
             IORegs::Div => "Div",
             IORegs::Tima => "Tima",
             IORegs::Tma => "Tma",
@@ -147,6 +150,7 @@ impl Display for IORegs {
     }
 }
 
+#[derive(Debug)]
 pub enum AudioRegs {
     Fs1,
     Pwm1,
@@ -179,30 +183,29 @@ pub enum AudioRegs {
 impl Display for AudioRegs {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let name = match self {
-            AudioRegs::Fs1 => "Aud 1 Sweep",
-            AudioRegs::Pwm1 => "Aud 1 Wave Duty",
-            AudioRegs::Env1 => "Aud 1 Envelope",
-            AudioRegs::Af1 => "Aud 1 Freq",
-            AudioRegs::Ctl1 => "Aud 1 Ctl",
-            AudioRegs::Pwm2 => "Aud 2 Wave Duty",
-            AudioRegs::Env2 => "Aud 2 Envelope",
-            AudioRegs::Af2 => "Aud 2 Freq",
-            AudioRegs::Ctl2 => "Aud 2 Ctl",
+            AudioRegs::Fs1 => "Audio 1 Sweep",
+            AudioRegs::Pwm1 => "Audio 1 Wave Duty",
+            AudioRegs::Env1 => "Audio 1 Envelope",
+            AudioRegs::Af1 => "Audio 1 Freq",
+            AudioRegs::Ctl1 => "Audio 1 Ctl",
+            AudioRegs::Pwm2 => "Audio 2 Wave Duty",
+            AudioRegs::Env2 => "Audio 2 Envelope",
+            AudioRegs::Af2 => "Audio 2 Freq",
+            AudioRegs::Ctl2 => "Audio 2 Ctl",
             AudioRegs::A3Toggle => "Audio Channel 3 Toggle",
-            AudioRegs::Pwm3 => "Aud 3 Wave Duty",
-            AudioRegs::Vol3 => "Aud 3 Vol",
-            AudioRegs::Af3 => "Aud 3 Freq",
-            AudioRegs::Ctl3 => "Aud 3 Ctl",
-            AudioRegs::Pwm4 => "Aud 4 Wave Duty",
-            AudioRegs::Vol4 => "Aud 4 Vol",
-            AudioRegs::Af4 => "Aud 4 Freq",
-            AudioRegs::Ctl4 => "Aud 4 Ctl",
-            AudioRegs::AudOutMap => "Aud Output Mapping",
-            AudioRegs::AudMap => "Aud Mapping",
-            AudioRegs::AudChanCtl => "Aud Channel Ctl",
-            AudioRegs::AudWave => "Aud Wave",
+            AudioRegs::Pwm3 => "Audio 3 Wave Duty",
+            AudioRegs::Vol3 => "Audio 3 Vol",
+            AudioRegs::Af3 => "Audio 3 Freq",
+            AudioRegs::Ctl3 => "Audio 3 Ctl",
+            AudioRegs::Pwm4 => "Audio 4 Wave Duty",
+            AudioRegs::Vol4 => "Audio 4 Vol",
+            AudioRegs::Af4 => "Audio 4 Freq",
+            AudioRegs::Ctl4 => "Audio 4 Ctl",
+            AudioRegs::AudOutMap => "Audio Output Mapping",
+            AudioRegs::AudMap => "Audio Mapping",
+            AudioRegs::AudChanCtl => "Audio Channel Ctl",
+            AudioRegs::AudWave => "Audio Wave",
         };
         write!(f, "{}", name)
     }
 }
-
