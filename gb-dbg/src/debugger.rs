@@ -46,7 +46,7 @@ impl<MEM: DebugOperations> Debugger<MEM> {
 
         egui::SidePanel::right("right_panel")
             .resizable(false)
-            .default_width(170.0)
+            .default_width(130.0)
             .show(ctx, |ui| {
                 if Some(ControlFlow::Break(Until::Null))
                     == self
