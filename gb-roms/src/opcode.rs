@@ -289,6 +289,7 @@ where
                 register8!(C).into(),
                 Value::IndirectReg16(Reg16::HL)
             )),
+            0x4F => Ok(op!(Ld, register8!(C).into(), register8!(A).into())),
             0x50 => Ok(op!(Ld, register8!(D).into(), register8!(B).into())),
             0x51 => Ok(op!(Ld, register8!(D).into(), register8!(C).into())),
             0x52 => Ok(op!(Ld, register8!(D).into(), register8!(D).into())),
