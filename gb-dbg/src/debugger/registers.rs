@@ -56,11 +56,12 @@ impl RegisterEditor {
                                 };
 
                                 // Only display tooltip if tooltip string is different from register name
-                                if format!("{}", &row.0).to_lowercase() != format!("{:?}", &row.0).to_lowercase() {
+                                if format!("{}", &row.0).to_lowercase()
+                                    != format!("{:?}", &row.0).to_lowercase()
+                                {
                                     ui.label(egui::Label::new(format!("{:?}", &row.0)))
                                         .on_hover_text(&row.0);
-                                }
-                                else {
+                                } else {
                                     ui.label(egui::Label::new(format!("{:?}", &row.0)));
                                 }
                                 ui.label(egui::Label::new(format));
