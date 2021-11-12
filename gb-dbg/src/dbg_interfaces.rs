@@ -1,7 +1,7 @@
 use anyhow::Result;
-use std::fmt::{self, Display};
+use std::fmt::{self, Debug, Display, Formatter};
 
-pub struct RegisterMap<T: Display>(pub T, pub RegisterValue);
+pub struct RegisterMap<T: Display + Debug>(pub T, pub RegisterValue);
 
 #[derive(Clone, Copy)]
 pub enum RegisterValue {
@@ -43,13 +43,18 @@ pub trait RegisterDebugOperations {
 
     fn io_get(&self, key: IORegs) -> Result<RegisterValue>;
 
+    fn audio_get(&self, key: AudioRegs) -> Result<RegisterValue>;
+
     fn cpu_registers(&self) -> Vec<RegisterMap<CpuRegs>>;
 
     fn ppu_registers(&self) -> Vec<RegisterMap<PpuRegs>>;
 
     fn io_registers(&self) -> Vec<RegisterMap<IORegs>>;
+
+    fn audio_registers(&self) -> Vec<RegisterMap<AudioRegs>>;
 }
 
+#[derive(Debug)]
 pub enum CpuRegs {
     AF,
     BC,
@@ -73,6 +78,7 @@ impl Display for CpuRegs {
     }
 }
 
+#[derive(Debug)]
 pub enum PpuRegs {
     Control,
     Status,
@@ -108,11 +114,12 @@ impl Display for PpuRegs {
     }
 }
 
+#[derive(Debug)]
 pub enum IORegs {
     Joy,
 
     SerialByte,
-    SerialControl,
+    SerialCtl,
 
     Div,
     Tima,
@@ -123,7 +130,28 @@ pub enum IORegs {
     Ie,
 
     BootRom,
+}
 
+impl Display for IORegs {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let name = match self {
+            IORegs::Joy => "Joypad",
+            IORegs::SerialByte => "Serial Byte",
+            IORegs::SerialCtl => "Serial Control",
+            IORegs::Div => "Div",
+            IORegs::Tima => "Tima",
+            IORegs::Tma => "Tma",
+            IORegs::Tac => "TAc",
+            IORegs::If => "Interrupt Flag",
+            IORegs::Ie => "Interrupt Enable",
+            IORegs::BootRom => "BootRom",
+        };
+        write!(f, "{}", name)
+    }
+}
+
+#[derive(Debug)]
+pub enum AudioRegs {
     Fs1,
     Pwm1,
     Env1,
@@ -152,41 +180,31 @@ pub enum IORegs {
     AudWave,
 }
 
-impl Display for IORegs {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+impl Display for AudioRegs {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let name = match self {
-            IORegs::Joy => "Joypad",
-            IORegs::SerialByte => "Serial Byte",
-            IORegs::SerialControl => "Serial Control",
-            IORegs::Div => "Div",
-            IORegs::Tima => "Tima",
-            IORegs::Tma => "Tma",
-            IORegs::Tac => "TAc",
-            IORegs::If => "Interrupt Flag",
-            IORegs::Ie => "Interrupt Enable",
-            IORegs::BootRom => "BootRom",
-            IORegs::Fs1 => "Aud 1 Sweep",
-            IORegs::Pwm1 => "Aud 1 Wave Duty",
-            IORegs::Env1 => "Aud 1 Envelope",
-            IORegs::Af1 => "Aud 1 Freq",
-            IORegs::Ctl1 => "Aud 1 Ctl",
-            IORegs::Pwm2 => "Aud 2 Wave Duty",
-            IORegs::Env2 => "Aud 2 Envelope",
-            IORegs::Af2 => "Aud 2 Freq",
-            IORegs::Ctl2 => "Aud 2 Ctl",
-            IORegs::A3Toggle => "Audio Channel 3 Toggle",
-            IORegs::Pwm3 => "Aud 3 Wave Duty",
-            IORegs::Vol3 => "Aud 3 Vol",
-            IORegs::Af3 => "Aud 3 Freq",
-            IORegs::Ctl3 => "Aud 3 Ctl",
-            IORegs::Pwm4 => "Aud 4 Wave Duty",
-            IORegs::Vol4 => "Aud 4 Vol",
-            IORegs::Af4 => "Aud 4 Freq",
-            IORegs::Ctl4 => "Aud 4 Ctl",
-            IORegs::AudOutMap => "Aud Output Mapping",
-            IORegs::AudMap => "Aud Mapping",
-            IORegs::AudChanCtl => "Aud Channel Ctl",
-            IORegs::AudWave => "Aud Wave",
+            AudioRegs::Fs1 => "Audio 1 Sweep",
+            AudioRegs::Pwm1 => "Audio 1 Wave Duty",
+            AudioRegs::Env1 => "Audio 1 Envelope",
+            AudioRegs::Af1 => "Audio 1 Freq",
+            AudioRegs::Ctl1 => "Audio 1 Ctl",
+            AudioRegs::Pwm2 => "Audio 2 Wave Duty",
+            AudioRegs::Env2 => "Audio 2 Envelope",
+            AudioRegs::Af2 => "Audio 2 Freq",
+            AudioRegs::Ctl2 => "Audio 2 Ctl",
+            AudioRegs::A3Toggle => "Audio Channel 3 Toggle",
+            AudioRegs::Pwm3 => "Audio 3 Wave Duty",
+            AudioRegs::Vol3 => "Audio 3 Vol",
+            AudioRegs::Af3 => "Audio 3 Freq",
+            AudioRegs::Ctl3 => "Audio 3 Ctl",
+            AudioRegs::Pwm4 => "Audio 4 Wave Duty",
+            AudioRegs::Vol4 => "Audio 4 Vol",
+            AudioRegs::Af4 => "Audio 4 Freq",
+            AudioRegs::Ctl4 => "Audio 4 Ctl",
+            AudioRegs::AudOutMap => "Audio Output Mapping",
+            AudioRegs::AudMap => "Audio Mapping",
+            AudioRegs::AudChanCtl => "Audio Channel Ctl",
+            AudioRegs::AudWave => "Audio Wave",
         };
         write!(f, "{}", name)
     }

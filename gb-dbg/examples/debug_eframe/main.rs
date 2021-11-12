@@ -43,7 +43,7 @@ fn main() {
     };
     let options = NativeOptions {
         resizable: false,
-        initial_window_size: Some(Vec2::new(1000.0, 600.0)),
+        initial_window_size: Some(Vec2::new(1200.0, 600.0)),
         ..Default::default()
     };
     eframe::run_native(Box::new(dgb_app), options)
