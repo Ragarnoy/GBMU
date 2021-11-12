@@ -1,3 +1,5 @@
+mod window;
+
 #[cfg(test)]
 mod tests {
     #[test]
