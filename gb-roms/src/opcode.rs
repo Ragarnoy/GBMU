@@ -1,4 +1,4 @@
-mod error;
+pub mod error;
 #[macro_use]
 mod register;
 mod condition;

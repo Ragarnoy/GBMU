@@ -32,13 +32,15 @@ impl<MEM: DebugOperations> Debugger<MEM> {
             self.flow_status = self.flow_controller.draw(ui);
         });
 
+        self.disassembler
+            .may_update_cache(memory.cpu_get(CpuRegs::PC).unwrap().into(), memory);
+
         egui::SidePanel::left("left_panel")
             .resizable(false)
             .default_width(510.0)
             .show(ctx, |ui| {
                 ui.vertical(|ui| {
-                    self.disassembler
-                        .draw(ui, memory.cpu_get(CpuRegs::PC).unwrap().into(), memory);
+                    self.disassembler.draw(ui);
                     ui.separator();
                     self.memory_editor.draw(ui, &mut memory);
                 });
@@ -87,7 +89,7 @@ impl DebuggerBuilder {
             memory_editor: MemoryViewer::new(self.options.unwrap_or_default().address_ranges),
             register_editor: RegisterEditor,
             flow_controller: FlowController,
-            disassembler: DisassemblyViewer,
+            disassembler: DisassemblyViewer::default(),
             breakpoint_editor: BreakpointEditor::default(),
             flow_status: None,
         }
