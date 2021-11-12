@@ -95,10 +95,11 @@ impl BreakpointEditor {
         address.len() > 0 && u16::from_str_radix(address, 16).is_ok()
     }
 
-    pub fn are_breakpoints_trigger(&self, pc: u16) -> bool {
-        for breakpoint in &self.breakpoints {
+    pub fn are_breakpoints_trigger(&mut self, pc: u16) -> bool {
+        for breakpoint in &mut self.breakpoints {
             if breakpoint.enabled {
                 if pc == breakpoint.address() {
+                    breakpoint.enabled = false;
                     return true;
                 }
             }

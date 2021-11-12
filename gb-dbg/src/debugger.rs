@@ -63,7 +63,7 @@ impl<MEM: DebugOperations> Debugger<MEM> {
         self.flow_status
     }
 
-    pub fn updated_flow_status(&self, memory: &MEM) -> Option<ControlFlow<Until>> {
+    pub fn updated_flow_status(&mut self, memory: &MEM) -> Option<ControlFlow<Until>> {
         if self
             .breakpoint_editor
             .are_breakpoints_trigger(memory.cpu_get(CpuRegs::PC).unwrap().into())
