@@ -955,6 +955,7 @@ dependencies = [
  "eframe",
  "egui",
  "egui_memory_editor",
+ "gb-bus",
  "gb-roms",
  "log",
 ]
