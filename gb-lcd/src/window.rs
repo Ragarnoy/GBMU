@@ -1,6 +1,6 @@
 use crate::error::Error;
-use egui::CtxRef;
-use egui_sdl2_gl::{painter::Painter, DpiScaling, EguiStateHandler};
+use egui::{CtxRef, Painter};
+use egui_sdl2_gl::{DpiScaling, EguiStateHandler};
 use sdl2::{
     event::Event,
     video::{GLContext, Window as SdlWindow},
