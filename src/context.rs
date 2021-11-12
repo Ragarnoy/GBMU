@@ -147,15 +147,15 @@ impl Game {
 
     pub fn cycle(&mut self) -> bool {
         if !self.emulation_stopped {
-            let frame_not_finished = {
-                let mut borrow_cpu = self.cpu.borrow_mut();
-                let cpu = borrow_cpu.deref_mut();
-                let ppu = &mut self.ppu;
-                let mut borrow_timer = self.timer.borrow_mut();
-                let timer = borrow_timer.deref_mut();
-
-                cycles!(self.clock, &mut self.addr_bus, cpu, ppu, timer)
-            };
+            let frame_not_finished = cycles!(
+                self.clock,
+                &mut self.addr_bus,
+                self.cpu.borrow_mut().deref_mut(),
+                &mut self.ppu,
+                self.timer.borrow_mut().deref_mut(),
+                self.joypad.borrow_mut().deref_mut(),
+                self.dma.borrow_mut().deref_mut()
+            );
             self.check_scheduled_stop(!frame_not_finished);
             frame_not_finished
         } else {

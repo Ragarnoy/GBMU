@@ -10,7 +10,7 @@ pub struct Clock {
 macro_rules! cycles {
     ($clock:expr, $addr_bus:expr, $($tickers:expr),+) => {{
        $(
-           gb_clock::cycle($tickers, $addr_bus);
+            gb_clock::cycle($tickers, $addr_bus);
         )+
         $clock.inc_frame()
     }};
