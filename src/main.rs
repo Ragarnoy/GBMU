@@ -11,6 +11,7 @@ use sdl2::keyboard::Scancode;
 use context::{Context, Game, Windows};
 use gb_dbg::debugger::{Debugger, DebuggerBuilder};
 use gb_lcd::{render, window::GBWindow};
+use gb_ppu::TILEMAP_DIM;
 use logger::init_logger;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -40,6 +41,8 @@ fn main() {
     init_logger(opts.log_level);
 
     let (mut context, mut game, mut debugger, mut event_pump) = init_gbmu(&opts);
+    let mut display_window = false;
+    let mut image = [[[0; 3]; TILEMAP_DIM]; TILEMAP_DIM];
 
     'running: loop {
         context
@@ -92,6 +95,37 @@ fn main() {
             input_wind
                 .end_frame()
                 .expect("Fail at the end for the input window");
+        }
+
+        if let Some((ref mut tilemap_window, ref mut display)) = context.windows.tilemap {
+            tilemap_window
+                .start_frame()
+                .expect("Fail at the start for the main window");
+            egui::containers::TopBottomPanel::top("Top menu").show(
+                tilemap_window.egui_ctx(),
+                |ui| {
+                    egui::menu::bar(ui, |ui| {
+                        ui.set_height(render::MENU_BAR_SIZE);
+                        egui::menu::menu(ui, "bg/win", |ui| {
+                            if let Some(ref mut game) = game {
+                                if ui.button("background").clicked() {
+                                    display_window = false;
+                                    image = game.ppu.tilemap_image(display_window);
+                                }
+                                if ui.button("window").clicked() {
+                                    display_window = true;
+                                    image = game.ppu.tilemap_image(display_window);
+                                }
+                            }
+                        });
+                    })
+                },
+            );
+            display.update_render(&image);
+            display.draw();
+            tilemap_window
+                .end_frame()
+                .expect("Fail at the end for the main window");
         }
 
         if std::ops::ControlFlow::Break(()) == event::process_event(&mut context, &mut event_pump) {
@@ -155,6 +189,14 @@ fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
 
     let dbg = DebuggerBuilder::new().build();
 
+    let tilemap = GBWindow::new(
+        "tilemap",
+        (TILEMAP_DIM as u32, TILEMAP_DIM as u32 + bar_pixels_size),
+        true,
+        &video_subsystem,
+    )
+    .expect("Error while building tilemap window");
+
     let windows = Windows {
         main: gb_window,
         debug: if opts.debug && game_context.is_some() {
@@ -163,6 +205,10 @@ fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
             None
         },
         input: None,
+        tilemap: Some((
+            tilemap,
+            render::RenderImage::<TILEMAP_DIM, TILEMAP_DIM>::with_bar_size(bar_pixels_size as f32),
+        )),
     };
 
     (

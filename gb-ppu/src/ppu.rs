@@ -114,6 +114,10 @@ impl Ppu {
         let mut y = 0;
         let vram = self.vram.borrow();
         let lcd_reg = self.lcd_reg.borrow();
+        let scx = lcd_reg.scrolling.scx as usize;
+        let scx_bot = (scx + 160) % 255;
+        let scy = lcd_reg.scrolling.scy as usize;
+        let scy_bot = (scy + 144) % 255;
         for k in 0..TILEMAP_TILE_COUNT {
             let index = vram
                 .get_map_tile_index(
@@ -129,13 +133,26 @@ impl Ppu {
             let tile = vram.read_8x8_tile(index).unwrap();
             for (j, row) in tile.iter().enumerate() {
                 for (i, pixel) in row.iter().rev().enumerate() {
-                    image[y * 8 + j][x * 8 + i] = lcd_reg
+                    let pix_y = y * 8 + j;
+                    let pix_x = x * 8 + i;
+                    image[pix_y][pix_x] = lcd_reg
                         .pal_mono
                         .bg()
                         .get()
                         .get_color(*pixel)
                         .unwrap_or_default()
                         .into();
+                    if !window
+                        && (((pix_y == scy || pix_y == scy_bot)
+                            && ((scx < scx_bot && pix_x >= scx && pix_x <= scx_bot)
+                                || (scx > scx_bot && (pix_x >= scx) ^ (pix_x <= scx_bot))))
+                            || ((pix_x == scx || pix_x == scx_bot)
+                                && ((scy < scy_bot && pix_y >= scy && pix_y <= scy_bot)
+                                    || (scy > scy_bot && (pix_y >= scy) ^ (pix_y <= scy_bot)))))
+                    {
+                        let neg_pixel = image[pix_y][pix_x];
+                        image[pix_y][pix_x] = [!neg_pixel[0], !neg_pixel[1], !neg_pixel[2]];
+                    }
                 }
             }
             x += 1;

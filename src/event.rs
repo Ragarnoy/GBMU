@@ -76,6 +76,9 @@ pub fn process_event<const WIDTH: usize, const HEIGHT: usize>(
                     if let Some(ref mut input_wind) = context.windows.input {
                         input_wind.send_event(&event, &context.sdl);
                     }
+                    if let Some((ref mut tilemap_wind, _)) = context.windows.tilemap {
+                        tilemap_wind.send_event(&event, &context.sdl);
+                    }
                 }
             }
         }

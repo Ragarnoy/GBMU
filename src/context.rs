@@ -16,6 +16,7 @@ use gb_lcd::{
     window::GBWindow,
 };
 use gb_ppu::Ppu;
+use gb_ppu::TILEMAP_DIM;
 use gb_roms::{
     controllers::{bios, generate_rom_controller, BiosWrapper, MbcController},
     header::AutoSave,
@@ -37,6 +38,7 @@ pub struct Windows {
     pub main: GBWindow,
     pub debug: Option<GBWindow>,
     pub input: Option<GBWindow>,
+    pub tilemap: Option<(GBWindow, RenderImage<TILEMAP_DIM, TILEMAP_DIM>)>,
 }
 
 pub struct Game {
