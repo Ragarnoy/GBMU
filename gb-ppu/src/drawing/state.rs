@@ -11,6 +11,9 @@ pub struct State {
     pixel_drawn: u8,
 }
 
+const INTERRUPT_FLAG: u16 = 0xFF0F;
+const INTERRUPT_BIT: u8 = 0b10;
+
 impl State {
     const LINE_COUNT: u8 = 154;
     pub const LAST_LINE: u8 = Self::LINE_COUNT - 1;
@@ -217,9 +220,13 @@ impl State {
             || line_updated && lcd_reg.stat.lyc_eq_ly_interrupt() && lcd_reg.stat.lyc_eq_ly()
         {
             let interrupts_val = adr_bus
-                .read(0xFF0F, Some(Lock::Ppu))
+                .read(INTERRUPT_FLAG, Some(Lock::Ppu))
                 .expect("Failed to read interrupt value for lcd stat");
-            if let Err(err) = adr_bus.write(0xFF0F, interrupts_val | 0b10, Some(Lock::Ppu)) {
+            if let Err(err) = adr_bus.write(
+                INTERRUPT_FLAG,
+                interrupts_val | INTERRUPT_BIT,
+                Some(Lock::Ppu),
+            ) {
                 log::error!("Failed to write interrupt value for lcd stat: {:?}", err)
             }
         }

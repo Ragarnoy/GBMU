@@ -973,6 +973,8 @@ name = "gb-joypad"
 version = "0.0.0"
 dependencies = [
  "egui",
+ "gb-bus",
+ "gb-clock",
  "log",
  "modular-bitfield",
  "sdl2",
