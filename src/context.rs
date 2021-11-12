@@ -1,8 +1,5 @@
 use anyhow::Result;
-use gb_bus::{
-    generic::{CharDevice, SimpleRW},
-    AddressBus, Bus, IORegBus, Lock, WorkingRam,
-};
+use gb_bus::{generic::SimpleRW, AddressBus, Bus, IORegBus, Lock, WorkingRam};
 use gb_clock::Clock;
 use gb_cpu::cpu::Cpu;
 use gb_dbg::{
