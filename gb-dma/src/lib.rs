@@ -41,10 +41,7 @@ impl Ticker for Dma {
         Tick::MCycle
     }
 
-    fn tick<B>(&mut self, adr_bus: &mut B)
-    where
-        B: Bus<u8> + Bus<u16>,
-    {
+    fn tick(&mut self, adr_bus: &mut dyn Bus<u8>) {
         if let Some(step) = self.oam_transfer {
             if step == 0 {
                 adr_bus.lock(Area::Oam, Lock::Dma);

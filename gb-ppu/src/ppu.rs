@@ -227,13 +227,13 @@ impl Ppu {
         image
     }
 
-    fn vblank<B: Bus<u8>>(&mut self, _adr_bus: &mut B) {
+    fn vblank(&mut self, _adr_bus: &mut dyn Bus<u8>) {
         if self.state.line() == State::LAST_LINE && self.state.step() == State::LAST_STEP {
             std::mem::swap(&mut self.pixels, &mut self.next_pixels);
         }
     }
 
-    fn hblank<B: Bus<u8>>(&mut self, adr_bus: &mut B) {
+    fn hblank(&mut self, adr_bus: &mut dyn Bus<u8>) {
         let unlock_oam: bool;
         if let Ok(oam) = self.oam.try_borrow() {
             if let Some(Lock::Ppu) = oam.get_lock() {
@@ -265,7 +265,7 @@ impl Ppu {
         }
     }
 
-    fn oam_fetch<B: Bus<u8>>(&mut self, adr_bus: &mut B) {
+    fn oam_fetch(&mut self, adr_bus: &mut dyn Bus<u8>) {
         if let Ok(lcd_reg) = self.lcd_reg.try_borrow() {
             let mut lock: Option<Lock>;
             let step: u16;
@@ -292,7 +292,7 @@ impl Ppu {
                         Err(err) => log::error!("Error while reading sprite: {}", err),
                         Ok(sprite) => {
                             let scanline = self.state.line() + 16;
-                            let top = sprite.y_pos();
+                            let top = sprite.y_pos().min(160);
                             let bot = top + if lcd_reg.control.obj_size() { 16 } else { 8 };
 
                             if scanline >= top && scanline < bot {
@@ -320,7 +320,7 @@ impl Ppu {
         }
     }
 
-    fn pixel_drawing<B: Bus<u8>>(&mut self, adr_bus: &mut B) {
+    fn pixel_drawing(&mut self, adr_bus: &mut dyn Bus<u8>) {
         if let Ok(lcd_reg) = self.lcd_reg.try_borrow() {
             let mut lock: Option<Lock>;
             let x: u8;
@@ -446,10 +446,7 @@ impl Ticker for Ppu {
         Tick::TCycle
     }
 
-    fn tick<B>(&mut self, adr_bus: &mut B)
-    where
-        B: Bus<u8> + Bus<u16>,
-    {
+    fn tick(&mut self, adr_bus: &mut dyn Bus<u8>) {
         match self.state.mode() {
             Mode::OAMFetch => self.oam_fetch(adr_bus),
             Mode::PixelDrawing => self.pixel_drawing(adr_bus),

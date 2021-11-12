@@ -244,10 +244,7 @@ impl Ticker for Joypad {
     fn cycle_count(&self) -> Tick {
         Tick::MCycle
     }
-    fn tick<B>(&mut self, addr_bus: &mut B)
-    where
-        B: Bus<u8> + Bus<u16>,
-    {
+    fn tick(&mut self, addr_bus: &mut dyn Bus<u8>) {
         match self.refresh {
             Some(0) => {
                 self.refresh = None;

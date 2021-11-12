@@ -1,6 +1,6 @@
 use anyhow::Result;
 use gb_bus::{generic::SimpleRW, AddressBus, Bus, IORegBus, Lock, WorkingRam};
-use gb_clock::Clock;
+use gb_clock::{cycles, Clock};
 use gb_cpu::cpu::Cpu;
 use gb_dbg::dbg_interfaces::AudioRegs;
 use gb_dbg::{
@@ -24,7 +24,7 @@ use gb_roms::{
 };
 use gb_timer::Timer;
 use std::collections::HashMap;
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, ops::DerefMut, rc::Rc};
 
 pub struct Context<const WIDTH: usize, const HEIGHT: usize> {
     pub sdl: sdl2::Sdl,
@@ -47,7 +47,7 @@ pub struct Game {
     pub mbc: Rc<RefCell<MbcController>>,
     pub cpu: Rc<RefCell<Cpu>>,
     pub ppu: Ppu,
-    pub clock: Clock<AddressBus>,
+    pub clock: Clock,
     pub io_bus: Rc<RefCell<IORegBus>>,
     pub timer: Rc<RefCell<Timer>>,
     pub dma: Rc<RefCell<Dma>>,
@@ -147,11 +147,14 @@ impl Game {
 
     pub fn cycle(&mut self) -> bool {
         if !self.emulation_stopped {
-            let frame_not_finished = self.clock.cycle(
+            let frame_not_finished = cycles!(
+                self.clock,
                 &mut self.addr_bus,
-                self.cpu.borrow_mut(),
+                self.cpu.borrow_mut().deref_mut(),
                 &mut self.ppu,
-                self.timer.borrow_mut(),
+                self.timer.borrow_mut().deref_mut(),
+                self.joypad.borrow_mut().deref_mut(),
+                self.dma.borrow_mut().deref_mut()
             );
             self.check_scheduled_stop(!frame_not_finished);
             frame_not_finished
