@@ -1,6 +1,6 @@
 use anyhow::Result;
 use gb_bus::{generic::SimpleRW, AddressBus, Bus, IORegBus, Lock, WorkingRam};
-use gb_clock::{cycles, Clock, Ticker};
+use gb_clock::{cycles, Clock};
 use gb_cpu::cpu::Cpu;
 use gb_dbg::dbg_interfaces::AudioRegs;
 use gb_dbg::{
@@ -147,12 +147,15 @@ impl Game {
 
     pub fn cycle(&mut self) -> bool {
         if !self.emulation_stopped {
-            let mut borrow_cpu = self.cpu.borrow_mut();
-            let cpu = borrow_cpu.deref_mut();
-            let ppu = &mut self.ppu;
-            let mut borrow_timer = self.timer.borrow_mut();
-            let timer = borrow_timer.deref_mut();
-            let frame_not_finished = cycles!(self.clock, &mut self.addr_bus, cpu, ppu, timer);
+            let frame_not_finished = {
+                let mut borrow_cpu = self.cpu.borrow_mut();
+                let cpu = borrow_cpu.deref_mut();
+                let ppu = &mut self.ppu;
+                let mut borrow_timer = self.timer.borrow_mut();
+                let timer = borrow_timer.deref_mut();
+
+                cycles!(self.clock, &mut self.addr_bus, cpu, ppu, timer)
+            };
             self.check_scheduled_stop(!frame_not_finished);
             frame_not_finished
         } else {
