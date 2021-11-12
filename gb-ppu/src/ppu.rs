@@ -363,7 +363,7 @@ impl Ppu {
                     .fetch(&vram, &lcd_reg, y as usize, x as usize);
                 self.pixel_fetcher.push_to_fifo(&mut self.pixel_fifo);
                 if self.pixel_fetcher.push_to_fifo(&mut self.pixel_fifo)
-                    || x < self.state.pixel_drawn()
+                    && x < self.state.pixel_drawn()
                 {
                     Self::check_next_pixel_mode(
                         &lcd_reg,
@@ -386,6 +386,7 @@ impl Ppu {
         sprites: &mut Vec<Sprite>,
         cursor: (u8, u8),
     ) {
+        pixel_fifo.enabled = true;
         if pixel_fifo.count() < 8 {
             Self::check_for_bg_win_mode(lcd_reg, pixel_fetcher, pixel_fifo, cursor);
         } else {
