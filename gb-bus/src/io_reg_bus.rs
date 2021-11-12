@@ -13,6 +13,7 @@ use std::{cell::RefCell, rc::Rc};
 
 macro_rules! write_area {
     ($start:expr, $field:expr, $area_type:ident, $value:expr, $addr:expr) => {{
+        #[cfg(features = "trace_bus_write")]
         log::trace!(
             "writing at {:4x} the value {:2x} in area {:?}",
             $addr,
@@ -28,6 +29,7 @@ macro_rules! write_area {
 
 macro_rules! read_area {
     ($start:expr, $field:expr, $area_type:ident, $addr: expr) => {{
+        #[cfg(features = "trace_bus_rea")]
         log::trace!(
             "reading at {:4x} in area {:?}",
             $addr,
