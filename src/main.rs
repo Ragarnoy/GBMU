@@ -81,6 +81,9 @@ fn main() {
                 dgb_wind
                     .end_frame()
                     .expect("Fail at the end for the debug window");
+                if let Some(flow) = debugger.updated_flow_status(game) {
+                    game.update_scheduled_stop(flow);
+                }
             }
         }
 
