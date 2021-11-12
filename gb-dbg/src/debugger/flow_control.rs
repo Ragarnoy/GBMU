@@ -9,19 +9,23 @@ impl FlowController {
         let mut ret: Option<ControlFlow<Until>> = None;
         ui.horizontal(|ui| {
             if ui.button("Continue").clicked() {
-                log::error!("clicked on step");
+                log::debug!("clicked on continue");
                 ret = Some(ControlFlow::Continue(()));
             }
+            if ui.button("Pause").clicked() {
+                log::debug!("clicked on pause");
+                ret = Some(ControlFlow::Break(Until::Null));
+            }
             if ui.button("Step").clicked() {
-                log::error!("clicked on step");
+                log::debug!("clicked on step");
                 ret = Some(ControlFlow::Break(Until::Step(1)));
             }
             if ui.button("Run one frame").clicked() {
-                log::error!("clicked on frame");
+                log::debug!("clicked on frame");
                 ret = Some(ControlFlow::Break(Until::Frame(1)));
             }
             if ui.button("Run one second").clicked() {
-                log::error!("clicked on one second");
+                log::debug!("clicked on one second");
                 ret = Some(ControlFlow::Break(Until::Second(1)));
             }
         });
