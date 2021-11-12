@@ -6,6 +6,9 @@ use modular_bitfield::{
 };
 use std::collections::HashMap;
 
+const INTERRUPT_FLAG: u16 = 0xFF0F;
+const INTERRUPT_BIT: u8 = 0b10000;
+
 #[bitfield]
 #[derive(Default, Debug, Clone, Copy)]
 struct RegisterBits {
@@ -67,9 +70,9 @@ impl RegisterBits {
 
 fn trigger_interrupt(addr_bus: &mut dyn Bus<u8>) {
     let interrupts_val = addr_bus
-        .read(0xFF00, None)
+        .read(INTERRUPT_FLAG, None)
         .expect("Failed to read interrupt value for joypad interrupt");
-    if let Err(err) = addr_bus.write(0xFF00, interrupts_val | 0b10000, None) {
+    if let Err(err) = addr_bus.write(INTERRUPT_FLAG, interrupts_val | INTERRUPT_BIT, None) {
         log::error!(
             "Failed to write interrupt value for joypad interrupt: {:?}",
             err
