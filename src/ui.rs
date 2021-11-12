@@ -43,6 +43,6 @@ pub fn draw_egui(
 }
 
 pub fn new_debug_window(video: &sdl2::VideoSubsystem) -> GBWindow {
-    GBWindow::new("GBMU Debug", (800, 600), false, video)
+    GBWindow::new("GBMU Debug", (1200, 600), false, video)
         .expect("Error while building debug window")
 }
