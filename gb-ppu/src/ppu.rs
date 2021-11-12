@@ -292,7 +292,7 @@ impl Ppu {
                         Err(err) => log::error!("Error while reading sprite: {}", err),
                         Ok(sprite) => {
                             let scanline = self.state.line() + 16;
-                            let top = sprite.y_pos();
+                            let top = sprite.y_pos().min(160);
                             let bot = top + if lcd_reg.control.obj_size() { 16 } else { 8 };
 
                             if scanline >= top && scanline < bot {
