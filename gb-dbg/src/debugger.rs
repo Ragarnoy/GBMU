@@ -59,8 +59,8 @@ impl<MEM: DebugOperations> Debugger<MEM> {
         });
     }
 
-    pub fn flow_status(&self) -> Option<ControlFlow<Until>> {
-        self.flow_status
+    pub fn flow_status(&mut self) -> Option<ControlFlow<Until>> {
+        self.flow_status.take()
     }
 
     pub fn updated_flow_status(&mut self, memory: &MEM) -> Option<ControlFlow<Until>> {
