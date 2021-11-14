@@ -77,7 +77,7 @@ impl Default for MicrocodeController {
 }
 
 impl MicrocodeController {
-    pub fn step(&mut self, regs: &mut Registers, bus: &mut impl Bus<u8>) {
+    pub fn step(&mut self, regs: &mut Registers, bus: &mut dyn Bus<u8>) {
         use std::ops::ControlFlow;
 
         let mut state = State::new(regs, bus);

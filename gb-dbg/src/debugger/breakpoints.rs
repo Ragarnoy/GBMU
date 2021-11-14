@@ -1,7 +1,7 @@
 mod breakpoint;
 
 use crate::debugger::breakpoints::breakpoint::Breakpoint;
-use crate::run_duration::RunDuration;
+use crate::until::Until;
 use egui::{Color32, Label, Ui, Vec2};
 use std::ops::ControlFlow;
 
@@ -20,7 +20,7 @@ impl Default for BreakpointEditor {
 }
 
 impl BreakpointEditor {
-    pub fn draw(&mut self, ui: &mut Ui, pc: u16) -> Option<ControlFlow<(), RunDuration>> {
+    pub fn draw(&mut self, ui: &mut Ui, pc: u16) -> Option<ControlFlow<Until>> {
         ui.label(Label::new("Breakpoints").text_color(Color32::WHITE));
         breakpoint_options(ui);
 
@@ -75,7 +75,7 @@ impl BreakpointEditor {
                             egui::Label::new(breakpoint.to_string().clone())
                                 .text_color(Color32::RED),
                         );
-                        ret = Some(ControlFlow::Break(()));
+                        ret = Some(ControlFlow::Break(Until::Null));
                     } else {
                         ui.add(egui::Label::new(breakpoint.to_string().clone()));
                     }

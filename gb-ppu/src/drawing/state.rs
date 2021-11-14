@@ -11,6 +11,9 @@ pub struct State {
     pixel_drawn: u8,
 }
 
+const INTERRUPT_FLAG: u16 = 0xFF0F;
+const INTERRUPT_BIT: u8 = 0b10;
+
 impl State {
     const LINE_COUNT: u8 = 154;
     pub const LAST_LINE: u8 = Self::LINE_COUNT - 1;
@@ -86,8 +89,20 @@ impl State {
             (line, Self::LAST_STEP) => {
                 if line == Self::VBLANK_START - 1 {
                     self.mode = Mode::VBlank;
+                    log::trace!(
+                        "start VBlank (mode 1) at line {}, step {}, {} pixel drawn",
+                        self.line,
+                        self.step,
+                        self.pixel_drawn()
+                    );
                 } else {
                     self.mode = Mode::OAMFetch;
+                    log::trace!(
+                        "start OAM fetch (mode 2) at line {}, step {}, {} pixel drawn",
+                        self.line,
+                        self.step,
+                        self.pixel_drawn()
+                    );
                 }
                 return true;
             }
@@ -101,6 +116,12 @@ impl State {
             (line, _) if line < Self::VBLANK_START => log::error!("VBlank reached on draw line"),
             (Self::LAST_LINE, Self::LAST_STEP) => {
                 self.mode = Mode::OAMFetch;
+                log::trace!(
+                    "start OAM fetch (mode 2) at line {}, step {}, {} pixel drawn",
+                    self.line,
+                    self.step,
+                    self.pixel_drawn()
+                );
                 return true;
             }
             _ => {}
@@ -118,6 +139,12 @@ impl State {
             }
             (_, Self::LAST_OAM_FETCH_STEP) => {
                 self.mode = Mode::PixelDrawing;
+                log::trace!(
+                    "start pixel drawing (mode 3) at line {}, step {}, {} pixel drawn",
+                    self.line,
+                    self.step,
+                    self.pixel_drawn()
+                );
                 return true;
             }
             _ => {}
@@ -133,14 +160,31 @@ impl State {
             (_, step) if step < Self::PIXEL_DRAWING_START => {
                 log::error!("PixelDrawing reached on OAMFetch period")
             }
-            (_, step) if step >= Self::HBLANK_MAX_START => {
+            (line, step) if step >= Self::HBLANK_MAX_START => {
                 self.mode = Mode::HBlank;
-                log::error!("PixelDrawing reached on HBlank period");
+                log::trace!(
+                    "start HBlank (mode 0) at line {}, step {}, {} pixel drawn",
+                    self.line,
+                    self.step,
+                    self.pixel_drawn()
+                );
+                log::error!(
+                    "PixelDrawing reached on HBlank period at: l{}; s{}; p{}",
+                    line,
+                    step,
+                    self.pixel_drawn()
+                );
                 return true;
             }
             (_, step) if step >= Self::HBLANK_MIN_START => {
                 if self.pixel_drawn >= 160 {
                     self.mode = Mode::HBlank;
+                    log::trace!(
+                        "start HBlank (mode 0) at line {}, step {}, {} pixel drawn",
+                        self.line,
+                        self.step,
+                        self.pixel_drawn()
+                    );
                     if self.pixel_drawn > 160 {
                         log::error!("Too many pixel drawn before switching to HBlank");
                     }
@@ -176,9 +220,13 @@ impl State {
             || line_updated && lcd_reg.stat.lyc_eq_ly_interrupt() && lcd_reg.stat.lyc_eq_ly()
         {
             let interrupts_val = adr_bus
-                .read(0xFF0F, Some(Lock::Ppu))
+                .read(INTERRUPT_FLAG, Some(Lock::Ppu))
                 .expect("Failed to read interrupt value for lcd stat");
-            if let Err(err) = adr_bus.write(0xFF0F, interrupts_val | 0b10, Some(Lock::Ppu)) {
+            if let Err(err) = adr_bus.write(
+                INTERRUPT_FLAG,
+                interrupts_val | INTERRUPT_BIT,
+                Some(Lock::Ppu),
+            ) {
                 log::error!("Failed to write interrupt value for lcd stat: {:?}", err)
             }
         }

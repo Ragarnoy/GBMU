@@ -1,5 +1,7 @@
-use crate::{Config, InputType};
+use crate::{register::JoypadRegister, Config, InputType};
 use egui::{CtxRef, Direction, Layout, Separator, Ui};
+use gb_bus::{Address, Bus, Error, FileOperation, IORegArea};
+use gb_clock::{Tick, Ticker};
 use sdl2::event::Event;
 use sdl2::keyboard::Scancode;
 use std::collections::HashMap;
@@ -12,6 +14,8 @@ pub struct Joypad {
     input_map: HashMap<Scancode, InputType>,
     input_states: HashMap<InputType, bool>,
     listening: Option<InputType>,
+    register: JoypadRegister,
+    refresh: Option<u8>,
 }
 
 const DEFAULT_UP: Scancode = Scancode::Up;
@@ -34,6 +38,8 @@ impl Joypad {
         InputType::B,
         InputType::A,
     ];
+
+    const REFRESH_DELAY: u8 = 5;
 
     pub fn new(window_id: u32) -> Self {
         Joypad {
@@ -59,6 +65,8 @@ impl Joypad {
                 (InputType::A, false),
             ]),
             listening: None,
+            register: JoypadRegister::default(),
+            refresh: None,
         }
     }
 
@@ -77,6 +85,8 @@ impl Joypad {
                 (InputType::A, false),
             ]),
             listening: None,
+            register: JoypadRegister::default(),
+            refresh: None,
         }
     }
 
@@ -206,6 +216,42 @@ impl Joypad {
                 }
             }
             _ => {}
+        }
+    }
+}
+
+impl FileOperation<IORegArea> for Joypad {
+    fn write(&mut self, v: u8, addr: Box<dyn Address<IORegArea>>) -> Result<(), Error> {
+        match (addr.area_type(), addr.get_address()) {
+            (IORegArea::Controller, 0x00) => {
+                self.register = (v & 0b0011_0000).into();
+                self.refresh = Some(Joypad::REFRESH_DELAY);
+                Ok(())
+            }
+            _ => Err(Error::SegmentationFault(addr.into())),
+        }
+    }
+
+    fn read(&self, addr: Box<dyn Address<IORegArea>>) -> Result<u8, Error> {
+        match (addr.area_type(), addr.get_address()) {
+            (IORegArea::Controller, 0x00) => Ok(self.register.into()),
+            _ => Err(Error::SegmentationFault(addr.into())),
+        }
+    }
+}
+
+impl Ticker for Joypad {
+    fn cycle_count(&self) -> Tick {
+        Tick::MCycle
+    }
+    fn tick(&mut self, addr_bus: &mut dyn Bus<u8>) {
+        match self.refresh {
+            Some(0) => {
+                self.refresh = None;
+                self.register.refresh(addr_bus, &mut self.input_states);
+            } // update register
+            Some(n) => self.refresh = Some(n - 1), // decrease delay
+            None => {}                             // idle
         }
     }
 }

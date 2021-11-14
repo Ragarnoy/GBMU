@@ -5,14 +5,14 @@ pub mod memory;
 mod options;
 pub mod registers;
 
-use crate::dbg_interfaces::{DebugOperations, MemoryDebugOperations};
+use crate::dbg_interfaces::{CpuRegs, DebugOperations, MemoryDebugOperations};
 use crate::debugger::breakpoints::BreakpointEditor;
 use crate::debugger::disassembler::DisassemblyViewer;
 use crate::debugger::flow_control::FlowController;
 use crate::debugger::memory::MemoryViewer;
 use crate::debugger::options::DebuggerOptions;
 use crate::debugger::registers::RegisterEditor;
-use crate::run_duration::RunDuration;
+use crate::until::Until;
 use egui::CtxRef;
 use std::ops::ControlFlow;
 
@@ -22,7 +22,7 @@ pub struct Debugger<MEM> {
     flow_controller: FlowController,
     disassembler: DisassemblyViewer,
     breakpoint_editor: BreakpointEditor,
-    flow_status: Option<ControlFlow<(), RunDuration>>,
+    flow_status: Option<ControlFlow<Until>>,
 }
 
 impl<MEM: DebugOperations> Debugger<MEM> {
@@ -32,13 +32,15 @@ impl<MEM: DebugOperations> Debugger<MEM> {
             self.flow_status = self.flow_controller.draw(ui);
         });
 
+        self.disassembler
+            .may_update_cache(memory.cpu_get(CpuRegs::PC).unwrap().into(), memory);
+
         egui::SidePanel::left("left_panel")
             .resizable(false)
             .default_width(510.0)
             .show(ctx, |ui| {
                 ui.vertical(|ui| {
-                    self.disassembler
-                        .draw(ui, memory.cpu_get("PC").unwrap().into(), memory);
+                    self.disassembler.draw(ui);
                     ui.separator();
                     self.memory_editor.draw(ui, &mut memory);
                 });
@@ -46,11 +48,15 @@ impl<MEM: DebugOperations> Debugger<MEM> {
 
         egui::SidePanel::right("right_panel")
             .resizable(false)
-            .default_width(170.0)
+            .default_width(130.0)
             .show(ctx, |ui| {
-                self.flow_status = self
-                    .breakpoint_editor
-                    .draw(ui, memory.cpu_get("PC").unwrap().into());
+                if Some(ControlFlow::Break(Until::Null))
+                    == self
+                        .breakpoint_editor
+                        .draw(ui, memory.cpu_get(CpuRegs::PC).unwrap().into())
+                {
+                    self.flow_status = Some(ControlFlow::Break(Until::Null));
+                };
             });
 
         egui::CentralPanel::default().show(ctx, |ui| {
@@ -58,7 +64,7 @@ impl<MEM: DebugOperations> Debugger<MEM> {
         });
     }
 
-    pub fn flow_status(&self) -> Option<ControlFlow<(), RunDuration>> {
+    pub fn flow_status(&self) -> Option<ControlFlow<Until>> {
         self.flow_status
     }
 }
@@ -83,7 +89,7 @@ impl DebuggerBuilder {
             memory_editor: MemoryViewer::new(self.options.unwrap_or_default().address_ranges),
             register_editor: RegisterEditor,
             flow_controller: FlowController,
-            disassembler: DisassemblyViewer,
+            disassembler: DisassemblyViewer::default(),
             breakpoint_editor: BreakpointEditor::default(),
             flow_status: None,
         }

@@ -8,3 +8,8 @@ edition = "2021"
 [dependencies]
 rand = { version = "0.8.4", features = ["small_rng"] }
 log = "0.4"
+
+[features]
+trace_bus_full = ["trace_bus_write", "trace_bus_read"]
+trace_bus_write = []
+trace_bus_read = []

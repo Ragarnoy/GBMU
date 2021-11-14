@@ -67,14 +67,6 @@ impl TestIORegAddress {
         }
     }
 
-    pub fn dma() -> Self {
-        TestIORegAddress {
-            relative: 0x0006,
-            absolute: 0xFF46,
-            area: IORegArea::Lcd,
-        }
-    }
-
     pub fn palette(pos: u16) -> Self {
         TestIORegAddress {
             relative: 0x0007 + pos.min(2),

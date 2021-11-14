@@ -13,7 +13,7 @@ impl Ticker for Cpu {
         gb_clock::Tick::MCycle
     }
 
-    fn tick<B: Bus<u8>>(&mut self, addr_bus: &mut B) {
+    fn tick(&mut self, addr_bus: &mut dyn Bus<u8>) {
         self.controller.step(&mut self.registers, addr_bus)
     }
 }

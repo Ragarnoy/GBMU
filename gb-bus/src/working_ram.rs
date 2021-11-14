@@ -13,9 +13,9 @@ pub struct WorkingRam {
 impl WorkingRam {
     pub fn new(enable_cgb_feature: bool) -> Self {
         let banks = if enable_cgb_feature {
-            Vec::with_capacity(CGB_MAX_BANKS)
+            vec![[0; RAM_BANK_SIZE]; CGB_MAX_BANKS]
         } else {
-            Vec::with_capacity(DMG_MAX_BANKS)
+            vec![[0; RAM_BANK_SIZE]; DMG_MAX_BANKS]
         };
         Self {
             banks,

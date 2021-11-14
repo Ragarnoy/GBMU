@@ -16,11 +16,9 @@
       <sourceFolder url="file://$MODULE_DIR$/gb-clock/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/gb-joypad/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/gb-rtc/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/examples" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/gb-cpu/examples" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/gb-cpu/tests" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/gb-lcd-wgpu/examples" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/gb-lcd-wgpu/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/gb-dma/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/gb-test/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/gb-timer/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />

@@ -3,9 +3,9 @@ use crate::{
     io_reg_constant::{
         BG_OBJ_PALETTES_END, BG_OBJ_PALETTES_START, BOOT_ROM_START, COMMUNICATION_END,
         COMMUNICATION_START, CONTROLLER_START, DIV_TIMER_START, INTERRUPT_FLAG, LCD_END, LCD_START,
-        SOUND_END, SOUND_START, TIMER_CONTROL_START, TIMER_COUNTER_START, TIMER_MODULO_START,
-        VRAM_BANK_START, VRAM_DMA_END, VRAM_DMA_START, WAVEFORM_RAM_END, WAVEFORM_RAM_START,
-        WRAM_BANK_START,
+        OAM_DMA_START, SOUND_END, SOUND_START, TIMER_CONTROL_START, TIMER_COUNTER_START,
+        TIMER_MODULO_START, VRAM_BANK_START, VRAM_DMA_END, VRAM_DMA_START, WAVEFORM_RAM_END,
+        WAVEFORM_RAM_START, WRAM_BANK_START,
     },
     Address as PseudoAddress, Area, Error, FileOperation, IORegArea,
 };
@@ -13,6 +13,7 @@ use std::{cell::RefCell, rc::Rc};
 
 macro_rules! write_area {
     ($start:expr, $field:expr, $area_type:ident, $value:expr, $addr:expr) => {{
+        #[cfg(features = "trace_bus_write")]
         log::trace!(
             "writing at {:4x} the value {:2x} in area {:?}",
             $addr,
@@ -28,6 +29,7 @@ macro_rules! write_area {
 
 macro_rules! read_area {
     ($start:expr, $field:expr, $area_type:ident, $addr: expr) => {{
+        #[cfg(features = "trace_bus_rea")]
         log::trace!(
             "reading at {:4x} in area {:?}",
             $addr,
@@ -52,6 +54,7 @@ pub struct IORegBus {
     pub sound: Rc<RefCell<dyn FileOperation<IORegArea>>>,
     pub waveform_ram: Rc<RefCell<dyn FileOperation<IORegArea>>>,
     pub lcd: Rc<RefCell<dyn FileOperation<IORegArea>>>,
+    pub oam_dma: Rc<RefCell<dyn FileOperation<IORegArea>>>,
     pub vram_bank: Rc<RefCell<dyn FileOperation<IORegArea>>>,
     pub boot_rom: Rc<RefCell<dyn FileOperation<IORegArea>>>,
     pub vram_dma: Rc<RefCell<dyn FileOperation<IORegArea>>>,
@@ -77,6 +80,7 @@ impl FileOperation<Area> for IORegBus {
             WAVEFORM_RAM_START..=WAVEFORM_RAM_END => {
                 read_area!(WAVEFORM_RAM_START, self.waveform_ram, WaveformRam, addr)
             }
+            OAM_DMA_START => read_area!(OAM_DMA_START, self.oam_dma, OamDma, addr),
             LCD_START..=LCD_END => read_area!(LCD_START, self.lcd, Lcd, addr),
             VRAM_BANK_START => read_area!(VRAM_BANK_START, self.vram_bank, VRamBank, addr),
             BOOT_ROM_START => read_area!(BOOT_ROM_START, self.boot_rom, BootRom, addr),
@@ -122,6 +126,7 @@ impl FileOperation<Area> for IORegBus {
             WAVEFORM_RAM_START..=WAVEFORM_RAM_END => {
                 write_area!(WAVEFORM_RAM_START, self.waveform_ram, WaveformRam, v, addr)
             }
+            OAM_DMA_START => write_area!(OAM_DMA_START, self.oam_dma, OamDma, v, addr),
             LCD_START..=LCD_END => write_area!(LCD_START, self.lcd, Lcd, v, addr),
             VRAM_BANK_START => write_area!(VRAM_BANK_START, self.vram_bank, VRamBank, v, addr),
             BOOT_ROM_START => write_area!(BOOT_ROM_START, self.boot_rom, BootRom, v, addr),
