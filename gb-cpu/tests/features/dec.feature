@@ -17,6 +17,7 @@ Feature: Test Dec opcodes
   Scenario: test dec setting zero flag
     Given the bytes 05 at the position PC
     And the u8 register B set to the value 1
+    Then the flag zero is not set
     When the cpu has ticked 1 times
     Then the opcode was DecB
     When the cpu has ticked 1 times

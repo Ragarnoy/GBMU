@@ -122,6 +122,14 @@ async fn check_u16_in_bus(world: &mut CpuWorld, address: String, values: String)
     }
 }
 
+#[then(regex = r"the flag zero is (not )?set")]
+async fn check_zero_flag(world: &mut CpuWorld, toggle: String) {
+    use gb_cpu::interfaces::ReadFlagReg;
+
+    let toggle = toggle.is_empty();
+    assert_eq!(toggle, world.cpu.registers.zero());
+}
+
 fn main() {
     block_on(CpuWorld::run("tests/features"));
 }
