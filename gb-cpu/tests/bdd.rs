@@ -93,6 +93,13 @@ async fn check_reg16_value(world: &mut CpuWorld, reg: Reg16, value: String) {
     assert_eq!(reg_value, value, "got {:x}, wanted {:x}", reg_value, value);
 }
 
+#[then(regex = r"the u8 register (\w) is set to ([A-F0-9]{1,2})")]
+async fn check_reg8_value(world: &mut CpuWorld, reg: Reg8, value: String) {
+    let value = u8::from_str_radix(&value, 16).expect("valid hexa value");
+    let reg_value = reg.read_corresponding_regs(&world.cpu.registers);
+    assert_eq!(reg_value, value, "got {:x}, wanted {:x}", reg_value, value);
+}
+
 #[then(regex = r"the values written at ([A-F0-9]{1,4}) are ((?:[A-F0-9]{2,2}(:?, )?)+)")]
 async fn check_u16_in_bus(world: &mut CpuWorld, address: String, values: String) {
     let address = u16::from_str_radix(&address, 16).expect("valid hexa value");
