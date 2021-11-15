@@ -54,7 +54,7 @@ pub trait RegisterDebugOperations {
     fn audio_registers(&self) -> Vec<RegisterMap<AudioRegs>>;
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum CpuRegs {
     AF,
     BC,
