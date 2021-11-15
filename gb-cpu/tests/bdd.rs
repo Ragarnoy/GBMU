@@ -4,7 +4,7 @@ use futures::executor::block_on;
 use gb_bus::Bus;
 use gb_clock::Ticker;
 use gb_cpu::cpu::Cpu;
-use gb_test::{MockBus, Reg16};
+use gb_test::{MockBus, Reg16, Reg8};
 use std::{
     convert::Infallible,
     fmt::{self, Debug},
@@ -52,6 +52,12 @@ async fn setup_bytes(world: &mut CpuWorld, bytes: String, reg: Reg16) {
 #[given(regex = r"the register (\w\w) set to the value ([A-F0-9]{1,4})")]
 async fn setup_register(world: &mut CpuWorld, reg: Reg16, value: String) {
     let value = u16::from_str_radix(&value, 16).expect("valid hexa value");
+    reg.write_corresponding_regs(&mut world.cpu.registers, value);
+}
+
+#[given(regex = r"the u8 register (\w) set to the value ([A-F0-9]{1,2})")]
+async fn setup_u8_register(world: &mut CpuWorld, reg: Reg8, value: String) {
+    let value = u8::from_str_radix(&value, 16).expect("valid hexa value");
     reg.write_corresponding_regs(&mut world.cpu.registers, value);
 }
 
