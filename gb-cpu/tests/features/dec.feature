@@ -5,8 +5,8 @@ Feature: Test Dec opcodes
     And the u8 register <Reg> set to the value <Init>
     When the cpu has ticked 1 times
     Then the opcode was Dec<Reg>
-    And the cpu has no action left
-    And the u8 register <Reg> is set to <End>
+    When the cpu has ticked 1 times
+    Then the u8 register <Reg> is set to <End>
 
     Examples:
       | Reg | Bytes | Init | End |
@@ -19,6 +19,6 @@ Feature: Test Dec opcodes
     And the u8 register B set to the value 1
     When the cpu has ticked 1 times
     Then the opcode was DecB
-    And the cpu has no action left
-    And the u8 register B is set to 0
+    When the cpu has ticked 1 times
+    Then the u8 register B is set to 0
     And the flag zero is set
