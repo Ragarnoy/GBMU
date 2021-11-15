@@ -59,7 +59,7 @@ impl BreakpointEditor {
             .spacing(Vec2::new(6.5, 2.5))
             .show(ui, |ui| {
                 ui.label(egui::Label::new("Delete"));
-                ui.label(egui::Label::new("Active"));
+                ui.label(egui::Label::new("Enabled"));
                 ui.label(egui::Label::new("Address"));
                 ui.end_row();
 
