@@ -34,7 +34,7 @@ impl FileOperation<Area> for RomOnlyController {
         if address < self.rom.len() {
             Ok(self.rom[address])
         } else {
-            Err(Error::new_bus_error(addr))
+            Err(Error::bus_error(addr))
         }
     }
 }
