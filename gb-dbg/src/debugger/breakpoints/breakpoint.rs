@@ -15,7 +15,7 @@ impl Default for BreakpointType {
 pub struct Breakpoint {
     r#type: BreakpointType,
     pub enabled: bool,
-    pub last_triggered: Option<usize>,
+    last_triggered: Option<usize>,
 }
 
 impl Default for Breakpoint {
@@ -50,8 +50,14 @@ impl Breakpoint {
         }
     }
 
-    /// check if breakpoint is trigerred
-    pub fn trigerred(&self, counter: usize) -> bool {
+    /// check if breakpoint is active
+    /// this method is used to prevent the breakpoint to trigger itself on the same session
+    pub fn active(&self, counter: usize) -> bool {
         self.enabled && self.last_triggered == Some(counter)
+    }
+
+    /// The method is used to register that the breakpoint was triggered at the session
+    pub fn trigger(&mut self, counter: usize) {
+        self.last_triggered = Some(counter);
     }
 }
