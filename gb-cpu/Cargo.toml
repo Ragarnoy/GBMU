@@ -14,7 +14,7 @@ log = "0.4"
 num_enum = "0.5"
 
 [dev-dependencies]
-cucumber = { git = "https://github.com/cucumber-rs/cucumber", version = "0.10" }
+cucumber = "0.10"
 async-trait = "0.1"
 futures = "0.3"
 gb-test = { path = "../gb-test" }
