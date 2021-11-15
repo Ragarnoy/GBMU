@@ -50,13 +50,8 @@ impl<MEM: DebugOperations> Debugger<MEM> {
             .resizable(false)
             .default_width(130.0)
             .show(ctx, |ui| {
-                if Some(ControlFlow::Break(Until::Null))
-                    == self
-                        .breakpoint_editor
-                        .draw(ui, memory.cpu_get(CpuRegs::PC).unwrap().into())
-                {
-                    self.flow_status = Some(ControlFlow::Break(Until::Null));
-                };
+                self.breakpoint_editor
+                    .draw(ui, memory.cpu_get(CpuRegs::PC).unwrap().into())
             });
 
         egui::CentralPanel::default().show(ctx, |ui| {
@@ -64,8 +59,19 @@ impl<MEM: DebugOperations> Debugger<MEM> {
         });
     }
 
-    pub fn flow_status(&self) -> Option<ControlFlow<Until>> {
-        self.flow_status
+    pub fn flow_status(&mut self) -> Option<ControlFlow<Until>> {
+        self.flow_status.take()
+    }
+
+    pub fn updated_flow_status(&mut self, memory: &MEM) -> Option<ControlFlow<Until>> {
+        if self
+            .breakpoint_editor
+            .are_breakpoints_triggered(memory.cpu_get(CpuRegs::PC).unwrap().into())
+        {
+            Some(ControlFlow::Break(Until::Null))
+        } else {
+            self.flow_status()
+        }
     }
 }
 

@@ -52,9 +52,12 @@ fn main() {
             .expect("Fail at the start for the main window");
         if let Some(ref mut game) = game {
             while game.cycle() {
-                log::trace!("cycling the game");
+                //            log::trace!("cycling the game");
+                if let Some(flow) = debugger.updated_flow_status(game) {
+                    game.update_scheduled_stop(flow);
+                }
             }
-            log::trace!("frame ready");
+            //       log::trace!("frame ready");
             game.draw(&mut context);
         }
         ui::draw_egui(
@@ -78,7 +81,7 @@ fn main() {
                 dgb_wind
                     .end_frame()
                     .expect("Fail at the end for the debug window");
-                if let Some(flow) = debugger.flow_status() {
+                if let Some(flow) = debugger.updated_flow_status(game) {
                     game.update_scheduled_stop(flow);
                 }
             }
