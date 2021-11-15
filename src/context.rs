@@ -55,6 +55,7 @@ pub struct Game {
     pub addr_bus: AddressBus,
     scheduled_stop: Option<ScheduledStop>,
     emulation_stopped: bool,
+    cycle_count: usize,
 }
 
 #[derive(Debug)]
@@ -142,6 +143,7 @@ impl Game {
             addr_bus: bus,
             scheduled_stop: None,
             emulation_stopped: stopped,
+            cycle_count: 0,
         })
     }
 
@@ -156,6 +158,7 @@ impl Game {
                 self.joypad.borrow_mut().deref_mut(),
                 self.dma.borrow_mut().deref_mut()
             );
+            self.cycle_count += 1;
             self.check_scheduled_stop(!frame_not_finished);
             frame_not_finished
         } else {
@@ -237,7 +240,11 @@ impl Game {
     }
 }
 
-impl DebugOperations for Game {}
+impl DebugOperations for Game {
+    fn cycle(&self) -> usize {
+        self.cycle_count
+    }
+}
 
 impl MemoryDebugOperations for Game {
     fn read(&self, index: u16) -> u8 {
