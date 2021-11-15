@@ -25,8 +25,8 @@ pub struct Debugger<MEM> {
     flow_status: Option<ControlFlow<Until>>,
 }
 
-impl<MEM: DebugOperations> Debugger<MEM> {
-    pub fn draw(&mut self, ctx: &CtxRef, mut memory: &mut MEM) {
+impl<BUS: DebugOperations> Debugger<BUS> {
+    pub fn draw(&mut self, ctx: &CtxRef, mut memory: &mut BUS) {
         // ctx.set_debug_on_hover(true);
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             self.flow_status = self.flow_controller.draw(ui);
@@ -46,18 +46,11 @@ impl<MEM: DebugOperations> Debugger<MEM> {
                 });
             });
 
-        egui::SidePanel::right("right_panel")
-            .resizable(false)
-            .default_width(165.0)
-            .show(ctx, |ui| {
-                if Some(ControlFlow::Break(Until::Null))
-                    == self
-                        .breakpoint_editor
-                        .draw(ui, memory.cpu_get(CpuRegs::PC).unwrap().into())
-                {
-                    self.flow_status = Some(ControlFlow::Break(Until::Null));
-                };
-            });
+        // egui::SidePanel::right("right_panel")
+        //     .resizable(false)
+        //     .default_width(165.0)
+        //     .show(ctx, |ui| {
+        //     });
 
         egui::CentralPanel::default().show(ctx, |ui| {
             self.register_editor.draw(ui, memory);
