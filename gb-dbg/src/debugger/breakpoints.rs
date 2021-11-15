@@ -5,49 +5,53 @@ use crate::debugger::breakpoints::breakpoint::Breakpoint;
 use crate::until::Until;
 use egui::{Color32, Label, Ui, Vec2};
 use std::ops::ControlFlow;
+use crate::dbg_interfaces::RegisterDebugOperations;
 
+#[derive(Default, Debug)]
+pub struct BreakpointOptions {
+    is_advanced: bool,
+    is_not: bool,
+}
+
+#[derive(Debug)]
 pub struct BreakpointEditor {
     breakpoints: Vec<Breakpoint>,
-    is_advanced: bool,
-    new_address: String,
+    breakpoint_field: String,
+    pub options: BreakpointOptions,
 }
 
 impl Default for BreakpointEditor {
     fn default() -> Self {
         Self {
             breakpoints: Vec::with_capacity(20),
-            is_advanced: false,
-            new_address: String::with_capacity(8),
+            breakpoint_field: String::with_capacity(8),
+            options: Default::default(),
         }
     }
 }
 
 impl BreakpointEditor {
-    pub fn draw(&mut self, ui: &mut Ui, pc: u16) -> Option<ControlFlow<Until>> {
+    pub fn draw<T: RegisterDebugOperations>(&mut self, ui: &mut Ui, regs: &T) -> Option<ControlFlow<Until>> {
         ui.label(Label::new("Breakpoints").text_color(Color32::WHITE));
         self.draw_breakpoint_options(ui);
 
         let mut ret = None;
         ui.separator();
-        self.new_address.retain(|c| c.is_ascii_hexdigit());
-        if self.new_address.len() <= 5 {
-            self.new_address.truncate(4)
-        }
-        if self.is_advanced {
-            self.draw_advanced_breakpoint_widget(ui);
+        if self.options.is_advanced {
+            self.draw_advanced_breakpoint_widget(ui, regs);
         }
         else {
-            self.draw_simple_breakpoint_widget(ui);
+            self.draw_simple_breakpoint_widget(ui, regs);
         }
 
         let mut deletion_list: Vec<usize> = Vec::with_capacity(20);
         egui::Grid::new("breakpoints_".to_owned())
             .striped(true)
-            .spacing(Vec2::new(6.5, 2.5))
+            .spacing(Vec2::new(60.5, 6.5))
             .show(ui, |ui| {
-                ui.label(egui::Label::new("Del"));
+                ui.label(egui::Label::new("Delete"));
                 ui.label(egui::Label::new("Active"));
-                ui.label(egui::Label::new("Criteria"));
+                ui.label(egui::Label::new("Condition"));
                 ui.end_row();
 
                 for (i, breakpoint) in &mut self.breakpoints.iter_mut().enumerate() {
@@ -55,7 +59,7 @@ impl BreakpointEditor {
                         deletion_list.push(i)
                     }
                     ui.checkbox(&mut breakpoint.enabled, "");
-                    if pc == breakpoint.address() && breakpoint.enabled {
+                    if breakpoint.is_triggered(regs) {
                         ui.add(
                             egui::Label::new(breakpoint.to_string().clone())
                                 .text_color(Color32::RED),
@@ -74,8 +78,8 @@ impl BreakpointEditor {
         ret
     }
 
-    fn add_address_breakpoint(&mut self, address: u16) {
-        if !self.breakpoints.iter().any(|x| x.address() == address) {
+    fn add_address_breakpoint<T: RegisterDebugOperations>(&mut self, address: u16, regs: &T) {
+        if !self.breakpoints.iter().any(|x| x.is_triggered(regs)) {
             self.breakpoints.push(Breakpoint::from_address(address));
         }
     }
@@ -84,43 +88,46 @@ impl BreakpointEditor {
         address.len() == 4 && u16::from_str_radix(address, 16).is_ok()
     }
 
-    fn draw_advanced_breakpoint_widget(&mut self, ui: &mut Ui) {
+    fn draw_advanced_breakpoint_widget<T: RegisterDebugOperations>(&mut self, ui: &mut Ui, regs: &T) {
         ui.horizontal(|ui| {
             let add_button_response =
-                ui.add(egui::Button::new("+").enabled(self.is_valid_address(&self.new_address)));
-            let not_button_response =
-                ui.add(egui::Button::new("NOT").enabled(self.is_valid_address(&self.new_address)));
+                ui.add(egui::Button::new("+").enabled(self.is_valid_address(&self.breakpoint_field)));
+            ui.checkbox(&mut self.options.is_not, "NOT");
         });
         let text_field_response = ui.add(
-            egui::TextEdit::singleline(&mut self.new_address)
-                .desired_width(120.0)
+            egui::TextEdit::singleline(&mut self.breakpoint_field)
+                .desired_width(150.0)
                 .hint_text("AF == 0x80"),
         );
     }
 
-    fn draw_simple_breakpoint_widget(&mut self, ui: &mut Ui) {
+    fn draw_simple_breakpoint_widget<T: RegisterDebugOperations>(&mut self, ui: &mut Ui, regs: &T) {
+        self.breakpoint_field.retain(|c| c.is_ascii_hexdigit());
+        if self.breakpoint_field.len() <= 5 {
+            self.breakpoint_field.truncate(4)
+        }
         ui.horizontal(|ui| {
             let add_button_response =
-                ui.add(egui::Button::new("+").enabled(self.is_valid_address(&self.new_address)));
+                ui.add(egui::Button::new("+").enabled(self.is_valid_address(&self.breakpoint_field)));
             ui.add(
                 egui::Label::new("0x")
                     .text_color(Color32::from_gray(90))
                     .weak(),
             );
             let text_field_response = ui.add(
-                egui::TextEdit::singleline(&mut self.new_address)
+                egui::TextEdit::singleline(&mut self.breakpoint_field)
                     .desired_width(85.0)
                     .hint_text("555F"),
             );
             if add_button_response.clicked()
                 || text_field_response.clicked()
                 && ui.input().key_pressed(egui::Key::Enter)
-                && self.is_valid_address(&self.new_address)
+                && self.is_valid_address(&self.breakpoint_field)
             {
-                self.add_address_breakpoint(u16::from_str_radix(&*self.new_address, 16).unwrap());
+                self.add_address_breakpoint(u16::from_str_radix(&*self.breakpoint_field, 16).unwrap(), regs);
             }
             if text_field_response.lost_focus() {
-                self.new_address.clear();
+                self.breakpoint_field.clear();
             }
         });
     }
@@ -130,7 +137,7 @@ impl BreakpointEditor {
             .id_source(55)
             .default_open(false)
             .show(ui, |ui| {
-                ui.checkbox(&mut self.is_advanced, "Advanced")
+                ui.checkbox(&mut self.options.is_advanced, "Advanced")
             });
     }
 }

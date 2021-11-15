@@ -1,26 +1,21 @@
 use std::fmt::{Display, Formatter};
+use crate::dbg_interfaces::RegisterDebugOperations;
+use crate::debugger::breakpoints::breakpoint_node::BreakpointNode;
 
 #[derive(Debug)]
-enum BreakpointType {
-    Address(u16),
-}
-
-impl Default for BreakpointType {
-    fn default() -> Self {
-        Self::Address(0)
-    }
-}
-
-#[derive(Default, Debug)]
 pub struct Breakpoint {
-    bp_type: BreakpointType,
+    expr: BreakpointNode,
+    pub not: bool,
     pub enabled: bool,
 }
 
 impl Display for Breakpoint {
     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
-        match self.bp_type {
-            BreakpointType::Address(x) => write!(f, "0x{:04X}", x),
+        if self.not {
+            write!(f, "!{}", self.expr)
+        }
+        else {
+            write!(f, "{}", self.expr)
         }
     }
 }
@@ -28,14 +23,21 @@ impl Display for Breakpoint {
 impl Breakpoint {
     pub fn from_address(address: u16) -> Self {
         Self {
-            bp_type: BreakpointType::Address(address),
+            expr: BreakpointNode::new_simple(address),
             enabled: true,
+            not: false,
         }
     }
 
-    pub fn address(&self) -> u16 {
-        match self.bp_type {
-            BreakpointType::Address(x) => x,
+    pub fn is_triggered<T: RegisterDebugOperations>(&self, regs: &T) -> bool {
+        if self.enabled {
+            if self.not {
+                !self.expr.compute(regs)
+            }
+            else {
+                self.expr.compute(regs)
+            }
         }
+        else { false }
     }
 }
