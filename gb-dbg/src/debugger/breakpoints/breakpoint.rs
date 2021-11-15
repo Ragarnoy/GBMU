@@ -13,13 +13,13 @@ impl Default for BreakpointType {
 
 #[derive(Default, Debug)]
 pub struct Breakpoint {
-    r#type: BreakpointType,
+    bp_type: BreakpointType,
     pub enabled: bool,
 }
 
 impl Display for Breakpoint {
     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
-        match self.r#type {
+        match self.bp_type {
             BreakpointType::Address(x) => write!(f, "0x{:04X}", x),
         }
     }
@@ -28,13 +28,13 @@ impl Display for Breakpoint {
 impl Breakpoint {
     pub fn from_address(address: u16) -> Self {
         Self {
-            r#type: BreakpointType::Address(address),
-            enabled: false,
+            bp_type: BreakpointType::Address(address),
+            enabled: true,
         }
     }
 
     pub fn address(&self) -> u16 {
-        match self.r#type {
+        match self.bp_type {
             BreakpointType::Address(x) => x,
         }
     }
