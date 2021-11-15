@@ -53,7 +53,7 @@ impl Breakpoint {
     /// check if breakpoint is active
     /// this method is used to prevent the breakpoint to trigger itself on the same session
     pub fn active(&self, counter: usize) -> bool {
-        self.enabled && self.last_triggered == Some(counter)
+        self.enabled && self.last_triggered != Some(counter)
     }
 
     /// The method is used to register that the breakpoint was triggered at the session

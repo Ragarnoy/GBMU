@@ -31,7 +31,7 @@ impl From<RegisterValue> for u16 {
 }
 
 pub trait DebugOperations: MemoryDebugOperations + RegisterDebugOperations {
-    fn cycle(&self) -> usize
+    fn cycle(&self) -> usize;
 }
 
 pub trait MemoryDebugOperations {
