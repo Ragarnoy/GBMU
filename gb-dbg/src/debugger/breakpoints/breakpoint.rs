@@ -11,10 +11,21 @@ impl Default for BreakpointType {
     }
 }
 
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct Breakpoint {
     r#type: BreakpointType,
     pub enabled: bool,
+    pub last_triggered: Option<usize>,
+}
+
+impl Default for Breakpoint {
+    fn default() -> Self {
+        Self {
+            r#type: BreakpointType::default(),
+            enabled: true,
+            last_triggered: None,
+        }
+    }
 }
 
 impl Display for Breakpoint {
@@ -29,7 +40,7 @@ impl Breakpoint {
     pub fn from_address(address: u16) -> Self {
         Self {
             r#type: BreakpointType::Address(address),
-            enabled: false,
+            ..Default::default()
         }
     }
 
@@ -37,5 +48,10 @@ impl Breakpoint {
         match self.r#type {
             BreakpointType::Address(x) => x,
         }
+    }
+
+    /// check if breakpoint is trigerred
+    pub fn trigerred(&self, counter: usize) -> bool {
+        self.enabled && self.last_triggered == Some(counter)
     }
 }
