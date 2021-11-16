@@ -1,6 +1,7 @@
-use std::fmt::{Display, Formatter};
 use crate::dbg_interfaces::RegisterDebugOperations;
 use crate::debugger::breakpoints::breakpoint_node::BreakpointNode;
+use std::fmt::{Display, Formatter};
+use std::str::FromStr;
 
 #[derive(Debug)]
 pub struct Breakpoint {
@@ -13,8 +14,7 @@ impl Display for Breakpoint {
     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
         if self.not {
             write!(f, "!{}", self.expr)
-        }
-        else {
+        } else {
             write!(f, "{}", self.expr)
         }
     }
@@ -42,11 +42,11 @@ impl Breakpoint {
         if self.enabled {
             if self.not {
                 !self.expr.compute(regs)
-            }
-            else {
+            } else {
                 self.expr.compute(regs)
             }
+        } else {
+            false
         }
-        else { false }
     }
 }

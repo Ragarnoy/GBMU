@@ -6,8 +6,8 @@ use egui::Vec2;
 use game::Game;
 use gb_dbg::debugger::{Debugger, DebuggerBuilder};
 use gb_dbg::until::Until;
-use std::ops::ControlFlow;
 use gb_dbg::{DEBUGGER_HEIGHT, DEBUGGER_WIDTH};
+use std::ops::ControlFlow;
 
 pub struct DebuggerApp {
     pub debugger: Debugger<Game>,

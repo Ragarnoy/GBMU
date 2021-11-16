@@ -1,14 +1,14 @@
-use std::fmt::{Display, Formatter, write};
-use std::str::FromStr;
+use crate::dbg_interfaces::{CpuRegs, RegisterDebugOperations};
 use anyhow::anyhow;
-use nom::IResult;
 use nom::branch::alt;
 use nom::bytes::complete::{tag, take_while_m_n};
 use nom::combinator::map;
 use nom::sequence::tuple;
-use crate::dbg_interfaces::{CpuRegs, RegisterDebugOperations};
+use nom::IResult;
+use std::fmt::{Display, Formatter};
+use std::str::FromStr;
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 enum Operator {
     Eq,
     NotEq,
@@ -42,7 +42,7 @@ impl Display for BreakpointNode {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         if let CpuRegs::PC = self.lhs {
             if let Operator::Eq = self.op {
-                return write!(f, "0x{:04X}", self.rhs)
+                return write!(f, "0x{:04X}", self.rhs);
             }
         }
 
@@ -66,7 +66,7 @@ impl BreakpointNode {
         Self {
             lhs: CpuRegs::PC,
             op: Operator::Eq,
-            rhs: address
+            rhs: address,
         }
     }
 }
@@ -83,15 +83,12 @@ impl FromStr for BreakpointNode {
         };
         if !rest.is_empty() {
             Err(anyhow!("Invalid input"))
-        }
-        else {
-            Ok(
-                BreakpointNode {
-                    lhs: reg,
-                    op,
-                    rhs: val,
-                }
-            )
+        } else {
+            Ok(BreakpointNode {
+                lhs: reg,
+                op,
+                rhs: val,
+            })
         }
     }
 }
@@ -104,7 +101,7 @@ fn operator(input: &str) -> IResult<&str, Operator> {
         map(tag(">="), |_| Operator::SupEq),
         map(tag("<"), |_| Operator::Inf),
         map(tag("<="), |_| Operator::InfEq),
-    ))(input)
+    ))(input.trim())
 }
 
 fn register(input: &str) -> IResult<&str, CpuRegs> {
@@ -115,12 +112,11 @@ fn register(input: &str) -> IResult<&str, CpuRegs> {
         map(tag("HL"), |_| CpuRegs::HL),
         map(tag("PC"), |_| CpuRegs::PC),
         map(tag("SP"), |_| CpuRegs::SP),
-    ))(input)
+    ))(input.trim())
 }
 
 fn value(input: &str) -> IResult<&str, u16> {
-    map(
-        take_while_m_n(1, 4, |c: char| c.is_ascii_hexdigit()),
-        |s| u16::from_str_radix(s, 16).unwrap()
-    )(input)
+    map(take_while_m_n(1, 4, |c: char| c.is_ascii_hexdigit()), |s| {
+        u16::from_str_radix(s, 16).unwrap()
+    })(input.trim())
 }

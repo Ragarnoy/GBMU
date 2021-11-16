@@ -55,11 +55,7 @@ impl<BUS: DebugOperations> Debugger<BUS> {
         egui::CentralPanel::default().show(ctx, |ui| {
             self.register_editor.draw(ui, memory);
             ui.separator();
-            if Some(ControlFlow::Break(Until::Null))
-                == self
-                .breakpoint_editor
-                .draw(ui, memory)
-            {
+            if Some(ControlFlow::Break(Until::Null)) == self.breakpoint_editor.draw(ui, memory) {
                 self.flow_status = Some(ControlFlow::Break(Until::Null));
             };
         });
