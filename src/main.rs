@@ -9,7 +9,6 @@ use clap::{AppSettings, Clap};
 use context::{Context, Game, Windows};
 use gb_dbg::debugger::{Debugger, DebuggerBuilder};
 use gb_lcd::{render, window::GBWindow};
-use gb_ppu::TILEMAP_DIM;
 use logger::init_logger;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -39,8 +38,6 @@ fn main() {
     init_logger(opts.log_level);
 
     let (mut context, mut game, mut debugger, mut event_pump) = init_gbmu(&opts);
-    let mut display_window = false;
-    let mut image = [[[0; 3]; TILEMAP_DIM]; TILEMAP_DIM];
 
     'running: loop {
         context
@@ -59,10 +56,9 @@ fn main() {
             game.draw(&mut context);
         }
         ui::draw_egui(
-            &mut context.windows.main,
-            &mut context.windows.debug,
-            &context.video,
-            &mut context.windows.input,
+            &mut context,
+            #[cfg(feature = "debug_render")]
+            &game,
         );
         context
             .windows
@@ -95,7 +91,14 @@ fn main() {
                 .expect("Fail at the end for the input window");
         }
 
-        if let Some((ref mut tilemap_window, ref mut display)) = context.windows.tilemap {
+        #[cfg(feature = "debug_render")]
+        if let Some((
+            ref mut tilemap_window,
+            ref mut display,
+            ref mut image,
+            ref mut display_window,
+        )) = context.windows.tilemap
+        {
             tilemap_window
                 .start_frame()
                 .expect("Fail at the start for the main window");
@@ -107,19 +110,19 @@ fn main() {
                         egui::menu::menu(ui, "bg/win", |ui| {
                             if let Some(ref mut game) = game {
                                 if ui.button("background").clicked() {
-                                    display_window = false;
-                                    image = game.ppu.tilemap_image(display_window);
+                                    *display_window = false;
+                                    *image = game.ppu.tilemap_image(*display_window);
                                 }
                                 if ui.button("window").clicked() {
-                                    display_window = true;
-                                    image = game.ppu.tilemap_image(display_window);
+                                    *display_window = true;
+                                    *image = game.ppu.tilemap_image(*display_window);
                                 }
                             }
                         });
                     })
                 },
             );
-            display.update_render(&image);
+            display.update_render(image);
             display.draw();
             tilemap_window
                 .end_frame()
@@ -187,14 +190,6 @@ fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
 
     let dbg = DebuggerBuilder::new().build();
 
-    // let tilemap = GBWindow::new(
-    //     "tilemap",
-    //     (TILEMAP_DIM as u32, TILEMAP_DIM as u32 + bar_pixels_size),
-    //     true,
-    //     &video_subsystem,
-    // )
-    // .expect("Error while building tilemap window");
-
     let windows = Windows {
         main: gb_window,
         debug: if opts.debug && game_context.is_some() {
@@ -203,11 +198,8 @@ fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
             None
         },
         input: None,
+        #[cfg(feature = "debug_render")]
         tilemap: None,
-        // Some((
-        //     tilemap,
-        //     render::RenderImage::<TILEMAP_DIM, TILEMAP_DIM>::with_bar_size(bar_pixels_size as f32),
-        // )),
     };
 
     (

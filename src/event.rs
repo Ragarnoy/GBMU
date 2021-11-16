@@ -68,6 +68,11 @@ pub fn process_event<const WIDTH: usize, const HEIGHT: usize>(
                             settings::save(context.joypad.borrow().get_config());
                             context.windows.input = None;
                         }
+                    } else {
+                        #[cfg(feature = "debug_render")]
+                        if context.windows.tilemap.is_some() {
+                            context.windows.tilemap = None;
+                        }
                     }
                 }
                 _ => {}
@@ -80,7 +85,8 @@ pub fn process_event<const WIDTH: usize, const HEIGHT: usize>(
                     if let Some(ref mut input_wind) = context.windows.input {
                         input_wind.send_event(&event, &context.sdl);
                     }
-                    if let Some((ref mut tilemap_wind, _)) = context.windows.tilemap {
+                    #[cfg(feature = "debug_render")]
+                    if let Some((ref mut tilemap_wind, _, _, _)) = context.windows.tilemap {
                         tilemap_wind.send_event(&event, &context.sdl);
                     }
                 }

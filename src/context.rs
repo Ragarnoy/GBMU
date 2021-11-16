@@ -16,6 +16,7 @@ use gb_lcd::{
     window::GBWindow,
 };
 use gb_ppu::Ppu;
+#[cfg(feature = "debug_render")]
 use gb_ppu::TILEMAP_DIM;
 use gb_roms::{
     controllers::{bios, generate_rom_controller, BiosWrapper, MbcController},
@@ -40,7 +41,13 @@ pub struct Windows {
     pub main: GBWindow,
     pub debug: Option<GBWindow>,
     pub input: Option<GBWindow>,
-    pub tilemap: Option<(GBWindow, RenderImage<TILEMAP_DIM, TILEMAP_DIM>)>,
+    #[cfg(feature = "debug_render")]
+    pub tilemap: Option<(
+        GBWindow,
+        RenderImage<TILEMAP_DIM, TILEMAP_DIM>,
+        [[[u8; 3]; TILEMAP_DIM]; TILEMAP_DIM],
+        bool,
+    )>,
 }
 
 pub struct Game {
