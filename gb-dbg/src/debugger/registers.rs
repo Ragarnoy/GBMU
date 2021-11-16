@@ -1,4 +1,4 @@
-use crate::dbg_interfaces::{RegisterDebugOperations, RegisterMap};
+use crate::dbg_interfaces::{RegisterDebugOperations, RegisterMap, RegisterValue};
 
 use egui::Label;
 use egui::{CollapsingHeader, Color32, Ui, Vec2};
@@ -48,11 +48,9 @@ impl RegisterEditor {
                         .spacing(Vec2::new(3.5, 2.5))
                         .show(ui, |ui| {
                             for row in registers.iter() {
-                                let value: u16 = row.1.into();
-                                let format = if value > u8::MAX as u16 {
-                                    format!("0x{:04X}", value)
-                                } else {
-                                    format!("0x{:02X}", value)
+                                let format = match row.1 {
+                                    RegisterValue::U8(v) => format!("0x{:02X}", v),
+                                    RegisterValue::U16(v) => format!("0x{:04X}", v),
                                 };
 
                                 // Only display tooltip if tooltip string is different from register name
