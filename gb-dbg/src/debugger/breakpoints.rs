@@ -1,11 +1,12 @@
 mod breakpoint;
 mod breakpoint_node;
 
+use crate::dbg_interfaces::RegisterDebugOperations;
 use crate::debugger::breakpoints::breakpoint::Breakpoint;
 use crate::until::Until;
-use egui::{Color32, Label, Ui, Vec2};
+use egui::paint::Shadow;
+use egui::{Color32, Label, Ui, Vec2, Visuals};
 use std::ops::ControlFlow;
-use crate::dbg_interfaces::RegisterDebugOperations;
 
 #[derive(Default, Debug)]
 pub struct BreakpointOptions {
@@ -31,7 +32,11 @@ impl Default for BreakpointEditor {
 }
 
 impl BreakpointEditor {
-    pub fn draw<T: RegisterDebugOperations>(&mut self, ui: &mut Ui, regs: &T) -> Option<ControlFlow<Until>> {
+    pub fn draw<T: RegisterDebugOperations>(
+        &mut self,
+        ui: &mut Ui,
+        regs: &T,
+    ) -> Option<ControlFlow<Until>> {
         ui.label(Label::new("Breakpoints").text_color(Color32::WHITE));
         self.draw_breakpoint_options(ui);
 
@@ -39,8 +44,7 @@ impl BreakpointEditor {
         ui.separator();
         if self.options.is_advanced {
             self.draw_advanced_breakpoint_widget(ui, regs);
-        }
-        else {
+        } else {
             self.draw_simple_breakpoint_widget(ui, regs);
         }
 
@@ -55,7 +59,10 @@ impl BreakpointEditor {
                 ui.end_row();
 
                 for (i, breakpoint) in &mut self.breakpoints.iter_mut().enumerate() {
-                    if ui.add(egui::Button::new("-").text_color(Color32::RED)).clicked() {
+                    if ui
+                        .add(egui::Button::new("-").text_color(Color32::RED))
+                        .clicked()
+                    {
                         deletion_list.push(i)
                     }
                     ui.checkbox(&mut breakpoint.enabled, "");
@@ -84,21 +91,54 @@ impl BreakpointEditor {
         }
     }
 
-    fn is_valid_address(&self, address: &str) -> bool {
-        address.len() == 4 && u16::from_str_radix(address, 16).is_ok()
+    fn add_expr_breakpoint<T: RegisterDebugOperations>(
+        &mut self,
+        expr: &str,
+        regs: &T,
+    ) -> anyhow::Result<()> {
+        if !self.breakpoints.iter().any(|x| x.is_triggered(regs)) {
+            let breakpoint = Breakpoint::from_expression(expr)?;
+            self.breakpoints.push(breakpoint);
+        }
+        Ok(())
     }
 
-    fn draw_advanced_breakpoint_widget<T: RegisterDebugOperations>(&mut self, ui: &mut Ui, regs: &T) {
+    fn draw_advanced_breakpoint_widget<T: RegisterDebugOperations>(
+        &mut self,
+        ui: &mut Ui,
+        regs: &T,
+    ) {
         ui.horizontal(|ui| {
             let add_button_response =
-                ui.add(egui::Button::new("+").enabled(self.is_valid_address(&self.breakpoint_field)));
+                ui.add(egui::Button::new("+").enabled(is_valid_expression(&self.breakpoint_field)));
             ui.checkbox(&mut self.options.is_not, "NOT");
+            let text_field_response = ui.add(
+                egui::TextEdit::singleline(&mut self.breakpoint_field)
+                    .desired_width(150.0)
+                    .hint_text("AF == 0x80"),
+            );
+            if (add_button_response.clicked()
+                || text_field_response.clicked()
+                    && ui.input().key_pressed(egui::Key::Enter)
+                    && is_valid_expression(&self.breakpoint_field))
+                && self
+                    .add_expr_breakpoint(&self.breakpoint_field.clone(), regs)
+                    .is_err()
+            {
+                let visual = Visuals {
+                    window_shadow: Shadow {
+                        color: Color32::RED,
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                };
+                text_field_response.ctx.set_visuals(visual);
+            }
+            if text_field_response.lost_focus() {
+                self.breakpoint_field.clear();
+                text_field_response.ctx.set_visuals(Visuals::default())
+            }
         });
-        let text_field_response = ui.add(
-            egui::TextEdit::singleline(&mut self.breakpoint_field)
-                .desired_width(150.0)
-                .hint_text("AF == 0x80"),
-        );
     }
 
     fn draw_simple_breakpoint_widget<T: RegisterDebugOperations>(&mut self, ui: &mut Ui, regs: &T) {
@@ -108,7 +148,7 @@ impl BreakpointEditor {
         }
         ui.horizontal(|ui| {
             let add_button_response =
-                ui.add(egui::Button::new("+").enabled(self.is_valid_address(&self.breakpoint_field)));
+                ui.add(egui::Button::new("+").enabled(is_valid_address(&self.breakpoint_field)));
             ui.add(
                 egui::Label::new("0x")
                     .text_color(Color32::from_gray(90))
@@ -121,10 +161,13 @@ impl BreakpointEditor {
             );
             if add_button_response.clicked()
                 || text_field_response.clicked()
-                && ui.input().key_pressed(egui::Key::Enter)
-                && self.is_valid_address(&self.breakpoint_field)
+                    && ui.input().key_pressed(egui::Key::Enter)
+                    && is_valid_address(&self.breakpoint_field)
             {
-                self.add_address_breakpoint(u16::from_str_radix(&*self.breakpoint_field, 16).unwrap(), regs);
+                self.add_address_breakpoint(
+                    u16::from_str_radix(&*self.breakpoint_field, 16).unwrap(),
+                    regs,
+                );
             }
             if text_field_response.lost_focus() {
                 self.breakpoint_field.clear();
@@ -140,4 +183,14 @@ impl BreakpointEditor {
                 ui.checkbox(&mut self.options.is_advanced, "Advanced")
             });
     }
+}
+
+fn is_valid_address(address: &str) -> bool {
+    address.len() == 4 && u16::from_str_radix(address, 16).is_ok()
+}
+
+fn is_valid_expression(expr: &str) -> bool {
+    expr.chars().all(|c| {
+        c.is_alphanumeric() || c.is_whitespace() || c == '=' || c == '>' || c == '<' || c == '!'
+    }) && !expr.is_empty()
 }

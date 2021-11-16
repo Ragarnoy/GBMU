@@ -75,7 +75,12 @@ impl FromStr for BreakpointNode {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let (rest, (reg, op, val)) = tuple((register, operator, value))(s).unwrap();
+        let (rest, (reg, op, val)) = match tuple((register, operator, value))(s) {
+            Ok(ret) => ret,
+            Err(_) => {
+                return Err(anyhow!("Invalid input"));
+            }
+        };
         if !rest.is_empty() {
             Err(anyhow!("Invalid input"))
         }

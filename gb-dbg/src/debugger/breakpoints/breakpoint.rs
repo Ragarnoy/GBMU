@@ -29,6 +29,15 @@ impl Breakpoint {
         }
     }
 
+    pub fn from_expression(expr: &str) -> anyhow::Result<Self> {
+        let node = BreakpointNode::from_str(expr)?;
+        Ok(Self {
+            expr: node,
+            enabled: true,
+            not: false,
+        })
+    }
+
     pub fn is_triggered<T: RegisterDebugOperations>(&self, regs: &T) -> bool {
         if self.enabled {
             if self.not {
