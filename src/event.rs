@@ -1,4 +1,6 @@
 use crate::{context::Context, settings};
+#[cfg(feature = "debug_render")]
+use sdl2::keyboard::Scancode;
 use sdl2::{event::Event, keyboard::Keycode, EventPump};
 
 pub fn process_event<const WIDTH: usize, const HEIGHT: usize>(
@@ -20,11 +22,13 @@ pub fn process_event<const WIDTH: usize, const HEIGHT: usize>(
                 scancode,
                 ..
             } => {
-                if window.sdl_window().id() == window_id && scancode == Some(Scancode::Grave) {
-                    debug = !debug;
-                    log::debug!("toggle debug ({})", debug);
-                    display.switch_draw_mode(debug);
-                    window.set_debug(debug);
+                if context.windows.main.sdl_window().id() == window_id
+                    && scancode == Some(Scancode::Grave)
+                {
+                    context.debug_render = !context.debug_render;
+                    log::debug!("toggle debug ({})", context.debug_render);
+                    context.display.switch_draw_mode(context.debug_render);
+                    context.windows.main.set_debug(context.debug_render);
                 }
             }
             Event::Window {

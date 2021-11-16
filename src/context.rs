@@ -32,6 +32,8 @@ pub struct Context<const WIDTH: usize, const HEIGHT: usize> {
     pub windows: Windows,
     pub display: RenderImage<WIDTH, HEIGHT>,
     pub joypad: Rc<RefCell<Joypad>>,
+    #[cfg(feature = "debug_render")]
+    pub debug_render: bool,
 }
 
 pub struct Windows {

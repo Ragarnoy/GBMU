@@ -23,6 +23,12 @@ pub fn draw_egui(
             if ui.button("Debug").clicked() && debug_window.is_none() {
                 debug_window.replace(new_debug_window(video));
             }
+            #[cfg(feature = "debug_render")]
+            egui::menu::menu(ui, "PPU", |ui| {
+                if ui.button("tilesheet").clicked() {}
+                if ui.button("tilemap").clicked() {}
+                if ui.button("objects").clicked() {}
+            });
             if ui.button("Input").clicked() && input.is_none() {
                 input.replace(
                     GBWindow::new(

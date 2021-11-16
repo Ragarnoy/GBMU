@@ -5,8 +5,6 @@ mod settings;
 mod ui;
 
 use clap::{AppSettings, Clap};
-#[cfg(feature = "debug_render")]
-use sdl2::keyboard::Scancode;
 
 use context::{Context, Game, Windows};
 use gb_dbg::debugger::{Debugger, DebuggerBuilder};
@@ -189,13 +187,13 @@ fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
 
     let dbg = DebuggerBuilder::new().build();
 
-    let tilemap = GBWindow::new(
-        "tilemap",
-        (TILEMAP_DIM as u32, TILEMAP_DIM as u32 + bar_pixels_size),
-        true,
-        &video_subsystem,
-    )
-    .expect("Error while building tilemap window");
+    // let tilemap = GBWindow::new(
+    //     "tilemap",
+    //     (TILEMAP_DIM as u32, TILEMAP_DIM as u32 + bar_pixels_size),
+    //     true,
+    //     &video_subsystem,
+    // )
+    // .expect("Error while building tilemap window");
 
     let windows = Windows {
         main: gb_window,
@@ -205,10 +203,11 @@ fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
             None
         },
         input: None,
-        tilemap: Some((
-            tilemap,
-            render::RenderImage::<TILEMAP_DIM, TILEMAP_DIM>::with_bar_size(bar_pixels_size as f32),
-        )),
+        tilemap: None,
+        // Some((
+        //     tilemap,
+        //     render::RenderImage::<TILEMAP_DIM, TILEMAP_DIM>::with_bar_size(bar_pixels_size as f32),
+        // )),
     };
 
     (
@@ -218,6 +217,8 @@ fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
             display,
             joypad,
             windows,
+            #[cfg(feature = "debug_render")]
+            debug_render: false,
         },
         game_context,
         dbg,
