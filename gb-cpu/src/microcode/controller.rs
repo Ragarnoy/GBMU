@@ -5,6 +5,8 @@ use super::{
 use crate::registers::Registers;
 use gb_bus::{Area, Bus, FileOperation, IORegArea};
 use std::fmt::{self, Debug, Display};
+#[cfg(feature = "registers_logs")]
+use std::{cell::RefCell, fs::File, rc::Rc};
 #[derive(Clone, Debug)]
 pub enum OpcodeType {
     Unprefixed(Opcode),
@@ -46,6 +48,8 @@ pub struct MicrocodeController {
     pub interrupt_master_enable: bool,
     pub interrupt_flag: u8,
     pub interrupt_enable: u8,
+    #[cfg(feature = "registers_logs")]
+    file: Rc<RefCell<File>>,
 }
 
 impl Debug for MicrocodeController {
@@ -65,9 +69,7 @@ type ActionFn = fn(controller: &mut MicrocodeController, state: &mut State) -> M
 impl Default for MicrocodeController {
     fn default() -> Self {
         #[cfg(feature = "registers_logs")]
-        if let Err(e) = MicrocodeController::remove_file() {
-            eprintln!("Couldn't remove file: {}", e);
-        };
+        let file = MicrocodeController::create_new_file().unwrap();
         Self {
             opcode: None,
             actions: Vec::with_capacity(12),
@@ -75,6 +77,8 @@ impl Default for MicrocodeController {
             interrupt_master_enable: true,
             interrupt_flag: 0,
             interrupt_enable: 0,
+            #[cfg(feature = "registers_logs")]
+            file: Rc::new(RefCell::new(file)),
         }
     }
 }
@@ -164,36 +168,32 @@ impl MicrocodeController {
     }
 
     #[cfg(feature = "registers_logs")]
-    fn log_registers_to_file(&self, opcode_logs: &str) -> std::io::Result<()> {
-        use std::env;
-        use std::fs::OpenOptions;
+    fn log_registers_to_file(&mut self, opcode_logs: &str) -> std::io::Result<()> {
         use std::io::prelude::*;
+        let mut file = &*self.file.borrow_mut();
 
-        let current_dir_path = env::current_dir()?.into_os_string();
-
-        if let Some(path) = current_dir_path.to_str() {
-            let mut file = OpenOptions::new()
-                .write(true)
-                .append(true)
-                .create(true)
-                .open(format!("{}/debug/registers_logs/{}", path, "ours.txt"))?;
-            if let Err(e) = writeln!(file, "{}", opcode_logs) {
-                eprintln!("Couldn't write to file: {}", e);
-            }
+        if let Err(e) = writeln!(file, "{}", opcode_logs) {
+            eprintln!("Couldn't write to file: {}", e);
         }
         Ok(())
     }
 
     #[cfg(feature = "registers_logs")]
-    fn remove_file() -> std::io::Result<()> {
-        use std::{env, fs};
+    fn create_new_file() -> std::io::Result<File> {
+        use std::{env, fs::OpenOptions};
 
-        let current_dir_path = env::current_dir()?.into_os_string();
+        let project_path = env::current_dir()?.into_os_string();
 
-        if let Some(path) = current_dir_path.to_str() {
-            fs::remove_file(format!("{}/debug/registers_logs/{}", path, "ours.txt"))?;
-        }
-        Ok(())
+        OpenOptions::new()
+            .write(true)
+            .append(true)
+            .create_new(true)
+            .open(format!(
+                "{}/debug/registers_logs/ours.txt",
+                project_path
+                    .to_str()
+                    .expect("Could not get project's path from env."),
+            ))
     }
 }
 
