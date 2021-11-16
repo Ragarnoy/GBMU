@@ -4,7 +4,11 @@ use super::{
 };
 use crate::registers::Registers;
 use gb_bus::{Area, Bus, FileOperation, IORegArea};
+#[cfg(feature = "registers_logs")]
+use std::env;
 use std::fmt::{self, Debug, Display};
+#[cfg(feature = "registers_logs")]
+use std::fs;
 
 #[derive(Clone, Debug)]
 pub enum OpcodeType {
@@ -47,6 +51,8 @@ pub struct MicrocodeController {
     pub interrupt_master_enable: bool,
     pub interrupt_flag: u8,
     pub interrupt_enable: u8,
+    #[cfg(feature = "registers_logs")]
+    logs: String,
 }
 
 impl Debug for MicrocodeController {
@@ -72,6 +78,8 @@ impl Default for MicrocodeController {
             interrupt_master_enable: true,
             interrupt_flag: 0,
             interrupt_enable: 0,
+            #[cfg(feature = "registers_logs")]
+            logs: String::new(),
         }
     }
 }
@@ -86,6 +94,9 @@ impl MicrocodeController {
             if self.is_interrupt_ready() {
                 handle_interrupts
             } else {
+                #[cfg(feature = "registers_logs")]
+                self.log_registers_to_file(format!("{:?}", state).as_str())
+                    .unwrap_or_default();
                 fetch
             }
         });
@@ -155,6 +166,20 @@ impl MicrocodeController {
         let interrupt_flag = self.interrupt_flag;
         let interrupt_enable = self.interrupt_enable;
         interrupt_flag & interrupt_enable != 0
+    }
+
+    #[cfg(feature = "registers_logs")]
+    fn log_registers_to_file(&mut self, opcode_logs: &str) -> std::io::Result<()> {
+        let current_dir_path = env::current_dir()?.into_os_string();
+
+        if let Some(path) = current_dir_path.to_str() {
+            self.logs.push_str(opcode_logs);
+            fs::write(
+                format!("{}/debug/registers_logs/{}", path, "ours.txt"),
+                self.to_owned().logs,
+            )?;
+        }
+        Ok(())
     }
 }
 
