@@ -41,3 +41,60 @@ impl FromStr for Reg16 {
         }
     }
 }
+
+pub enum Reg8 {
+    A,
+    B,
+    C,
+    D,
+    E,
+    H,
+    L,
+}
+
+impl Reg8 {
+    pub fn read_corresponding_regs(&self, regs: &Registers) -> u8 {
+        use gb_cpu::interfaces::Read8BitsReg;
+
+        match self {
+            Reg8::A => regs.a(),
+            Reg8::B => regs.b(),
+            Reg8::C => regs.c(),
+            Reg8::D => regs.d(),
+            Reg8::E => regs.e(),
+            Reg8::H => regs.h(),
+            Reg8::L => regs.l(),
+        }
+    }
+
+    pub fn write_corresponding_regs(&self, regs: &mut Registers, value: u8) {
+        use gb_cpu::interfaces::Write8BitsReg;
+
+        match self {
+            Reg8::A => regs.set_a(value),
+            Reg8::B => regs.set_b(value),
+            Reg8::C => regs.set_c(value),
+            Reg8::D => regs.set_d(value),
+            Reg8::E => regs.set_e(value),
+            Reg8::H => regs.set_h(value),
+            Reg8::L => regs.set_l(value),
+        }
+    }
+}
+
+impl FromStr for Reg8 {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "A" => Ok(Reg8::A),
+            "B" => Ok(Reg8::B),
+            "C" => Ok(Reg8::C),
+            "D" => Ok(Reg8::D),
+            "E" => Ok(Reg8::E),
+            "H" => Ok(Reg8::H),
+            "L" => Ok(Reg8::L),
+            _ => Err(format!("invalid 8-bits register name {}", s)),
+        }
+    }
+}
