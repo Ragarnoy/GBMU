@@ -4,14 +4,13 @@ mod breakpoint_node;
 use crate::dbg_interfaces::RegisterDebugOperations;
 use crate::debugger::breakpoints::breakpoint::Breakpoint;
 use crate::until::Until;
-use egui::paint::Shadow;
+
 use egui::{Color32, Label, Ui, Vec2, Visuals};
 use std::ops::ControlFlow;
 
 #[derive(Default, Debug)]
 pub struct BreakpointOptions {
     is_advanced: bool,
-    is_not: bool,
 }
 
 #[derive(Debug)]
@@ -111,7 +110,6 @@ impl BreakpointEditor {
         ui.horizontal(|ui| {
             let add_button_response =
                 ui.add(egui::Button::new("+").enabled(is_valid_expression(&self.breakpoint_field)));
-            ui.checkbox(&mut self.options.is_not, "NOT");
             let text_field_response = ui.add(
                 egui::TextEdit::singleline(&mut self.breakpoint_field)
                     .desired_width(150.0)
