@@ -724,7 +724,7 @@ dependencies = [
 [[package]]
 name = "egui_memory_editor"
 version = "0.1.4"
-source = "git+https://github.com/Ragarnoy/egui_memory_editor?branch=master#6590a4737f7d9a9c774072fdb6a52bf4c694233f"
+source = "git+https://github.com/Ragarnoy/egui_memory_editor?rev=6590a4737f7d9a9c774072fdb6a52bf4c694233f#6590a4737f7d9a9c774072fdb6a52bf4c694233f"
 dependencies = [
  "egui",
 ]
