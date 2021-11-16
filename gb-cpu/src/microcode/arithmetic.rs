@@ -46,7 +46,7 @@ pub fn add_16(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow
 /// together in a base10 context
 pub fn daa(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     let value = ctl.pop();
-    let was_a_subtraction = state.regs.substraction();
+    let was_a_subtraction = state.regs.subtraction();
 
     let (value, carry) = if was_a_subtraction {
         daa_subtraction(value, state.regs.carry(), state.regs.half_carry())

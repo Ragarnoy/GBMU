@@ -5,7 +5,7 @@ Feature: Test opcodes that substrac 2 value
     When the cpu has ticked 2 times
     Then the opcode was CpA8
     When the cpu has ticked 1 times
-    Then the flag substraction is set
+    Then the flag subtraction is set
     And the flag carry is set
     And the flag half carry is not set
 
@@ -15,7 +15,7 @@ Feature: Test opcodes that substrac 2 value
     When the cpu has ticked 2 times
     Then the opcode was <Name>
     When the cpu has ticked 1 times
-    Then the flag substraction is set
+    Then the flag subtraction is set
     And the flag carry is set
     And the flag half carry is not set
     And the u8 register <Reg> is set to D1
