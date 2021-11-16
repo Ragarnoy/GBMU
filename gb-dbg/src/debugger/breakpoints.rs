@@ -123,14 +123,7 @@ impl BreakpointEditor {
                     .add_expr_breakpoint(&self.breakpoint_field.clone(), regs)
                     .is_err()
             {
-                let visual = Visuals {
-                    window_shadow: Shadow {
-                        color: Color32::RED,
-                        ..Default::default()
-                    },
-                    ..Default::default()
-                };
-                text_field_response.ctx.set_visuals(visual);
+                log::error!("Debugger input is invalid")
             }
             if text_field_response.lost_focus() {
                 self.breakpoint_field.clear();
