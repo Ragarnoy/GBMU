@@ -51,8 +51,6 @@ pub struct MicrocodeController {
     pub interrupt_master_enable: bool,
     pub interrupt_flag: u8,
     pub interrupt_enable: u8,
-    #[cfg(feature = "registers_logs")]
-    logs: String,
 }
 
 impl Debug for MicrocodeController {
@@ -78,8 +76,6 @@ impl Default for MicrocodeController {
             interrupt_master_enable: true,
             interrupt_flag: 0,
             interrupt_enable: 0,
-            #[cfg(feature = "registers_logs")]
-            logs: String::new(),
         }
     }
 }
@@ -173,10 +169,18 @@ impl MicrocodeController {
         let current_dir_path = env::current_dir()?.into_os_string();
 
         if let Some(path) = current_dir_path.to_str() {
-            self.logs.push_str(opcode_logs);
+            let logs = match fs::read(format!("{}/debug/registers_logs/{}", path, "ours.txt")) {
+                Ok(v) => v,
+                _ => vec![],
+            };
+
+            let logs = match std::str::from_utf8(&logs) {
+                Ok(v) => v,
+                Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
+            };
             fs::write(
                 format!("{}/debug/registers_logs/{}", path, "ours.txt"),
-                self.to_owned().logs,
+                format!("{}{}", logs, opcode_logs),
             )?;
         }
         Ok(())
