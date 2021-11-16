@@ -98,6 +98,12 @@ impl BreakpointEditor {
     pub fn are_breakpoints_triggered(&mut self, cycle: usize, pc: u16) -> bool {
         for breakpoint in &mut self.breakpoints {
             if breakpoint.active(cycle) && pc == breakpoint.address() {
+                log::debug!(
+                    "breakpoint triggered cycle={}, pc={}, break={:?}",
+                    cycle,
+                    pc,
+                    breakpoint
+                );
                 breakpoint.trigger(cycle);
                 return true;
             }
