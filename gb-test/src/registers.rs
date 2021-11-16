@@ -4,6 +4,7 @@ use std::str::FromStr;
 pub enum Reg16 {
     PC,
     SP,
+    BC,
     DE,
     HL,
 }
@@ -15,6 +16,7 @@ impl Reg16 {
             Reg16::SP => regs.sp,
             Reg16::DE => regs.de,
             Reg16::HL => regs.hl,
+            Reg16::BC => regs.bc,
         }
     }
 
@@ -24,6 +26,7 @@ impl Reg16 {
             Reg16::SP => regs.sp = value,
             Reg16::DE => regs.de = value,
             Reg16::HL => regs.hl = value,
+            Reg16::BC => regs.bc = value,
         }
     }
 }
@@ -37,6 +40,7 @@ impl FromStr for Reg16 {
             "DE" => Ok(Reg16::DE),
             "SP" => Ok(Reg16::SP),
             "HL" => Ok(Reg16::HL),
+            "BC" => Ok(Reg16::BC),
             _ => Err(format!("invalid 16-bits register name {}", s)),
         }
     }
