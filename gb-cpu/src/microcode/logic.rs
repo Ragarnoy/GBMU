@@ -2,8 +2,9 @@ use super::{math::sub_components, MicrocodeController, MicrocodeFlow, State, OK_
 use crate::interfaces::WriteFlagReg;
 
 pub fn cp(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
-    let value = ctl.pop();
-    let (_, flag) = sub_components(ctl.pop(), value);
+    let left = ctl.pop();
+    let right = ctl.pop();
+    let (_, flag) = sub_components(left, right);
     state.regs.set_subtraction(true);
     state.regs.set_half_carry(flag.half_carry);
     state.regs.set_carry(flag.carry);
