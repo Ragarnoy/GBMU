@@ -95,7 +95,7 @@ impl ReadFlagReg for Registers {
         self.f() >> 7 == 0b1
     }
 
-    fn substraction(&self) -> bool {
+    fn subtraction(&self) -> bool {
         (self.f() >> 6 & 1) == 1
     }
 
@@ -126,7 +126,7 @@ impl WriteFlagReg for Registers {
         }
     }
 
-    fn set_substraction(&mut self, value: bool) {
+    fn set_subtraction(&mut self, value: bool) {
         if value {
             self.set_f(self.f() | SUBSTRACTION_MASK)
         } else {

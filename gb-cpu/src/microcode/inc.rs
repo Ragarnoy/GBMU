@@ -18,7 +18,7 @@ pub fn inc8(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
 }
 
 fn update_inc_flag(state: &mut impl WriteFlagReg, flag: Flag) {
-    state.set_substraction(false);
+    state.set_subtraction(false);
     state.set_half_carry(flag.half_carry);
     state.set_zero(flag.zero);
 }

@@ -13,13 +13,13 @@ pub struct Flag {
 pub fn scf(_ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     state.regs.set_carry(true);
     state.regs.set_half_carry(false);
-    state.regs.set_substraction(false);
+    state.regs.set_subtraction(false);
     OK_PLAY_NEXT_ACTION
 }
 
 pub fn ccf(_ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     state.regs.set_carry(!state.regs.carry());
     state.regs.set_half_carry(false);
-    state.regs.set_substraction(false);
+    state.regs.set_subtraction(false);
     OK_PLAY_NEXT_ACTION
 }

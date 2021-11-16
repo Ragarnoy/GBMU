@@ -5,7 +5,7 @@ use crate::interfaces::{ReadFlagReg, WriteFlagReg};
 
 pub fn sub(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     let (value, flag) = math::sub_components(ctl.pop(), ctl.pop());
-    state.regs.set_substraction(true);
+    state.regs.set_subtraction(true);
     state.regs.set_zero(flag.zero);
     state.regs.set_half_carry(flag.half_carry);
     state.regs.set_carry(flag.carry);
@@ -15,7 +15,7 @@ pub fn sub(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
 
 pub fn add(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     let (value, flag) = math::add_components(ctl.pop(), ctl.pop());
-    state.regs.set_substraction(false);
+    state.regs.set_subtraction(false);
     state.regs.set_zero(flag.zero);
     state.regs.set_half_carry(flag.half_carry);
     state.regs.set_carry(flag.carry);
@@ -27,7 +27,7 @@ pub fn add_16(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow
     let b = ctl.pop_u16();
     let a = ctl.pop_u16();
     let (res, overflow) = a.overflowing_add(b);
-    state.regs.set_substraction(false);
+    state.regs.set_subtraction(false);
     state.regs.set_half_carry((a & 0xf) + (b & 0xf) > 0xf);
     state.regs.set_carry(overflow);
     ctl.push_u16(res);
@@ -46,9 +46,9 @@ pub fn add_16(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow
 /// together in a base10 context
 pub fn daa(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     let value = ctl.pop();
-    let was_a_substraction = state.regs.substraction();
+    let was_a_subtraction = state.regs.substraction();
 
-    let (value, carry) = if was_a_substraction {
+    let (value, carry) = if was_a_subtraction {
         daa_subtraction(value, state.regs.carry(), state.regs.half_carry())
     } else {
         daa_addition(value, state.regs.carry(), state.regs.half_carry())
@@ -134,7 +134,7 @@ pub fn adc(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     let right = ctl.pop() + (state.regs.carry() as u8);
     let (value, flag) = math::add_components(left, right);
 
-    state.regs.set_substraction(false);
+    state.regs.set_subtraction(false);
     state.regs.set_zero(flag.zero);
     state.regs.set_half_carry(flag.half_carry);
     state.regs.set_carry(flag.carry);
@@ -147,7 +147,7 @@ pub fn sbc(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     let right = ctl.pop() + (state.regs.carry() as u8);
     let (value, flag) = math::sub_components(left, right);
 
-    state.regs.set_substraction(true);
+    state.regs.set_subtraction(true);
     state.regs.set_zero(flag.zero);
     state.regs.set_half_carry(flag.half_carry);
     state.regs.set_carry(flag.carry);

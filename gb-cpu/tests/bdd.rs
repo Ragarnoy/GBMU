@@ -147,7 +147,7 @@ async fn check_flag(world: &mut CpuWorld, flag: String, toggle: String) {
         "zero" => world.cpu.registers.zero(),
         "half carry" => world.cpu.registers.half_carry(),
         "carry" => world.cpu.registers.carry(),
-        "substraction" => world.cpu.registers.substraction(),
+        "subtraction" => world.cpu.registers.substraction(),
         _ => panic!("invalid flag name {}", flag),
     };
     assert_eq!(toggle, flag);

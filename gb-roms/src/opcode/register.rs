@@ -155,7 +155,7 @@ pub enum RegisterFlag {
     Z,
 
     /// Substract Flag
-    /// This flag is set when the last math instruction was a substraction
+    /// This flag is set when the last math instruction was a subtraction
     N,
 
     /// Half Carry Flag
