@@ -4,12 +4,7 @@ use super::{
 };
 use crate::registers::Registers;
 use gb_bus::{Area, Bus, FileOperation, IORegArea};
-#[cfg(feature = "registers_logs")]
-use std::env;
 use std::fmt::{self, Debug, Display};
-#[cfg(feature = "registers_logs")]
-use std::fs;
-
 #[derive(Clone, Debug)]
 pub enum OpcodeType {
     Unprefixed(Opcode),
@@ -166,22 +161,21 @@ impl MicrocodeController {
 
     #[cfg(feature = "registers_logs")]
     fn log_registers_to_file(&mut self, opcode_logs: &str) -> std::io::Result<()> {
+        use std::env;
+        use std::fs::OpenOptions;
+        use std::io::prelude::*;
+
         let current_dir_path = env::current_dir()?.into_os_string();
 
         if let Some(path) = current_dir_path.to_str() {
-            let logs = match fs::read(format!("{}/debug/registers_logs/{}", path, "ours.txt")) {
-                Ok(v) => v,
-                _ => vec![],
-            };
-
-            let logs = match std::str::from_utf8(&logs) {
-                Ok(v) => v,
-                Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
-            };
-            fs::write(
-                format!("{}/debug/registers_logs/{}", path, "ours.txt"),
-                format!("{}{}", logs, opcode_logs),
-            )?;
+            let mut file = OpenOptions::new()
+                .write(true)
+                .append(true)
+                .create(true)
+                .open(format!("{}/debug/registers_logs/{}", path, "ours.txt"))?;
+            if let Err(e) = writeln!(file, "{}", opcode_logs) {
+                eprintln!("Couldn't write to file: {}", e);
+            }
         }
         Ok(())
     }
