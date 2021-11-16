@@ -138,12 +138,19 @@ async fn check_u16_in_bus(world: &mut CpuWorld, address: String, values: String)
     }
 }
 
-#[then(regex = r"the flag zero is (not )?set")]
-async fn check_zero_flag(world: &mut CpuWorld, toggle: String) {
+#[then(regex = r"the flag ([\w ]+) is (not )?set")]
+async fn check_flag(world: &mut CpuWorld, flag: String, toggle: String) {
     use gb_cpu::interfaces::ReadFlagReg;
 
     let toggle = toggle.is_empty();
-    assert_eq!(toggle, world.cpu.registers.zero());
+    let flag = match flag.as_str() {
+        "zero" => world.cpu.registers.zero(),
+        "half carry" => world.cpu.registers.half_carry(),
+        "carry" => world.cpu.registers.carry(),
+        "substraction" => world.cpu.registers.substraction(),
+        _ => panic!("invalid flag name {}", flag),
+    };
+    assert_eq!(toggle, flag);
 }
 
 fn main() {
