@@ -4,7 +4,7 @@ use crate::Game;
 use gb_dbg::{DEBUGGER_HEIGHT, DEBUGGER_WIDTH};
 use gb_lcd::{render, window::GBWindow};
 #[cfg(feature = "debug_render")]
-use gb_ppu::TILEMAP_DIM;
+use gb_ppu::{TILEMAP_DIM, TILESHEET_HEIGHT, TILESHEET_WIDTH};
 use native_dialog::FileDialog;
 
 pub fn draw_egui<const WIDTH: usize, const HEIGHT: usize>(
@@ -32,7 +32,20 @@ pub fn draw_egui<const WIDTH: usize, const HEIGHT: usize>(
             #[cfg(feature = "debug_render")]
             egui::menu::menu(ui, "PPU", |ui| {
                 if let Some(game) = game {
-                    if ui.button("tilesheet").clicked() {}
+                    if ui.button("tilesheet").clicked() {
+                        let tilesheet = GBWindow::new(
+                            "ppu tilesheet",
+                            (TILESHEET_WIDTH as u32, TILESHEET_HEIGHT as u32),
+                            true,
+                            &context.video,
+                        )
+                        .expect("Error while building tilemap window");
+                        context.windows.tilesheet = Some((
+                            tilesheet,
+                            render::RenderImage::<TILESHEET_WIDTH, TILESHEET_HEIGHT>::new(),
+                            game.ppu.tilesheet_image(),
+                        ))
+                    }
                     if ui.button("tilemap").clicked() && context.windows.tilemap.is_none() {
                         let bar_pixels_size =
                             GBWindow::dots_to_pixels(&context.video, render::MENU_BAR_SIZE)
@@ -53,7 +66,6 @@ pub fn draw_egui<const WIDTH: usize, const HEIGHT: usize>(
                             false,
                         ))
                     }
-                    if ui.button("objects").clicked() {}
                 }
             });
             if ui.button("Input").clicked() && context.windows.input.is_none() {

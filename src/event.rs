@@ -54,6 +54,23 @@ pub fn process_event<const WIDTH: usize, const HEIGHT: usize>(
                         if input_wind.sdl_window().id() == window_id {
                             input_wind.resize().expect("Fail to resize input window");
                         }
+                    } else {
+                        #[cfg(feature = "debug_render")]
+                        if let Some((ref mut tilemap_wind, _, _, _)) = context.windows.tilemap {
+                            if tilemap_wind.sdl_window().id() == window_id {
+                                tilemap_wind
+                                    .resize()
+                                    .expect("Fail to resize tilemap window");
+                            }
+                        }
+                        #[cfg(feature = "debug_render")]
+                        if let Some((ref mut tilesheet_wind, _, _)) = context.windows.tilesheet {
+                            if tilesheet_wind.sdl_window().id() == window_id {
+                                tilesheet_wind
+                                    .resize()
+                                    .expect("Fail to resize tilesheet window");
+                            }
+                        }
                     }
                 }
                 sdl2::event::WindowEvent::Close => {
@@ -70,8 +87,16 @@ pub fn process_event<const WIDTH: usize, const HEIGHT: usize>(
                         }
                     } else {
                         #[cfg(feature = "debug_render")]
-                        if context.windows.tilemap.is_some() {
-                            context.windows.tilemap = None;
+                        if let Some((ref mut tilemap_wind, _, _, _)) = context.windows.tilemap {
+                            if tilemap_wind.sdl_window().id() == window_id {
+                                context.windows.tilemap = None;
+                            }
+                        }
+                        #[cfg(feature = "debug_render")]
+                        if let Some((ref mut tilesheet_wind, _, _)) = context.windows.tilesheet {
+                            if tilesheet_wind.sdl_window().id() == window_id {
+                                context.windows.tilesheet = None;
+                            }
                         }
                     }
                 }
@@ -88,6 +113,10 @@ pub fn process_event<const WIDTH: usize, const HEIGHT: usize>(
                     #[cfg(feature = "debug_render")]
                     if let Some((ref mut tilemap_wind, _, _, _)) = context.windows.tilemap {
                         tilemap_wind.send_event(&event, &context.sdl);
+                    }
+                    #[cfg(feature = "debug_render")]
+                    if let Some((ref mut tilesheet_wind, _, _)) = context.windows.tilesheet {
+                        tilesheet_wind.send_event(&event, &context.sdl);
                     }
                 }
             }
