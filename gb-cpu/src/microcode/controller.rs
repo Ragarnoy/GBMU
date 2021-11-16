@@ -64,6 +64,10 @@ type ActionFn = fn(controller: &mut MicrocodeController, state: &mut State) -> M
 
 impl Default for MicrocodeController {
     fn default() -> Self {
+        #[cfg(feature = "registers_logs")]
+        if let Err(e) = MicrocodeController::remove_file() {
+            eprintln!("Couldn't remove file: {}", e);
+        };
         Self {
             opcode: None,
             actions: Vec::with_capacity(12),
@@ -160,7 +164,7 @@ impl MicrocodeController {
     }
 
     #[cfg(feature = "registers_logs")]
-    fn log_registers_to_file(&mut self, opcode_logs: &str) -> std::io::Result<()> {
+    fn log_registers_to_file(&self, opcode_logs: &str) -> std::io::Result<()> {
         use std::env;
         use std::fs::OpenOptions;
         use std::io::prelude::*;
@@ -176,6 +180,18 @@ impl MicrocodeController {
             if let Err(e) = writeln!(file, "{}", opcode_logs) {
                 eprintln!("Couldn't write to file: {}", e);
             }
+        }
+        Ok(())
+    }
+
+    #[cfg(feature = "registers_logs")]
+    fn remove_file() -> std::io::Result<()> {
+        use std::{env, fs};
+
+        let current_dir_path = env::current_dir()?.into_os_string();
+
+        if let Some(path) = current_dir_path.to_str() {
+            fs::remove_file(format!("{}/debug/registers_logs/{}", path, "ours.txt"))?;
         }
         Ok(())
     }
