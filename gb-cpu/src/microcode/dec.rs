@@ -20,7 +20,7 @@ pub fn dec8(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
 fn update_dec_flag(state: &mut impl WriteFlagReg, flag: Flag) {
     state.set_half_carry(flag.half_carry);
     state.set_zero(flag.zero);
-    state.set_subtraction(true);
+    state.set_substraction(true);
 }
 
 /// decrease sp by one

@@ -123,14 +123,14 @@ fn read_flag() {
     regs.set_f((ZERO_MASK | SUBSTRACTION_MASK | HALF_CARRY_MASK | CARRY_MASK) as u8);
 
     assert!(regs.zero(), "ZERO flag should be set");
-    assert!(regs.subtraction(), "SUBTRACTION flag should be set");
+    assert!(regs.substraction(), "SUBTRACTION flag should be set");
     assert!(regs.half_carry(), "HALF_CARRY flag should be set");
     assert!(regs.carry(), "CARRY flag should be set");
 
     regs.set_f(0);
 
     assert!(!regs.zero());
-    assert!(!regs.subtraction());
+    assert!(!regs.substraction());
     assert!(!regs.half_carry());
     assert!(!regs.carry());
 }
@@ -155,16 +155,16 @@ mod write_flag {
     }
 
     #[test]
-    fn subtraction() {
+    fn substraction() {
         let mut regs = Registers::default();
 
-        assert!(!regs.subtraction());
+        assert!(!regs.substraction());
 
-        regs.set_subtraction(true);
-        assert_eq!(regs.subtraction(), true);
+        regs.set_substraction(true);
+        assert_eq!(regs.substraction(), true);
 
-        regs.set_subtraction(false);
-        assert_eq!(regs.subtraction(), false);
+        regs.set_substraction(false);
+        assert_eq!(regs.substraction(), false);
     }
 
     #[test]
