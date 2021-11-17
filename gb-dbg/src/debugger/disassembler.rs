@@ -40,10 +40,7 @@ impl DisassemblyViewer {
                 .striped(true)
                 .spacing(Vec2::new(150.0, 2.5))
                 .show(ui, |ui| {
-                    ui.label(egui::Label::new("Address").text_color(Color32::WHITE));
-                    ui.label(egui::Label::new("Instruction").text_color(Color32::WHITE));
-                    ui.label(egui::Label::new("Data").text_color(Color32::WHITE));
-                    ui.end_row();
+                    DisassemblyViewer::draw_labels(ui);
                     let mut pc = self.cache_pc_valid_range.unwrap_or((0, 0)).0;
                     for row in self.cache.iter().take(8) {
                         DisassemblyViewer::draw_row(ui, &mut pc, row);
@@ -51,6 +48,13 @@ impl DisassemblyViewer {
                     ui.end_row();
                 });
         });
+    }
+
+    fn draw_labels(ui: &mut Ui) {
+        ui.label(egui::Label::new("Address").text_color(Color32::WHITE));
+        ui.label(egui::Label::new("Instruction").text_color(Color32::WHITE));
+        ui.label(egui::Label::new("Data").text_color(Color32::WHITE));
+        ui.end_row();
     }
 
     fn draw_row(ui: &mut Ui, pc: &mut u16, row: &Result<(Opcode, Vec<u8>), Error>) {
