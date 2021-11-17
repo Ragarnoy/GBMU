@@ -4,7 +4,6 @@ mod breakpoint_node;
 use crate::dbg_interfaces::RegisterDebugOperations;
 use crate::debugger::breakpoints::breakpoint::Breakpoint;
 
-
 use egui::{Color32, Label, Ui, Vec2, Visuals};
 
 #[derive(Default, Debug)]
@@ -30,11 +29,7 @@ impl Default for BreakpointEditor {
 }
 
 impl BreakpointEditor {
-    pub fn draw<T: RegisterDebugOperations>(
-        &mut self,
-        ui: &mut Ui,
-        regs: &T,
-    ) {
+    pub fn draw<T: RegisterDebugOperations>(&mut self, ui: &mut Ui, regs: &T) {
         ui.label(Label::new("Breakpoints").text_color(Color32::WHITE));
         self.draw_breakpoint_options(ui);
 
@@ -90,16 +85,16 @@ impl BreakpointEditor {
         !address.is_empty() && u16::from_str_radix(address, 16).is_ok()
     }
 
-    pub fn are_breakpoints_triggered(&mut self, pc: u16) -> bool {
+    pub fn are_breakpoints_triggered<T: RegisterDebugOperations>(&mut self, regs: &T) -> bool {
         for breakpoint in &mut self.breakpoints {
-            if breakpoint.enabled && pc == breakpoint.address() {
+            if breakpoint.is_triggered(regs) {
                 breakpoint.enabled = false;
                 return true;
             }
         }
         false
     }
-}
+
     fn add_expr_breakpoint<T: RegisterDebugOperations>(
         &mut self,
         expr: &str,

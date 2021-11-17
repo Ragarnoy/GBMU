@@ -54,8 +54,7 @@ impl<BUS: DebugOperations> Debugger<BUS> {
 
         egui::CentralPanel::default().show(ctx, |ui| {
             self.register_editor.draw(ui, memory);
-            self.breakpoint_editor
-                .draw(ui, memory.cpu_get(CpuRegs::PC).unwrap().into())
+            self.breakpoint_editor.draw(ui, memory)
         });
     }
 
@@ -63,11 +62,8 @@ impl<BUS: DebugOperations> Debugger<BUS> {
         self.flow_status.take()
     }
 
-    pub fn updated_flow_status(&mut self, memory: &MEM) -> Option<ControlFlow<Until>> {
-        if self
-            .breakpoint_editor
-            .are_breakpoints_triggered(memory.cpu_get(CpuRegs::PC).unwrap().into())
-        {
+    pub fn updated_flow_status(&mut self, memory: &BUS) -> Option<ControlFlow<Until>> {
+        if self.breakpoint_editor.are_breakpoints_triggered(memory) {
             Some(ControlFlow::Break(Until::Null))
         } else {
             self.flow_status()
