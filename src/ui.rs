@@ -42,7 +42,9 @@ pub fn draw_egui<const WIDTH: usize, const HEIGHT: usize>(
                         .expect("Error while building tilemap window");
                         context.windows.tilesheet = Some((
                             tilesheet,
-                            render::RenderImage::<TILESHEET_WIDTH, TILESHEET_HEIGHT>::new(),
+                            render::RenderImage::<TILESHEET_WIDTH, TILESHEET_HEIGHT>::with_bar_size(
+                                0.0,
+                            ),
                             game.ppu.tilesheet_image(),
                         ))
                     }

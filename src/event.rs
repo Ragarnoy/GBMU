@@ -56,19 +56,25 @@ pub fn process_event<const WIDTH: usize, const HEIGHT: usize>(
                         }
                     } else {
                         #[cfg(feature = "debug_render")]
-                        if let Some((ref mut tilemap_wind, _, _, _)) = context.windows.tilemap {
+                        if let Some((ref mut tilemap_wind, ref mut display, _, _)) =
+                            context.windows.tilemap
+                        {
                             if tilemap_wind.sdl_window().id() == window_id {
                                 tilemap_wind
                                     .resize()
                                     .expect("Fail to resize tilemap window");
+                                display.resize(tilemap_wind.sdl_window().size());
                             }
                         }
                         #[cfg(feature = "debug_render")]
-                        if let Some((ref mut tilesheet_wind, _, _)) = context.windows.tilesheet {
+                        if let Some((ref mut tilesheet_wind, ref mut display, _)) =
+                            context.windows.tilesheet
+                        {
                             if tilesheet_wind.sdl_window().id() == window_id {
                                 tilesheet_wind
                                     .resize()
                                     .expect("Fail to resize tilesheet window");
+                                display.resize(tilesheet_wind.sdl_window().size());
                             }
                         }
                     }
