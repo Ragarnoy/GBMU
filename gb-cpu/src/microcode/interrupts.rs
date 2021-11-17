@@ -1,5 +1,3 @@
-use crate::microcode::{controller::OpcodeType, opcode::Opcode};
-
 use super::{
     dec, jump::jump, read, utils::sleep, write, MicrocodeController, MicrocodeFlow, State,
     OK_PLAY_NEXT_ACTION,
@@ -51,12 +49,12 @@ pub fn handle_interrupts(ctl: &mut MicrocodeController, _state: &mut State) -> M
     OK_PLAY_NEXT_ACTION
 }
 
-pub fn toggle_ime(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow {
-    ctl.interrupt_master_enable = match ctl.opcode {
-        Some(OpcodeType::Unprefixed(Opcode::Di)) => false,
-        Some(OpcodeType::Unprefixed(Opcode::Ei)) => true,
-        Some(OpcodeType::Unprefixed(Opcode::Reti)) => true,
-        _ => panic!("toggle_ime action should not be used during this instruction."),
-    };
+pub fn disable_ime(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow {
+    ctl.interrupt_master_enable = false;
+    OK_PLAY_NEXT_ACTION
+}
+
+pub fn enable_ime(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow {
+    ctl.interrupt_master_enable = true;
     OK_PLAY_NEXT_ACTION
 }
