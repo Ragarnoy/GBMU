@@ -92,58 +92,7 @@ fn main() {
         }
 
         #[cfg(feature = "debug_render")]
-        if let Some((
-            ref mut tilemap_window,
-            ref mut display,
-            ref mut image,
-            ref mut display_window,
-        )) = context.windows.tilemap
-        {
-            tilemap_window
-                .start_frame()
-                .expect("Fail at the start for the main window");
-            if let Some(ref mut game) = game {
-                egui::containers::TopBottomPanel::top("Top menu").show(
-                    tilemap_window.egui_ctx(),
-                    |ui| {
-                        egui::menu::bar(ui, |ui| {
-                            ui.set_height(render::MENU_BAR_SIZE);
-                            egui::menu::menu(ui, "bg/win", |ui| {
-                                if ui.button("background").clicked() {
-                                    *display_window = false;
-                                }
-                                if ui.button("window").clicked() {
-                                    *display_window = true;
-                                }
-                            });
-                        })
-                    },
-                );
-                *image = game.ppu.tilemap_image(*display_window);
-            }
-            display.update_render(image);
-            display.draw();
-            tilemap_window
-                .end_frame()
-                .expect("Fail at the end for the main window");
-        }
-
-        #[cfg(feature = "debug_render")]
-        if let Some((ref mut tilesheet_window, ref mut display, ref mut image)) =
-            context.windows.tilesheet
-        {
-            tilesheet_window
-                .start_frame()
-                .expect("Fail at the start for the main window");
-            if let Some(ref mut game) = game {
-                *image = game.ppu.tilesheet_image();
-            }
-            display.update_render(image);
-            display.draw();
-            tilesheet_window
-                .end_frame()
-                .expect("Fail at the end for the main window");
-        }
+        ui::draw_ppu_debug_ui(&mut context, &mut game);
 
         if std::ops::ControlFlow::Break(()) == event::process_event(&mut context, &mut event_pump) {
             break 'running;
