@@ -42,6 +42,13 @@ impl Breakpoint {
         }
     }
 
+    pub fn is_triggered<DBG: DebugOperations>(&mut self, context: &DBG) -> bool {
+        if self.active() {
+            true
+        }
+        false
+    }
+
     /// check if breakpoint is active
     /// this method is used to prevent the breakpoint to trigger itself on the same session
     pub fn active(&self, counter: usize) -> bool {
