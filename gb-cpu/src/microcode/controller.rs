@@ -82,7 +82,12 @@ impl MicrocodeController {
         let mut state = State::new(regs, bus);
         let action = self.actions.pop().unwrap_or_else(|| {
             self.clear();
-            if self.is_interrupt_ready() {
+
+            let is_prev_opcode_ei = match self.opcode {
+                Some(OpcodeType::Unprefixed(opcode)) => opcode == Opcode::Ei,
+                _ => false,
+            };
+            if !is_prev_opcode_ei && self.is_interrupt_ready() {
                 handle_interrupts
             } else {
                 #[cfg(feature = "registers_logs")]
