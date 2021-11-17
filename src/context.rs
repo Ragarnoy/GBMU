@@ -236,6 +236,14 @@ impl Game {
     }
 }
 
+impl Drop for Game {
+    fn drop(&mut self) {
+        if self.auto_save == Some(AutoSave::Ram) || self.auto_save == Some(AutoSave::RamTimer) {
+            todo!("auto save");
+        }
+    }
+}
+
 impl DebugOperations for Game {}
 
 impl MemoryDebugOperations for Game {
