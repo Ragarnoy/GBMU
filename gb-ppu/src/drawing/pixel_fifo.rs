@@ -1,10 +1,15 @@
 use super::Pixel;
 use std::collections::VecDeque;
 
-#[derive(Default)]
 pub struct PixelFIFO {
     pixels: VecDeque<Pixel>,
     pub enabled: bool,
+}
+
+impl Default for PixelFIFO {
+    fn default() -> PixelFIFO {
+        PixelFIFO::new()
+    }
 }
 
 impl PixelFIFO {

@@ -15,9 +15,10 @@ fn overwrite_memory(
 ) {
     assert!(ppu_mem.overwrite_vram(dump.1).is_ok());
     assert!(ppu_mem.overwrite_oam(dump.2).is_ok());
-    assert!(ppu_reg
-        .overwrite_lcd(dump.3[0x40..0x4C].try_into().expect("invalid lcd bytes"))
-        .is_ok());
+    let mut reg = Vec::new();
+    reg.extend_from_slice(dump.3[0x40..0x46].try_into().unwrap());
+    reg.extend_from_slice(dump.3[0x47..0x4C].try_into().unwrap());
+    assert!(ppu_reg.overwrite_lcd(reg.try_into().unwrap()).is_ok());
 }
 
 pub fn main() {
