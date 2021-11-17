@@ -19,12 +19,8 @@ use std::rc::Rc;
 #[clap(version = "0.1")]
 #[clap(setting = AppSettings::ColoredHelp)]
 struct Opts {
-    #[cfg(not(debug_assertions))]
-    #[clap(short = 'l', long = "log", default_value = "warn", about = "change log level", possible_values = &["trace", "debug", "info", "warn", "error", "off"])]
-    log_level: log::LevelFilter,
-
-    #[cfg(debug_assertions)]
-    #[clap(short = 'l', long = "log", default_value = "debug", about = "change log level", possible_values = &["trace", "debug", "info", "warn", "error", "off"])]
+    #[cfg_attr(not(debug_assertions), clap(short = 'l', long = "log", default_value = "warn", about = "change log level", possible_values = &["trace", "debug", "info", "warn", "error", "off"]))]
+    #[cfg_attr(debug_assertions, clap(short = 'l', long = "log", default_value = "debug", about = "change log level", possible_values = &["trace", "debug", "info", "warn", "error", "off"]))]
     log_level: log::LevelFilter,
 
     #[clap(about = "rom file to be loaded by the gameboy")]
