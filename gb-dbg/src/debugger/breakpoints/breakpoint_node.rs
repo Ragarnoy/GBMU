@@ -8,7 +8,7 @@ use nom::IResult;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 enum Operator {
     Eq,
     NotEq,
@@ -40,13 +40,11 @@ pub struct BreakpointNode {
 
 impl Display for BreakpointNode {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        if let CpuRegs::PC = self.lhs {
-            if let Operator::Eq = self.op {
-                return write!(f, "0x{:04X}", self.rhs);
-            }
+        if CpuRegs::PC == self.lhs && Operator::Eq == self.op {
+            write!(f, "0x{:04X}", self.rhs)
+        } else {
+            write!(f, "{:?} {} 0x{:04X}", self.lhs, self.op, self.rhs)
         }
-
-        write!(f, "{:?} {} 0x{:04X}", self.lhs, self.op, self.rhs)
     }
 }
 
