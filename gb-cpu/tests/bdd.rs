@@ -4,7 +4,7 @@ use futures::executor::block_on;
 use gb_bus::Bus;
 use gb_clock::Ticker;
 use gb_cpu::cpu::Cpu;
-use gb_test::{MockBus, Reg16};
+use gb_test::{MockBus, Reg16, Reg8};
 use std::{
     convert::Infallible,
     fmt::{self, Debug},
@@ -55,6 +55,12 @@ async fn setup_register(world: &mut CpuWorld, reg: Reg16, value: String) {
     reg.write_corresponding_regs(&mut world.cpu.registers, value);
 }
 
+#[given(regex = r"the u8 register (\w) set to the value ([A-F0-9]{1,2})")]
+async fn setup_u8_register(world: &mut CpuWorld, reg: Reg8, value: String) {
+    let value = u8::from_str_radix(&value, 16).expect("valid hexa value");
+    reg.write_corresponding_regs(&mut world.cpu.registers, value);
+}
+
 #[when(regex = r"the cpu has ticked (\d+) times?")]
 async fn tick_cpu(world: &mut CpuWorld, amount: usize) {
     let mut count = 0;
@@ -87,6 +93,29 @@ async fn check_reg16_value(world: &mut CpuWorld, reg: Reg16, value: String) {
     assert_eq!(reg_value, value, "got {:x}, wanted {:x}", reg_value, value);
 }
 
+#[then(
+    regex = r"the composite register ((?:\w) (?:\w)) set to the value ((?:[A-F0-9]{1,2}) (?:[A-F0-9]{1,2}))"
+)]
+async fn check_composite_reg_value(world: &mut CpuWorld, reg: String, value: String) {
+    use std::str::FromStr;
+
+    let reg = reg.split(" ").collect::<Vec<&str>>().join("");
+    let reg = Reg16::from_str(&reg).expect("cannot decode composite register");
+
+    let value = value.split(" ").collect::<Vec<&str>>().join("");
+    let value = u16::from_str_radix(&value, 16).expect("valid hexa value");
+
+    let reg_value = reg.read_corresponding_regs(&world.cpu.registers);
+    assert_eq!(reg_value, value, "got {:x}, wanted {:x}", reg_value, value);
+}
+
+#[then(regex = r"the u8 register (\w) is set to ([A-F0-9]{1,2})")]
+async fn check_reg8_value(world: &mut CpuWorld, reg: Reg8, value: String) {
+    let value = u8::from_str_radix(&value, 16).expect("valid hexa value");
+    let reg_value = reg.read_corresponding_regs(&world.cpu.registers);
+    assert_eq!(reg_value, value, "got {:x}, wanted {:x}", reg_value, value);
+}
+
 #[then(regex = r"the values written at ([A-F0-9]{1,4}) are ((?:[A-F0-9]{2,2}(:?, )?)+)")]
 async fn check_u16_in_bus(world: &mut CpuWorld, address: String, values: String) {
     let address = u16::from_str_radix(&address, 16).expect("valid hexa value");
@@ -107,6 +136,21 @@ async fn check_u16_in_bus(world: &mut CpuWorld, address: String, values: String)
             addr
         );
     }
+}
+
+#[then(regex = r"the flag ([\w ]+) is (not )?set")]
+async fn check_flag(world: &mut CpuWorld, flag: String, toggle: String) {
+    use gb_cpu::interfaces::ReadFlagReg;
+
+    let toggle = toggle.is_empty();
+    let flag = match flag.as_str() {
+        "zero" => world.cpu.registers.zero(),
+        "half carry" => world.cpu.registers.half_carry(),
+        "carry" => world.cpu.registers.carry(),
+        "subtraction" => world.cpu.registers.subtraction(),
+        _ => panic!("invalid flag name {}", flag),
+    };
+    assert_eq!(toggle, flag);
 }
 
 fn main() {

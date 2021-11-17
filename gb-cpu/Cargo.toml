@@ -6,6 +6,9 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+registers_logs = []
+
 [dependencies]
 gb-clock = { path = "../gb-clock" }
 gb-bus = { path = "../gb-bus" }
@@ -14,7 +17,7 @@ log = "0.4"
 num_enum = "0.5"
 
 [dev-dependencies]
-cucumber = { git = "https://github.com/cucumber-rs/cucumber", version = "0.10" }
+cucumber = "0.10"
 async-trait = "0.1"
 futures = "0.3"
 gb-test = { path = "../gb-test" }

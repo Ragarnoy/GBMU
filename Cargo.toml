@@ -13,6 +13,7 @@ edition = "2021"
 
 [features]
 debug_render = ["gb-lcd/debug_render"]
+registers_logs = ["gb-cpu/registers_logs"]
 
 [dependencies]
 sdl2 = { version = "0.34", features = ["bundled", "static-link"] }

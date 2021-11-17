@@ -56,7 +56,7 @@ impl FileOperation<IORegArea> for Timer {
             IORegArea::TimerCounter => Ok(self.tima),
             IORegArea::TimerModulo => Ok(self.tma),
             IORegArea::TimerControl => Ok(self.tac),
-            _ => Err(Error::new_bus_error(addr)),
+            _ => Err(Error::bus_error(addr)),
         }
     }
 
@@ -66,7 +66,7 @@ impl FileOperation<IORegArea> for Timer {
             IORegArea::TimerCounter => self.tima = v,
             IORegArea::TimerModulo => self.tma = v,
             IORegArea::TimerControl => self.tac = v,
-            _ => return Err(Error::new_bus_error(addr)),
+            _ => return Err(Error::bus_error(addr)),
         }
         Ok(())
     }

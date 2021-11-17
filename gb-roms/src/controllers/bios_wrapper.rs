@@ -60,21 +60,21 @@ impl FileOperation<Area> for BiosWrapper {
 
 impl FileOperation<IORegArea> for BiosWrapper {
     fn read(&self, address: Box<dyn Address<IORegArea>>) -> Result<u8, Error> {
-        let addr: u16 = address.into();
+        let addr = address.get_address();
         if addr == 0 {
             Ok(self.bios_enabling_reg)
         } else {
-            Err(Error::BusError(addr))
+            Err(Error::bus_error(address))
         }
     }
 
     fn write(&mut self, v: u8, address: Box<dyn Address<IORegArea>>) -> Result<(), Error> {
-        let addr: u16 = address.into();
+        let addr = address.get_address();
         if addr == 0 {
             self.bios_enabling_reg = v;
             Ok(())
         } else {
-            Err(Error::BusError(addr))
+            Err(Error::bus_error(address))
         }
     }
 }

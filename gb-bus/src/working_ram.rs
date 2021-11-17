@@ -39,7 +39,7 @@ impl FileOperation<Area> for WorkingRam {
                 };
                 self.banks[index][address] = value;
             }
-            _ => return Err(Error::new_bus_error(addr)),
+            _ => return Err(Error::bus_error(addr)),
         }
         Ok(())
     }
@@ -57,7 +57,7 @@ impl FileOperation<Area> for WorkingRam {
                 };
                 Ok(self.banks[index][address])
             }
-            _ => Err(Error::new_bus_error(addr)),
+            _ => Err(Error::bus_error(addr)),
         }
     }
 }

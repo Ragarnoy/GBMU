@@ -7,7 +7,7 @@ mod read {
     #[test]
     fn af() {
         let regs = Registers {
-            af: u16::to_be(0xaaff),
+            af: 0xaaff,
             ..Registers::default()
         };
 
@@ -18,7 +18,7 @@ mod read {
     #[test]
     fn bc() {
         let regs = Registers {
-            bc: u16::to_be(0xbbcc),
+            bc: 0xbbcc,
             ..Registers::default()
         };
 
@@ -29,7 +29,7 @@ mod read {
     #[test]
     fn de() {
         let regs = Registers {
-            de: u16::to_be(0xddee),
+            de: 0xddee,
             ..Registers::default()
         };
 
@@ -40,7 +40,7 @@ mod read {
     #[test]
     fn hl() {
         let regs = Registers {
-            hl: u16::to_be(0x8833),
+            hl: 0x8833,
             ..Registers::default()
         };
 
@@ -116,11 +116,11 @@ mod write {
 fn read_flag() {
     use crate::{
         interfaces::{ReadFlagReg, Write8BitsRegExt},
-        registers::{Registers, CARRY_MASK, HALF_CARRY_MASK, SUBTRACTION_MASK, ZERO_MASK},
+        registers::{Registers, CARRY_MASK, HALF_CARRY_MASK, SUBSTRACTION_MASK, ZERO_MASK},
     };
 
     let mut regs = Registers::default();
-    regs.set_f((ZERO_MASK | SUBTRACTION_MASK | HALF_CARRY_MASK | CARRY_MASK) as u8);
+    regs.set_f((ZERO_MASK | SUBSTRACTION_MASK | HALF_CARRY_MASK | CARRY_MASK) as u8);
 
     assert!(regs.zero(), "ZERO flag should be set");
     assert!(regs.subtraction(), "SUBTRACTION flag should be set");

@@ -8,7 +8,7 @@ pub enum Error {
 }
 
 impl Error {
-    pub fn new_bus_error<A: Into<u16>>(addr: Box<dyn Address<A>>) -> Self {
+    pub fn bus_error<A: Into<u16>>(addr: Box<dyn Address<A>>) -> Self {
         Self::BusError(addr.into())
     }
 
