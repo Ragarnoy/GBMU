@@ -16,6 +16,23 @@ use std::cell::RefCell;
 use std::ops::Deref;
 use std::rc::Rc;
 
+struct PixelBorder {
+    pub pos: usize,
+    pub sc: usize,
+    pub sc_bot: usize,
+}
+
+macro_rules! view_border {
+    ($main:ident, $other:ident) => {
+        (($main.pos == $main.sc || $main.pos == $main.sc_bot)
+            && (($other.sc < $other.sc_bot
+                && $other.pos >= $other.sc
+                && $other.pos <= $other.sc_bot)
+                || ($other.sc > $other.sc_bot
+                    && ($other.pos >= $other.sc) ^ ($other.pos <= $other.sc_bot))))
+    };
+}
+
 /// The Pixel Process Unit is in charge of selecting the pixel to be displayed on the lcd screen.
 ///
 /// It owns the VRAM and the OAM, as well as a few registers.
@@ -135,6 +152,16 @@ impl Ppu {
                 for (i, pixel) in row.iter().rev().enumerate() {
                     let pix_y = y * 8 + j;
                     let pix_x = x * 8 + i;
+                    let pixel_y = PixelBorder {
+                        pos: pix_y,
+                        sc: scy,
+                        sc_bot: scy_bot,
+                    };
+                    let pixel_x = PixelBorder {
+                        pos: pix_x,
+                        sc: scx,
+                        sc_bot: scx_bot,
+                    };
                     image[pix_y][pix_x] = lcd_reg
                         .pal_mono
                         .bg()
@@ -142,13 +169,7 @@ impl Ppu {
                         .get_color(*pixel)
                         .unwrap_or_default()
                         .into();
-                    if !window
-                        && (((pix_y == scy || pix_y == scy_bot)
-                            && ((scx < scx_bot && pix_x >= scx && pix_x <= scx_bot)
-                                || (scx > scx_bot && (pix_x >= scx) ^ (pix_x <= scx_bot))))
-                            || ((pix_x == scx || pix_x == scx_bot)
-                                && ((scy < scy_bot && pix_y >= scy && pix_y <= scy_bot)
-                                    || (scy > scy_bot && (pix_y >= scy) ^ (pix_y <= scy_bot)))))
+                    if !window && (view_border!(pixel_y, pixel_x) || view_border!(pixel_x, pixel_y))
                     {
                         let neg_pixel = image[pix_y][pix_x];
                         image[pix_y][pix_x] = [!neg_pixel[0], !neg_pixel[1], !neg_pixel[2]];
