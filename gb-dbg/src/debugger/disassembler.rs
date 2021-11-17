@@ -46,30 +46,34 @@ impl DisassemblyViewer {
                     ui.end_row();
                     let mut pc = self.cache_pc_valid_range.unwrap_or((0, 0)).0;
                     for row in self.cache.iter().take(8) {
-                        ui.label(egui::Label::new(format!("0x{:04X}", pc)));
-                        pc += opcode_len(row);
-                        let opcode = row
-                            .as_ref()
-                            .map_or("??".to_string(), |(opc, _)| opc.to_string());
-                        let bytes = row.as_ref().map_or_else(
-                            |e| match e {
-                                Error::InvalidRegisterValue(v)
-                                | Error::InvalideOpcode(v)
-                                | Error::UnknownOpcode(v) => v.to_string(),
-                            },
-                            |(_, bytes)| {
-                                bytes.iter().fold(String::with_capacity(8), |acc, &s| {
-                                    acc + format!("0x{:02X} ", s).as_str()
-                                })
-                            },
-                        );
-                        ui.label(egui::Label::new(opcode));
-                        ui.label(egui::Label::new(bytes));
-                        ui.end_row();
+                        DisassemblyViewer::draw_row(ui, &mut pc, row);
                     }
                     ui.end_row();
                 });
         });
+    }
+
+    fn draw_row(ui: &mut Ui, pc: &mut u16, row: &Result<(Opcode, Vec<u8>), Error>) {
+        ui.label(egui::Label::new(format!("0x{:04X}", pc)));
+        *pc += opcode_len(row);
+        let opcode = row
+            .as_ref()
+            .map_or("??".to_string(), |(opc, _)| opc.to_string());
+        let bytes = row.as_ref().map_or_else(
+            |e| match e {
+                Error::InvalidRegisterValue(v)
+                | Error::InvalideOpcode(v)
+                | Error::UnknownOpcode(v) => v.to_string(),
+            },
+            |(_, bytes)| {
+                bytes.iter().fold(String::with_capacity(8), |acc, &s| {
+                    acc + format!("0x{:02X} ", s).as_str()
+                })
+            },
+        );
+        ui.label(egui::Label::new(opcode));
+        ui.label(egui::Label::new(bytes));
+        ui.end_row();
     }
 }
 
