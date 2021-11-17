@@ -204,27 +204,3 @@ impl FileOperation<IORegArea> for MicrocodeController {
         Ok(())
     }
 }
-
-impl FileOperation<Area> for MicrocodeController {
-    fn read(&self, _addr: Box<dyn gb_bus::Address<Area>>) -> Result<u8, gb_bus::Error> {
-        Ok(self.interrupt_enable)
-    }
-    fn write(&mut self, v: u8, _addr: Box<dyn gb_bus::Address<Area>>) -> Result<(), gb_bus::Error> {
-        self.interrupt_enable = v;
-        Ok(())
-    }
-}
-
-impl FileOperation<IORegArea> for MicrocodeController {
-    fn read(&self, _addr: Box<dyn gb_bus::Address<IORegArea>>) -> Result<u8, gb_bus::Error> {
-        Ok(self.interrupt_flag)
-    }
-    fn write(
-        &mut self,
-        v: u8,
-        _addr: Box<dyn gb_bus::Address<IORegArea>>,
-    ) -> Result<(), gb_bus::Error> {
-        self.interrupt_flag = v;
-        Ok(())
-    }
-}

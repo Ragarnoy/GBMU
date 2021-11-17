@@ -1,3 +1,5 @@
+use crate::microcode::{controller::OpcodeType, opcode::Opcode};
+
 use super::{
     dec, jump::jump, read, utils::sleep, write, MicrocodeController, MicrocodeFlow, State,
     OK_PLAY_NEXT_ACTION,
