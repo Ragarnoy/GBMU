@@ -2,7 +2,7 @@
 name = "gb-lcd"
 version = "0.1.0"
 authors = ["Guilhem Smith <gsmith@student.42.fr>"]
-edition = "2018"
+edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -11,6 +11,6 @@ debug_render = []
 
 [dependencies]
 sdl2 = { version = "0.34", features = ["bundled", "static-link"] }
-egui = { version = "0.13" }
+egui = "0.14"
 gl = { version = "0.14" }
-egui_sdl2_gl = { version = "0.13", default-features = false }
+egui_sdl2_gl = { git = "https://github.com/luxtorpeda-dev/egui_sdl2_gl", default-features = false }

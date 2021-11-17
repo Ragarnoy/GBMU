@@ -9,17 +9,11 @@ pub trait Ticker {
     fn cycle_count(&self) -> Tick;
 
     /// The behavior called T times per clock cycle.
-    fn tick<B>(&mut self, adr_bus: &mut B)
-    where
-        B: Bus<u8> + Bus<u16>;
+    fn tick(&mut self, adr_bus: &mut dyn Bus<u8>);
 }
 
 /// Execute X cycle depending of [Tick] type of the implementation of [Ticker]
-pub fn cycle<T, B>(ticker: &mut T, adr_bus: &mut B)
-where
-    T: Ticker,
-    B: Bus<u8> + Bus<u16>,
-{
+pub fn cycle(ticker: &mut dyn Ticker, adr_bus: &mut dyn Bus<u8>) {
     for _ in 0..ticker.cycle_count().into() {
         ticker.tick(adr_bus);
     }

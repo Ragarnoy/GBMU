@@ -1,5 +1,3 @@
-pub const BIOS_START: u16 = 0x0000;
-pub const BIOS_STOP: u16 = 0x00ff;
 pub const ROM_START: u16 = 0x0000;
 pub const ROM_STOP: u16 = 0x7fff;
 pub const VRAM_START: u16 = 0x8000;
@@ -17,3 +15,6 @@ pub const IO_REG_STOP: u16 = 0xff7f;
 pub const HRAM_START: u16 = 0xff80;
 pub const HRAM_STOP: u16 = 0xfffe;
 pub const IE_REG_START: u16 = 0xffff;
+pub const FORBIDDEN_START: u16 = 0xfea0;
+
+pub const UNDEFINED_VALUE: u8 = 0xff;

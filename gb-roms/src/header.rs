@@ -7,14 +7,14 @@ pub mod size;
 
 use std::convert::{From, TryFrom, TryInto};
 
-pub use cartridge_type::{AutoSaveType, CartridgeType};
+pub use cartridge_type::{AutoSave, CartridgeType};
 use destination_code::DestinationCode;
 pub use error::Error;
 use flag::{CgbFlag, SgbFlag};
 use license_code::{NewLicenseCode, OldLicenseCode};
 use size::{RamSize, RomSize};
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Header {
     pub entry_point: [u8; 4],
     pub nitendo_logo: [u8; 48],
@@ -32,15 +32,14 @@ pub struct Header {
 }
 
 impl Header {
-    pub fn from_file(file: std::fs::File) -> Result<Self, Error> {
+    pub fn from_file(file: &mut std::fs::File) -> Result<Self, Error> {
         use std::io::{Read, Seek, SeekFrom};
 
-        let mut f = file;
         let mut chunk = [0_u8; 80];
 
-        f.seek(SeekFrom::Start(0x100))
+        file.seek(SeekFrom::Start(0x100))
             .expect("cannot seek file to header");
-        f.read_exact(&mut chunk).expect("cannot read header");
+        file.read_exact(&mut chunk).expect("cannot read header");
         Header::from_chunk(chunk)
     }
 
@@ -184,7 +183,7 @@ impl TryFrom<RawHeader> for Header {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Title {
     Simple(String),
     Advanced {

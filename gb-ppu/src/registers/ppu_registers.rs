@@ -15,7 +15,7 @@ pub struct PPURegisters {
 impl PPURegisters {
     /// Build a PPURegisters from references counters of Vram and Oam.
     ///
-    /// This function is used by [PPU.registers()](crate::PPU::registers), you should not need to call this constructor yourself.
+    /// This function is used by [Ppu.registers()](crate::Ppu::registers), you should not need to call this constructor yourself.
     pub fn new(lcd: Rc<RefCell<LcdReg>>) -> Self {
         PPURegisters { lcd }
     }
@@ -38,7 +38,6 @@ impl PPURegisters {
 
 impl FileOperation<IORegArea> for PPURegisters {
     fn read(&self, addr: Box<dyn Address<IORegArea>>) -> Result<u8, Error> {
-        log::warn!("missing ppu registers read");
         match addr.area_type() {
             IORegArea::Lcd => match self.lcd.try_borrow() {
                 Ok(lcd) => lcd.read(addr),
@@ -64,7 +63,6 @@ impl FileOperation<IORegArea> for PPURegisters {
     }
 
     fn write(&mut self, v: u8, addr: Box<dyn Address<IORegArea>>) -> Result<(), Error> {
-        log::warn!("missing ppu registers write");
         match addr.area_type() {
             IORegArea::Lcd => match self.lcd.try_borrow_mut() {
                 Ok(mut lcd) => lcd.write(addr, v),
@@ -100,7 +98,7 @@ mod read {
 
     #[test]
     fn lcd_control() {
-        let data: [u8; LcdReg::SIZE] = [0x42, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        let data: [u8; LcdReg::SIZE] = [0x42, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
         let lcd = Rc::new(RefCell::new(data.into()));
         let ppu_reg = PPURegisters::new(lcd);
 
@@ -112,19 +110,19 @@ mod read {
 
     #[test]
     fn lcd_dma() {
-        let data: [u8; LcdReg::SIZE] = [0, 0, 0, 0, 0, 0, 0x42, 0, 0, 0, 0, 0];
+        let data: [u8; LcdReg::SIZE] = [0, 0x42, 0, 0, 0, 0, 0, 0, 0, 0, 0];
         let lcd = Rc::new(RefCell::new(data.into()));
         let ppu_reg = PPURegisters::new(lcd);
 
         let res = ppu_reg
-            .read(Box::new(TestIORegAddress::dma()))
+            .read(Box::new(TestIORegAddress::stat()))
             .expect("Try reading value from lcd dma");
         assert_eq!(res, 0x42, "invalid value from lcd dma");
     }
 
     #[test]
     fn lcd_window_pos() {
-        let data: [u8; LcdReg::SIZE] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x42];
+        let data: [u8; LcdReg::SIZE] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x42];
         let lcd = Rc::new(RefCell::new(data.into()));
         let ppu_reg = PPURegisters::new(lcd);
 

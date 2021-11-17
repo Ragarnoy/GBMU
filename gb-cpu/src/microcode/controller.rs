@@ -1,13 +1,23 @@
-use super::{fetch::fetch, opcode::Opcode, opcode_cb::OpcodeCB, CycleDigest, MicrocodeFlow, State};
-use crate::{
-    microcode::interrupts::{handle_interrupts, is_interrupt_ready},
-    registers::Registers,
+use super::{
+    fetch::fetch, interrupts::handle_interrupts, opcode::Opcode, opcode_cb::OpcodeCB, CycleDigest,
+    MicrocodeFlow, State,
 };
+use crate::registers::Registers;
 use gb_bus::{Area, Bus, FileOperation, IORegArea};
-
+use std::fmt::{self, Debug, Display};
+#[derive(Clone, Debug)]
 pub enum OpcodeType {
     Unprefixed(Opcode),
     CBPrefixed(OpcodeCB),
+}
+
+impl Display for OpcodeType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            OpcodeType::Unprefixed(opcode) => write!(f, "{:?}", opcode),
+            OpcodeType::CBPrefixed(cb_opcode) => write!(f, "{:?}", cb_opcode),
+        }
+    }
 }
 
 impl From<Opcode> for OpcodeType {
@@ -22,19 +32,32 @@ impl From<OpcodeCB> for OpcodeType {
     }
 }
 
+#[derive(Clone)]
 pub struct MicrocodeController {
     /// current opcode
     pub opcode: Option<OpcodeType>,
     /// Microcode actions, their role is to execute one step of an Opcode
     /// Each Actions take at most 1 `M-Cycle`
     /// Used like a LOFI queue
-    actions: Vec<ActionFn>,
+    pub actions: Vec<ActionFn>,
     /// Cache use for microcode action
     cache: Vec<u8>,
     /// The IME flag is used to disable all interrupts
     pub interrupt_master_enable: bool,
     pub interrupt_flag: u8,
     pub interrupt_enable: u8,
+}
+
+impl Debug for MicrocodeController {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "MicrocodeController {{ opcode: {:?}, actions: {}, cache: {:?} }}",
+            self.opcode,
+            self.actions.len(),
+            self.cache
+        )
+    }
 }
 
 type ActionFn = fn(controller: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow;
@@ -53,15 +76,18 @@ impl Default for MicrocodeController {
 }
 
 impl MicrocodeController {
-    pub fn step(&mut self, regs: &mut Registers, bus: &mut impl Bus<u8>) {
+    pub fn step(&mut self, regs: &mut Registers, bus: &mut dyn Bus<u8>) {
         use std::ops::ControlFlow;
 
         let mut state = State::new(regs, bus);
         let action = self.actions.pop().unwrap_or_else(|| {
             self.clear();
-            if is_interrupt_ready(self) {
+            if self.is_interrupt_ready() {
                 handle_interrupts
             } else {
+                #[cfg(feature = "registers_logs")]
+                self.log_registers_to_file(format!("{:?}", state).as_str())
+                    .unwrap_or_default();
                 fetch
             }
         });
@@ -110,8 +136,8 @@ impl MicrocodeController {
     /// Push the value to the cache
     pub fn push_u16(&mut self, value: u16) {
         let bytes = value.to_be_bytes();
-        self.cache.push(bytes[0]);
         self.cache.push(bytes[1]);
+        self.cache.push(bytes[0]);
     }
 
     /// Pop the last pushed `byte` from the cache.
@@ -122,6 +148,60 @@ impl MicrocodeController {
     /// Pop the last u16 from the cache.
     pub fn pop_u16(&mut self) -> u16 {
         u16::from_be_bytes([self.pop(), self.pop()])
+    }
+
+    fn is_interrupt_ready(&self) -> bool {
+        if !self.interrupt_master_enable {
+            return false;
+        }
+        let interrupt_flag = self.interrupt_flag;
+        let interrupt_enable = self.interrupt_enable;
+        interrupt_flag & interrupt_enable != 0
+    }
+
+    #[cfg(feature = "registers_logs")]
+    fn log_registers_to_file(&mut self, opcode_logs: &str) -> std::io::Result<()> {
+        use std::env;
+        use std::fs::OpenOptions;
+        use std::io::prelude::*;
+
+        let current_dir_path = env::current_dir()?.into_os_string();
+
+        if let Some(path) = current_dir_path.to_str() {
+            let mut file = OpenOptions::new()
+                .write(true)
+                .append(true)
+                .create(true)
+                .open(format!("{}/debug/registers_logs/{}", path, "ours.txt"))?;
+            if let Err(e) = writeln!(file, "{}", opcode_logs) {
+                eprintln!("Couldn't write to file: {}", e);
+            }
+        }
+        Ok(())
+    }
+}
+
+impl FileOperation<Area> for MicrocodeController {
+    fn read(&self, _addr: Box<dyn gb_bus::Address<Area>>) -> Result<u8, gb_bus::Error> {
+        Ok(self.interrupt_enable)
+    }
+    fn write(&mut self, v: u8, _addr: Box<dyn gb_bus::Address<Area>>) -> Result<(), gb_bus::Error> {
+        self.interrupt_enable = v;
+        Ok(())
+    }
+}
+
+impl FileOperation<IORegArea> for MicrocodeController {
+    fn read(&self, _addr: Box<dyn gb_bus::Address<IORegArea>>) -> Result<u8, gb_bus::Error> {
+        Ok(self.interrupt_flag)
+    }
+    fn write(
+        &mut self,
+        v: u8,
+        _addr: Box<dyn gb_bus::Address<IORegArea>>,
+    ) -> Result<(), gb_bus::Error> {
+        self.interrupt_flag = v;
+        Ok(())
     }
 }
 

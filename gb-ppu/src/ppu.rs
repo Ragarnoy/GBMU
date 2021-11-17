@@ -8,7 +8,7 @@ use crate::{
     SPRITE_RENDER_HEIGHT, SPRITE_RENDER_WIDTH, TILEMAP_DIM, TILEMAP_TILE_COUNT, TILESHEET_HEIGHT,
     TILESHEET_TILE_COUNT, TILESHEET_WIDTH,
 };
-use gb_bus::Bus;
+use gb_bus::{Area, Bus};
 use gb_clock::{Tick, Ticker};
 use gb_lcd::render::{RenderData, SCREEN_HEIGHT, SCREEN_WIDTH};
 
@@ -19,7 +19,7 @@ use std::rc::Rc;
 /// The Pixel Process Unit is in charge of selecting the pixel to be displayed on the lcd screen.
 ///
 /// It owns the VRAM and the OAM, as well as a few registers.
-pub struct PPU {
+pub struct Ppu {
     vram: Rc<RefCell<Vram>>,
     oam: Rc<RefCell<Oam>>,
     lcd_reg: Rc<RefCell<LcdReg>>,
@@ -31,9 +31,9 @@ pub struct PPU {
     scanline_sprites: Vec<Sprite>,
 }
 
-impl PPU {
+impl Ppu {
     pub fn new() -> Self {
-        Self {
+        Ppu {
             vram: Rc::new(RefCell::new(Vram::new())),
             oam: Rc::new(RefCell::new(Oam::new())),
             lcd_reg: Rc::new(RefCell::new(LcdReg::new())),
@@ -227,94 +227,144 @@ impl PPU {
         image
     }
 
-    fn vblank(&mut self) {
+    fn vblank(&mut self, _adr_bus: &mut dyn Bus<u8>) {
         if self.state.line() == State::LAST_LINE && self.state.step() == State::LAST_STEP {
             std::mem::swap(&mut self.pixels, &mut self.next_pixels);
         }
     }
 
-    fn hblank(&mut self) {
-        if let Ok(mut oam) = self.oam.try_borrow_mut() {
+    fn hblank(&mut self, adr_bus: &mut dyn Bus<u8>) {
+        let unlock_oam: bool;
+        if let Ok(oam) = self.oam.try_borrow() {
             if let Some(Lock::Ppu) = oam.get_lock() {
-                oam.unlock();
+                unlock_oam = true;
+            } else {
+                unlock_oam = false;
             }
         } else {
             log::error!("Oam borrow failed for ppu in mode 0");
+            unlock_oam = false;
         }
-        if let Ok(mut vram) = self.vram.try_borrow_mut() {
+        if unlock_oam {
+            adr_bus.unlock(Area::Oam);
+        }
+
+        let unlock_vram: bool;
+        if let Ok(vram) = self.vram.try_borrow() {
             if let Some(Lock::Ppu) = vram.get_lock() {
-                vram.unlock();
+                unlock_vram = true;
+            } else {
+                unlock_vram = false;
             }
         } else {
             log::error!("Vram borrow failed for ppu in mode 0");
+            unlock_vram = false;
+        }
+        if unlock_vram {
+            adr_bus.unlock(Area::Vram);
         }
     }
 
-    fn oam_fetch(&mut self) {
+    fn oam_fetch(&mut self, adr_bus: &mut dyn Bus<u8>) {
         if let Ok(lcd_reg) = self.lcd_reg.try_borrow() {
-            if let Ok(mut oam) = self.oam.try_borrow_mut() {
-                let lock = oam.get_lock();
-                let step = self.state.step();
+            let mut lock: Option<Lock>;
+            let step: u16;
+            if let Ok(oam) = self.oam.try_borrow() {
+                lock = oam.get_lock();
+                step = self.state.step();
+            } else {
+                log::error!("Oam borrow failed for ppu in mode 2");
+                return;
+            }
 
-                if lock.is_none() {
-                    // init mode 2
-                    oam.lock(Lock::Ppu);
-                    self.scanline_sprites.clear();
-                }
-                if let Some(Lock::Ppu) = lock {
-                    if step % 2 == 1 {
-                        let sprite_pos = step as usize / 2;
+            if lock.is_none() {
+                // init mode 2
+                adr_bus.lock(Area::Oam, Lock::Ppu);
+                lock = Some(Lock::Ppu);
+                self.scanline_sprites.clear();
+            }
+            if let Some(Lock::Ppu) = lock {
+                let oam = self.oam.borrow();
+                if step % 2 == 1 {
+                    let sprite_pos = step as usize / 2;
 
-                        match oam.read_sprite(sprite_pos) {
-                            Err(err) => log::error!("Error while reading sprite: {}", err),
-                            Ok(sprite) => {
-                                let scanline = self.state.line() + 16;
-                                let top = sprite.y_pos();
-                                let bot = top + if lcd_reg.control.obj_size() { 16 } else { 8 };
+                    match oam.read_sprite(sprite_pos) {
+                        Err(err) => log::error!("Error while reading sprite: {}", err),
+                        Ok(sprite) => {
+                            let scanline = self.state.line() + 16;
+                            let top = sprite.y_pos().min(160);
+                            let bot = top + if lcd_reg.control.obj_size() { 16 } else { 8 };
 
-                                if scanline >= top && scanline < bot {
-                                    for i in 0..self.scanline_sprites.len() {
-                                        let scan_sprite = self.scanline_sprites[i];
+                            if scanline >= top && scanline < bot {
+                                for i in 0..self.scanline_sprites.len() {
+                                    let scan_sprite = self.scanline_sprites[i];
 
-                                        if sprite.x_pos() < scan_sprite.x_pos() {
-                                            self.scanline_sprites.insert(i, sprite);
-                                            if self.scanline_sprites.len() > 10 {
-                                                self.scanline_sprites.pop();
-                                            }
-                                            return;
+                                    if sprite.x_pos() < scan_sprite.x_pos() {
+                                        self.scanline_sprites.insert(i, sprite);
+                                        if self.scanline_sprites.len() > 10 {
+                                            self.scanline_sprites.pop();
                                         }
+                                        return;
                                     }
-                                    if self.scanline_sprites.len() < 10 {
-                                        self.scanline_sprites.push(sprite);
-                                    }
+                                }
+                                if self.scanline_sprites.len() < 10 {
+                                    self.scanline_sprites.push(sprite);
                                 }
                             }
                         }
                     }
                 }
-            } else {
-                log::error!("Oam borrow failed for ppu in mode 2");
             }
         } else {
             log::error!("Lcd reg borrow failed for ppu in mode 2");
         }
     }
 
-    fn pixel_drawing(&mut self) {
+    fn pixel_drawing(&mut self, adr_bus: &mut dyn Bus<u8>) {
         if let Ok(lcd_reg) = self.lcd_reg.try_borrow() {
-            if let Ok(mut vram) = self.vram.try_borrow_mut() {
-                let lock = vram.get_lock();
-                let x = self.state.pixel_drawn();
-                let y = self.state.line();
+            let mut lock: Option<Lock>;
+            let x: u8;
+            let y: u8;
+            if let Ok(vram) = self.vram.try_borrow() {
+                lock = vram.get_lock();
+                x = self.state.pixel_drawn();
+                y = self.state.line();
+            } else {
+                log::error!("Vram borrow failed for ppu in mode 3");
+                return;
+            }
 
-                if lock.is_none() {
-                    // init mode 3
-                    vram.lock(Lock::Ppu);
-                    self.pixel_fetcher.clear();
-                    self.pixel_fifo.clear();
-                    self.state.clear_pixel_count();
-                    // reverse the sprites order so the ones on the left of the viewport are the first to pop
-                    self.scanline_sprites = self.scanline_sprites.drain(0..).rev().collect();
+            if lock.is_none() {
+                // init mode 3
+                adr_bus.lock(Area::Vram, Lock::Ppu);
+                lock = Some(Lock::Ppu);
+                self.pixel_fetcher.clear();
+                self.pixel_fifo.clear();
+                self.state.clear_pixel_count();
+                // reverse the sprites order so the ones on the left of the viewport are the first to pop
+                self.scanline_sprites = self.scanline_sprites.drain(0..).rev().collect();
+                Self::check_next_pixel_mode(
+                    &lcd_reg,
+                    &mut self.pixel_fetcher,
+                    &mut self.pixel_fifo,
+                    &mut self.scanline_sprites,
+                    (x, y),
+                );
+            }
+            if let Some(Lock::Ppu) = lock {
+                let vram = self.vram.borrow();
+                if self.pixel_fifo.enabled && x < SCREEN_WIDTH as u8 {
+                    if let Some(pixel) = self.pixel_fifo.pop() {
+                        self.next_pixels[y as usize][x as usize] = Color::from(pixel).into();
+                        self.state.draw_pixel();
+                    };
+                }
+                self.pixel_fetcher
+                    .fetch(&vram, &lcd_reg, y as usize, x as usize);
+                self.pixel_fetcher.push_to_fifo(&mut self.pixel_fifo);
+                if self.pixel_fetcher.push_to_fifo(&mut self.pixel_fifo)
+                    || x < self.state.pixel_drawn()
+                {
                     Self::check_next_pixel_mode(
                         &lcd_reg,
                         &mut self.pixel_fetcher,
@@ -323,30 +373,6 @@ impl PPU {
                         (x, y),
                     );
                 }
-                if let Some(Lock::Ppu) = lock {
-                    if self.pixel_fifo.enabled && x < SCREEN_WIDTH as u8 {
-                        if let Some(pixel) = self.pixel_fifo.pop() {
-                            self.next_pixels[y as usize][x as usize] = Color::from(pixel).into();
-                            self.state.draw_pixel();
-                        };
-                    }
-                    self.pixel_fetcher
-                        .fetch(&vram, &lcd_reg, y as usize, x as usize);
-                    self.pixel_fetcher.push_to_fifo(&mut self.pixel_fifo);
-                    if self.pixel_fetcher.push_to_fifo(&mut self.pixel_fifo)
-                        || x < self.state.pixel_drawn()
-                    {
-                        Self::check_next_pixel_mode(
-                            &lcd_reg,
-                            &mut self.pixel_fetcher,
-                            &mut self.pixel_fifo,
-                            &mut self.scanline_sprites,
-                            (x, y),
-                        );
-                    }
-                }
-            } else {
-                log::error!("Vram borrow failed for ppu in mode 3");
             }
         } else {
             log::error!("Lcd_reg borrow failed for ppu in mode 3");
@@ -376,11 +402,14 @@ impl PPU {
         let (x, y) = cursor;
 
         if lcd_reg.window_pos.wy <= y && lcd_reg.window_pos.wx <= x {
-            pixel_fetcher.set_mode(FetchMode::Window);
-        } else {
+            if pixel_fetcher.mode() == FetchMode::Background {
+                pixel_fetcher.set_mode(FetchMode::Window);
+                pixel_fifo.clear();
+            }
+        } else if pixel_fetcher.mode() == FetchMode::Window {
             pixel_fetcher.set_mode(FetchMode::Background);
+            pixel_fifo.clear();
         }
-        pixel_fifo.clear();
     }
 
     fn check_for_sprite_mode(
@@ -406,81 +435,26 @@ impl PPU {
     }
 }
 
-impl Default for PPU {
-    fn default() -> PPU {
-        PPU::new()
+impl Default for Ppu {
+    fn default() -> Ppu {
+        Ppu::new()
     }
 }
 
-impl Ticker for PPU {
+impl Ticker for Ppu {
     fn cycle_count(&self) -> Tick {
         Tick::TCycle
     }
 
-    fn tick<B>(&mut self, _adr_bus: &mut B)
-    where
-        B: Bus<u8> + Bus<u16>,
-    {
+    fn tick(&mut self, adr_bus: &mut dyn Bus<u8>) {
         match self.state.mode() {
-            Mode::OAMFetch => self.oam_fetch(),
-            Mode::PixelDrawing => self.pixel_drawing(),
-            Mode::HBlank => self.hblank(),
-            Mode::VBlank => self.vblank(),
+            Mode::OAMFetch => self.oam_fetch(adr_bus),
+            Mode::PixelDrawing => self.pixel_drawing(adr_bus),
+            Mode::HBlank => self.hblank(adr_bus),
+            Mode::VBlank => self.vblank(adr_bus),
         }
         // update state after executing tick
         let lcd_reg = self.lcd_reg.try_borrow_mut().ok();
-        self.state.update(lcd_reg);
-    }
-}
-
-#[cfg(test)]
-mod mem_lock {
-    use super::PPU;
-    use crate::memory::{Lock, Lockable};
-    use crate::test_tools::TestAddress;
-    use gb_bus::FileOperation;
-
-    #[test]
-    fn vram() {
-        let ppu = PPU::new();
-        let mut ppu_mem = ppu.memory();
-        {
-            ppu.vram.borrow_mut().lock(Lock::Ppu);
-            ppu_mem
-                .write(0x42, Box::new(TestAddress::root_vram()))
-                .expect("Try write value into borrowed vram");
-            let res = ppu_mem
-                .read(Box::new(TestAddress::root_vram()))
-                .expect("Try reading mut borrowed value from vram");
-            assert_eq!(res, 0xFF, "invalid value from vram");
-
-            ppu.vram.borrow_mut().unlock();
-            let res = ppu_mem
-                .read(Box::new(TestAddress::root_vram()))
-                .expect("Try reading mut borrowed value from vram");
-            assert_eq!(res, 0x00, "invalid value from vram");
-        }
-    }
-
-    #[test]
-    fn oam() {
-        let ppu = PPU::new();
-        let mut ppu_mem = ppu.memory();
-        {
-            ppu.oam.borrow_mut().lock(Lock::Ppu);
-            ppu_mem
-                .write(0x42, Box::new(TestAddress::root_oam()))
-                .expect("Try write value into borrowed oam");
-            let res = ppu_mem
-                .read(Box::new(TestAddress::root_oam()))
-                .expect("Try reading mut borrowed value from oam");
-            assert_eq!(res, 0xFF, "invalid value from oam");
-
-            ppu.oam.borrow_mut().unlock();
-            let res = ppu_mem
-                .read(Box::new(TestAddress::root_oam()))
-                .expect("Try reading mut borrowed value from oam");
-            assert_eq!(res, 0x00, "invalid value from oam");
-        }
+        self.state.update(lcd_reg, adr_bus);
     }
 }

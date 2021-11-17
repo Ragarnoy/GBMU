@@ -1,33 +1,31 @@
-mod memory;
-mod registers;
+mod game;
 
-use crate::memory::Memory;
-use crate::registers::Registers;
 use eframe::egui::CtxRef;
 use eframe::epi::*;
 use egui::Vec2;
+use game::Game;
 use gb_dbg::debugger::{Debugger, DebuggerBuilder};
-use gb_dbg::run_duration::RunDuration;
+use gb_dbg::until::Until;
 use std::ops::ControlFlow;
 
 pub struct DebuggerApp {
-    pub debugger: Debugger<Memory>,
-    pub memory: Memory,
-    pub register: Registers,
+    pub debugger: Debugger<Game>,
+    pub memory: Game,
 }
 
 impl App for DebuggerApp {
     fn update(&mut self, ctx: &CtxRef, _frame: &mut Frame<'_>) {
-        self.debugger.draw(ctx, &mut self.memory, &self.register);
+        self.debugger.draw(ctx, &mut self.memory);
 
         if let Some(flow) = self.debugger.flow_status() {
             match flow {
-                ControlFlow::Continue(x) => match x {
-                    RunDuration::Step => self.register.pc += 1,
-                    RunDuration::RunFrame => self.register.pc += 2,
-                    RunDuration::RunSecond => self.register.pc += 3,
+                ControlFlow::Break(x) => match x {
+                    Until::Step(n) => self.memory.pc += (n << 1) as u16,
+                    Until::Frame(n) => self.memory.pc += (n << 2) as u16,
+                    Until::Second(n) => self.memory.pc += (n << 3) as u16,
+                    Until::Null => self.memory.pc = 0,
                 },
-                ControlFlow::Break(_) => self.register.pc = 1,
+                ControlFlow::Continue(_) => self.memory.pc = 1,
             };
         }
     }
@@ -38,15 +36,14 @@ impl App for DebuggerApp {
 }
 
 fn main() {
-    let dbg: Debugger<Memory> = DebuggerBuilder::new().build();
+    let dbg: Debugger<Game> = DebuggerBuilder::new().build();
     let dgb_app = DebuggerApp {
         debugger: dbg,
         memory: Default::default(),
-        register: Default::default(),
     };
     let options = NativeOptions {
         resizable: false,
-        initial_window_size: Some(Vec2::new(1000.0, 600.0)),
+        initial_window_size: Some(Vec2::new(1200.0, 600.0)),
         ..Default::default()
     };
     eframe::run_native(Box::new(dgb_app), options)

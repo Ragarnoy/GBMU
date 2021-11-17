@@ -53,6 +53,18 @@ fn test_sub_components() {
             }
         )
     );
+    assert_eq!(
+        sub_components(5, 34),
+        (
+            0xff - 29 + 1,
+            Flag {
+                half_carry: false,
+                carry: true,
+                negative: true,
+                zero: false,
+            }
+        )
+    )
 }
 
 /// Add `b` to `a` (`a + b`)

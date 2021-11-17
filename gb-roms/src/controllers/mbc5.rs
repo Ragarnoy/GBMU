@@ -99,7 +99,7 @@ impl FileOperation<Area> for MBC5 {
         match addr.area_type() {
             Area::Rom => self.read_rom(addr),
             Area::ExtRam => self.read_ram(addr),
-            _ => Err(Error::new_bus_error(addr)),
+            _ => Err(Error::bus_error(addr)),
         }
     }
 
@@ -107,7 +107,7 @@ impl FileOperation<Area> for MBC5 {
         match addr.area_type() {
             Area::Rom => self.write_rom(v, addr),
             Area::ExtRam => self.write_ram(v, addr),
-            _ => Err(Error::new_bus_error(addr)),
+            _ => Err(Error::bus_error(addr)),
         }
     }
 }
@@ -207,7 +207,6 @@ impl Controller for MBC5 {
         D: Deserializer<'de>,
     {
         use serde::de::Error;
-        use std::convert::TryFrom;
 
         let ram_data = Mbc5RamData::deserialize(deserializer)?;
         if self.ram_banks.len() != ram_data.ram_banks.len() {

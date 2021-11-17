@@ -24,7 +24,7 @@ pub enum Opcode {
     /// `ADD HL, BC`: add `BC` to `HL`, 2m
     AddHLBC = 0x09,
     /// `LD A, (BC)`: load `(BC)` into `A`, 2m
-    LdABCInd = 0x0a,
+    LdABC = 0x0a,
     /// `DEC BC`: decrement `BC`, 2m
     DecBC = 0x0b,
     /// `INC BC`: increment `BC`, 2m
@@ -42,7 +42,7 @@ pub enum Opcode {
     /// `LD DE, u16`: load `u16` into `DE`, 3m
     LdDE16 = 0x11,
     /// `LD (DE), A`: load `A` into `(DE)`, 2m
-    LdDEAInd = 0x12,
+    LdDEA = 0x12,
     /// `INC DE`: increment `DE`, 2m
     IncDE = 0x13,
     /// `INC D`: increment `D`, 1m
@@ -58,7 +58,7 @@ pub enum Opcode {
     /// `ADD HL, DE`: add `DE` to `HL`, 2m
     AddHLDE = 0x19,
     /// `LD A, (DE)`: load `(DE)` into `A`, 2m
-    LdADEInd = 0x1a,
+    LdADE = 0x1a,
     /// `DEC DE`: decrement `DE`, 2m
     DecDE = 0x1b,
     /// `INC E`: increment `E`, 1m

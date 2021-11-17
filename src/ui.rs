@@ -20,10 +20,7 @@ pub fn draw_egui(
                 log::debug!("picked file: {:?}", files);
             }
             if ui.button("Debug").clicked() && debug_window.is_none() {
-                debug_window.replace(
-                    GBWindow::new("GBMU Debug", (800, 600), false, video)
-                        .expect("Error while building debug window"),
-                );
+                debug_window.replace(new_debug_window(video));
             }
             if ui.button("Input").clicked() && input.is_none() {
                 input.replace(
@@ -43,4 +40,9 @@ pub fn draw_egui(
             }
         })
     });
+}
+
+pub fn new_debug_window(video: &sdl2::VideoSubsystem) -> GBWindow {
+    GBWindow::new("GBMU Debug", (1200, 600), false, video)
+        .expect("Error while building debug window")
 }

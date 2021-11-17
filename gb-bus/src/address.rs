@@ -19,11 +19,20 @@ impl<A> Address<A> {
         }
     }
 
+    /// Create an address for single byte registry
+    pub fn byte_reg(area: A, absolute_addr: u16) -> Self {
+        Self {
+            relative: 0,
+            absolute: absolute_addr,
+            area,
+        }
+    }
+
     /// Create an Address from an absolute adress and an offset
     ///
     /// ```
     /// # use gb_bus::{address::Address, Area};
-    /// let pos = Address::from_offset(Area::Bios, 0x42, 0x10);
+    /// let pos = Address::from_offset(Area::Rom, 0x42, 0x10);
     ///
     /// assert_eq!(pos.absolute, 0x42);
     /// assert_eq!(pos.relative, 0x32);

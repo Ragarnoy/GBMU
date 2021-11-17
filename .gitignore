@@ -5,6 +5,7 @@ assets/bios
 
 # Rust
 target
+.cargo
 
 # packaged app
 build/
@@ -14,3 +15,11 @@ settings.yaml
 
 # vim files
 *.swp
+
+# registers_logs
+
+*ours.txt
+
+# Apple
+
+*.DS_Store

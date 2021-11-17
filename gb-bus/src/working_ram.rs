@@ -13,9 +13,9 @@ pub struct WorkingRam {
 impl WorkingRam {
     pub fn new(enable_cgb_feature: bool) -> Self {
         let banks = if enable_cgb_feature {
-            Vec::with_capacity(CGB_MAX_BANKS)
+            vec![[0; RAM_BANK_SIZE]; CGB_MAX_BANKS]
         } else {
-            Vec::with_capacity(DMG_MAX_BANKS)
+            vec![[0; RAM_BANK_SIZE]; DMG_MAX_BANKS]
         };
         Self {
             banks,
@@ -39,7 +39,7 @@ impl FileOperation<Area> for WorkingRam {
                 };
                 self.banks[index][address] = value;
             }
-            _ => return Err(Error::new_bus_error(addr)),
+            _ => return Err(Error::bus_error(addr)),
         }
         Ok(())
     }
@@ -57,7 +57,7 @@ impl FileOperation<Area> for WorkingRam {
                 };
                 Ok(self.banks[index][address])
             }
-            _ => Err(Error::new_bus_error(addr)),
+            _ => Err(Error::bus_error(addr)),
         }
     }
 }

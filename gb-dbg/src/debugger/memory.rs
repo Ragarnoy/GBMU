@@ -9,7 +9,7 @@ pub struct MemoryViewer<MEM> {
 }
 
 impl<MEM: MemoryDebugOperations> MemoryViewer<MEM> {
-    pub fn new(address_ranges: Vec<(&'static str, Range<usize>)>) -> Self {
+    pub fn new(address_ranges: Vec<(&'static str, Range<u16>)>) -> Self {
         let mut mem_options = MemoryEditorOptions::default();
         mem_options.is_resizable_column = false;
         mem_options.is_options_collapsed = true;
@@ -18,7 +18,8 @@ impl<MEM: MemoryDebugOperations> MemoryViewer<MEM> {
         })
         .with_options(mem_options);
         for (range_name, range) in address_ranges {
-            mem_edit = mem_edit.with_address_range(range_name, range);
+            mem_edit =
+                mem_edit.with_address_range(range_name, range.start as usize..range.end as usize);
         }
 
         Self {

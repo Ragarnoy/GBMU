@@ -1,28 +1,28 @@
-use crate::{ticker::cycle, Debuger, Ticker};
-use gb_bus::Bus;
-use std::marker::PhantomData;
-
-#[derive(Default)]
 /// Ensure that the various process unit execute their instructions in the right order.
-pub struct Clock<B: Bus<u8> + Bus<u16>> {
-    curr_frame_cycle: usize,
-    phantom_bus: PhantomData<B>,
+pub struct Clock {
+    pub curr_frame_cycle: usize,
 }
 
-impl<B: Bus<u8> + Bus<u16>> Clock<B> {
+/// A single clock cycle, during which each [Ticker] will tick 1 or 4 times depending on their [Tick](crate::Tick) type.
+///
+/// Its return value indicate if the current frame is incomplete.
+#[macro_export]
+macro_rules! cycles {
+    ($clock:expr, $addr_bus:expr, $($tickers:expr),+) => {{
+       $(
+            gb_clock::cycle($tickers, $addr_bus);
+        )+
+        $clock.inc_frame()
+    }};
+}
+
+impl Clock {
     /// The amount of cycles to execute per frame.
     pub const CYCLES_PER_FRAME: usize = 17556;
 
-    /// A single clock cycle, during which each [Ticker] will tick 1 or 4 times depending on their [Tick](crate::Tick) type.
-    pub fn cycle<CPU: Ticker, PPU: Ticker>(
-        &mut self,
-        adr_bus: &mut B,
-        cpu: &mut CPU,
-        ppu: &mut PPU,
-    ) {
-        cycle(cpu, adr_bus);
-        cycle(ppu, adr_bus);
+    pub fn inc_frame(&mut self) -> bool {
         self.curr_frame_cycle += 1;
+        !self.frame_ready()
     }
 
     /// Indicate if the current frame has been completed or not.
@@ -30,33 +30,12 @@ impl<B: Bus<u8> + Bus<u16>> Clock<B> {
         self.curr_frame_cycle %= Self::CYCLES_PER_FRAME;
         self.curr_frame_cycle == 0
     }
+}
 
-    /// Execute enough cycles to complete the current frame.
-    ///
-    /// if a [Debuger] is given, it will check breakpoints after each clock cycle and interrupt the execution if needed.
-    pub fn frame<CPU: Ticker, PPU: Ticker>(
-        &mut self,
-        adr_bus: &mut B,
-        dbg: Option<&dyn Debuger<B>>,
-        cpu: &mut CPU,
-        ppu: &mut PPU,
-    ) {
-        self.curr_frame_cycle %= Self::CYCLES_PER_FRAME;
-        match dbg {
-            Some(dbg) => {
-                while self.curr_frame_cycle < Self::CYCLES_PER_FRAME {
-                    self.cycle(adr_bus, cpu, ppu);
-                    if dbg.breakpoints(adr_bus) {
-                        return;
-                    }
-                }
-            }
-            None => {
-                while self.curr_frame_cycle < Self::CYCLES_PER_FRAME {
-                    self.cycle(adr_bus, cpu, ppu);
-                }
-            }
+impl Default for Clock {
+    fn default() -> Self {
+        Self {
+            curr_frame_cycle: 0,
         }
-        self.curr_frame_cycle = 0;
     }
 }

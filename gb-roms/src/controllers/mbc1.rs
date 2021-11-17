@@ -159,7 +159,7 @@ impl FileOperation<Area> for MBC1 {
         match addr.area_type() {
             Area::Rom => self.write_rom(v, addr),
             Area::Ram => self.write_ram(v, addr),
-            _ => Err(Error::new_bus_error(addr)),
+            _ => Err(Error::bus_error(addr)),
         }
     }
 
@@ -167,7 +167,7 @@ impl FileOperation<Area> for MBC1 {
         match addr.area_type() {
             Area::Rom => self.read_rom(addr),
             Area::Ram => self.read_ram(addr),
-            _ => Err(Error::new_bus_error(addr)),
+            _ => Err(Error::bus_error(addr)),
         }
     }
 }
@@ -199,7 +199,6 @@ impl Controller for MBC1 {
         D: serde::Deserializer<'de>,
     {
         use serde::de::Error;
-        use std::convert::TryFrom;
 
         let data = Mbc1Data::deserialize(deserializer)?;
         self.ram_bank = data

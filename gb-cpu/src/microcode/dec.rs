@@ -5,7 +5,7 @@ use super::{
 use crate::interfaces::WriteFlagReg;
 
 pub fn dec16(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow {
-    let value = ctl.pop_u16() + 1;
+    let (value, _) = ctl.pop_u16().overflowing_sub(1);
     ctl.push_u16(value);
     OK_CONSUME_CYCLE
 }

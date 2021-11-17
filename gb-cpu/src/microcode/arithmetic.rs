@@ -1,9 +1,10 @@
-use super::{math, MicrocodeController, MicrocodeFlow, State, OK_PLAY_NEXT_ACTION};
+use super::{
+    math, MicrocodeController, MicrocodeFlow, State, OK_CONSUME_CYCLE, OK_PLAY_NEXT_ACTION,
+};
 use crate::interfaces::{ReadFlagReg, WriteFlagReg};
 
 pub fn sub(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
-    let value = ctl.pop();
-    let (value, flag) = math::sub_components(ctl.pop(), value);
+    let (value, flag) = math::sub_components(ctl.pop(), ctl.pop());
     state.regs.set_subtraction(true);
     state.regs.set_zero(flag.zero);
     state.regs.set_half_carry(flag.half_carry);
@@ -13,14 +14,24 @@ pub fn sub(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
 }
 
 pub fn add(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
-    let value = ctl.pop();
-    let (value, flag) = math::add_components(ctl.pop(), value);
+    let (value, flag) = math::add_components(ctl.pop(), ctl.pop());
     state.regs.set_subtraction(false);
     state.regs.set_zero(flag.zero);
     state.regs.set_half_carry(flag.half_carry);
     state.regs.set_carry(flag.carry);
     ctl.push(value);
     OK_PLAY_NEXT_ACTION
+}
+
+pub fn add_16(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
+    let b = ctl.pop_u16();
+    let a = ctl.pop_u16();
+    let (res, overflow) = a.overflowing_add(b);
+    state.regs.set_subtraction(false);
+    state.regs.set_half_carry((a & 0xf) + (b & 0xf) > 0xf);
+    state.regs.set_carry(overflow);
+    ctl.push_u16(res);
+    OK_CONSUME_CYCLE
 }
 
 /// Daa perform an operation on a byte to format it in Binary Coded Decimal number (BCD)
@@ -35,9 +46,9 @@ pub fn add(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
 /// together in a base10 context
 pub fn daa(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     let value = ctl.pop();
-    let was_a_substraction = state.regs.subtraction();
+    let was_a_subtraction = state.regs.subtraction();
 
-    let (value, carry) = if was_a_substraction {
+    let (value, carry) = if was_a_subtraction {
         daa_subtraction(value, state.regs.carry(), state.regs.half_carry())
     } else {
         daa_addition(value, state.regs.carry(), state.regs.half_carry())
@@ -94,7 +105,7 @@ fn daa_subtraction(value: u8, carry: bool, half_carry: bool) -> (u8, bool) {
 }
 
 /// return the upper/lower bound of a byte
-fn slice_byte(value: u8) -> (u8, u8) {
+pub fn slice_byte(value: u8) -> (u8, u8) {
     let upper = value >> 4;
     let lower = value & 0xf;
     (upper, lower)
@@ -119,8 +130,9 @@ fn test_slice_byte() {
 }
 
 pub fn adc(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
-    let value = ctl.pop() + (state.regs.carry() as u8);
-    let (value, flag) = math::add_components(ctl.pop(), value);
+    let left = ctl.pop();
+    let right = ctl.pop() + (state.regs.carry() as u8);
+    let (value, flag) = math::add_components(left, right);
 
     state.regs.set_subtraction(false);
     state.regs.set_zero(flag.zero);
@@ -131,8 +143,9 @@ pub fn adc(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
 }
 
 pub fn sbc(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
-    let value = ctl.pop() + (state.regs.carry() as u8);
-    let (value, flag) = math::sub_components(ctl.pop(), value);
+    let left = ctl.pop();
+    let right = ctl.pop() + (state.regs.carry() as u8);
+    let (value, flag) = math::sub_components(left, right);
 
     state.regs.set_subtraction(true);
     state.regs.set_zero(flag.zero);
