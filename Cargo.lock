@@ -137,6 +137,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "bincode"
+version = "2.0.0-alpha.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f15e4a3f8ad2e4bc6c5a24233a3dcf1ad449857dd8fe76fa23f8ef6ea4cb4f7c"
+dependencies = [
+ "bincode_derive",
+ "serde",
+]
+
+[[package]]
+name = "bincode_derive"
+version = "2.0.0-alpha.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fbdb4d197bb44b42f71ab87dcade323bc0035196cafe268d916f959e1de88c9f"
+
+[[package]]
 name = "bitflags"
 version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1074,6 +1090,7 @@ name = "gbmu"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "bincode",
  "clap 3.0.0-beta.4",
  "egui",
  "gb-bus",
