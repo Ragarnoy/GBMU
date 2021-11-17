@@ -1,4 +1,4 @@
-use gb_dbg::{DEBUGGER_DIMENSIONS, DEBUGGER_HEIGHT, DEBUGGER_WIDTH};
+use gb_dbg::{DEBUGGER_HEIGHT, DEBUGGER_WIDTH};
 use gb_lcd::{render, window::GBWindow};
 use native_dialog::FileDialog;
 
@@ -46,7 +46,7 @@ pub fn draw_egui(
 pub fn new_debug_window(video: &sdl2::VideoSubsystem) -> GBWindow {
     GBWindow::new(
         "GBMU Debug",
-        (DEBUGGER_WIDTH.into(), DEBUGGER_HEIGHT.into()),
+        (DEBUGGER_WIDTH as u32, DEBUGGER_HEIGHT as u32),
         false,
         video,
     )
