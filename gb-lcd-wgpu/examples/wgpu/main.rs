@@ -8,8 +8,9 @@ use winit::window::WindowBuilder;
 use winit_input_helper::WinitInputHelper;
 
 mod gui;
-const INITIAL_WIDTH: u32 = 1200;
-const INITIAL_HEIGHT: u32 = 600;
+const INITIAL_WIDTH: u32 = 160;
+const INITIAL_HEIGHT: u32 = 144;
+const ERROR_MARGIN: f64 = 0.00001;
 
 fn main() -> Result<(), Error> {
     env_logger::init();
@@ -21,6 +22,7 @@ fn main() -> Result<(), Error> {
             .with_title("Hello Pixels + egui")
             .with_inner_size(size)
             .with_min_inner_size(size)
+            .with_resizable(true)
             .build(&event_loop)
             .unwrap()
     };
@@ -35,6 +37,7 @@ fn main() -> Result<(), Error> {
         (pixels, gui)
     };
     let mut menubar_height = 0.0;
+    let mut scale_factor = 0.0;
 
     event_loop.run(move |event, _, control_flow| {
         // Update egui inputs
@@ -85,14 +88,20 @@ fn main() -> Result<(), Error> {
             }
 
             // Update the scale factor
-            if let Some(scale_factor) = input.scale_factor() {
-                gui.scale_factor(scale_factor);
+            if let Some(new_scale_factor) = input.scale_factor() {
+                if (new_scale_factor - scale_factor).abs() > ERROR_MARGIN {
+                    scale_factor = new_scale_factor;
+                    gui.scale_factor(new_scale_factor);
+                }
             }
 
             // Resize the window
             if let Some(size) = input.window_resized() {
-                pixels.resize_surface(size.width, size.height);
-                gui.resize(size.width, size.height);
+                if size.height > 0 && size.width > 0 {
+                    pixels.resize_buffer(size.width, size.height);
+                    pixels.resize_surface(size.width, size.height);
+                    gui.resize(size.width, size.height);
+                }
             }
 
             // Update internal state and request a redraw
