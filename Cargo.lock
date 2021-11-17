@@ -73,6 +73,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "000444226fcff248f2bc4c7625be32c63caccfecc2723a2b9f78a7487a49c407"
 
 [[package]]
+name = "ansi_term"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ee49baf6cb617b853aa8d93bf420db2383fab46d314482ca2803b40d5fde979b"
+dependencies = [
+ "winapi",
+]
+
+[[package]]
 name = "anyhow"
 version = "1.0.44"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -234,6 +243,21 @@ dependencies = [
 
 [[package]]
 name = "clap"
+version = "2.33.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "37e58ac78573c40708d45522f0d80fa2f01cc4f9b4e2bf749807255454312002"
+dependencies = [
+ "ansi_term",
+ "atty",
+ "bitflags",
+ "strsim 0.8.0",
+ "textwrap 0.11.0",
+ "unicode-width",
+ "vec_map",
+]
+
+[[package]]
+name = "clap"
 version = "3.0.0-beta.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fcd70aa5597dbc42f7217a543f9ef2768b2ef823ba29036072d30e1d88e98406"
@@ -315,13 +339,13 @@ dependencies = [
 
 [[package]]
 name = "console"
-version = "0.14.1"
+version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3993e6445baa160675931ec041a5e03ca84b9c6e32a056150d3aa2bdda0a1f45"
+checksum = "a28b32d32ca44b70c3e4acd7db1babf555fa026e385fb95f18028f88848b3c31"
 dependencies = [
  "encode_unicode",
- "lazy_static",
  "libc",
+ "once_cell",
  "regex",
  "terminal_size",
  "unicode-width",
@@ -513,12 +537,12 @@ dependencies = [
 
 [[package]]
 name = "cucumber"
-version = "0.10.0"
-source = "git+https://github.com/cucumber-rs/cucumber#9dbfe433364ba1e03dd310ef314760717a3634c3"
+version = "0.10.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eab886787f3c659f408c5fe0a9d7bd1d831ed324fcb55aa89bf339fee8b027b6"
 dependencies = [
  "async-trait",
  "atty",
- "clap",
  "console",
  "cucumber-codegen",
  "derive_more",
@@ -532,12 +556,14 @@ dependencies = [
  "once_cell",
  "regex",
  "sealed",
+ "structopt",
 ]
 
 [[package]]
 name = "cucumber-codegen"
-version = "0.10.0"
-source = "git+https://github.com/cucumber-rs/cucumber#9dbfe433364ba1e03dd310ef314760717a3634c3"
+version = "0.10.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9313bba9a820772969ee89f947d91e867c3e37ce6694583ac73466977a9a9f1f"
 dependencies = [
  "inflections",
  "itertools",
@@ -698,7 +724,7 @@ dependencies = [
 [[package]]
 name = "egui_memory_editor"
 version = "0.1.4"
-source = "git+https://github.com/Ragarnoy/egui_memory_editor?branch=master#6590a4737f7d9a9c774072fdb6a52bf4c694233f"
+source = "git+https://github.com/Ragarnoy/egui_memory_editor?rev=6590a4737f7d9a9c774072fdb6a52bf4c694233f#6590a4737f7d9a9c774072fdb6a52bf4c694233f"
 dependencies = [
  "egui",
 ]
@@ -1011,7 +1037,7 @@ name = "gb-roms"
 version = "0.1.0"
 dependencies = [
  "chrono",
- "clap",
+ "clap 3.0.0-beta.4",
  "gb-bus",
  "gb-rtc",
  "modular-bitfield",
@@ -1049,7 +1075,7 @@ name = "gbmu"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "clap",
+ "clap 3.0.0-beta.4",
  "egui",
  "gb-bus",
  "gb-clock",
@@ -2241,6 +2267,12 @@ checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 
 [[package]]
 name = "strsim"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8ea5119cdb4c55b55d432abb513a0429384878c15dde60cc77b1c99de1a95a6a"
+
+[[package]]
+name = "strsim"
 version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6446ced80d6c486436db5c078dde11a9f73d42b57fb273121e160b84f63d894c"
@@ -2250,6 +2282,30 @@ name = "strsim"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "73473c0e59e6d5812c5dfe2a064a6444949f089e20eec9a2e5506596494e4623"
+
+[[package]]
+name = "structopt"
+version = "0.3.25"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "40b9788f4202aa75c240ecc9c15c65185e6a39ccdeb0fd5d008b98825464c87c"
+dependencies = [
+ "clap 2.33.3",
+ "lazy_static",
+ "structopt-derive",
+]
+
+[[package]]
+name = "structopt-derive"
+version = "0.4.18"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dcb5ae327f9cc13b68763b5749770cb9e048a99bd9dfdfa58d0cf05d5f64afe0"
+dependencies = [
+ "heck",
+ "proc-macro-error",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
 
 [[package]]
 name = "syn"
@@ -2296,6 +2352,15 @@ checksum = "633c1a546cee861a1a6d0dc69ebeca693bf4296661ba7852b9d21d159e0506df"
 dependencies = [
  "libc",
  "winapi",
+]
+
+[[package]]
+name = "textwrap"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d326610f408c7a4eb6f51c37c330e496b08506c9457c9d34287ecc38809fb060"
+dependencies = [
+ "unicode-width",
 ]
 
 [[package]]

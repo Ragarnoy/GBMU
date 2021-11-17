@@ -3,10 +3,9 @@ mod breakpoint_node;
 
 use crate::dbg_interfaces::RegisterDebugOperations;
 use crate::debugger::breakpoints::breakpoint::Breakpoint;
-use crate::until::Until;
+
 
 use egui::{Color32, Label, Ui, Vec2, Visuals};
-use std::ops::ControlFlow;
 
 #[derive(Default, Debug)]
 pub struct BreakpointOptions {
@@ -35,11 +34,10 @@ impl BreakpointEditor {
         &mut self,
         ui: &mut Ui,
         regs: &T,
-    ) -> Option<ControlFlow<Until>> {
+    ) {
         ui.label(Label::new("Breakpoints").text_color(Color32::WHITE));
         self.draw_breakpoint_options(ui);
 
-        let mut ret = None;
         ui.separator();
         if self.options.is_advanced {
             self.draw_advanced_breakpoint_widget(ui, regs);
@@ -70,7 +68,6 @@ impl BreakpointEditor {
                             egui::Label::new(breakpoint.to_string().clone())
                                 .text_color(Color32::RED),
                         );
-                        ret = Some(ControlFlow::Break(Until::Null));
                     } else {
                         ui.add(egui::Label::new(breakpoint.to_string().clone()));
                     }
@@ -81,7 +78,6 @@ impl BreakpointEditor {
         deletion_list.into_iter().for_each(|i| {
             self.breakpoints.remove(i);
         });
-        ret
     }
 
     fn add_address_breakpoint<T: RegisterDebugOperations>(&mut self, address: u16, regs: &T) {
@@ -90,6 +86,20 @@ impl BreakpointEditor {
         }
     }
 
+    fn is_valid_address(address: &str) -> bool {
+        !address.is_empty() && u16::from_str_radix(address, 16).is_ok()
+    }
+
+    pub fn are_breakpoints_triggered(&mut self, pc: u16) -> bool {
+        for breakpoint in &mut self.breakpoints {
+            if breakpoint.enabled && pc == breakpoint.address() {
+                breakpoint.enabled = false;
+                return true;
+            }
+        }
+        false
+    }
+}
     fn add_expr_breakpoint<T: RegisterDebugOperations>(
         &mut self,
         expr: &str,
