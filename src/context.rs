@@ -239,6 +239,20 @@ impl Game {
 impl Drop for Game {
     fn drop(&mut self) {
         if self.auto_save == Some(AutoSave::Ram) || self.auto_save == Some(AutoSave::RamTimer) {
+            use bincode::{config::Configuration, encode_into_std_write};
+            use std::fs::OpenOptions;
+
+            let save_file = format!("/tmp/gbmu/saves/auto/{}/ram.bin", self.romname);
+            let mut save_file = OpenOptions::new()
+                .create(true)
+                .write(true)
+                .open(save_file)
+                .expect("cannot open auto save file");
+            let config = Configuration::standard()
+                .with_big_endian()
+                .with_fixed_int_encoding()
+                .write_fixed_array_length();
+            encode_into_std_write(self.mbc.borrow(), &mut save_file, config);
             todo!("auto save");
         }
     }
