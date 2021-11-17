@@ -81,16 +81,6 @@ impl BreakpointEditor {
         }
     }
 
-    pub fn are_breakpoints_triggered<T: RegisterDebugOperations>(&mut self, regs: &T) -> bool {
-        for breakpoint in &mut self.breakpoints {
-            if breakpoint.is_triggered(regs) {
-                breakpoint.enabled = false;
-                return true;
-            }
-        }
-        false
-    }
-
     fn add_expr_breakpoint<T: RegisterDebugOperations>(
         &mut self,
         expr: &str,
@@ -101,6 +91,16 @@ impl BreakpointEditor {
             self.breakpoints.push(breakpoint);
         }
         Ok(())
+    }
+
+    pub fn are_breakpoints_triggered<T: RegisterDebugOperations>(&mut self, regs: &T) -> bool {
+        for breakpoint in &mut self.breakpoints {
+            if breakpoint.is_triggered(regs) {
+                breakpoint.enabled = false;
+                return true;
+            }
+        }
+        false
     }
 
     fn draw_advanced_breakpoint_widget<T: RegisterDebugOperations>(
