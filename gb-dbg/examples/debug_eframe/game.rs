@@ -102,27 +102,27 @@ impl From<&Game> for Vec<RegisterMap<CpuRegs>> {
 }
 
 impl RegisterDebugOperations for Game {
-    fn cpu_get(&self, key: CpuRegs) -> anyhow::Result<RegisterValue> {
+    fn cpu_get(&self, key: CpuRegs) -> RegisterValue {
         match key {
-            CpuRegs::AF => Ok(RegisterValue::from(self.a)),
-            CpuRegs::BC => Ok(RegisterValue::from(self.b)),
-            CpuRegs::DE => Ok(RegisterValue::from(self.d)),
-            CpuRegs::HL => Ok(RegisterValue::from(self.f)),
-            CpuRegs::SP => Ok(RegisterValue::from(self.c)),
-            CpuRegs::PC => Ok(RegisterValue::from(self.pc)),
+            CpuRegs::AF => RegisterValue::from(self.a),
+            CpuRegs::BC => RegisterValue::from(self.b),
+            CpuRegs::DE => RegisterValue::from(self.d),
+            CpuRegs::HL => RegisterValue::from(self.f),
+            CpuRegs::SP => RegisterValue::from(self.c),
+            CpuRegs::PC => RegisterValue::from(self.pc),
         }
     }
 
-    fn ppu_get(&self, _key: PpuRegs) -> anyhow::Result<RegisterValue> {
-        Ok(0xffu8.into())
+    fn ppu_get(&self, _key: PpuRegs) -> RegisterValue {
+        0xffu8.into()
     }
 
-    fn io_get(&self, _key: IORegs) -> anyhow::Result<RegisterValue> {
-        Ok(0xffu8.into())
+    fn io_get(&self, _key: IORegs) -> RegisterValue {
+        0xffu8.into()
     }
 
-    fn audio_get(&self, _key: AudioRegs) -> anyhow::Result<RegisterValue> {
-        Ok(0xffu8.into())
+    fn audio_get(&self, _key: AudioRegs) -> RegisterValue {
+        0xffu8.into()
     }
 
     fn cpu_registers(&self) -> Vec<RegisterMap<CpuRegs>> {
