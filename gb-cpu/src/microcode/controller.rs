@@ -170,6 +170,7 @@ impl MicrocodeController {
     #[cfg(feature = "registers_logs")]
     fn log_registers_to_file(&mut self, opcode_logs: &str) -> std::io::Result<()> {
         use std::io::prelude::*;
+
         let mut file = &*self.file.borrow_mut();
 
         if let Err(e) = writeln!(file, "{}", opcode_logs) {
@@ -184,16 +185,12 @@ impl MicrocodeController {
 
         let project_path = env::current_dir()?.into_os_string();
 
-        OpenOptions::new()
-            .write(true)
-            .append(true)
-            .create_new(true)
-            .open(format!(
-                "{}/debug/registers_logs/ours.txt",
-                project_path
-                    .to_str()
-                    .expect("Could not get project's path from env."),
-            ))
+        OpenOptions::new().write(true).create(true).open(format!(
+            "{}/debug/registers_logs/ours.txt",
+            project_path
+                .to_str()
+                .expect("Could not get project's path from env."),
+        ))
     }
 }
 
