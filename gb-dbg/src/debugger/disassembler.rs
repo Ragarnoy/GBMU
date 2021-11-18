@@ -69,10 +69,12 @@ impl DisassemblyViewer {
                 | Error::InvalideOpcode(v)
                 | Error::UnknownOpcode(v) => format!("{:#02X}", v),
             },
-            |(_, bytes)| {
-                bytes.iter().fold(String::with_capacity(8), |acc, &s| {
-                    acc + format!("{:#02X} ", s).as_str()
-                })
+            |(_, bytesarray)| {
+                bytesarray
+                    .iter()
+                    .map(|bytes| format!("{:#02X}", bytes))
+                    .collect::<Vec<String>>()
+                    .join(" ")
             },
         );
         ui.label(egui::Label::new(opcode));
