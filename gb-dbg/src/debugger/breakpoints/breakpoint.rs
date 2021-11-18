@@ -35,11 +35,7 @@ impl Breakpoint {
     }
 
     pub fn is_triggered<T: DebugOperations>(&self, regs: &T) -> bool {
-        if self.enabled {
-            self.expr.compute(regs)
-        } else {
-            false
-        }
+        self.enabled && self.expr.compute(regs)
     }
 
     /// check if breakpoint is active
