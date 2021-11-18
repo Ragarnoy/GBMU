@@ -1,4 +1,4 @@
-use crate::dbg_interfaces::RegisterDebugOperations;
+use crate::dbg_interfaces::DebugOperations;
 use crate::debugger::breakpoints::breakpoint_node::BreakpointNode;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
@@ -7,7 +7,7 @@ use std::str::FromStr;
 pub struct Breakpoint {
     expr: BreakpointNode,
     pub enabled: bool,
-    last_triggered: Option<usize>,
+    last_state: bool,
 }
 
 impl Display for Breakpoint {
@@ -21,7 +21,7 @@ impl Breakpoint {
         Self {
             expr: BreakpointNode::new_simple(address),
             enabled: true,
-            last_triggered: None,
+            last_state: false,
         }
     }
 
@@ -30,11 +30,11 @@ impl Breakpoint {
         Ok(Self {
             expr: node,
             enabled: true,
-            last_triggered: None,
+            last_state: false,
         })
     }
 
-    pub fn is_triggered<T: RegisterDebugOperations>(&self, regs: &T) -> bool {
+    pub fn is_triggered<T: DebugOperations>(&self, regs: &T) -> bool {
         if self.enabled {
             self.expr.compute(regs)
         } else {
@@ -42,21 +42,14 @@ impl Breakpoint {
         }
     }
 
-    pub fn is_triggered<DBG: DebugOperations>(&mut self, context: &DBG) -> bool {
-        if self.active() {
-            true
-        }
-        false
-    }
-
     /// check if breakpoint is active
     /// this method is used to prevent the breakpoint to trigger itself on the same session
-    pub fn active(&self, counter: usize) -> bool {
-        self.enabled && self.last_triggered != Some(counter)
-    }
+    pub fn active<DBG: DebugOperations>(&mut self, context: &DBG) -> bool {
+        let current_state = self.is_triggered(context);
+        let result = !self.last_state && current_state;
 
-    /// The method is used to register that the breakpoint was triggered at the session
-    pub fn trigger(&mut self, counter: usize) {
-        self.last_triggered = Some(counter);
+        self.last_state = current_state;
+
+        result
     }
 }
