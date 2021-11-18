@@ -6,6 +6,7 @@ use egui::Vec2;
 use game::Game;
 use gb_dbg::debugger::{Debugger, DebuggerBuilder};
 use gb_dbg::until::Until;
+use gb_dbg::{DEBUGGER_HEIGHT, DEBUGGER_WIDTH};
 use std::ops::ControlFlow;
 
 pub struct DebuggerApp {
@@ -43,7 +44,7 @@ fn main() {
     };
     let options = NativeOptions {
         resizable: false,
-        initial_window_size: Some(Vec2::new(1200.0, 600.0)),
+        initial_window_size: Some(Vec2::from((DEBUGGER_WIDTH, DEBUGGER_HEIGHT))),
         ..Default::default()
     };
     eframe::run_native(Box::new(dgb_app), options)

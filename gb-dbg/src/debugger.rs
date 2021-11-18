@@ -25,8 +25,8 @@ pub struct Debugger<MEM> {
     flow_status: Option<ControlFlow<Until>>,
 }
 
-impl<MEM: DebugOperations> Debugger<MEM> {
-    pub fn draw(&mut self, ctx: &CtxRef, mut memory: &mut MEM) {
+impl<BUS: DebugOperations> Debugger<BUS> {
+    pub fn draw(&mut self, ctx: &CtxRef, mut memory: &mut BUS) {
         // ctx.set_debug_on_hover(true);
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             self.flow_status = self.flow_controller.draw(ui);
@@ -46,16 +46,15 @@ impl<MEM: DebugOperations> Debugger<MEM> {
                 });
             });
 
-        egui::SidePanel::right("right_panel")
-            .resizable(false)
-            .default_width(130.0)
-            .show(ctx, |ui| {
-                self.breakpoint_editor
-                    .draw(ui, memory.cpu_get(CpuRegs::PC).into())
-            });
+        // egui::SidePanel::right("right_panel")
+        //     .resizable(false)
+        //     .default_width(165.0)
+        //     .show(ctx, |ui| {
+        //     });
 
         egui::CentralPanel::default().show(ctx, |ui| {
             self.register_editor.draw(ui, memory);
+            self.breakpoint_editor.draw(ui, memory)
         });
     }
 
@@ -63,10 +62,10 @@ impl<MEM: DebugOperations> Debugger<MEM> {
         self.flow_status.take()
     }
 
-    pub fn updated_flow_status(&mut self, memory: &MEM) -> Option<ControlFlow<Until>> {
+    pub fn updated_flow_status(&mut self, memory: &BUS) -> Option<ControlFlow<Until>> {
         if self
             .breakpoint_editor
-            .are_breakpoints_triggered(memory.cycle(), memory.cpu_get(CpuRegs::PC).into())
+            .are_breakpoints_triggered(memory.cycle(), memory)
         {
             Some(ControlFlow::Break(Until::Null))
         } else {
