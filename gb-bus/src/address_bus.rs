@@ -136,7 +136,7 @@ impl MemoryLock for AddressBus {
     fn is_available(&self, area: Area, lock_key: Option<Lock>) -> bool {
         if let Some(lock) = self.area_locks.get(&area) {
             if let Some(key) = lock_key {
-                return *lock == key;
+                return *lock <= key;
             }
         } else {
             return true;
@@ -254,5 +254,76 @@ mod test_address_bus {
         assert_eq!(addr_bus.read_byte(0xff00), Ok(0x36));
         assert_eq!(addr_bus.read_byte(0xff80), Ok(0x37));
         assert_eq!(addr_bus.read_byte(0xffff), Ok(0x38));
+    }
+}
+
+#[cfg(test)]
+mod memory_locking {
+    use super::{AddressBus, Area, Lock, MemoryLock};
+    use crate::generic::CharDevice;
+    use std::collections::HashMap;
+    use std::{cell::RefCell, rc::Rc};
+
+    #[test]
+    fn allow_stronger_key() {
+        let mut addr_bus = AddressBus {
+            rom: Rc::new(RefCell::new(CharDevice(1))),
+            vram: Rc::new(RefCell::new(CharDevice(2))),
+            ext_ram: Rc::new(RefCell::new(CharDevice(3))),
+            ram: Rc::new(RefCell::new(CharDevice(4))),
+            eram: Rc::new(RefCell::new(CharDevice(5))),
+            oam: Rc::new(RefCell::new(CharDevice(6))),
+            io_reg: Rc::new(RefCell::new(CharDevice(7))),
+            hram: Rc::new(RefCell::new(CharDevice(8))),
+            ie_reg: Rc::new(RefCell::new(CharDevice(9))),
+            area_locks: HashMap::new(),
+        };
+
+        assert!(addr_bus.is_available(Area::Vram, None));
+        assert!(addr_bus.is_available(Area::Vram, Some(Lock::Ppu)));
+        assert!(addr_bus.is_available(Area::Vram, Some(Lock::Dma)));
+        assert!(addr_bus.is_available(Area::Vram, Some(Lock::Debugger)));
+
+        addr_bus.lock(Area::Vram, Lock::Ppu);
+        assert!(!addr_bus.is_available(Area::Vram, None));
+        assert!(addr_bus.is_available(Area::Vram, Some(Lock::Ppu)));
+        assert!(addr_bus.is_available(Area::Vram, Some(Lock::Dma)));
+        assert!(addr_bus.is_available(Area::Vram, Some(Lock::Debugger)));
+
+        addr_bus.lock(Area::Vram, Lock::Dma);
+        assert!(!addr_bus.is_available(Area::Vram, None));
+        assert!(!addr_bus.is_available(Area::Vram, Some(Lock::Ppu)));
+        assert!(addr_bus.is_available(Area::Vram, Some(Lock::Dma)));
+        assert!(addr_bus.is_available(Area::Vram, Some(Lock::Debugger)));
+
+        addr_bus.lock(Area::Vram, Lock::Debugger);
+        assert!(!addr_bus.is_available(Area::Vram, None));
+        assert!(!addr_bus.is_available(Area::Vram, Some(Lock::Ppu)));
+        assert!(!addr_bus.is_available(Area::Vram, Some(Lock::Dma)));
+        assert!(addr_bus.is_available(Area::Vram, Some(Lock::Debugger)));
+    }
+
+    #[test]
+    fn lock_unlock() {
+        let mut addr_bus = AddressBus {
+            rom: Rc::new(RefCell::new(CharDevice(1))),
+            vram: Rc::new(RefCell::new(CharDevice(2))),
+            ext_ram: Rc::new(RefCell::new(CharDevice(3))),
+            ram: Rc::new(RefCell::new(CharDevice(4))),
+            eram: Rc::new(RefCell::new(CharDevice(5))),
+            oam: Rc::new(RefCell::new(CharDevice(6))),
+            io_reg: Rc::new(RefCell::new(CharDevice(7))),
+            hram: Rc::new(RefCell::new(CharDevice(8))),
+            ie_reg: Rc::new(RefCell::new(CharDevice(9))),
+            area_locks: HashMap::new(),
+        };
+
+        assert!(addr_bus.is_available(Area::Vram, None));
+
+        addr_bus.lock(Area::Vram, Lock::Ppu);
+        assert!(!addr_bus.is_available(Area::Vram, None));
+
+        addr_bus.unlock(Area::Vram);
+        assert!(addr_bus.is_available(Area::Vram, None));
     }
 }
