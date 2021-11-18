@@ -33,7 +33,7 @@ impl<MEM: DebugOperations> Debugger<MEM> {
         });
 
         self.disassembler
-            .may_update_cache(memory.cpu_get(CpuRegs::PC).unwrap().into(), memory);
+            .may_update_cache(memory.cpu_get(CpuRegs::PC).into(), memory);
 
         egui::SidePanel::left("left_panel")
             .resizable(false)
@@ -51,7 +51,7 @@ impl<MEM: DebugOperations> Debugger<MEM> {
             .default_width(130.0)
             .show(ctx, |ui| {
                 self.breakpoint_editor
-                    .draw(ui, memory.cpu_get(CpuRegs::PC).unwrap().into())
+                    .draw(ui, memory.cpu_get(CpuRegs::PC).into())
             });
 
         egui::CentralPanel::default().show(ctx, |ui| {
@@ -66,7 +66,7 @@ impl<MEM: DebugOperations> Debugger<MEM> {
     pub fn updated_flow_status(&mut self, memory: &MEM) -> Option<ControlFlow<Until>> {
         if self
             .breakpoint_editor
-            .are_breakpoints_triggered(memory.cycle(), memory.cpu_get(CpuRegs::PC).unwrap().into())
+            .are_breakpoints_triggered(memory.cycle(), memory.cpu_get(CpuRegs::PC).into())
         {
             Some(ControlFlow::Break(Until::Null))
         } else {

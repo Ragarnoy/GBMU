@@ -1,4 +1,3 @@
-use anyhow::Result;
 use std::fmt::{self, Debug, Display, Formatter};
 
 pub struct RegisterMap<T: Display + Debug>(pub T, pub RegisterValue);
@@ -39,13 +38,13 @@ pub trait MemoryDebugOperations {
 }
 
 pub trait RegisterDebugOperations {
-    fn cpu_get(&self, key: CpuRegs) -> Result<RegisterValue>;
+    fn cpu_get(&self, key: CpuRegs) -> RegisterValue;
 
-    fn ppu_get(&self, key: PpuRegs) -> Result<RegisterValue>;
+    fn ppu_get(&self, key: PpuRegs) -> RegisterValue;
 
-    fn io_get(&self, key: IORegs) -> Result<RegisterValue>;
+    fn io_get(&self, key: IORegs) -> RegisterValue;
 
-    fn audio_get(&self, key: AudioRegs) -> Result<RegisterValue>;
+    fn audio_get(&self, key: AudioRegs) -> RegisterValue;
 
     fn cpu_registers(&self) -> Vec<RegisterMap<CpuRegs>>;
 

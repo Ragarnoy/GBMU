@@ -1,4 +1,3 @@
-use anyhow::Result;
 use gb_bus::{generic::SimpleRW, AddressBus, Bus, IORegBus, Lock, WorkingRam};
 use gb_clock::{cycles, Clock};
 use gb_cpu::cpu::Cpu;
@@ -270,40 +269,40 @@ macro_rules! read_bus_reg {
 }
 
 impl RegisterDebugOperations for Game {
-    fn cpu_get(&self, key: CpuRegs) -> Result<RegisterValue> {
+    fn cpu_get(&self, key: CpuRegs) -> RegisterValue {
         match key {
-            CpuRegs::AF => Ok(self.cpu.borrow().registers.af.into()),
-            CpuRegs::BC => Ok(self.cpu.borrow().registers.bc.into()),
-            CpuRegs::DE => Ok(self.cpu.borrow().registers.de.into()),
-            CpuRegs::HL => Ok(self.cpu.borrow().registers.hl.into()),
-            CpuRegs::SP => Ok(self.cpu.borrow().registers.sp.into()),
-            CpuRegs::PC => Ok(self.cpu.borrow().registers.pc.into()),
+            CpuRegs::AF => self.cpu.borrow().registers.af.into(),
+            CpuRegs::BC => self.cpu.borrow().registers.bc.into(),
+            CpuRegs::DE => self.cpu.borrow().registers.de.into(),
+            CpuRegs::HL => self.cpu.borrow().registers.hl.into(),
+            CpuRegs::SP => self.cpu.borrow().registers.sp.into(),
+            CpuRegs::PC => self.cpu.borrow().registers.pc.into(),
         }
     }
 
-    fn ppu_get(&self, key: PpuRegs) -> Result<RegisterValue> {
+    fn ppu_get(&self, key: PpuRegs) -> RegisterValue {
         use gb_bus::io_reg_constant::{
             PPU_BGP, PPU_CONTROL, PPU_DMA, PPU_LY, PPU_LYC, PPU_OBP0, PPU_OBP1, PPU_SCX, PPU_SCY,
             PPU_STATUS, PPU_WX, PPU_WY,
         };
 
         match key {
-            PpuRegs::Control => Ok(read_bus_reg!(self.addr_bus, PPU_CONTROL)),
-            PpuRegs::Status => Ok(read_bus_reg!(self.addr_bus, PPU_STATUS)),
-            PpuRegs::Scy => Ok(read_bus_reg!(self.addr_bus, PPU_SCY)),
-            PpuRegs::Scx => Ok(read_bus_reg!(self.addr_bus, PPU_SCX)),
-            PpuRegs::Ly => Ok(read_bus_reg!(self.addr_bus, PPU_LY)),
-            PpuRegs::Lyc => Ok(read_bus_reg!(self.addr_bus, PPU_LYC)),
-            PpuRegs::Dma => Ok(read_bus_reg!(self.addr_bus, PPU_DMA)),
-            PpuRegs::Bgp => Ok(read_bus_reg!(self.addr_bus, PPU_BGP)),
-            PpuRegs::Obp0 => Ok(read_bus_reg!(self.addr_bus, PPU_OBP0)),
-            PpuRegs::Obp1 => Ok(read_bus_reg!(self.addr_bus, PPU_OBP1)),
-            PpuRegs::Wy => Ok(read_bus_reg!(self.addr_bus, PPU_WY)),
-            PpuRegs::Wx => Ok(read_bus_reg!(self.addr_bus, PPU_WX)),
+            PpuRegs::Control => read_bus_reg!(self.addr_bus, PPU_CONTROL),
+            PpuRegs::Status => read_bus_reg!(self.addr_bus, PPU_STATUS),
+            PpuRegs::Scy => read_bus_reg!(self.addr_bus, PPU_SCY),
+            PpuRegs::Scx => read_bus_reg!(self.addr_bus, PPU_SCX),
+            PpuRegs::Ly => read_bus_reg!(self.addr_bus, PPU_LY),
+            PpuRegs::Lyc => read_bus_reg!(self.addr_bus, PPU_LYC),
+            PpuRegs::Dma => read_bus_reg!(self.addr_bus, PPU_DMA),
+            PpuRegs::Bgp => read_bus_reg!(self.addr_bus, PPU_BGP),
+            PpuRegs::Obp0 => read_bus_reg!(self.addr_bus, PPU_OBP0),
+            PpuRegs::Obp1 => read_bus_reg!(self.addr_bus, PPU_OBP1),
+            PpuRegs::Wy => read_bus_reg!(self.addr_bus, PPU_WY),
+            PpuRegs::Wx => read_bus_reg!(self.addr_bus, PPU_WX),
         }
     }
 
-    fn io_get(&self, key: IORegs) -> Result<RegisterValue> {
+    fn io_get(&self, key: IORegs) -> RegisterValue {
         use gb_bus::io_reg_constant::{
             IO_BOOTROM, IO_DIV, IO_IE, IO_IF, IO_JOY, IO_SERIALBYTE, IO_SERIALCTL, IO_TAC, IO_TIMA,
             IO_TMA,
@@ -311,24 +310,24 @@ impl RegisterDebugOperations for Game {
 
         match key {
             // joypad regs
-            IORegs::Joy => Ok(read_bus_reg!(self.addr_bus, IO_JOY)),
+            IORegs::Joy => read_bus_reg!(self.addr_bus, IO_JOY),
             // serial regs
-            IORegs::SerialByte => Ok(read_bus_reg!(self.addr_bus, IO_SERIALBYTE)),
-            IORegs::SerialCtl => Ok(read_bus_reg!(self.addr_bus, IO_SERIALCTL)),
+            IORegs::SerialByte => read_bus_reg!(self.addr_bus, IO_SERIALBYTE),
+            IORegs::SerialCtl => read_bus_reg!(self.addr_bus, IO_SERIALCTL),
             // Timer regs
-            IORegs::Div => Ok(read_bus_reg!(self.addr_bus, IO_DIV)),
-            IORegs::Tima => Ok(read_bus_reg!(self.addr_bus, IO_TIMA)),
-            IORegs::Tma => Ok(read_bus_reg!(self.addr_bus, IO_TMA)),
-            IORegs::Tac => Ok(read_bus_reg!(self.addr_bus, IO_TAC)),
+            IORegs::Div => read_bus_reg!(self.addr_bus, IO_DIV),
+            IORegs::Tima => read_bus_reg!(self.addr_bus, IO_TIMA),
+            IORegs::Tma => read_bus_reg!(self.addr_bus, IO_TMA),
+            IORegs::Tac => read_bus_reg!(self.addr_bus, IO_TAC),
             // cpu int regs
-            IORegs::If => Ok(read_bus_reg!(self.addr_bus, IO_IF)),
-            IORegs::Ie => Ok(read_bus_reg!(self.addr_bus, IO_IE)),
+            IORegs::If => read_bus_reg!(self.addr_bus, IO_IF),
+            IORegs::Ie => read_bus_reg!(self.addr_bus, IO_IE),
             // Boot ROM
-            IORegs::BootRom => Ok(read_bus_reg!(self.addr_bus, IO_BOOTROM)),
+            IORegs::BootRom => read_bus_reg!(self.addr_bus, IO_BOOTROM),
         }
     }
 
-    fn audio_get(&self, key: AudioRegs) -> Result<RegisterValue> {
+    fn audio_get(&self, key: AudioRegs) -> RegisterValue {
         use gb_bus::io_reg_constant::{
             AUD_A3TOGGLE, AUD_AF1, AUD_AF2, AUD_AF3, AUD_AF4, AUD_CHANNEL_CTL, AUD_CTL1, AUD_CTL2,
             AUD_CTL3, AUD_CTL4, AUD_ENV1, AUD_ENV2, AUD_FS1, AUD_MAP, AUD_OUTPUT_MAP, AUD_PWM1,
@@ -336,28 +335,28 @@ impl RegisterDebugOperations for Game {
         };
 
         match key {
-            AudioRegs::Fs1 => Ok(read_bus_reg!(self.addr_bus, AUD_FS1)),
-            AudioRegs::Pwm1 => Ok(read_bus_reg!(self.addr_bus, AUD_PWM1)),
-            AudioRegs::Env1 => Ok(read_bus_reg!(self.addr_bus, AUD_ENV1)),
-            AudioRegs::Af1 => Ok(read_bus_reg!(self.addr_bus, AUD_AF1)),
-            AudioRegs::Ctl1 => Ok(read_bus_reg!(self.addr_bus, AUD_CTL1)),
-            AudioRegs::Pwm2 => Ok(read_bus_reg!(self.addr_bus, AUD_PWM2)),
-            AudioRegs::Env2 => Ok(read_bus_reg!(self.addr_bus, AUD_ENV2)),
-            AudioRegs::Af2 => Ok(read_bus_reg!(self.addr_bus, AUD_AF2)),
-            AudioRegs::Ctl2 => Ok(read_bus_reg!(self.addr_bus, AUD_CTL2)),
-            AudioRegs::A3Toggle => Ok(read_bus_reg!(self.addr_bus, AUD_A3TOGGLE)),
-            AudioRegs::Pwm3 => Ok(read_bus_reg!(self.addr_bus, AUD_PWM3)),
-            AudioRegs::Vol3 => Ok(read_bus_reg!(self.addr_bus, AUD_VOL3)),
-            AudioRegs::Af3 => Ok(read_bus_reg!(self.addr_bus, AUD_AF3)),
-            AudioRegs::Ctl3 => Ok(read_bus_reg!(self.addr_bus, AUD_CTL3)),
-            AudioRegs::Pwm4 => Ok(read_bus_reg!(self.addr_bus, AUD_PWM4)),
-            AudioRegs::Vol4 => Ok(read_bus_reg!(self.addr_bus, AUD_VOL4)),
-            AudioRegs::Af4 => Ok(read_bus_reg!(self.addr_bus, AUD_AF4)),
-            AudioRegs::Ctl4 => Ok(read_bus_reg!(self.addr_bus, AUD_CTL4)),
-            AudioRegs::AudOutMap => Ok(read_bus_reg!(self.addr_bus, AUD_OUTPUT_MAP)),
-            AudioRegs::AudMap => Ok(read_bus_reg!(self.addr_bus, AUD_MAP)),
-            AudioRegs::AudChanCtl => Ok(read_bus_reg!(self.addr_bus, AUD_CHANNEL_CTL)),
-            AudioRegs::AudWave => Ok(read_bus_reg!(self.addr_bus, AUD_WAVE)),
+            AudioRegs::Fs1 => read_bus_reg!(self.addr_bus, AUD_FS1),
+            AudioRegs::Pwm1 => read_bus_reg!(self.addr_bus, AUD_PWM1),
+            AudioRegs::Env1 => read_bus_reg!(self.addr_bus, AUD_ENV1),
+            AudioRegs::Af1 => read_bus_reg!(self.addr_bus, AUD_AF1),
+            AudioRegs::Ctl1 => read_bus_reg!(self.addr_bus, AUD_CTL1),
+            AudioRegs::Pwm2 => read_bus_reg!(self.addr_bus, AUD_PWM2),
+            AudioRegs::Env2 => read_bus_reg!(self.addr_bus, AUD_ENV2),
+            AudioRegs::Af2 => read_bus_reg!(self.addr_bus, AUD_AF2),
+            AudioRegs::Ctl2 => read_bus_reg!(self.addr_bus, AUD_CTL2),
+            AudioRegs::A3Toggle => read_bus_reg!(self.addr_bus, AUD_A3TOGGLE),
+            AudioRegs::Pwm3 => read_bus_reg!(self.addr_bus, AUD_PWM3),
+            AudioRegs::Vol3 => read_bus_reg!(self.addr_bus, AUD_VOL3),
+            AudioRegs::Af3 => read_bus_reg!(self.addr_bus, AUD_AF3),
+            AudioRegs::Ctl3 => read_bus_reg!(self.addr_bus, AUD_CTL3),
+            AudioRegs::Pwm4 => read_bus_reg!(self.addr_bus, AUD_PWM4),
+            AudioRegs::Vol4 => read_bus_reg!(self.addr_bus, AUD_VOL4),
+            AudioRegs::Af4 => read_bus_reg!(self.addr_bus, AUD_AF4),
+            AudioRegs::Ctl4 => read_bus_reg!(self.addr_bus, AUD_CTL4),
+            AudioRegs::AudOutMap => read_bus_reg!(self.addr_bus, AUD_OUTPUT_MAP),
+            AudioRegs::AudMap => read_bus_reg!(self.addr_bus, AUD_MAP),
+            AudioRegs::AudChanCtl => read_bus_reg!(self.addr_bus, AUD_CHANNEL_CTL),
+            AudioRegs::AudWave => read_bus_reg!(self.addr_bus, AUD_WAVE),
         }
     }
 

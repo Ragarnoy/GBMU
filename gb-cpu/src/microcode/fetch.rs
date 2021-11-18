@@ -1,4 +1,4 @@
-use crate::microcode::{bitwise, flag, push, utils};
+use crate::microcode::{bitwise, flag, interrupts, push, utils};
 
 use super::{
     arithmetic,
@@ -594,14 +594,36 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                 ]),
 
                 Opcode::Daa => ctl.push_actions(&[read::a, arithmetic::daa, write::a]),
-                Opcode::Rla => ctl.push_actions(&[read::a, bitwise::rl, write::a]),
-                Opcode::RrcA => ctl.push_actions(&[read::a, bitwise::rrc, write::a]),
-                Opcode::Rra => ctl.push_actions(&[read::a, bitwise::rr, write::a]),
-                Opcode::RlcA => ctl.push_actions(&[read::a, bitwise::rlc, write::a]),
+
+                Opcode::Rla => {
+                    ctl.push_actions(&[read::a, bitwise::rl, flag::reset_flag_zero, write::a])
+                }
+                Opcode::RrcA => {
+                    ctl.push_actions(&[read::a, bitwise::rrc, flag::reset_flag_zero, write::a])
+                }
+                Opcode::Rra => {
+                    ctl.push_actions(&[read::a, bitwise::rr, flag::reset_flag_zero, write::a])
+                }
+                Opcode::RlcA => {
+                    ctl.push_actions(&[read::a, bitwise::rlc, flag::reset_flag_zero, write::a])
+                }
 
                 Opcode::Scf => ctl.push_actions(&[flag::scf]),
                 Opcode::Cpl => ctl.push_actions(&[read::a, logic::cpl, write::a]),
                 Opcode::Ccf => ctl.push_actions(&[flag::ccf]),
+
+                Opcode::Ei => ctl.push_action(interrupts::enable_ime),
+                Opcode::Di => ctl.push_action(interrupts::disable_ime),
+                Opcode::Reti => ctl.push_actions(&[
+                    read::sp,
+                    read::ind,
+                    inc::sp,
+                    read::sp,
+                    read::ind,
+                    inc::sp,
+                    jump::jump,
+                    interrupts::enable_ime,
+                ]),
 
                 Opcode::Nop => &mut ctl,
                 Opcode::PrefixCb => ctl.push_action(fetch_cb),
