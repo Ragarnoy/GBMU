@@ -33,7 +33,7 @@ impl<BUS: DebugOperations> Debugger<BUS> {
         });
 
         self.disassembler
-            .may_update_cache(memory.cpu_get(CpuRegs::PC).unwrap().into(), memory);
+            .may_update_cache(memory.cpu_get(CpuRegs::PC).into(), memory);
 
         egui::SidePanel::left("left_panel")
             .resizable(false)

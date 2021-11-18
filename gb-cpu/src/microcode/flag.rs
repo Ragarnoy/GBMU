@@ -23,3 +23,8 @@ pub fn ccf(_ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     state.regs.set_subtraction(false);
     OK_PLAY_NEXT_ACTION
 }
+
+pub fn reset_flag_zero(_ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
+    state.regs.set_zero(false);
+    OK_PLAY_NEXT_ACTION
+}

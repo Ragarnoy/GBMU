@@ -48,3 +48,13 @@ pub fn handle_interrupts(ctl: &mut MicrocodeController, _state: &mut State) -> M
     ]);
     OK_PLAY_NEXT_ACTION
 }
+
+pub fn disable_ime(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow {
+    ctl.interrupt_master_enable = false;
+    OK_PLAY_NEXT_ACTION
+}
+
+pub fn enable_ime(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow {
+    ctl.interrupt_master_enable = true;
+    OK_PLAY_NEXT_ACTION
+}

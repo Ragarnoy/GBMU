@@ -5,6 +5,8 @@ use super::{
 use crate::registers::Registers;
 use gb_bus::{Area, Bus, FileOperation, IORegArea};
 use std::fmt::{self, Debug, Display};
+#[cfg(feature = "registers_logs")]
+use std::{cell::RefCell, fs::File, rc::Rc};
 #[derive(Clone, Debug)]
 pub enum OpcodeType {
     Unprefixed(Opcode),
@@ -46,6 +48,8 @@ pub struct MicrocodeController {
     pub interrupt_master_enable: bool,
     pub interrupt_flag: u8,
     pub interrupt_enable: u8,
+    #[cfg(feature = "registers_logs")]
+    file: Rc<RefCell<File>>,
 }
 
 impl Debug for MicrocodeController {
@@ -64,6 +68,8 @@ type ActionFn = fn(controller: &mut MicrocodeController, state: &mut State) -> M
 
 impl Default for MicrocodeController {
     fn default() -> Self {
+        #[cfg(feature = "registers_logs")]
+        let file = MicrocodeController::create_new_file().unwrap();
         Self {
             opcode: None,
             actions: Vec::with_capacity(12),
@@ -71,6 +77,8 @@ impl Default for MicrocodeController {
             interrupt_master_enable: true,
             interrupt_flag: 0,
             interrupt_enable: 0,
+            #[cfg(feature = "registers_logs")]
+            file: Rc::new(RefCell::new(file)),
         }
     }
 }
@@ -82,7 +90,12 @@ impl MicrocodeController {
         let mut state = State::new(regs, bus);
         let action = self.actions.pop().unwrap_or_else(|| {
             self.clear();
-            if self.is_interrupt_ready() {
+
+            let is_prev_opcode_ei = match self.opcode {
+                Some(OpcodeType::Unprefixed(opcode)) => opcode == Opcode::Ei,
+                _ => false,
+            };
+            if !is_prev_opcode_ei && self.is_interrupt_ready() {
                 handle_interrupts
             } else {
                 #[cfg(feature = "registers_logs")]
@@ -161,23 +174,28 @@ impl MicrocodeController {
 
     #[cfg(feature = "registers_logs")]
     fn log_registers_to_file(&mut self, opcode_logs: &str) -> std::io::Result<()> {
-        use std::env;
-        use std::fs::OpenOptions;
         use std::io::prelude::*;
 
-        let current_dir_path = env::current_dir()?.into_os_string();
+        let mut file = &*self.file.borrow_mut();
 
-        if let Some(path) = current_dir_path.to_str() {
-            let mut file = OpenOptions::new()
-                .write(true)
-                .append(true)
-                .create(true)
-                .open(format!("{}/debug/registers_logs/{}", path, "ours.txt"))?;
-            if let Err(e) = writeln!(file, "{}", opcode_logs) {
-                eprintln!("Couldn't write to file: {}", e);
-            }
+        if let Err(e) = writeln!(file, "{}", opcode_logs) {
+            eprintln!("Couldn't write to file: {}", e);
         }
         Ok(())
+    }
+
+    #[cfg(feature = "registers_logs")]
+    fn create_new_file() -> std::io::Result<File> {
+        use std::{env, fs::OpenOptions};
+
+        let project_path = env::current_dir()?.into_os_string();
+
+        OpenOptions::new().write(true).create(true).open(format!(
+            "{}/debug/registers_logs/ours.txt",
+            project_path
+                .to_str()
+                .expect("Could not get project's path from env."),
+        ))
     }
 }
 
