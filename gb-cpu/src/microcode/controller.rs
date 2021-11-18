@@ -88,6 +88,7 @@ impl MicrocodeController {
     ) {
         use std::ops::ControlFlow;
 
+        let mut state = State::new(regs, bus, int_flags.clone());
         let action = self.actions.pop().unwrap_or_else(|| {
             self.clear();
 
@@ -104,7 +105,6 @@ impl MicrocodeController {
                 fetch
             }
         });
-        let mut state = State::new(regs, bus, int_flags.clone());
 
         match action(self, &mut state) {
             ControlFlow::Continue(CycleDigest::Again) => self.step(int_flags, regs, bus),
