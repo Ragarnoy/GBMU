@@ -239,25 +239,30 @@ impl Game {
 impl Drop for Game {
     fn drop(&mut self) {
         if self.auto_save == Some(AutoSave::Ram) || self.auto_save == Some(AutoSave::RamTimer) {
-            use bincode::{config::Configuration, encode_into_std_write, serde::encode_to_vec};
-            use core::ops::Deref;
-            use std::fs::OpenOptions;
+            use std::path::Path;
 
-            let save_file = format!("/tmp/gbmu/saves/auto/{}/ram.bin", self.romname);
-            let mut save_file = OpenOptions::new()
-                .create(true)
-                .write(true)
-                .open(save_file)
-                .expect("cannot open auto save file");
-            let config = Configuration::standard()
-                .with_big_endian()
-                .with_fixed_int_encoding()
-                .write_fixed_array_length();
-            let data = encode_to_vec(self.mbc.borrow().deref(), config)
-                .expect("cannot serialize mbc data");
-            encode_into_std_write(data, &mut save_file, config)
-                .expect("cannot serialize mbc data to file");
-            todo!("auto save");
+            let rom_path = Path::new(&self.romname);
+            let rom_fmt_name = rom_path
+                .file_stem()
+                .unwrap()
+                .to_string_lossy()
+                .replace(" ", "-")
+                .to_lowercase();
+            {
+                use core::ops::Deref;
+                use rmp_serde::encode::write_named;
+                use std::fs::OpenOptions;
+
+                let save_file = format!("/tmp/gbmu/{}-game-save.msgpack", rom_fmt_name);
+                log::info!("saving mbc data to {}", save_file);
+                let mut save_file = OpenOptions::new()
+                    .create(true)
+                    .write(true)
+                    .open(save_file)
+                    .expect("cannot open auto save file");
+                write_named(&mut save_file, self.mbc.borrow().deref())
+                    .expect("cannot serialize mbc data to file");
+            }
         }
     }
 }
