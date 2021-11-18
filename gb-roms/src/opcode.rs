@@ -246,6 +246,22 @@ where
         let current = self.read_byte()?;
 
         let decode_res: Result<Opcode, Error> = match current {
+            0x02 => Ok(op!(
+                Ld,
+                Store::IndirectReg16(Reg16::BC),
+                register8!(A).into()
+            )),
+            0x12 => Ok(op!(
+                Ld,
+                Store::IndirectReg16(Reg16::DE),
+                register8!(A).into()
+            )),
+            0xEA => Ok(op!(
+                Ld,
+                Store::Indirect16(self.get_nn()),
+                register8!(A).into()
+            )),
+
             // Ld nn, n
             0x06 => Ok(op!(Ld, register8!(B).into(), self.get_n().into())),
             0x0E => Ok(op!(Ld, register8!(C).into(), self.get_n().into())),
@@ -666,7 +682,9 @@ where
             // reti
             0xD9 => Ok(op!(ReturnI)),
 
-            _ => Err(Error::UnknownOpcode(current)),
+            0xD3 | 0xDB | 0xDD | 0xE3..=0xE4 | 0xEB..=0xED | 0xF4 | 0xFC..=0xFD => {
+                Err(Error::UnknownOpcode(current))
+            }
         };
         Some(decode_res.map(|opcode| (opcode, self.current_opcode_bytes.clone())))
     }
