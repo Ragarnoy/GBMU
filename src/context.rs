@@ -239,7 +239,8 @@ impl Game {
 impl Drop for Game {
     fn drop(&mut self) {
         if self.auto_save == Some(AutoSave::Ram) || self.auto_save == Some(AutoSave::RamTimer) {
-            use bincode::{config::Configuration, encode_into_std_write};
+            use bincode::{config::Configuration, encode_into_std_write, serde::encode_to_vec};
+            use core::ops::Deref;
             use std::fs::OpenOptions;
 
             let save_file = format!("/tmp/gbmu/saves/auto/{}/ram.bin", self.romname);
@@ -252,7 +253,10 @@ impl Drop for Game {
                 .with_big_endian()
                 .with_fixed_int_encoding()
                 .write_fixed_array_length();
-            encode_into_std_write(self.mbc.borrow(), &mut save_file, config);
+            let data = encode_to_vec(self.mbc.borrow().deref(), config)
+                .expect("cannot serialize mbc data");
+            encode_into_std_write(data, &mut save_file, config)
+                .expect("cannot serialize mbc data to file");
             todo!("auto save");
         }
     }
