@@ -55,6 +55,12 @@ pub fn main() {
             include_bytes!("memory dumps/io_registers/Super_Mario_Land.dmp"),
         ),
         (
+            "bios",
+            include_bytes!("memory dumps/vram/bios-logo.dmp"),
+            &[0u8; 160],
+            &[0u8; 112],
+        ),
+        (
             "zelda",
             include_bytes!("memory dumps/vram/Legend_of_Zelda_link_Awaking.dmp"),
             include_bytes!("memory dumps/oam/Legend_of_Zelda_link_Awaking.dmp"),
