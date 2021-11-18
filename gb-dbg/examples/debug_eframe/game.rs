@@ -56,7 +56,11 @@ pub struct Game {
     pub memory: Vec<u8>,
 }
 
-impl DebugOperations for Game {}
+impl DebugOperations for Game {
+    fn cycle(&self) -> usize {
+        (self.a + self.b) as usize
+    }
+}
 
 impl MemoryDebugOperations for Game {
     fn read(&self, index: u16) -> u8 {

@@ -63,7 +63,10 @@ impl<BUS: DebugOperations> Debugger<BUS> {
     }
 
     pub fn updated_flow_status(&mut self, memory: &BUS) -> Option<ControlFlow<Until>> {
-        if self.breakpoint_editor.are_breakpoints_triggered(memory) {
+        if self
+            .breakpoint_editor
+            .are_breakpoints_triggered(memory.cycle(), memory)
+        {
             Some(ControlFlow::Break(Until::Null))
         } else {
             self.flow_status()

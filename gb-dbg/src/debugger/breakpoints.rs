@@ -46,7 +46,7 @@ impl BreakpointEditor {
             .spacing(Vec2::new(60.5, 6.5))
             .show(ui, |ui| {
                 ui.label(egui::Label::new("Delete"));
-                ui.label(egui::Label::new("Active"));
+                ui.label(egui::Label::new("Enabled"));
                 ui.label(egui::Label::new("Condition"));
                 ui.end_row();
 
@@ -93,10 +93,14 @@ impl BreakpointEditor {
         Ok(())
     }
 
-    pub fn are_breakpoints_triggered<T: RegisterDebugOperations>(&mut self, regs: &T) -> bool {
+    pub fn are_breakpoints_triggered<T: RegisterDebugOperations>(
+        &mut self,
+        cycle: usize,
+        regs: &T,
+    ) -> bool {
         for breakpoint in &mut self.breakpoints {
-            if breakpoint.is_triggered(regs) {
-                breakpoint.enabled = false;
+            if breakpoint.active(cycle) && breakpoint.is_triggered(regs) {
+                breakpoint.trigger(cycle);
                 return true;
             }
         }

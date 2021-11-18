@@ -7,6 +7,7 @@ use std::str::FromStr;
 pub struct Breakpoint {
     expr: BreakpointNode,
     pub enabled: bool,
+    last_triggered: Option<usize>,
 }
 
 impl Display for Breakpoint {
@@ -20,6 +21,7 @@ impl Breakpoint {
         Self {
             expr: BreakpointNode::new_simple(address),
             enabled: true,
+            last_triggered: None,
         }
     }
 
@@ -28,6 +30,7 @@ impl Breakpoint {
         Ok(Self {
             expr: node,
             enabled: true,
+            last_triggered: None,
         })
     }
 
@@ -37,5 +40,16 @@ impl Breakpoint {
         } else {
             false
         }
+    }
+
+    /// check if breakpoint is active
+    /// this method is used to prevent the breakpoint to trigger itself on the same session
+    pub fn active(&self, counter: usize) -> bool {
+        self.enabled && self.last_triggered != Some(counter)
+    }
+
+    /// The method is used to register that the breakpoint was triggered at the session
+    pub fn trigger(&mut self, counter: usize) {
+        self.last_triggered = Some(counter);
     }
 }
