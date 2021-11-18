@@ -267,6 +267,7 @@ where
                 register8!(A).into(),
                 Value::IndirectReg16(Reg16::HL)
             )),
+
             0x40 => Ok(op!(Ld, register8!(B).into(), register8!(B).into())),
             0x41 => Ok(op!(Ld, register8!(B).into(), register8!(C).into())),
             0x42 => Ok(op!(Ld, register8!(B).into(), register8!(D).into())),
@@ -278,6 +279,8 @@ where
                 register8!(B).into(),
                 Value::IndirectReg16(Reg16::HL)
             )),
+            0x47 => Ok(op!(Ld, register8!(B).into(), register8!(A).into())),
+
             0x48 => Ok(op!(Ld, register8!(C).into(), register8!(B).into())),
             0x49 => Ok(op!(Ld, register8!(C).into(), register8!(C).into())),
             0x4A => Ok(op!(Ld, register8!(C).into(), register8!(D).into())),
@@ -290,6 +293,7 @@ where
                 Value::IndirectReg16(Reg16::HL)
             )),
             0x4F => Ok(op!(Ld, register8!(C).into(), register8!(A).into())),
+
             0x50 => Ok(op!(Ld, register8!(D).into(), register8!(B).into())),
             0x51 => Ok(op!(Ld, register8!(D).into(), register8!(C).into())),
             0x52 => Ok(op!(Ld, register8!(D).into(), register8!(D).into())),
@@ -301,6 +305,8 @@ where
                 register8!(D).into(),
                 Value::IndirectReg16(Reg16::HL)
             )),
+            0x57 => Ok(op!(Ld, register8!(D).into(), register8!(A).into())),
+
             0x58 => Ok(op!(Ld, register8!(E).into(), register8!(B).into())),
             0x59 => Ok(op!(Ld, register8!(E).into(), register8!(C).into())),
             0x5A => Ok(op!(Ld, register8!(E).into(), register8!(D).into())),
@@ -312,6 +318,8 @@ where
                 register8!(E).into(),
                 Value::IndirectReg16(Reg16::HL)
             )),
+            0x5F => Ok(op!(Ld, register8!(E).into(), register8!(A).into())),
+
             0x60 => Ok(op!(Ld, register8!(H).into(), register8!(B).into())),
             0x61 => Ok(op!(Ld, register8!(H).into(), register8!(C).into())),
             0x62 => Ok(op!(Ld, register8!(H).into(), register8!(D).into())),
@@ -323,6 +331,8 @@ where
                 register8!(H).into(),
                 Value::IndirectReg16(Reg16::HL)
             )),
+            0x67 => Ok(op!(Ld, register8!(H).into(), register8!(A).into())),
+
             0x68 => Ok(op!(Ld, register8!(L).into(), register8!(B).into())),
             0x69 => Ok(op!(Ld, register8!(L).into(), register8!(C).into())),
             0x6A => Ok(op!(Ld, register8!(L).into(), register8!(D).into())),
@@ -334,6 +344,8 @@ where
                 register8!(L).into(),
                 Value::IndirectReg16(Reg16::HL)
             )),
+            0x6F => Ok(op!(Ld, register8!(L).into(), register8!(A).into())),
+
             0x70 => Ok(op!(
                 Ld,
                 Store::IndirectReg16(Reg16::HL),
@@ -363,6 +375,11 @@ where
                 Ld,
                 Store::IndirectReg16(Reg16::HL),
                 register8!(L).into()
+            )),
+            0x77 => Ok(op!(
+                Ld,
+                Store::IndirectReg16(Reg16::HL),
+                register8!(A).into()
             )),
             0x36 => Ok(op!(
                 Ld,
