@@ -51,12 +51,12 @@ impl Display for BreakpointNode {
 impl BreakpointNode {
     pub fn compute<T: RegisterDebugOperations>(&self, regs: &T) -> bool {
         match self.op {
-            Operator::Eq => u16::from(regs.cpu_get(self.lhs).unwrap()) == self.rhs,
-            Operator::NotEq => u16::from(regs.cpu_get(self.lhs).unwrap()) != self.rhs,
-            Operator::Sup => u16::from(regs.cpu_get(self.lhs).unwrap()) > self.rhs,
-            Operator::Inf => u16::from(regs.cpu_get(self.lhs).unwrap()) < self.rhs,
-            Operator::SupEq => u16::from(regs.cpu_get(self.lhs).unwrap()) >= self.rhs,
-            Operator::InfEq => u16::from(regs.cpu_get(self.lhs).unwrap()) <= self.rhs,
+            Operator::Eq => u16::from(regs.cpu_get(self.lhs)) == self.rhs,
+            Operator::NotEq => u16::from(regs.cpu_get(self.lhs)) != self.rhs,
+            Operator::Sup => u16::from(regs.cpu_get(self.lhs)) > self.rhs,
+            Operator::Inf => u16::from(regs.cpu_get(self.lhs)) < self.rhs,
+            Operator::SupEq => u16::from(regs.cpu_get(self.lhs)) >= self.rhs,
+            Operator::InfEq => u16::from(regs.cpu_get(self.lhs)) <= self.rhs,
         }
     }
 
