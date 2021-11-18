@@ -25,12 +25,7 @@ impl Ticker for Cpu {
     }
 
     fn tick(&mut self, addr_bus: &mut dyn Bus<u8>) {
-        use std::ops::DerefMut;
-
-        self.controller.step(
-            self.interrupt_flags.borrow_mut().deref_mut(),
-            &mut self.registers,
-            addr_bus,
-        )
+        self.controller
+            .step(self.interrupt_flags.clone(), &mut self.registers, addr_bus)
     }
 }

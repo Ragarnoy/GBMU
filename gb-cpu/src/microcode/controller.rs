@@ -6,7 +6,8 @@ use crate::{interrupt_flags::InterruptFlags, registers::Registers};
 use gb_bus::Bus;
 use std::fmt::{self, Debug, Display};
 #[cfg(feature = "registers_logs")]
-use std::{cell::RefCell, fs::File, rc::Rc};
+use std::fs::File;
+use std::{cell::RefCell, rc::Rc};
 
 #[derive(Clone, Debug)]
 pub enum OpcodeType {
@@ -81,7 +82,7 @@ impl Default for MicrocodeController {
 impl MicrocodeController {
     pub fn step(
         &mut self,
-        int_flags: &mut InterruptFlags,
+        int_flags: Rc<RefCell<InterruptFlags>>,
         regs: &mut Registers,
         bus: &mut dyn Bus<u8>,
     ) {
@@ -94,7 +95,7 @@ impl MicrocodeController {
                 Some(OpcodeType::Unprefixed(opcode)) => opcode == Opcode::Ei,
                 _ => false,
             };
-            if !is_prev_opcode_ei && int_flags.is_interrupt_ready() {
+            if !is_prev_opcode_ei && int_flags.borrow().is_interrupt_ready() {
                 handle_interrupts
             } else {
                 #[cfg(feature = "registers_logs")]
@@ -103,7 +104,7 @@ impl MicrocodeController {
                 fetch
             }
         });
-        let mut state = State::new(regs, bus, int_flags);
+        let mut state = State::new(regs, bus, int_flags.clone());
 
         match action(self, &mut state) {
             ControlFlow::Continue(CycleDigest::Again) => self.step(int_flags, regs, bus),
