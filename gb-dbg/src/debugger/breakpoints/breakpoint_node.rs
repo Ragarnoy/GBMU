@@ -76,11 +76,11 @@ impl FromStr for BreakpointNode {
         let (rest, (reg, op, val)) = match tuple((register, operator, value))(s) {
             Ok(ret) => ret,
             Err(_) => {
-                return Err(anyhow!("Invalid input"));
+                return Err(anyhow!("Invalid breakpoint input (Cannot parse `{}`)", s));
             }
         };
         if !rest.is_empty() {
-            Err(anyhow!("Invalid input"))
+            Err(anyhow!("Invalid breakpoint input"))
         } else {
             Ok(BreakpointNode {
                 lhs: reg,
