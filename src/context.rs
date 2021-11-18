@@ -239,13 +239,16 @@ impl Game {
 impl Drop for Game {
     fn drop(&mut self) {
         if self.auto_save == Some(AutoSave::Ram) || self.auto_save == Some(AutoSave::RamTimer) {
+            use anyhow::Error;
             use std::path::Path;
 
             let rom_path = Path::new(&self.romname);
             let rom_fmt_name = rom_path
                 .file_stem()
-                .unwrap()
-                .to_string_lossy()
+                .map_or_else(
+                    || self.romname.clone(),
+                    |filename| filename.to_string_lossy().to_string(),
+                )
                 .replace(" ", "-")
                 .to_lowercase();
             {
@@ -253,15 +256,20 @@ impl Drop for Game {
                 use rmp_serde::encode::write_named;
                 use std::fs::OpenOptions;
 
-                let save_file = format!("/tmp/gbmu/{}-game-save.msgpack", rom_fmt_name);
-                log::info!("saving mbc data to {}", save_file);
-                let mut save_file = OpenOptions::new()
+                let filename = format!("/tmp/gbmu/{}-game-save.msgpack", rom_fmt_name);
+                match OpenOptions::new()
                     .create(true)
                     .write(true)
-                    .open(save_file)
-                    .expect("cannot open auto save file");
-                write_named(&mut save_file, self.mbc.borrow().deref())
-                    .expect("cannot serialize mbc data to file");
+                    .open(&filename)
+                    .map_err(Error::from)
+                    .and_then(|mut file| {
+                        write_named(&mut file, self.mbc.borrow().deref()).map_err(Error::from)
+                    }) {
+                    Ok(_) => log::info!("successfuly save mbc data to {}", filename),
+                    Err(e) => {
+                        log::error!("failed to save mbc data to {}, got error: {}", filename, e)
+                    }
+                }
             }
         }
     }
