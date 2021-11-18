@@ -1,7 +1,7 @@
 mod breakpoint;
 mod breakpoint_node;
 
-use crate::dbg_interfaces::RegisterDebugOperations;
+use crate::dbg_interfaces::DebugOperations;
 use crate::debugger::breakpoints::breakpoint::Breakpoint;
 
 use egui::{Color32, Label, Ui, Vec2, Visuals};
@@ -29,7 +29,7 @@ impl Default for BreakpointEditor {
 }
 
 impl BreakpointEditor {
-    pub fn draw<T: RegisterDebugOperations>(&mut self, ui: &mut Ui, regs: &T) {
+    pub fn draw<T: DebugOperations>(&mut self, ui: &mut Ui, regs: &T) {
         ui.label(Label::new("Breakpoints").text_color(Color32::WHITE));
         self.draw_breakpoint_options(ui);
 
@@ -75,13 +75,13 @@ impl BreakpointEditor {
         });
     }
 
-    fn add_address_breakpoint<T: RegisterDebugOperations>(&mut self, address: u16, regs: &T) {
+    fn add_address_breakpoint<T: DebugOperations>(&mut self, address: u16, regs: &T) {
         if !self.breakpoints.iter().any(|x| x.is_triggered(regs)) {
             self.breakpoints.push(Breakpoint::from_address(address));
         }
     }
 
-    fn add_expr_breakpoint<T: RegisterDebugOperations>(
+    fn add_expr_breakpoint<T: DebugOperations>(
         &mut self,
         expr: &str,
         regs: &T,
@@ -93,25 +93,17 @@ impl BreakpointEditor {
         Ok(())
     }
 
-    pub fn are_breakpoints_triggered<T: RegisterDebugOperations>(
-        &mut self,
-        cycle: usize,
-        regs: &T,
-    ) -> bool {
+    pub fn are_breakpoints_triggered<DBG: DebugOperations>(&mut self, context: &DBG) -> bool {
         for breakpoint in &mut self.breakpoints {
-            if breakpoint.active(cycle) && breakpoint.is_triggered(regs) {
-                breakpoint.trigger(cycle);
+            if breakpoint.active(context) {
+                log::debug!("breakpoint triggered break={:?}", breakpoint);
                 return true;
             }
         }
         false
     }
 
-    fn draw_advanced_breakpoint_widget<T: RegisterDebugOperations>(
-        &mut self,
-        ui: &mut Ui,
-        regs: &T,
-    ) {
+    fn draw_advanced_breakpoint_widget<T: DebugOperations>(&mut self, ui: &mut Ui, regs: &T) {
         ui.horizontal(|ui| {
             let add_button_response =
                 ui.add(egui::Button::new("+").enabled(is_valid_expression(&self.breakpoint_field)));
@@ -137,7 +129,7 @@ impl BreakpointEditor {
         });
     }
 
-    fn draw_simple_breakpoint_widget<T: RegisterDebugOperations>(&mut self, ui: &mut Ui, regs: &T) {
+    fn draw_simple_breakpoint_widget<T: DebugOperations>(&mut self, ui: &mut Ui, regs: &T) {
         self.breakpoint_field.retain(|c| c.is_ascii_hexdigit());
         if self.breakpoint_field.len() <= 5 {
             self.breakpoint_field.truncate(4)
