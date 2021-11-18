@@ -2,14 +2,14 @@ use gb_bus::{Area, FileOperation, IORegArea};
 
 #[derive(Default, Debug, Clone, Copy)]
 pub struct InterruptFlags {
-    pub master_enabled: bool,
+    pub master_enable: bool,
     pub flag: u8,
     pub enable_mask: u8,
 }
 
 impl InterruptFlags {
     pub fn is_interrupt_ready(&self) -> bool {
-        if !self.master_enabled {
+        if !self.master_enable {
             return false;
         }
         self.flag & self.enable_mask != 0
