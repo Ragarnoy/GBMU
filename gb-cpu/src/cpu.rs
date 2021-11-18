@@ -1,11 +1,30 @@
-use crate::{microcode::controller::MicrocodeController, registers::Registers};
-use gb_bus::{Area, Bus, FileOperation, IORegArea};
+use crate::{
+    interrupt_flags::InterruptFlags, microcode::controller::MicrocodeController,
+    registers::Registers,
+};
+use gb_bus::Bus;
 use gb_clock::Ticker;
+use std::{cell::RefCell, rc::Rc};
 
 #[derive(Default, Debug, Clone)]
 pub struct Cpu {
     pub registers: Registers,
     pub controller: MicrocodeController,
+    interrupt_flags: Rc<RefCell<InterruptFlags>>,
+}
+
+impl Cpu {
+    fn new(interrupt_flags: Rc<RefCell<InterruptFlags>>) -> Self {
+        Self {
+            registers: Registers::default(),
+            controller: MicrocodeController::default(),
+            interrupt_flags,
+        }
+    }
+
+    pub fn interrupt_flagss(&self) -> Rc<RefCell<InterruptFlags>> {
+        self.interrupt_flags.clone()
+    }
 }
 
 impl Ticker for Cpu {
@@ -14,30 +33,12 @@ impl Ticker for Cpu {
     }
 
     fn tick(&mut self, addr_bus: &mut dyn Bus<u8>) {
-        self.controller.step(&mut self.registers, addr_bus)
-    }
-}
+        use std::ops::DerefMut;
 
-impl FileOperation<Area> for Cpu {
-    fn read(&self, _addr: Box<dyn gb_bus::Address<Area>>) -> Result<u8, gb_bus::Error> {
-        Ok(self.controller.interrupt_enable)
-    }
-    fn write(&mut self, v: u8, _addr: Box<dyn gb_bus::Address<Area>>) -> Result<(), gb_bus::Error> {
-        self.controller.interrupt_enable = v;
-        Ok(())
-    }
-}
-
-impl FileOperation<IORegArea> for Cpu {
-    fn read(&self, _addr: Box<dyn gb_bus::Address<IORegArea>>) -> Result<u8, gb_bus::Error> {
-        Ok(self.controller.interrupt_flag)
-    }
-    fn write(
-        &mut self,
-        v: u8,
-        _addr: Box<dyn gb_bus::Address<IORegArea>>,
-    ) -> Result<(), gb_bus::Error> {
-        self.controller.interrupt_flag = v;
-        Ok(())
+        self.controller.step(
+            self.interrupt_flags.borrow_mut().deref_mut(),
+            &mut self.registers,
+            addr_bus,
+        )
     }
 }
