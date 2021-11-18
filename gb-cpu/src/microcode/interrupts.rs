@@ -3,9 +3,9 @@ use super::{
     OK_PLAY_NEXT_ACTION,
 };
 
-pub fn handle_interrupts(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow {
-    let interrupt_flag = ctl.interrupt_flag;
-    let interrupt_enable = ctl.interrupt_enable;
+pub fn handle_interrupts(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
+    let interrupt_flag = state.int_flags.flag;
+    let interrupt_enable = state.int_flags.enable_mask;
     let mut interrupt_match = interrupt_flag & interrupt_enable;
 
     // Shift to right until first bit is set
@@ -22,11 +22,11 @@ pub fn handle_interrupts(ctl: &mut MicrocodeController, _state: &mut State) -> M
         return OK_PLAY_NEXT_ACTION;
     }
     // Reset IME to avoid any new interrupt while processing current one
-    ctl.interrupt_master_enable = false;
+    state.int_flags.master_enable = false;
 
     // Reset bit from source in interrupt flag
     let bit_to_res = 1_u8 << source_bit;
-    ctl.interrupt_flag ^= bit_to_res;
+    state.int_flags.flag ^= bit_to_res;
 
     // Push interrupt source address to cache
     ctl.push_u16(0x0040 | ((source_bit as u16) << 3));
@@ -49,12 +49,12 @@ pub fn handle_interrupts(ctl: &mut MicrocodeController, _state: &mut State) -> M
     OK_PLAY_NEXT_ACTION
 }
 
-pub fn disable_ime(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow {
-    ctl.interrupt_master_enable = false;
+pub fn disable_ime(_ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
+    state.int_flags.master_enable = false;
     OK_PLAY_NEXT_ACTION
 }
 
-pub fn enable_ime(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow {
-    ctl.interrupt_master_enable = true;
+pub fn enable_ime(_ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
+    state.int_flags.master_enable = true;
     OK_PLAY_NEXT_ACTION
 }
