@@ -14,15 +14,7 @@ pub struct Cpu {
 }
 
 impl Cpu {
-    fn new(interrupt_flags: Rc<RefCell<InterruptFlags>>) -> Self {
-        Self {
-            registers: Registers::default(),
-            controller: MicrocodeController::default(),
-            interrupt_flags,
-        }
-    }
-
-    pub fn interrupt_flagss(&self) -> Rc<RefCell<InterruptFlags>> {
+    pub fn interrupt_flags(&self) -> Rc<RefCell<InterruptFlags>> {
         self.interrupt_flags.clone()
     }
 }
