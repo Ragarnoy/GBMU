@@ -1,5 +1,5 @@
 mod breakpoint;
-mod breakpoint_node;
+mod breakpoint_expression;
 
 use crate::dbg_interfaces::DebugOperations;
 use crate::debugger::breakpoints::breakpoint::Breakpoint;
@@ -196,4 +196,5 @@ fn is_valid_expression(expr: &str) -> bool {
     expr.chars().all(|c| {
         c.is_alphanumeric() || c.is_whitespace() || c == '=' || c == '>' || c == '<' || c == '!'
     }) && !expr.is_empty()
+        && expr.split_whitespace().count() == 3
 }

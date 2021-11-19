@@ -8,6 +8,34 @@ use nom::IResult;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
+#[derive(Debug)]
+enum Operand {
+    Register(CpuRegs),
+    Value(u16),
+}
+
+impl Operand {
+    fn realize<T: RegisterDebugOperations>(&self, regs: &T) -> u16 {
+        match self {
+            Operand::Register(r) => regs.cpu_get(*r).into(),
+            Operand::Value(v) => *v,
+        }
+    }
+}
+
+impl Display for Operand {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Operand::Register(r) => {
+                write!(f, "{:?}", r)
+            }
+            Operand::Value(v) => {
+                write!(f, "0x{:04X}", v)
+            }
+        }
+    }
+}
+
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 enum Operator {
     Eq,
@@ -32,48 +60,44 @@ impl Display for Operator {
 }
 
 #[derive(Debug)]
-pub struct BreakpointNode {
-    lhs: CpuRegs,
+pub struct BreakpointExpression {
+    lhs: Operand,
     op: Operator,
-    rhs: u16,
+    rhs: Operand,
 }
 
-impl Display for BreakpointNode {
+impl Display for BreakpointExpression {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        if CpuRegs::PC == self.lhs && Operator::Eq == self.op {
-            write!(f, "0x{:04X}", self.rhs)
-        } else {
-            write!(f, "{:?} {} 0x{:04X}", self.lhs, self.op, self.rhs)
-        }
+        write!(f, "{} {} {}", self.lhs, self.op, self.rhs)
     }
 }
 
-impl BreakpointNode {
+impl BreakpointExpression {
     pub fn compute<T: RegisterDebugOperations>(&self, regs: &T) -> bool {
         match self.op {
-            Operator::Eq => u16::from(regs.cpu_get(self.lhs)) == self.rhs,
-            Operator::NotEq => u16::from(regs.cpu_get(self.lhs)) != self.rhs,
-            Operator::Sup => u16::from(regs.cpu_get(self.lhs)) > self.rhs,
-            Operator::Inf => u16::from(regs.cpu_get(self.lhs)) < self.rhs,
-            Operator::SupEq => u16::from(regs.cpu_get(self.lhs)) >= self.rhs,
-            Operator::InfEq => u16::from(regs.cpu_get(self.lhs)) <= self.rhs,
+            Operator::Eq => self.lhs.realize(regs) == self.rhs.realize(regs),
+            Operator::NotEq => self.lhs.realize(regs) != self.rhs.realize(regs),
+            Operator::Sup => self.lhs.realize(regs) > self.rhs.realize(regs),
+            Operator::Inf => self.lhs.realize(regs) < self.rhs.realize(regs),
+            Operator::SupEq => self.lhs.realize(regs) >= self.rhs.realize(regs),
+            Operator::InfEq => self.lhs.realize(regs) <= self.rhs.realize(regs),
         }
     }
 
     pub fn new_simple(address: u16) -> Self {
         Self {
-            lhs: CpuRegs::PC,
+            lhs: Operand::Register(CpuRegs::PC),
             op: Operator::Eq,
-            rhs: address,
+            rhs: Operand::Value(address),
         }
     }
 }
 
-impl FromStr for BreakpointNode {
+impl FromStr for BreakpointExpression {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let (rest, (reg, op, val)) = match tuple((register, operator, value))(s) {
+        let (rest, (reg, op, val)) = match tuple((operand, operator, operand))(s) {
             Ok(ret) => ret,
             Err(_) => {
                 return Err(anyhow!("Invalid breakpoint input (Cannot parse `{}`)", s));
@@ -82,13 +106,17 @@ impl FromStr for BreakpointNode {
         if !rest.is_empty() {
             Err(anyhow!("Invalid breakpoint input"))
         } else {
-            Ok(BreakpointNode {
+            Ok(BreakpointExpression {
                 lhs: reg,
                 op,
                 rhs: val,
             })
         }
     }
+}
+
+fn operand(input: &str) -> IResult<&str, Operand> {
+    alt((map(register, Operand::Register), map(value, Operand::Value)))(input)
 }
 
 fn operator(input: &str) -> IResult<&str, Operator> {
