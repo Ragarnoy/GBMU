@@ -42,18 +42,9 @@ pub struct Windows {
     pub debug: Option<GBWindow>,
     pub input: Option<GBWindow>,
     #[cfg(feature = "debug_render")]
-    pub tilemap: Option<(
-        GBWindow,
-        RenderImage<TILEMAP_DIM, TILEMAP_DIM>,
-        [[[u8; 3]; TILEMAP_DIM]; TILEMAP_DIM],
-        bool,
-    )>,
+    pub tilemap: Option<(GBWindow, RenderImage<TILEMAP_DIM, TILEMAP_DIM>, bool)>,
     #[cfg(feature = "debug_render")]
-    pub tilesheet: Option<(
-        GBWindow,
-        RenderImage<TILESHEET_WIDTH, TILESHEET_HEIGHT>,
-        [[[u8; 3]; TILESHEET_WIDTH]; TILESHEET_HEIGHT],
-    )>,
+    pub tilesheet: Option<(GBWindow, RenderImage<TILESHEET_WIDTH, TILESHEET_HEIGHT>)>,
 }
 
 pub struct Game {

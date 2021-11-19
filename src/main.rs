@@ -55,11 +55,7 @@ fn main() {
             //       log::trace!("frame ready");
             game.draw(&mut context);
         }
-        ui::draw_egui(
-            &mut context,
-            #[cfg(feature = "debug_render")]
-            &game,
-        );
+        ui::draw_egui(&mut context);
         context
             .windows
             .main

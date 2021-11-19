@@ -7,10 +7,7 @@ use gb_lcd::{render, window::GBWindow};
 use gb_ppu::{TILEMAP_DIM, TILESHEET_HEIGHT, TILESHEET_WIDTH};
 use native_dialog::FileDialog;
 
-pub fn draw_egui<const WIDTH: usize, const HEIGHT: usize>(
-    context: &mut Context<WIDTH, HEIGHT>,
-    #[cfg(feature = "debug_render")] game: &Option<Game>,
-) {
+pub fn draw_egui<const WIDTH: usize, const HEIGHT: usize>(context: &mut Context<WIDTH, HEIGHT>) {
     egui::containers::TopBottomPanel::top("Top menu").show(context.windows.main.egui_ctx(), |ui| {
         egui::menu::bar(ui, |ui| {
             ui.set_height(render::MENU_BAR_SIZE);
@@ -31,43 +28,39 @@ pub fn draw_egui<const WIDTH: usize, const HEIGHT: usize>(
             }
             #[cfg(feature = "debug_render")]
             egui::menu::menu(ui, "PPU", |ui| {
-                if let Some(game) = game {
-                    if ui.button("tilesheet").clicked() && context.windows.tilesheet.is_none() {
-                        let tilesheet = GBWindow::new(
-                            "ppu tilesheet",
-                            (TILESHEET_WIDTH as u32, TILESHEET_HEIGHT as u32),
-                            true,
-                            &context.video,
-                        )
-                        .expect("Error while building tilesheet window");
-                        context.windows.tilesheet = Some((
-                            tilesheet,
-                            render::RenderImage::<TILESHEET_WIDTH, TILESHEET_HEIGHT>::with_bar_size(
-                                0.0,
-                            ),
-                            game.ppu.tilesheet_image(),
-                        ))
-                    }
-                    if ui.button("tilemap").clicked() && context.windows.tilemap.is_none() {
-                        let bar_pixels_size =
-                            GBWindow::dots_to_pixels(&context.video, render::MENU_BAR_SIZE)
-                                .expect("Error while computing bar size");
-                        let tilemap = GBWindow::new(
-                            "ppu tilemap",
-                            (TILEMAP_DIM as u32, TILEMAP_DIM as u32 + bar_pixels_size),
-                            true,
-                            &context.video,
-                        )
-                        .expect("Error while building tilemap window");
-                        context.windows.tilemap = Some((
-                            tilemap,
-                            render::RenderImage::<TILEMAP_DIM, TILEMAP_DIM>::with_bar_size(
-                                bar_pixels_size as f32,
-                            ),
-                            game.ppu.tilemap_image(false),
-                            false,
-                        ))
-                    }
+                if ui.button("tilesheet").clicked() && context.windows.tilesheet.is_none() {
+                    let tilesheet = GBWindow::new(
+                        "ppu tilesheet",
+                        (TILESHEET_WIDTH as u32, TILESHEET_HEIGHT as u32),
+                        true,
+                        &context.video,
+                    )
+                    .expect("Error while building tilesheet window");
+                    context.windows.tilesheet = Some((
+                        tilesheet,
+                        render::RenderImage::<TILESHEET_WIDTH, TILESHEET_HEIGHT>::with_bar_size(
+                            0.0,
+                        ),
+                    ))
+                }
+                if ui.button("tilemap").clicked() && context.windows.tilemap.is_none() {
+                    let bar_pixels_size =
+                        GBWindow::dots_to_pixels(&context.video, render::MENU_BAR_SIZE)
+                            .expect("Error while computing bar size");
+                    let tilemap = GBWindow::new(
+                        "ppu tilemap",
+                        (TILEMAP_DIM as u32, TILEMAP_DIM as u32 + bar_pixels_size),
+                        true,
+                        &context.video,
+                    )
+                    .expect("Error while building tilemap window");
+                    context.windows.tilemap = Some((
+                        tilemap,
+                        render::RenderImage::<TILEMAP_DIM, TILEMAP_DIM>::with_bar_size(
+                            bar_pixels_size as f32,
+                        ),
+                        false,
+                    ))
                 }
             });
             if ui.button("Input").clicked() && context.windows.input.is_none() {
@@ -95,7 +88,7 @@ pub fn draw_ppu_debug_ui<const WIDTH: usize, const HEIGHT: usize>(
     context: &mut Context<WIDTH, HEIGHT>,
     game: &mut Option<Game>,
 ) {
-    if let Some((ref mut tilemap_window, ref mut display, ref mut image, ref mut display_window)) =
+    if let Some((ref mut tilemap_window, ref mut display, ref mut display_window)) =
         context.windows.tilemap
     {
         tilemap_window
@@ -118,29 +111,25 @@ pub fn draw_ppu_debug_ui<const WIDTH: usize, const HEIGHT: usize>(
                     })
                 },
             );
-            *image = game.ppu.tilemap_image(*display_window);
+            display.update_render(&game.ppu.tilemap_image(*display_window));
         }
-        display.update_render(image);
         display.draw();
         tilemap_window
             .end_frame()
-            .expect("Fail at the end for the main window");
+            .expect("Fail at the end for the tilemap window");
     }
 
-    if let Some((ref mut tilesheet_window, ref mut display, ref mut image)) =
-        context.windows.tilesheet
-    {
+    if let Some((ref mut tilesheet_window, ref mut display)) = context.windows.tilesheet {
         tilesheet_window
             .start_frame()
             .expect("Fail at the start for the main window");
         if let Some(ref mut game) = game {
-            *image = game.ppu.tilesheet_image();
+            display.update_render(&game.ppu.tilesheet_image());
         }
-        display.update_render(image);
         display.draw();
         tilesheet_window
             .end_frame()
-            .expect("Fail at the end for the main window");
+            .expect("Fail at the end for the tilesheet window");
     }
 }
 

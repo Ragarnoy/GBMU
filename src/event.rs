@@ -58,7 +58,7 @@ pub fn process_event<const WIDTH: usize, const HEIGHT: usize>(
                         }
                     }
                     #[cfg(feature = "debug_render")]
-                    if let Some((ref mut tilemap_wind, ref mut display, _, _)) =
+                    if let Some((ref mut tilemap_wind, ref mut display, _)) =
                         context.windows.tilemap
                     {
                         if tilemap_wind.sdl_window().id() == window_id {
@@ -69,7 +69,7 @@ pub fn process_event<const WIDTH: usize, const HEIGHT: usize>(
                         }
                     }
                     #[cfg(feature = "debug_render")]
-                    if let Some((ref mut tilesheet_wind, ref mut display, _)) =
+                    if let Some((ref mut tilesheet_wind, ref mut display)) =
                         context.windows.tilesheet
                     {
                         if tilesheet_wind.sdl_window().id() == window_id {
@@ -96,13 +96,13 @@ pub fn process_event<const WIDTH: usize, const HEIGHT: usize>(
                         }
                     }
                     #[cfg(feature = "debug_render")]
-                    if let Some((ref mut tilemap_wind, _, _, _)) = context.windows.tilemap {
+                    if let Some((ref mut tilemap_wind, _, _)) = context.windows.tilemap {
                         if tilemap_wind.sdl_window().id() == window_id {
                             context.windows.tilemap = None;
                         }
                     }
                     #[cfg(feature = "debug_render")]
-                    if let Some((ref mut tilesheet_wind, _, _)) = context.windows.tilesheet {
+                    if let Some((ref mut tilesheet_wind, _)) = context.windows.tilesheet {
                         if tilesheet_wind.sdl_window().id() == window_id {
                             context.windows.tilesheet = None;
                         }
@@ -119,11 +119,11 @@ pub fn process_event<const WIDTH: usize, const HEIGHT: usize>(
                         input_wind.send_event(&event, &context.sdl);
                     }
                     #[cfg(feature = "debug_render")]
-                    if let Some((ref mut tilemap_wind, _, _, _)) = context.windows.tilemap {
+                    if let Some((ref mut tilemap_wind, _, _)) = context.windows.tilemap {
                         tilemap_wind.send_event(&event, &context.sdl);
                     }
                     #[cfg(feature = "debug_render")]
-                    if let Some((ref mut tilesheet_wind, _, _)) = context.windows.tilesheet {
+                    if let Some((ref mut tilesheet_wind, _)) = context.windows.tilesheet {
                         tilesheet_wind.send_event(&event, &context.sdl);
                     }
                 }
