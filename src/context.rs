@@ -16,6 +16,8 @@ use gb_lcd::{
     window::GBWindow,
 };
 use gb_ppu::Ppu;
+#[cfg(feature = "debug_render")]
+use gb_ppu::{TILEMAP_DIM, TILESHEET_HEIGHT, TILESHEET_WIDTH};
 use gb_roms::{
     controllers::{bios, generate_rom_controller, BiosWrapper, MbcController},
     header::AutoSave,
@@ -31,12 +33,18 @@ pub struct Context<const WIDTH: usize, const HEIGHT: usize> {
     pub windows: Windows,
     pub display: RenderImage<WIDTH, HEIGHT>,
     pub joypad: Rc<RefCell<Joypad>>,
+    #[cfg(feature = "debug_render")]
+    pub debug_render: bool,
 }
 
 pub struct Windows {
     pub main: GBWindow,
     pub debug: Option<GBWindow>,
     pub input: Option<GBWindow>,
+    #[cfg(feature = "debug_render")]
+    pub tilemap: Option<(GBWindow, RenderImage<TILEMAP_DIM, TILEMAP_DIM>, bool)>,
+    #[cfg(feature = "debug_render")]
+    pub tilesheet: Option<(GBWindow, RenderImage<TILESHEET_WIDTH, TILESHEET_HEIGHT>)>,
 }
 
 pub struct Game {

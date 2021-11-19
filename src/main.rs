@@ -5,8 +5,6 @@ mod settings;
 mod ui;
 
 use clap::{AppSettings, Clap};
-#[cfg(feature = "debug_render")]
-use sdl2::keyboard::Scancode;
 
 use context::{Context, Game, Windows};
 use gb_dbg::debugger::options::DebuggerOptions;
@@ -65,12 +63,7 @@ fn main() {
             //       log::trace!("frame ready");
             game.draw(&mut context);
         }
-        ui::draw_egui(
-            &mut context.windows.main,
-            &mut context.windows.debug,
-            &context.video,
-            &mut context.windows.input,
-        );
+        ui::draw_egui(&mut context);
         context
             .windows
             .main
@@ -101,6 +94,9 @@ fn main() {
                 .end_frame()
                 .expect("Fail at the end for the input window");
         }
+
+        #[cfg(feature = "debug_render")]
+        ui::draw_ppu_debug_ui(&mut context, &mut game);
 
         if std::ops::ControlFlow::Break(()) == event::process_event(&mut context, &mut event_pump) {
             break 'running;
@@ -179,6 +175,10 @@ fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
             None
         },
         input: None,
+        #[cfg(feature = "debug_render")]
+        tilemap: None,
+        #[cfg(feature = "debug_render")]
+        tilesheet: None,
     };
 
     (
@@ -188,6 +188,8 @@ fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
             display,
             joypad,
             windows,
+            #[cfg(feature = "debug_render")]
+            debug_render: false,
         },
         game_context,
         dbg,

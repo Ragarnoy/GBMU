@@ -16,6 +16,23 @@ use std::cell::RefCell;
 use std::ops::Deref;
 use std::rc::Rc;
 
+struct PixelBorder {
+    pub pos: usize,
+    pub sc: usize,
+    pub sc_bot: usize,
+}
+
+macro_rules! view_border {
+    ($main:ident, $other:ident) => {
+        (($main.pos == $main.sc || $main.pos == $main.sc_bot)
+            && (($other.sc < $other.sc_bot
+                && $other.pos >= $other.sc
+                && $other.pos <= $other.sc_bot)
+                || ($other.sc > $other.sc_bot
+                    && ($other.pos >= $other.sc) ^ ($other.pos <= $other.sc_bot))))
+    };
+}
+
 /// The Pixel Process Unit is in charge of selecting the pixel to be displayed on the lcd screen.
 ///
 /// It owns the VRAM and the OAM, as well as a few registers.
@@ -114,6 +131,10 @@ impl Ppu {
         let mut y = 0;
         let vram = self.vram.borrow();
         let lcd_reg = self.lcd_reg.borrow();
+        let scx = lcd_reg.scrolling.scx as usize;
+        let scx_bot = (scx + 160) % 255;
+        let scy = lcd_reg.scrolling.scy as usize;
+        let scy_bot = (scy + 144) % 255;
         for k in 0..TILEMAP_TILE_COUNT {
             let index = vram
                 .get_map_tile_index(
@@ -129,13 +150,30 @@ impl Ppu {
             let tile = vram.read_8x8_tile(index).unwrap();
             for (j, row) in tile.iter().enumerate() {
                 for (i, pixel) in row.iter().rev().enumerate() {
-                    image[y * 8 + j][x * 8 + i] = lcd_reg
+                    let pix_y = y * 8 + j;
+                    let pix_x = x * 8 + i;
+                    let pixel_y = PixelBorder {
+                        pos: pix_y,
+                        sc: scy,
+                        sc_bot: scy_bot,
+                    };
+                    let pixel_x = PixelBorder {
+                        pos: pix_x,
+                        sc: scx,
+                        sc_bot: scx_bot,
+                    };
+                    image[pix_y][pix_x] = lcd_reg
                         .pal_mono
                         .bg()
                         .get()
                         .get_color(*pixel)
                         .unwrap_or_default()
                         .into();
+                    if !window && (view_border!(pixel_y, pixel_x) || view_border!(pixel_x, pixel_y))
+                    {
+                        let neg_pixel = image[pix_y][pix_x];
+                        image[pix_y][pix_x] = [!neg_pixel[0], !neg_pixel[1], !neg_pixel[2]];
+                    }
                 }
             }
             x += 1;
@@ -448,6 +486,11 @@ impl Ticker for Ppu {
     }
 
     fn tick(&mut self, adr_bus: &mut dyn Bus<u8>) {
+        if let Ok(lcd_reg) = self.lcd_reg.try_borrow() {
+            if !lcd_reg.control.ppu_enable() {
+                return;
+            }
+        }
         match self.state.mode() {
             Mode::OAMFetch => self.oam_fetch(adr_bus),
             Mode::PixelDrawing => self.pixel_drawing(adr_bus),
