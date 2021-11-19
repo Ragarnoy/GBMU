@@ -67,12 +67,14 @@ impl DisassemblyViewer {
             |e| match e {
                 Error::InvalidRegisterValue(v)
                 | Error::InvalideOpcode(v)
-                | Error::UnknownOpcode(v) => v.to_string(),
+                | Error::UnknownOpcode(v) => format!("{:#02X}", v),
             },
-            |(_, bytes)| {
-                bytes.iter().fold(String::with_capacity(8), |acc, &s| {
-                    acc + format!("0x{:02X} ", s).as_str()
-                })
+            |(_, bytesarray)| {
+                bytesarray
+                    .iter()
+                    .map(|bytes| format!("{:#02X}", bytes))
+                    .collect::<Vec<String>>()
+                    .join(" ")
             },
         );
         ui.label(egui::Label::new(opcode));

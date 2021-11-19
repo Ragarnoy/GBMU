@@ -95,6 +95,15 @@ impl Controller for MbcController {
     }
 }
 
+impl serde::Serialize for MbcController {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        self.save(serializer)
+    }
+}
+
 impl FileOperation<Area> for MbcController {
     fn read(&self, address: Box<dyn Address<Area>>) -> Result<u8, Error> {
         match self {

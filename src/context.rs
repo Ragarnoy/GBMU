@@ -1,6 +1,6 @@
 use gb_bus::{generic::SimpleRW, AddressBus, Bus, IORegBus, Lock, WorkingRam};
 use gb_clock::{cycles, Clock};
-use gb_cpu::cpu::Cpu;
+use gb_cpu::{cpu::Cpu, new_cpu};
 use gb_dbg::dbg_interfaces::AudioRegs;
 use gb_dbg::{
     dbg_interfaces::{
@@ -44,7 +44,7 @@ pub struct Game {
     pub header: Header,
     pub auto_save: Option<AutoSave>,
     pub mbc: Rc<RefCell<MbcController>>,
-    pub cpu: Rc<RefCell<Cpu>>,
+    pub cpu: Cpu,
     pub ppu: Ppu,
     pub clock: Clock,
     pub io_bus: Rc<RefCell<IORegBus>>,
@@ -54,6 +54,7 @@ pub struct Game {
     pub addr_bus: AddressBus,
     scheduled_stop: Option<ScheduledStop>,
     emulation_stopped: bool,
+    cycle_count: usize,
 }
 
 #[derive(Debug)]
@@ -86,7 +87,7 @@ impl Game {
         let ppu = Ppu::new();
         let ppu_mem = Rc::new(RefCell::new(ppu.memory()));
         let ppu_reg = Rc::new(RefCell::new(ppu.registers()));
-        let cpu = Rc::new(RefCell::new(Cpu::default()));
+        let (cpu, cpu_io_reg) = new_cpu();
         let wram = Rc::new(RefCell::new(WorkingRam::new(false)));
         let timer = Rc::new(RefCell::new(Timer::default()));
         let bios = Rc::new(RefCell::new(bios::dmg()));
@@ -109,7 +110,7 @@ impl Game {
             vram_dma: Rc::new(RefCell::new(SimpleRW::<6>::default())), // TODO: link the part that handle the DMA
             bg_obj_palettes: ppu_reg,
             wram_bank: wram.clone(),
-            interrupt_flag: cpu.clone(),
+            interrupt_flag: cpu_io_reg.clone(),
         }));
 
         let bus = AddressBus {
@@ -122,7 +123,7 @@ impl Game {
             io_reg: io_bus.clone(),
             hram: Rc::new(RefCell::new(SimpleRW::<0x80>::default())),
 
-            ie_reg: cpu.clone(),
+            ie_reg: cpu_io_reg,
             area_locks: HashMap::new(),
         };
 
@@ -141,6 +142,7 @@ impl Game {
             addr_bus: bus,
             scheduled_stop: None,
             emulation_stopped: stopped,
+            cycle_count: 0,
         })
     }
 
@@ -149,12 +151,13 @@ impl Game {
             let frame_not_finished = cycles!(
                 self.clock,
                 &mut self.addr_bus,
-                self.cpu.borrow_mut().deref_mut(),
+                &mut self.cpu,
                 &mut self.ppu,
                 self.timer.borrow_mut().deref_mut(),
                 self.joypad.borrow_mut().deref_mut(),
                 self.dma.borrow_mut().deref_mut()
             );
+            self.cycle_count += 1;
             self.check_scheduled_stop(!frame_not_finished);
             frame_not_finished
         } else {
@@ -236,7 +239,50 @@ impl Game {
     }
 }
 
-impl DebugOperations for Game {}
+impl Drop for Game {
+    fn drop(&mut self) {
+        if self.auto_save == Some(AutoSave::Ram) || self.auto_save == Some(AutoSave::RamTimer) {
+            use anyhow::Error;
+            use std::path::Path;
+
+            let rom_path = Path::new(&self.romname);
+            let rom_fmt_name = rom_path
+                .file_stem()
+                .map_or_else(
+                    || self.romname.clone(),
+                    |filename| filename.to_string_lossy().to_string(),
+                )
+                .replace(" ", "-")
+                .to_lowercase();
+            {
+                use core::ops::Deref;
+                use rmp_serde::encode::write_named;
+                use std::fs::OpenOptions;
+
+                let filename = format!("/tmp/gbmu/{}-game-save.msgpack", rom_fmt_name);
+                match OpenOptions::new()
+                    .create(true)
+                    .write(true)
+                    .open(&filename)
+                    .map_err(Error::from)
+                    .and_then(|mut file| {
+                        write_named(&mut file, self.mbc.borrow().deref()).map_err(Error::from)
+                    }) {
+                    Ok(_) => log::info!("successfuly save mbc data to {}", filename),
+                    Err(e) => {
+                        log::error!("failed to save mbc data to {}, got error: {}", filename, e)
+                    }
+                }
+            }
+        }
+    }
+}
+
+impl DebugOperations for Game {
+    fn cycle(&self) -> usize {
+        self.cycle_count
+    }
+}
 
 impl MemoryDebugOperations for Game {
     fn read(&self, index: u16) -> u8 {
@@ -264,12 +310,12 @@ macro_rules! read_bus_reg {
 impl RegisterDebugOperations for Game {
     fn cpu_get(&self, key: CpuRegs) -> RegisterValue {
         match key {
-            CpuRegs::AF => self.cpu.borrow().registers.af.into(),
-            CpuRegs::BC => self.cpu.borrow().registers.bc.into(),
-            CpuRegs::DE => self.cpu.borrow().registers.de.into(),
-            CpuRegs::HL => self.cpu.borrow().registers.hl.into(),
-            CpuRegs::SP => self.cpu.borrow().registers.sp.into(),
-            CpuRegs::PC => self.cpu.borrow().registers.pc.into(),
+            CpuRegs::AF => self.cpu.registers.af.into(),
+            CpuRegs::BC => self.cpu.registers.bc.into(),
+            CpuRegs::DE => self.cpu.registers.de.into(),
+            CpuRegs::HL => self.cpu.registers.hl.into(),
+            CpuRegs::SP => self.cpu.registers.sp.into(),
+            CpuRegs::PC => self.cpu.registers.pc.into(),
         }
     }
 
@@ -355,12 +401,12 @@ impl RegisterDebugOperations for Game {
 
     fn cpu_registers(&self) -> Vec<RegisterMap<CpuRegs>> {
         vec![
-            RegisterMap(CpuRegs::AF, self.cpu.borrow().registers.af.into()),
-            RegisterMap(CpuRegs::BC, self.cpu.borrow().registers.bc.into()),
-            RegisterMap(CpuRegs::DE, self.cpu.borrow().registers.de.into()),
-            RegisterMap(CpuRegs::HL, self.cpu.borrow().registers.hl.into()),
-            RegisterMap(CpuRegs::SP, self.cpu.borrow().registers.sp.into()),
-            RegisterMap(CpuRegs::PC, self.cpu.borrow().registers.pc.into()),
+            RegisterMap(CpuRegs::AF, self.cpu.registers.af.into()),
+            RegisterMap(CpuRegs::BC, self.cpu.registers.bc.into()),
+            RegisterMap(CpuRegs::DE, self.cpu.registers.de.into()),
+            RegisterMap(CpuRegs::HL, self.cpu.registers.hl.into()),
+            RegisterMap(CpuRegs::SP, self.cpu.registers.sp.into()),
+            RegisterMap(CpuRegs::PC, self.cpu.registers.pc.into()),
         ]
     }
 

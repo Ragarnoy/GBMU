@@ -29,7 +29,9 @@ impl From<RegisterValue> for u16 {
     }
 }
 
-pub trait DebugOperations: MemoryDebugOperations + RegisterDebugOperations {}
+pub trait DebugOperations: MemoryDebugOperations + RegisterDebugOperations {
+    fn cycle(&self) -> usize;
+}
 
 pub trait MemoryDebugOperations {
     fn read(&self, index: u16) -> u8;
