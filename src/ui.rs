@@ -39,7 +39,7 @@ pub fn draw_egui<const WIDTH: usize, const HEIGHT: usize>(
                             true,
                             &context.video,
                         )
-                        .expect("Error while building tilemap window");
+                        .expect("Error while building tilesheet window");
                         context.windows.tilesheet = Some((
                             tilesheet,
                             render::RenderImage::<TILESHEET_WIDTH, TILESHEET_HEIGHT>::with_bar_size(
