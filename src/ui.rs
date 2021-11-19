@@ -93,7 +93,7 @@ pub fn draw_ppu_debug_ui<const WIDTH: usize, const HEIGHT: usize>(
     {
         tilemap_window
             .start_frame()
-            .expect("Fail at the start for the main window");
+            .expect("Fail at the start for the tilemap window");
         if let Some(ref mut game) = game {
             egui::containers::TopBottomPanel::top("Top menu").show(
                 tilemap_window.egui_ctx(),
@@ -122,7 +122,7 @@ pub fn draw_ppu_debug_ui<const WIDTH: usize, const HEIGHT: usize>(
     if let Some((ref mut tilesheet_window, ref mut display)) = context.windows.tilesheet {
         tilesheet_window
             .start_frame()
-            .expect("Fail at the start for the main window");
+            .expect("Fail at the start for the tilesheet window");
         if let Some(ref mut game) = game {
             display.update_render(&game.ppu.tilesheet_image());
         }
