@@ -246,6 +246,22 @@ where
         let current = self.read_byte()?;
 
         let decode_res: Result<Opcode, Error> = match current {
+            0x02 => Ok(op!(
+                Ld,
+                Store::IndirectReg16(Reg16::BC),
+                register8!(A).into()
+            )),
+            0x12 => Ok(op!(
+                Ld,
+                Store::IndirectReg16(Reg16::DE),
+                register8!(A).into()
+            )),
+            0xEA => Ok(op!(
+                Ld,
+                Store::Indirect16(self.get_nn()),
+                register8!(A).into()
+            )),
+
             // Ld nn, n
             0x06 => Ok(op!(Ld, register8!(B).into(), self.get_n().into())),
             0x0E => Ok(op!(Ld, register8!(C).into(), self.get_n().into())),
@@ -267,6 +283,7 @@ where
                 register8!(A).into(),
                 Value::IndirectReg16(Reg16::HL)
             )),
+
             0x40 => Ok(op!(Ld, register8!(B).into(), register8!(B).into())),
             0x41 => Ok(op!(Ld, register8!(B).into(), register8!(C).into())),
             0x42 => Ok(op!(Ld, register8!(B).into(), register8!(D).into())),
@@ -278,6 +295,8 @@ where
                 register8!(B).into(),
                 Value::IndirectReg16(Reg16::HL)
             )),
+            0x47 => Ok(op!(Ld, register8!(B).into(), register8!(A).into())),
+
             0x48 => Ok(op!(Ld, register8!(C).into(), register8!(B).into())),
             0x49 => Ok(op!(Ld, register8!(C).into(), register8!(C).into())),
             0x4A => Ok(op!(Ld, register8!(C).into(), register8!(D).into())),
@@ -290,6 +309,7 @@ where
                 Value::IndirectReg16(Reg16::HL)
             )),
             0x4F => Ok(op!(Ld, register8!(C).into(), register8!(A).into())),
+
             0x50 => Ok(op!(Ld, register8!(D).into(), register8!(B).into())),
             0x51 => Ok(op!(Ld, register8!(D).into(), register8!(C).into())),
             0x52 => Ok(op!(Ld, register8!(D).into(), register8!(D).into())),
@@ -301,6 +321,8 @@ where
                 register8!(D).into(),
                 Value::IndirectReg16(Reg16::HL)
             )),
+            0x57 => Ok(op!(Ld, register8!(D).into(), register8!(A).into())),
+
             0x58 => Ok(op!(Ld, register8!(E).into(), register8!(B).into())),
             0x59 => Ok(op!(Ld, register8!(E).into(), register8!(C).into())),
             0x5A => Ok(op!(Ld, register8!(E).into(), register8!(D).into())),
@@ -312,6 +334,8 @@ where
                 register8!(E).into(),
                 Value::IndirectReg16(Reg16::HL)
             )),
+            0x5F => Ok(op!(Ld, register8!(E).into(), register8!(A).into())),
+
             0x60 => Ok(op!(Ld, register8!(H).into(), register8!(B).into())),
             0x61 => Ok(op!(Ld, register8!(H).into(), register8!(C).into())),
             0x62 => Ok(op!(Ld, register8!(H).into(), register8!(D).into())),
@@ -323,6 +347,8 @@ where
                 register8!(H).into(),
                 Value::IndirectReg16(Reg16::HL)
             )),
+            0x67 => Ok(op!(Ld, register8!(H).into(), register8!(A).into())),
+
             0x68 => Ok(op!(Ld, register8!(L).into(), register8!(B).into())),
             0x69 => Ok(op!(Ld, register8!(L).into(), register8!(C).into())),
             0x6A => Ok(op!(Ld, register8!(L).into(), register8!(D).into())),
@@ -334,6 +360,8 @@ where
                 register8!(L).into(),
                 Value::IndirectReg16(Reg16::HL)
             )),
+            0x6F => Ok(op!(Ld, register8!(L).into(), register8!(A).into())),
+
             0x70 => Ok(op!(
                 Ld,
                 Store::IndirectReg16(Reg16::HL),
@@ -363,6 +391,11 @@ where
                 Ld,
                 Store::IndirectReg16(Reg16::HL),
                 register8!(L).into()
+            )),
+            0x77 => Ok(op!(
+                Ld,
+                Store::IndirectReg16(Reg16::HL),
+                register8!(A).into()
             )),
             0x36 => Ok(op!(
                 Ld,
@@ -649,7 +682,9 @@ where
             // reti
             0xD9 => Ok(op!(ReturnI)),
 
-            _ => Err(Error::UnknownOpcode(current)),
+            0xD3 | 0xDB | 0xDD | 0xE3..=0xE4 | 0xEB..=0xED | 0xF4 | 0xFC..=0xFD => {
+                Err(Error::UnknownOpcode(current))
+            }
         };
         Some(decode_res.map(|opcode| (opcode, self.current_opcode_bytes.clone())))
     }
