@@ -32,7 +32,7 @@ pub fn draw_egui<const WIDTH: usize, const HEIGHT: usize>(
             #[cfg(feature = "debug_render")]
             egui::menu::menu(ui, "PPU", |ui| {
                 if let Some(game) = game {
-                    if ui.button("tilesheet").clicked() {
+                    if ui.button("tilesheet").clicked() && context.windows.tilesheet.is_none() {
                         let tilesheet = GBWindow::new(
                             "ppu tilesheet",
                             (TILESHEET_WIDTH as u32, TILESHEET_HEIGHT as u32),
