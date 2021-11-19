@@ -85,7 +85,7 @@ impl PixelFetcher {
         self.tile = match self.mode {
             FetchMode::Background => vram
                 .get_map_tile_index(
-                    (x + scx) % SCREEN_WIDTH / 8 + (y + scy) % SCREEN_HEIGHT / 8 * SCREEN_WIDTH / 8,
+                    ((x + scx) % 255) / 8 + ((y + scy) % 255) / 8 * 32,
                     lcd_reg.control.bg_tilemap_area(),
                     lcd_reg.control.bg_win_tiledata_area(),
                 )
@@ -129,7 +129,7 @@ impl PixelFetcher {
         match vram.read_tile_line(self.tile, line) {
             Ok(row) => {
                 for color_id in row {
-                    self.pixels.push_back(Pixel::new(
+                    self.pixels.push_front(Pixel::new(
                         color_id,
                         lcd_reg.pal_mono.bg().clone(),
                         false,
@@ -155,7 +155,7 @@ impl PixelFetcher {
         ) {
             Ok(row) => {
                 for (color_id, _) in row {
-                    self.pixels.push_back(Pixel::new(
+                    self.pixels.push_front(Pixel::new(
                         color_id,
                         sprite.get_palette(lcd_reg.pal_mono.obj()).clone(),
                         false,
