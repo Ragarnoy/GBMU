@@ -50,10 +50,14 @@ impl Ticker for Dma {
                 .read(((self.oam_register as u16) << 8) + step, Some(Lock::Dma))
                 .expect("memory unavailable during OAM DMA");
             if adr_bus.write(0xFE00 + step, src, Some(Lock::Dma)).is_err() {
-                log::error!("failed to write data during OAM DMA");
+                log::error!(
+                    "failed to write data '{:x}' at '{:x}' during OAM DMA",
+                    src,
+                    0xFE00 + step
+                );
             }
             let next_step = step + 1;
-            if next_step <= 160 {
+            if next_step < 160 {
                 self.oam_transfer = Some(next_step);
             } else {
                 self.oam_transfer = None;
