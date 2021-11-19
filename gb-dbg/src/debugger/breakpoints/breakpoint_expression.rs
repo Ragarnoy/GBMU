@@ -1,4 +1,4 @@
-use crate::dbg_interfaces::{CpuRegs, RegisterDebugOperations};
+use crate::dbg_interfaces::{CpuRegs, DebugOperations};
 use anyhow::anyhow;
 use nom::branch::alt;
 use nom::bytes::complete::{tag, take_while_m_n};
@@ -12,13 +12,15 @@ use std::str::FromStr;
 enum Operand {
     Register(CpuRegs),
     Value(u16),
+    Address(u16),
 }
 
 impl Operand {
-    fn realize<T: RegisterDebugOperations>(&self, regs: &T) -> u16 {
+    fn realize<T: DebugOperations>(&self, regs: &T) -> u16 {
         match self {
             Operand::Register(r) => regs.cpu_get(*r).into(),
             Operand::Value(v) => *v,
+            Operand::Address(a) => regs.read(*a).into(),
         }
     }
 }
@@ -31,6 +33,9 @@ impl Display for Operand {
             }
             Operand::Value(v) => {
                 write!(f, "0x{:04X}", v)
+            }
+            Operand::Address(a) => {
+                write!(f, "0x{:04X}", a)
             }
         }
     }
@@ -73,7 +78,7 @@ impl Display for BreakpointExpression {
 }
 
 impl BreakpointExpression {
-    pub fn compute<T: RegisterDebugOperations>(&self, regs: &T) -> bool {
+    pub fn compute<T: DebugOperations>(&self, regs: &T) -> bool {
         match self.op {
             Operator::Eq => self.lhs.realize(regs) == self.rhs.realize(regs),
             Operator::NotEq => self.lhs.realize(regs) != self.rhs.realize(regs),
@@ -97,7 +102,7 @@ impl FromStr for BreakpointExpression {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let (rest, (reg, op, val)) = match tuple((operand, operator, operand))(s) {
+        let (rest, (reg, op, val)) = match tuple((operand_left, operator, operand_right))(s) {
             Ok(ret) => ret,
             Err(_) => {
                 return Err(anyhow!("Invalid breakpoint input (Cannot parse `{}`)", s));
@@ -115,8 +120,15 @@ impl FromStr for BreakpointExpression {
     }
 }
 
-fn operand(input: &str) -> IResult<&str, Operand> {
+fn operand_right(input: &str) -> IResult<&str, Operand> {
     alt((map(register, Operand::Register), map(value, Operand::Value)))(input)
+}
+
+fn operand_left(input: &str) -> IResult<&str, Operand> {
+    alt((
+        map(register, Operand::Register),
+        map(value, Operand::Address),
+    ))(input)
 }
 
 fn operator(input: &str) -> IResult<&str, Operator> {
