@@ -61,13 +61,14 @@ impl PixelFetcher {
         lcd_reg: &dyn Deref<Target = LcdReg>,
         y: usize,
         x: usize,
+        x_queued: usize,
     ) {
         let scy = lcd_reg.scrolling.scy as usize;
         if self.internal_tick % 2 == 1 {
             // the fetcher take 2 tick to process one step
             match self.internal_tick / 2 {
-                0 => self.get_tile_index(vram, lcd_reg, y, x), // get the tile index.
-                1 => {}                                        // get the high data of the tile
+                0 => self.get_tile_index(vram, lcd_reg, y, x, x_queued), // get the tile index.
+                1 => {} // get the high data of the tile
                 2 => self.fetch_full_row(vram, lcd_reg, (y + scy) % 8), // get the low data of the tile, the pixels are ready after this step
                 _ => {}                                                 // idle on the last step
             }
@@ -81,13 +82,15 @@ impl PixelFetcher {
         lcd_reg: &dyn Deref<Target = LcdReg>,
         y: usize,
         x: usize,
+        x_queued: usize,
     ) {
         let scx = lcd_reg.scrolling.scx as usize;
         let scy = lcd_reg.scrolling.scy as usize;
         self.tile = match self.mode {
             FetchMode::Background => vram
                 .get_map_tile_index(
-                    ((x + scx) % 255) / 8 + ((y + scy) % 255) / 8 * TILEMAP_TILE_DIM_COUNT,
+                    ((x + x_queued + scx) % 255) / 8
+                        + ((y + scy) % 255) / 8 * TILEMAP_TILE_DIM_COUNT,
                     lcd_reg.control.bg_tilemap_area(),
                     lcd_reg.control.bg_win_tiledata_area(),
                 )
