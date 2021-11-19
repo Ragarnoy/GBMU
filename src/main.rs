@@ -29,12 +29,15 @@ struct Opts {
     #[clap(
         long = "breakpoint",
         short = 'b',
-        about = "create and enable breakpoints at the start of the rom",
+        about = "create and enable breakpoints at the start of the rom\n\
+        breakpoints must be specified in the following format:\n\
+        ./gbmu -b \"PC == 0050\" \"AF == 0010\" -- <ROM>",
         requires = "rom"
     )]
     breakpoints: Option<Vec<String>>,
     #[clap(
         long = "debug",
+        short = 'd',
         about = "enable debug mode at the start of the rom",
         requires = "rom"
     )]
