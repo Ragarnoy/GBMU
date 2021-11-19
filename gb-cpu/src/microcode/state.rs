@@ -1,7 +1,14 @@
-use crate::registers::Registers;
+use crate::{interrupt_flags::InterruptFlags, registers::Registers};
 #[cfg(feature = "registers_logs")]
 use core::fmt::{self, Debug};
 use gb_bus::Bus;
+use std::{cell::RefCell, rc::Rc};
+
+pub struct State<'a> {
+    bus: &'a mut dyn Bus<u8>,
+    pub regs: &'a mut Registers,
+    pub int_flags: Rc<RefCell<InterruptFlags>>,
+}
 
 #[cfg(feature = "registers_logs")]
 impl<'a> Debug for State<'a> {
@@ -27,14 +34,18 @@ impl<'a> Debug for State<'a> {
         )
     }
 }
-pub struct State<'a> {
-    bus: &'a mut dyn Bus<u8>,
-    pub regs: &'a mut Registers,
-}
 
 impl<'a> State<'a> {
-    pub fn new(regs: &'a mut Registers, bus: &'a mut dyn Bus<u8>) -> Self {
-        Self { bus, regs }
+    pub fn new(
+        regs: &'a mut Registers,
+        bus: &'a mut dyn Bus<u8>,
+        int_flags: Rc<RefCell<InterruptFlags>>,
+    ) -> Self {
+        Self {
+            bus,
+            regs,
+            int_flags,
+        }
     }
 
     /// Read the byte at the `Program Counter` then increment it
