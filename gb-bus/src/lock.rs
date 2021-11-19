@@ -1,10 +1,10 @@
 use crate::{Area, FileOperation};
 
-#[derive(Eq, PartialEq, Debug, Clone, Copy)]
+#[derive(Eq, PartialEq, Debug, Clone, Copy, PartialOrd, Ord)]
 pub enum Lock {
     Ppu,
-    Debugger,
     Dma,
+    Debugger,
 }
 
 pub trait MemoryLock {
@@ -17,3 +17,10 @@ pub trait MemoryLock {
 }
 
 pub trait InternalLock<A: Into<u16>>: MemoryLock + FileOperation<A> {}
+
+#[test]
+fn test_comparing_lock_order() {
+    assert!(Lock::Ppu < Lock::Dma);
+    assert!(Lock::Dma < Lock::Debugger);
+    assert!(Lock::Ppu < Lock::Debugger);
+}
