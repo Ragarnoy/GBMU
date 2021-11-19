@@ -1,11 +1,11 @@
 use crate::dbg_interfaces::DebugOperations;
-use crate::debugger::breakpoints::breakpoint_node::BreakpointNode;
+use crate::debugger::breakpoints::breakpoint_expression::BreakpointExpression;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
 #[derive(Debug)]
 pub struct Breakpoint {
-    expr: BreakpointNode,
+    expr: BreakpointExpression,
     pub enabled: bool,
     last_state: bool,
 }
@@ -19,14 +19,14 @@ impl Display for Breakpoint {
 impl Breakpoint {
     pub fn from_address(address: u16) -> Self {
         Self {
-            expr: BreakpointNode::new_simple(address),
+            expr: BreakpointExpression::new_simple(address),
             enabled: true,
             last_state: false,
         }
     }
 
     pub fn from_expression(expr: &str) -> anyhow::Result<Self> {
-        let node = BreakpointNode::from_str(expr)?;
+        let node = BreakpointExpression::from_str(expr)?;
         Ok(Self {
             expr: node,
             enabled: true,
