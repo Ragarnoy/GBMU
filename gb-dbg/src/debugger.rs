@@ -32,6 +32,9 @@ impl<BUS: DebugOperations> Debugger<BUS> {
             self.flow_status = self.flow_controller.draw(ui);
         });
 
+        egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |_ui| {
+        });
+
         self.disassembler
             .may_update_cache(memory.cpu_get(CpuRegs::PC).into(), memory);
 
