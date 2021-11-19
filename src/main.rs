@@ -9,6 +9,7 @@ use clap::{AppSettings, Clap};
 use sdl2::keyboard::Scancode;
 
 use context::{Context, Game, Windows};
+use gb_dbg::debugger::options::DebuggerOptions;
 use gb_dbg::debugger::{Debugger, DebuggerBuilder};
 use gb_lcd::{render, window::GBWindow};
 use logger::init_logger;
@@ -27,6 +28,13 @@ struct Opts {
     #[clap(about = "rom file to be loaded by the gameboy")]
     rom: Option<String>,
 
+    #[clap(
+        long = "breakpoint",
+        short = 'b',
+        about = "create and enable breakpoints at the start of the rom",
+        requires = "rom"
+    )]
+    breakpoints: Option<Vec<String>>,
     #[clap(
         long = "debug",
         about = "enable debug mode at the start of the rom",
@@ -153,7 +161,15 @@ fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
         )
     });
 
-    let dbg = DebuggerBuilder::new().build();
+    let dbg = if let Some(breakpoints) = &opts.breakpoints {
+        let dbg_options = DebuggerOptions {
+            breakpoints: breakpoints.clone(),
+            ..Default::default()
+        };
+        DebuggerBuilder::new().with_options(dbg_options).build()
+    } else {
+        DebuggerBuilder::new().build()
+    };
 
     let windows = Windows {
         main: gb_window,

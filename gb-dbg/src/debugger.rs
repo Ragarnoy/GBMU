@@ -2,10 +2,10 @@ mod breakpoints;
 pub mod disassembler;
 pub mod flow_control;
 pub mod memory;
-mod options;
+pub mod options;
 pub mod registers;
 
-use crate::dbg_interfaces::{CpuRegs, DebugOperations, MemoryDebugOperations};
+use crate::dbg_interfaces::{CpuRegs, DebugOperations};
 use crate::debugger::breakpoints::BreakpointEditor;
 use crate::debugger::disassembler::DisassemblyViewer;
 use crate::debugger::flow_control::FlowController;
@@ -37,7 +37,7 @@ impl<BUS: DebugOperations> Debugger<BUS> {
 
         egui::SidePanel::left("left_panel")
             .resizable(false)
-            .default_width(510.0)
+            .default_width(530.0)
             .show(ctx, |ui| {
                 ui.vertical(|ui| {
                     self.disassembler.draw(ui);
@@ -45,12 +45,6 @@ impl<BUS: DebugOperations> Debugger<BUS> {
                     self.memory_editor.draw(ui, &mut memory);
                 });
             });
-
-        // egui::SidePanel::right("right_panel")
-        //     .resizable(false)
-        //     .default_width(165.0)
-        //     .show(ctx, |ui| {
-        //     });
 
         egui::CentralPanel::default().show(ctx, |ui| {
             self.register_editor.draw(ui, memory);
@@ -86,13 +80,15 @@ impl DebuggerBuilder {
         self
     }
 
-    pub fn build<MEM: MemoryDebugOperations>(self) -> Debugger<MEM> {
+    pub fn build<MEM: DebugOperations>(self) -> Debugger<MEM> {
         Debugger {
-            memory_editor: MemoryViewer::new(self.options.unwrap_or_default().address_ranges),
+            memory_editor: MemoryViewer::new(
+                self.options.clone().unwrap_or_default().address_ranges,
+            ),
             register_editor: RegisterEditor,
             flow_controller: FlowController,
             disassembler: DisassemblyViewer::default(),
-            breakpoint_editor: BreakpointEditor::default(),
+            breakpoint_editor: BreakpointEditor::new(self.options.unwrap_or_default().breakpoints),
             flow_status: None,
         }
     }

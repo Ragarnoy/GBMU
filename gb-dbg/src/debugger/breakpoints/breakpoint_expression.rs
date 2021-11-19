@@ -100,11 +100,11 @@ impl FromStr for BreakpointExpression {
         let (rest, (reg, op, val)) = match tuple((operand, operator, operand))(s) {
             Ok(ret) => ret,
             Err(_) => {
-                return Err(anyhow!("Invalid input"));
+                return Err(anyhow!("Invalid breakpoint input (Cannot parse `{}`)", s));
             }
         };
         if !rest.is_empty() {
-            Err(anyhow!("Invalid input"))
+            Err(anyhow!("Invalid breakpoint input"))
         } else {
             Ok(BreakpointExpression {
                 lhs: reg,

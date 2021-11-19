@@ -55,6 +55,12 @@ pub fn main() {
             include_bytes!("memory dumps/io_registers/Super_Mario_Land.dmp"),
         ),
         (
+            "bios",
+            include_bytes!("memory dumps/vram/bios-logo.dmp"),
+            &[0u8; 160],
+            &bios_io_reg(),
+        ),
+        (
             "zelda",
             include_bytes!("memory dumps/vram/Legend_of_Zelda_link_Awaking.dmp"),
             include_bytes!("memory dumps/oam/Legend_of_Zelda_link_Awaking.dmp"),
@@ -126,4 +132,12 @@ pub fn main() {
         }
         // std::thread::sleep(::std::time::Duration::new(0, 1_000_000_000u32 / 60));
     }
+}
+
+fn bios_io_reg() -> [u8; 112] {
+    let mut io_reg = [0; 112];
+
+    io_reg[0x47] = 0xfc;
+
+    io_reg
 }
