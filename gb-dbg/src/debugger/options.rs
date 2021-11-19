@@ -4,8 +4,10 @@ use gb_bus::constant::{
 };
 use std::ops::Range;
 
+#[derive(Clone)]
 pub struct DebuggerOptions {
     pub address_ranges: Vec<(&'static str, Range<u16>)>,
+    pub breakpoints: Vec<String>,
 }
 
 impl Default for DebuggerOptions {
@@ -18,6 +20,7 @@ impl Default for DebuggerOptions {
                 ("RAM", RAM_START..RAM_STOP),
                 ("HRAM", HRAM_START..HRAM_STOP),
             ],
+            breakpoints: Default::default(),
         }
     }
 }

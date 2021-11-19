@@ -29,6 +29,21 @@ impl Default for BreakpointEditor {
 }
 
 impl BreakpointEditor {
+    pub fn new(breakpoint_list: Vec<String>) -> Self {
+        if breakpoint_list.is_empty() {
+            Default::default()
+        } else {
+            let breakpoints = breakpoint_list
+                .into_iter()
+                .filter_map(|b| Breakpoint::from_expression(&b).ok())
+                .collect();
+            Self {
+                breakpoints,
+                ..Default::default()
+            }
+        }
+    }
+
     pub fn draw<T: DebugOperations>(&mut self, ui: &mut Ui, regs: &T) {
         ui.label(Label::new("Breakpoints").text_color(Color32::WHITE));
         self.draw_breakpoint_options(ui);
