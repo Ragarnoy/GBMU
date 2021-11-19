@@ -22,8 +22,7 @@ impl RegisterEditor {
             self.draw_register_table(register.io_registers(), "IO", ui);
             self.draw_register_table(register.audio_registers(), "AUDIO", ui);
         });
-        ui.add_space(58.0);
-        ui.separator();
+        ui.add_space(30.0);
     }
 
     fn draw_register_table<T: std::fmt::Display + std::fmt::Debug>(

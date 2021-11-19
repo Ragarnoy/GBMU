@@ -1,41 +1,51 @@
+use crate::dbg_interfaces::DebugOperations;
+use crate::debugger::breakpoints::breakpoint_node::BreakpointNode;
 use std::fmt::{Display, Formatter};
+use std::str::FromStr;
 
 #[derive(Debug)]
-enum BreakpointType {
-    Address(u16),
-}
-
-impl Default for BreakpointType {
-    fn default() -> Self {
-        Self::Address(0)
-    }
-}
-
-#[derive(Default, Debug)]
 pub struct Breakpoint {
-    r#type: BreakpointType,
+    expr: BreakpointNode,
     pub enabled: bool,
+    last_state: bool,
 }
 
 impl Display for Breakpoint {
     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
-        match self.r#type {
-            BreakpointType::Address(x) => write!(f, "0x{:04X}", x),
-        }
+        write!(f, "{}", self.expr)
     }
 }
 
 impl Breakpoint {
     pub fn from_address(address: u16) -> Self {
         Self {
-            r#type: BreakpointType::Address(address),
-            enabled: false,
+            expr: BreakpointNode::new_simple(address),
+            enabled: true,
+            last_state: false,
         }
     }
 
-    pub fn address(&self) -> u16 {
-        match self.r#type {
-            BreakpointType::Address(x) => x,
-        }
+    pub fn from_expression(expr: &str) -> anyhow::Result<Self> {
+        let node = BreakpointNode::from_str(expr)?;
+        Ok(Self {
+            expr: node,
+            enabled: true,
+            last_state: false,
+        })
+    }
+
+    pub fn is_triggered<T: DebugOperations>(&self, regs: &T) -> bool {
+        self.enabled && self.expr.compute(regs)
+    }
+
+    /// check if breakpoint is active
+    /// this method is used to prevent the breakpoint to trigger itself on the same session
+    pub fn active<DBG: DebugOperations>(&mut self, context: &DBG) -> bool {
+        let current_state = self.is_triggered(context);
+        let result = !self.last_state && current_state;
+
+        self.last_state = current_state;
+
+        result
     }
 }
