@@ -58,7 +58,7 @@ pub fn main() {
             "bios",
             include_bytes!("memory dumps/vram/bios-logo.dmp"),
             &[0u8; 160],
-            &[0u8; 112],
+            &bios_io_reg(),
         ),
         (
             "zelda",
@@ -132,4 +132,12 @@ pub fn main() {
         }
         // std::thread::sleep(::std::time::Duration::new(0, 1_000_000_000u32 / 60));
     }
+}
+
+fn bios_io_reg() -> [u8; 112] {
+    let mut io_reg = [0; 112];
+
+    io_reg[0x47] = 0xfc;
+
+    io_reg
 }
