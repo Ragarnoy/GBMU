@@ -4,7 +4,10 @@ use crate::Game;
 use gb_dbg::{DEBUGGER_HEIGHT, DEBUGGER_WIDTH};
 use gb_lcd::{render, window::GBWindow};
 #[cfg(feature = "debug_render")]
-use gb_ppu::{TILEMAP_DIM, TILESHEET_HEIGHT, TILESHEET_WIDTH};
+use gb_ppu::{
+    SPRITE_LIST_RENDER_HEIGHT, SPRITE_LIST_RENDER_WIDTH, SPRITE_RENDER_HEIGHT, SPRITE_RENDER_WIDTH,
+    TILEMAP_DIM, TILESHEET_HEIGHT, TILESHEET_WIDTH,
+};
 use native_dialog::FileDialog;
 
 pub fn draw_egui<const WIDTH: usize, const HEIGHT: usize>(context: &mut Context<WIDTH, HEIGHT>) {
@@ -68,6 +71,31 @@ pub fn draw_egui<const WIDTH: usize, const HEIGHT: usize>(context: &mut Context<
                             bar_pixels_size as f32,
                         ),
                         false,
+                    ))
+                }
+                if ui.button("objects").clicked() && context.windows.oam.is_none() {
+                    let bar_pixels_size =
+                        GBWindow::dots_to_pixels(&context.video, render::MENU_BAR_SIZE)
+                            .expect("Error while computing bar size");
+                    let mut oam = GBWindow::new(
+                        "ppu oam",
+                        (SPRITE_RENDER_WIDTH as u32, SPRITE_RENDER_HEIGHT as u32 + bar_pixels_size),
+                        true,
+                        &context.video,
+                    )
+                    .expect("Error while building oam window");
+                    oam.sdl_window_mut()
+                        .set_minimum_size(SPRITE_RENDER_WIDTH as u32, SPRITE_RENDER_HEIGHT as u32 + bar_pixels_size)
+                        .expect("Failed to configure oam window");
+                    context.windows.oam = Some((
+                        oam,
+                        render::RenderImage::<SPRITE_RENDER_WIDTH, SPRITE_RENDER_HEIGHT>::with_bar_size(
+                            bar_pixels_size as f32,
+                        ),
+                        render::RenderImage::<SPRITE_LIST_RENDER_WIDTH, SPRITE_LIST_RENDER_HEIGHT>::with_bar_size(
+                            bar_pixels_size as f32,
+                        ),
+                        false
                     ))
                 }
             });
@@ -138,6 +166,43 @@ pub fn draw_ppu_debug_ui<const WIDTH: usize, const HEIGHT: usize>(
         tilesheet_window
             .end_frame()
             .expect("Fail at the end for the tilesheet window");
+    }
+
+    if let Some((
+        ref mut oam_window,
+        ref mut display_view,
+        ref mut display_list,
+        ref mut display_mode,
+    )) = context.windows.oam
+    {
+        oam_window
+            .start_frame()
+            .expect("Fail at the start for the oam window");
+        if let Some(ref mut game) = game {
+            egui::containers::TopBottomPanel::top("Top menu").show(oam_window.egui_ctx(), |ui| {
+                egui::menu::bar(ui, |ui| {
+                    ui.set_height(render::MENU_BAR_SIZE);
+                    egui::menu::menu(ui, "mode", |ui| {
+                        if ui.button("viewport").clicked() {
+                            *display_mode = false;
+                        }
+                        if ui.button("list").clicked() {
+                            *display_mode = true;
+                        }
+                    });
+                })
+            });
+            if !*display_mode {
+                display_view.update_render(&game.ppu.sprites_image());
+                display_view.draw();
+            } else {
+                display_list.update_render(&game.ppu.sprites_list_image());
+                display_list.draw();
+            }
+        }
+        oam_window
+            .end_frame()
+            .expect("Fail at the end for the oam window");
     }
 }
 
