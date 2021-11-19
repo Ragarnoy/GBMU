@@ -2,6 +2,7 @@ use super::{Pixel, PixelFIFO};
 use crate::memory::Vram;
 use crate::registers::LcdReg;
 use crate::Sprite;
+use crate::TILEMAP_TILE_DIM_COUNT;
 use gb_lcd::render::{SCREEN_HEIGHT, SCREEN_WIDTH};
 use std::collections::VecDeque;
 use std::ops::Deref;
@@ -61,13 +62,14 @@ impl PixelFetcher {
         y: usize,
         x: usize,
     ) {
+        let scy = lcd_reg.scrolling.scy as usize;
         if self.internal_tick % 2 == 1 {
             // the fetcher take 2 tick to process one step
             match self.internal_tick / 2 {
                 0 => self.get_tile_index(vram, lcd_reg, y, x), // get the tile index.
                 1 => {}                                        // get the high data of the tile
-                2 => self.fetch_full_row(vram, lcd_reg, y % 8), // get the low data of the tile, the pixels are ready after this step
-                _ => {}                                         // idle on the last step
+                2 => self.fetch_full_row(vram, lcd_reg, (y + scy) % 8), // get the low data of the tile, the pixels are ready after this step
+                _ => {}                                                 // idle on the last step
             }
         }
         self.internal_tick = (self.internal_tick + 1) % 8
@@ -85,7 +87,7 @@ impl PixelFetcher {
         self.tile = match self.mode {
             FetchMode::Background => vram
                 .get_map_tile_index(
-                    ((x + scx) % 255) / 8 + ((y + scy) % 255) / 8 * 32,
+                    ((x + scx) % 255) / 8 + ((y + scy) % 255) / 8 * TILEMAP_TILE_DIM_COUNT,
                     lcd_reg.control.bg_tilemap_area(),
                     lcd_reg.control.bg_win_tiledata_area(),
                 )
