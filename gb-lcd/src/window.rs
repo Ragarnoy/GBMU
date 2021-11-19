@@ -42,11 +42,15 @@ impl GBWindow {
             .gl_create_context()
             .map_err(Error::GBWindowInit)?;
 
-        let (egui_painter, egui_state) = egui_sdl2_gl::with_sdl2(&sdl_window, DpiScaling::Default);
+        let (egui_painter, egui_state) = egui_sdl2_gl::with_sdl2(
+            &sdl_window,
+            DpiScaling::Custom(
+                video_sys.display_dpi(0).map_err(Error::GBWindowInit)?.0 / RESOLUTION_DOT,
+            ),
+        );
         let egui_ctx = CtxRef::default();
 
-        let native_pixels_per_point =
-            RESOLUTION_DOT / video_sys.display_dpi(0).map_err(Error::GBWindowInit)?.0;
+        let native_pixels_per_point = 1.0;
 
         let start_time = Instant::now();
         Ok(Self {
@@ -147,11 +151,7 @@ impl GBWindow {
         self.debug = debug;
     }
 
-    pub fn dots_to_pixels(video_sys: &VideoSubsystem, dots: f32) -> Result<u32, Error> {
-        Ok(
-            (dots * RESOLUTION_DOT / video_sys.display_dpi(0).map_err(Error::GBWindowInit)?.0)
-                .ceil() as u32
-                + 4,
-        )
+    pub fn dots_to_pixels(_video_sys: &VideoSubsystem, dots: f32) -> Result<u32, Error> {
+        Ok((dots).ceil() as u32 + 4)
     }
 }
