@@ -19,7 +19,7 @@ impl<MEM: MemoryDebugOperations> MemoryViewer<MEM> {
         .with_options(mem_options);
         for (range_name, range) in address_ranges {
             mem_edit =
-                mem_edit.with_address_range(range_name, range.start as usize..range.end as usize);
+                mem_edit.with_address_range(range_name, range.start as usize..range.end as usize + 1);
         }
 
         Self {
