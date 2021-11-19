@@ -29,13 +29,17 @@ pub fn draw_egui<const WIDTH: usize, const HEIGHT: usize>(context: &mut Context<
             #[cfg(feature = "debug_render")]
             egui::menu::menu(ui, "PPU", |ui| {
                 if ui.button("tilesheet").clicked() && context.windows.tilesheet.is_none() {
-                    let tilesheet = GBWindow::new(
+                    let mut tilesheet = GBWindow::new(
                         "ppu tilesheet",
                         (TILESHEET_WIDTH as u32, TILESHEET_HEIGHT as u32),
                         true,
                         &context.video,
                     )
                     .expect("Error while building tilesheet window");
+                    tilesheet
+                        .sdl_window_mut()
+                        .set_minimum_size(TILESHEET_WIDTH as u32, TILESHEET_HEIGHT as u32)
+                        .expect("Failed to configure tilesheet window");
                     context.windows.tilesheet = Some((
                         tilesheet,
                         render::RenderImage::<TILESHEET_WIDTH, TILESHEET_HEIGHT>::with_bar_size(
@@ -47,13 +51,17 @@ pub fn draw_egui<const WIDTH: usize, const HEIGHT: usize>(context: &mut Context<
                     let bar_pixels_size =
                         GBWindow::dots_to_pixels(&context.video, render::MENU_BAR_SIZE)
                             .expect("Error while computing bar size");
-                    let tilemap = GBWindow::new(
+                    let mut tilemap = GBWindow::new(
                         "ppu tilemap",
                         (TILEMAP_DIM as u32, TILEMAP_DIM as u32 + bar_pixels_size),
                         true,
                         &context.video,
                     )
                     .expect("Error while building tilemap window");
+                    tilemap
+                        .sdl_window_mut()
+                        .set_minimum_size(TILEMAP_DIM as u32, TILEMAP_DIM as u32 + bar_pixels_size)
+                        .expect("Failed to configure tilemap window");
                     context.windows.tilemap = Some((
                         tilemap,
                         render::RenderImage::<TILEMAP_DIM, TILEMAP_DIM>::with_bar_size(
