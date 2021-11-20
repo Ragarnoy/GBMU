@@ -69,7 +69,7 @@ mod tests {
     #[test]
     fn mix() {
         let pal_0 = Rc::new(Cell::new(Palette::new(false)));
-        let pixels_0 = VecDeque::from_iter([
+        let mut pixels_0 = VecDeque::from_iter([
             Pixel::new(1, pal_0.clone(), false),
             Pixel::new(1, pal_0.clone(), false),
             Pixel::new(1, pal_0.clone(), false),
@@ -92,8 +92,8 @@ mod tests {
         ]);
         let mut fifo = PixelFIFO::new();
 
-        fifo.append(pixels_0);
-        fifo.mix(pixels_1);
+        fifo.append(&mut pixels_0);
+        fifo.mix(&pixels_1);
         assert_eq!(fifo.pixels.len(), 8, "incorrect pixel amount pushed");
         for (i, pixel) in fifo.pixels.iter().enumerate() {
             if i % 2 == 0 {
@@ -107,7 +107,7 @@ mod tests {
     #[test]
     fn append() {
         let palette = Rc::new(Cell::new(Palette::new(false)));
-        let pixels = VecDeque::from_iter([
+        let mut pixels = VecDeque::from_iter([
             Pixel::new(0, palette.clone(), false),
             Pixel::new(1, palette.clone(), false),
             Pixel::new(2, palette.clone(), false),
@@ -119,7 +119,7 @@ mod tests {
         ]);
         let mut fifo = PixelFIFO::new();
 
-        fifo.append(pixels);
+        fifo.append(&mut pixels);
         assert_eq!(fifo.pixels.len(), 8, "incorrect pixel amount pushed");
         for (i, pixel) in fifo.pixels.iter().enumerate() {
             assert_eq!(pixel.color as usize, i % 4, "pixel order");
@@ -129,7 +129,7 @@ mod tests {
     #[test]
     fn pop() {
         let palette = Rc::new(Cell::new(Palette::new(false)));
-        let pixels_0 = VecDeque::from_iter([
+        let mut pixels_0 = VecDeque::from_iter([
             Pixel::new(0, palette.clone(), false),
             Pixel::new(1, palette.clone(), false),
             Pixel::new(0, palette.clone(), false),
@@ -139,7 +139,7 @@ mod tests {
             Pixel::new(0, palette.clone(), false),
             Pixel::new(1, palette.clone(), false),
         ]);
-        let pixels_1 = VecDeque::from_iter([
+        let mut pixels_1 = VecDeque::from_iter([
             Pixel::new(2, palette.clone(), false),
             Pixel::new(3, palette.clone(), false),
             Pixel::new(2, palette.clone(), false),
@@ -151,9 +151,9 @@ mod tests {
         ]);
         let mut fifo = PixelFIFO::new();
 
-        fifo.append(pixels_0);
+        fifo.append(&mut pixels_0);
         assert!(fifo.pop().is_none(), "pop should have been blocked");
-        fifo.append(pixels_1);
+        fifo.append(&mut pixels_1);
         assert!(fifo.pop().is_some(), "pop should not have been blocked");
         assert_eq!(fifo.pixels.len(), 15, "incorrect pixel amount pushed");
         for (i, pixel) in fifo.pixels.iter().enumerate() {
