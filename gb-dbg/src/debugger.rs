@@ -13,10 +13,10 @@ use crate::debugger::flow_control::FlowController;
 use crate::debugger::memory::MemoryViewer;
 use crate::debugger::options::DebuggerOptions;
 use crate::debugger::registers::RegisterEditor;
+use crate::debugger::status_bar::StatusBar;
 use crate::until::Until;
 use egui::CtxRef;
 use std::ops::ControlFlow;
-use crate::debugger::status_bar::StatusBar;
 
 pub struct Debugger<MEM> {
     memory_editor: MemoryViewer<MEM>,
