@@ -57,13 +57,21 @@ fn main() {
             .start_frame()
             .expect("Fail at the start for the main window");
         if let Some(ref mut game) = game {
+            #[cfg(features = "time_frame")]
+            use std::time::Instant;
+
+            #[cfg(features = "time_frame")]
+            let now = Instant::now();
             while game.cycle() {
-                //            log::trace!("cycling the game");
                 if let Some(flow) = debugger.updated_flow_status(game) {
                     game.update_scheduled_stop(flow);
                 }
             }
-            //       log::trace!("frame ready");
+            #[cfg(features = "time_frame")]
+            {
+                let elapsed = now.elapsed();
+                log::info!("frame ready in {}ms", elapsed.as_millis());
+            }
             game.draw(&mut context);
         }
         ui::draw_egui(&mut context);
