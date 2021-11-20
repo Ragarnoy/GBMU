@@ -361,7 +361,7 @@ impl Ppu {
     fn pixel_drawing(&mut self, adr_bus: &mut dyn Bus<u8>) {
         if let Ok(lcd_reg) = self.lcd_reg.try_borrow() {
             let mut lock: Option<Lock>;
-            let x: u8;
+            let mut x: u8;
             let y: u8;
             if let Ok(vram) = self.vram.try_borrow() {
                 lock = vram.get_lock();
@@ -395,14 +395,17 @@ impl Ppu {
                     if let Some(pixel) = self.pixel_fifo.pop() {
                         self.next_pixels[y as usize][x as usize] = Color::from(pixel).into();
                         self.state.draw_pixel();
+                        x += 1;
                     };
                 }
-                self.pixel_fetcher
-                    .fetch(&vram, &lcd_reg, y as usize, x as usize);
-                self.pixel_fetcher.push_to_fifo(&mut self.pixel_fifo);
-                if self.pixel_fetcher.push_to_fifo(&mut self.pixel_fifo)
-                    && x < self.state.pixel_drawn()
-                {
+                self.pixel_fetcher.fetch(
+                    &vram,
+                    &lcd_reg,
+                    y as usize,
+                    x as usize,
+                    self.pixel_fifo.count(),
+                );
+                if self.pixel_fetcher.push_to_fifo(&mut self.pixel_fifo) && x < SCREEN_WIDTH as u8 {
                     Self::check_next_pixel_mode(
                         &lcd_reg,
                         &mut self.pixel_fetcher,
@@ -440,7 +443,8 @@ impl Ppu {
     ) {
         let (x, y) = cursor;
 
-        if lcd_reg.window_pos.wy <= y && lcd_reg.window_pos.wx <= x {
+        if lcd_reg.control.win_enable() && lcd_reg.window_pos.wy <= y && lcd_reg.window_pos.wx <= x
+        {
             if pixel_fetcher.mode() == FetchMode::Background {
                 pixel_fetcher.set_mode(FetchMode::Window);
                 pixel_fifo.clear();
