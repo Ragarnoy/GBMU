@@ -624,8 +624,10 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                     jump::jump,
                     interrupts::enable_ime,
                 ]),
+                Opcode::Halt => &mut ctl,
 
                 Opcode::Nop => &mut ctl,
+
                 Opcode::PrefixCb => ctl.push_action(fetch_cb),
                 _ => todo!("unimplemented opcode {:?}", opcode),
             };

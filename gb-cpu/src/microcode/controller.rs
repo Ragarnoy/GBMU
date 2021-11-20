@@ -2,7 +2,7 @@ use super::{
     fetch::fetch, interrupts::handle_interrupts, opcode::Opcode, opcode_cb::OpcodeCB, CycleDigest,
     MicrocodeFlow, State,
 };
-use crate::{interrupt_flags::InterruptFlags, registers::Registers};
+use crate::{interrupt_flags::InterruptFlags, microcode::utils::sleep, registers::Registers};
 use gb_bus::Bus;
 use std::fmt::{self, Debug, Display};
 #[cfg(feature = "registers_logs")]
@@ -91,18 +91,19 @@ impl MicrocodeController {
         let mut state = State::new(regs, bus, int_flags.clone());
         let action = self.actions.pop().unwrap_or_else(|| {
             self.clear();
-
-            let is_prev_opcode_ei = match self.opcode {
-                Some(OpcodeType::Unprefixed(opcode)) => opcode == Opcode::Ei,
-                _ => false,
+            let previous_opcode = match self.opcode {
+                Some(OpcodeType::Unprefixed(opcode)) => opcode,
+                _ => Opcode::Nop,
             };
-            if !is_prev_opcode_ei && int_flags.borrow().is_interrupt_ready() {
+            if previous_opcode != Opcode::Ei && int_flags.borrow().is_interrupt_ready() {
                 handle_interrupts
-            } else {
+            } else if previous_opcode != Opcode::Halt {
                 #[cfg(feature = "registers_logs")]
                 self.log_registers_to_file(format!("{:?}", state).as_str())
                     .unwrap_or_default();
                 fetch
+            } else {
+                sleep
             }
         });
 
