@@ -79,6 +79,16 @@ pub fn process_event<const WIDTH: usize, const HEIGHT: usize>(
                             display.resize(tilesheet_wind.sdl_window().size());
                         }
                     }
+                    #[cfg(feature = "debug_render")]
+                    if let Some((ref mut oam_wind, ref mut display_view, ref mut display_list, _)) =
+                        context.windows.oam
+                    {
+                        if oam_wind.sdl_window().id() == window_id {
+                            oam_wind.resize().expect("Fail to resize oam window");
+                            display_view.resize(oam_wind.sdl_window().size());
+                            display_list.resize(oam_wind.sdl_window().size());
+                        }
+                    }
                 }
                 sdl2::event::WindowEvent::Close => {
                     if context.windows.main.sdl_window().id() == window_id {
@@ -107,6 +117,12 @@ pub fn process_event<const WIDTH: usize, const HEIGHT: usize>(
                             context.windows.tilesheet = None;
                         }
                     }
+                    #[cfg(feature = "debug_render")]
+                    if let Some((ref mut oam_wind, _, _, _)) = context.windows.oam {
+                        if oam_wind.sdl_window().id() == window_id {
+                            context.windows.oam = None;
+                        }
+                    }
                 }
                 _ => {}
             },
@@ -125,6 +141,10 @@ pub fn process_event<const WIDTH: usize, const HEIGHT: usize>(
                     #[cfg(feature = "debug_render")]
                     if let Some((ref mut tilesheet_wind, _)) = context.windows.tilesheet {
                         tilesheet_wind.send_event(&event, &context.sdl);
+                    }
+                    #[cfg(feature = "debug_render")]
+                    if let Some((ref mut oam_wind, _, _, _)) = context.windows.oam {
+                        oam_wind.send_event(&event, &context.sdl);
                     }
                 }
             }

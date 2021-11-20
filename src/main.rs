@@ -182,6 +182,8 @@ fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
         tilemap: None,
         #[cfg(feature = "debug_render")]
         tilesheet: None,
+        #[cfg(feature = "debug_render")]
+        oam: None,
     };
 
     (

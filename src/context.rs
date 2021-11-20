@@ -17,7 +17,10 @@ use gb_lcd::{
 };
 use gb_ppu::Ppu;
 #[cfg(feature = "debug_render")]
-use gb_ppu::{TILEMAP_DIM, TILESHEET_HEIGHT, TILESHEET_WIDTH};
+use gb_ppu::{
+    SPRITE_LIST_RENDER_HEIGHT, SPRITE_LIST_RENDER_WIDTH, SPRITE_RENDER_HEIGHT, SPRITE_RENDER_WIDTH,
+    TILEMAP_DIM, TILESHEET_HEIGHT, TILESHEET_WIDTH,
+};
 use gb_roms::{
     controllers::{bios, generate_rom_controller, BiosWrapper, MbcController},
     header::AutoSave,
@@ -45,6 +48,13 @@ pub struct Windows {
     pub tilemap: Option<(GBWindow, RenderImage<TILEMAP_DIM, TILEMAP_DIM>, bool)>,
     #[cfg(feature = "debug_render")]
     pub tilesheet: Option<(GBWindow, RenderImage<TILESHEET_WIDTH, TILESHEET_HEIGHT>)>,
+    #[cfg(feature = "debug_render")]
+    pub oam: Option<(
+        GBWindow,
+        RenderImage<SPRITE_RENDER_WIDTH, SPRITE_RENDER_HEIGHT>,
+        RenderImage<SPRITE_LIST_RENDER_WIDTH, SPRITE_LIST_RENDER_HEIGHT>,
+        bool,
+    )>,
 }
 
 pub struct Game {
