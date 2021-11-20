@@ -4,6 +4,7 @@ pub mod flow_control;
 pub mod memory;
 pub mod options;
 pub mod registers;
+mod status_bar;
 
 use crate::dbg_interfaces::{CpuRegs, DebugOperations};
 use crate::debugger::breakpoints::BreakpointEditor;
@@ -15,6 +16,7 @@ use crate::debugger::registers::RegisterEditor;
 use crate::until::Until;
 use egui::CtxRef;
 use std::ops::ControlFlow;
+use crate::debugger::status_bar::StatusBar;
 
 pub struct Debugger<MEM> {
     memory_editor: MemoryViewer<MEM>,
@@ -22,6 +24,7 @@ pub struct Debugger<MEM> {
     flow_controller: FlowController,
     disassembler: DisassemblyViewer,
     breakpoint_editor: BreakpointEditor,
+    status_bar: StatusBar,
     flow_status: Option<ControlFlow<Until>>,
 }
 
@@ -30,6 +33,9 @@ impl<BUS: DebugOperations> Debugger<BUS> {
         // ctx.set_debug_on_hover(true);
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             self.flow_status = self.flow_controller.draw(ui);
+        });
+        egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
+            self.status_bar.draw(ui, memory);
         });
 
         self.disassembler
@@ -89,6 +95,7 @@ impl DebuggerBuilder {
             flow_controller: FlowController,
             disassembler: DisassemblyViewer::default(),
             breakpoint_editor: BreakpointEditor::new(self.options.unwrap_or_default().breakpoints),
+            status_bar: StatusBar,
             flow_status: None,
         }
     }
