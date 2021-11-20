@@ -36,23 +36,23 @@ impl PixelFIFO {
         self.pixels.len()
     }
 
-    pub fn append(&mut self, mut new_pixels: VecDeque<Pixel>) -> Option<VecDeque<Pixel>> {
+    pub fn append(&mut self, new_pixels: &mut VecDeque<Pixel>) -> bool {
         if self.pixels.len() <= 8 && new_pixels.len() == 8 {
-            self.pixels.append(&mut new_pixels);
-            None
+            self.pixels.append(new_pixels);
+            true
         } else {
-            Some(new_pixels)
+            false
         }
     }
 
-    pub fn mix(&mut self, mix_pixels: VecDeque<Pixel>) -> Option<VecDeque<Pixel>> {
+    pub fn mix(&mut self, mix_pixels: &VecDeque<Pixel>) -> bool {
         if self.pixels.len() >= 8 && mix_pixels.len() == 8 {
             for (in_place, mix_pixel) in self.pixels.iter_mut().zip(mix_pixels) {
                 in_place.mix(mix_pixel);
             }
-            None
+            true
         } else {
-            Some(mix_pixels)
+            false
         }
     }
 }
