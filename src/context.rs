@@ -27,7 +27,7 @@ use gb_roms::{
     Header,
 };
 use gb_timer::Timer;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::{cell::RefCell, ops::DerefMut, rc::Rc};
 
 pub struct Context<const WIDTH: usize, const HEIGHT: usize> {
@@ -142,7 +142,7 @@ impl Game {
             hram: Rc::new(RefCell::new(SimpleRW::<0x80>::default())),
 
             ie_reg: cpu_io_reg,
-            area_locks: HashMap::new(),
+            area_locks: BTreeMap::new(),
         };
 
         Ok(Self {
