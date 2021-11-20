@@ -6,7 +6,6 @@ use gb_roms::opcode::{error::Error, list::Opcode, OpcodeGenerator};
 pub struct DisassemblyViewer {
     cache: Vec<Result<(Opcode, Vec<u8>), Error>>,
     cache_pc_valid_range: Option<(u16, u16)>,
-    expected_pc: u16,
 }
 
 impl DisassemblyViewer {
@@ -23,14 +22,14 @@ impl DisassemblyViewer {
         let next_instr_start_address = opcode_len(current_opcode) + pc + 1;
 
         self.cache_pc_valid_range = Some((pc, next_instr_start_address));
-        self.expected_pc = next_instr_start_address;
     }
 
     fn update_cache<MEM: MemoryDebugOperations>(&mut self, pc: u16, memory: &MEM) {
         log::debug!("update opcode cache");
 
+        let expected_pc = self.cache_pc_valid_range.unwrap().1;
         // After a jump/ret/call instructions
-        if pc != self.expected_pc {
+        if pc != expected_pc {
             self.init_cache(pc, memory);
         } else {
             let next_opcode = &self.cache[1];
@@ -43,7 +42,6 @@ impl DisassemblyViewer {
 
             self.cache_pc_valid_range = Some((start_address, next_instr_start_address));
             self.cache = generator.take(8).collect::<Vec<Result<_, Error>>>();
-            self.expected_pc = next_instr_start_address;
         }
     }
 
