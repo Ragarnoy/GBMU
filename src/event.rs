@@ -67,7 +67,7 @@ pub fn process_event<const WIDTH: usize, const HEIGHT: usize>(
                     {
                         if tilemap_wind.sdl_window().id() == window_id {
                             tilemap_wind
-                                .resize()
+                                .resize(&context.video)
                                 .expect("Fail to resize tilemap window");
                             display.resize(tilemap_wind.sdl_window().size());
                         }
@@ -78,7 +78,7 @@ pub fn process_event<const WIDTH: usize, const HEIGHT: usize>(
                     {
                         if tilesheet_wind.sdl_window().id() == window_id {
                             tilesheet_wind
-                                .resize()
+                                .resize(&context.video)
                                 .expect("Fail to resize tilesheet window");
                             display.resize(tilesheet_wind.sdl_window().size());
                         }
@@ -88,7 +88,9 @@ pub fn process_event<const WIDTH: usize, const HEIGHT: usize>(
                         context.windows.oam
                     {
                         if oam_wind.sdl_window().id() == window_id {
-                            oam_wind.resize().expect("Fail to resize oam window");
+                            oam_wind
+                                .resize(&context.video)
+                                .expect("Fail to resize oam window");
                             display_view.resize(oam_wind.sdl_window().size());
                             display_list.resize(oam_wind.sdl_window().size());
                         }
