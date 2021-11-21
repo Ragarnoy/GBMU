@@ -17,7 +17,7 @@ use size::{RamSize, RomSize};
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Header {
     pub entry_point: [u8; 4],
-    pub nitendo_logo: [u8; 48],
+    pub logo: [u8; 48],
     pub title: Title,
     pub new_license_code: NewLicenseCode,
     pub sgb_flag: SgbFlag,
@@ -53,7 +53,7 @@ impl Default for Header {
     fn default() -> Self {
         Self {
             entry_point: Default::default(),
-            nitendo_logo: [0; 48],
+            logo: [0; 48],
             title: Default::default(),
             new_license_code: Default::default(),
             sgb_flag: Default::default(),
@@ -88,7 +88,7 @@ mod test_from_chunk {
             ]),
             Ok(Header {
                 entry_point: [0, 195, 198, 5],
-                nitendo_logo: [
+                logo: [
                     206, 237, 102, 102, 204, 13, 0, 11, 3, 115, 0, 131, 0, 12, 0, 13, 0, 8, 17, 31,
                     136, 137, 0, 14, 220, 204, 110, 230, 221, 221, 217, 153, 187, 187, 103, 99,
                     110, 14, 236, 204, 221, 220, 153, 159, 187, 185, 51, 62
@@ -123,7 +123,7 @@ mod test_from_chunk {
             ]),
             Ok(Header {
                 entry_point: [0, 195, 80, 1],
-                nitendo_logo: [
+                logo: [
                     206, 237, 102, 102, 204, 13, 0, 11, 3, 115, 0, 131, 0, 12, 0, 13, 0, 8, 17, 31,
                     136, 137, 0, 14, 220, 204, 110, 230, 221, 221, 217, 153, 187, 187, 103, 99,
                     110, 14, 236, 204, 221, 220, 153, 159, 187, 185, 51, 62
@@ -155,7 +155,7 @@ mod test_from_chunk {
             ]),
             Ok(Header {
                 entry_point: [0, 195, 80, 1],
-                nitendo_logo: [
+                logo: [
                     206, 237, 102, 102, 204, 13, 0, 11, 3, 115, 0, 131, 0, 12, 0, 13, 0, 8, 17, 31,
                     136, 137, 0, 14, 220, 204, 110, 230, 221, 221, 217, 153, 187, 187, 103, 99,
                     110, 14, 236, 204, 221, 220, 153, 159, 187, 185, 51, 62
@@ -186,7 +186,7 @@ impl TryFrom<RawHeader> for Header {
     fn try_from(raw: RawHeader) -> Result<Self, Self::Error> {
         Ok(Self {
             entry_point: raw.entry_point,
-            nitendo_logo: raw.nitendo_logo,
+            logo: raw.logo,
             title: raw.title.try_into()?,
             new_license_code: NewLicenseCode::try_from(
                 String::from_utf8(raw.new_license_code.into())?.as_str(),
@@ -250,7 +250,7 @@ impl TryFrom<[u8; 16]> for Title {
 #[repr(C)]
 pub struct RawHeader {
     pub entry_point: [u8; 4],
-    pub nitendo_logo: [u8; 48],
+    pub logo: [u8; 48],
     pub title: [u8; 16],
     pub new_license_code: [u8; 2],
     pub sgb_flag: u8,
@@ -268,7 +268,7 @@ impl From<&[u8; 80]> for RawHeader {
     fn from(chunk: &[u8; 80]) -> Self {
         Self {
             entry_point: <[u8; 4]>::try_from(&chunk[..4]).unwrap(),
-            nitendo_logo: <[u8; 48]>::try_from(&chunk[4..52]).unwrap(),
+            logo: <[u8; 48]>::try_from(&chunk[4..52]).unwrap(),
             title: <[u8; 16]>::try_from(&chunk[52..68]).unwrap(),
             new_license_code: <[u8; 2]>::try_from(&chunk[68..70]).unwrap(),
             sgb_flag: chunk[70],
