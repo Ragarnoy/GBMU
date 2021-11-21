@@ -381,7 +381,7 @@ impl RegisterDebugOperations for Game {
             PPU_BGP, PPU_CONTROL, PPU_DMA, PPU_LY, PPU_LYC, PPU_OBP0, PPU_OBP1, PPU_SCX, PPU_SCY,
             PPU_STATUS, PPU_WX, PPU_WY,
         };
-        match key {
+        if let Err(e) = match key {
             PpuRegs::Control => self
                 .addr_bus
                 .write(PPU_CONTROL, value, Some(Lock::Debugger)),
@@ -396,7 +396,9 @@ impl RegisterDebugOperations for Game {
             PpuRegs::Obp1 => self.addr_bus.write(PPU_OBP1, value, Some(Lock::Debugger)),
             PpuRegs::Wy => self.addr_bus.write(PPU_WY, value, Some(Lock::Debugger)),
             PpuRegs::Wx => self.addr_bus.write(PPU_WX, value, Some(Lock::Debugger)),
-        };
+        } {
+            log::error!("{:?}", e);
+        }
     }
 
     fn io_get(&self, key: IORegs) -> RegisterValue {
