@@ -9,12 +9,40 @@ pub struct DisassemblyViewer {
 }
 
 impl DisassemblyViewer {
-    fn update_cache<MEM: MemoryDebugOperations>(&mut self, pc: u16, memory: &MEM) {
-        log::debug!("update opcode cache");
+    fn init_cache<MEM: MemoryDebugOperations>(&mut self, pc: u16, memory: &MEM) {
+        log::debug!("initialise opcode cache");
         let byte_it = ByteIterator::new(pc, memory);
         let generator = OpcodeGenerator::from(byte_it);
+
         self.cache = generator.take(8).collect::<Vec<Result<_, Error>>>();
-        self.cache_pc_valid_range = Some((pc, opcode_len(&self.cache[0]) + pc));
+
+        let current_opcode = &self.cache[0];
+
+        // The "+ 1" delays the cache update so we can keep displaying the current instruction
+        let next_instr_start_address = opcode_len(current_opcode) + pc + 1;
+
+        self.cache_pc_valid_range = Some((pc, next_instr_start_address));
+    }
+
+    fn update_cache<MEM: MemoryDebugOperations>(&mut self, pc: u16, memory: &MEM) {
+        log::debug!("update opcode cache");
+
+        let expected_pc = self.cache_pc_valid_range.unwrap().1;
+        // After a jump/ret/call instructions
+        if pc != expected_pc {
+            self.init_cache(pc, memory);
+        } else {
+            let next_opcode = &self.cache[1];
+
+            let start_address = pc - 1;
+            let next_instr_start_address = opcode_len(next_opcode) + pc;
+
+            let byte_it = ByteIterator::new(start_address, memory);
+            let generator = OpcodeGenerator::from(byte_it);
+
+            self.cache_pc_valid_range = Some((start_address, next_instr_start_address));
+            self.cache = generator.take(8).collect::<Vec<Result<_, Error>>>();
+        }
     }
 
     pub fn may_update_cache<MEM: MemoryDebugOperations>(&mut self, pc: u16, memory: &MEM) {
@@ -23,8 +51,7 @@ impl DisassemblyViewer {
                 self.update_cache(pc, memory)
             }
         } else {
-            log::debug!("initialise opcode cache");
-            self.update_cache(pc, memory)
+            self.init_cache(pc, memory)
         }
     }
 
