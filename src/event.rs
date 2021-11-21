@@ -41,7 +41,7 @@ pub fn process_event<const WIDTH: usize, const HEIGHT: usize>(
                         context
                             .windows
                             .main
-                            .resize()
+                            .resize(&context.video)
                             .expect("Fail to resize GB window");
                         context
                             .display
@@ -49,12 +49,16 @@ pub fn process_event<const WIDTH: usize, const HEIGHT: usize>(
                     }
                     if let Some(ref mut dbg_wind) = context.windows.debug {
                         if dbg_wind.sdl_window().id() == window_id {
-                            dbg_wind.resize().expect("Fail to resize debug window");
+                            dbg_wind
+                                .resize(&context.video)
+                                .expect("Fail to resize debug window");
                         }
                     }
                     if let Some(ref mut input_wind) = context.windows.input {
                         if input_wind.sdl_window().id() == window_id {
-                            input_wind.resize().expect("Fail to resize input window");
+                            input_wind
+                                .resize(&context.video)
+                                .expect("Fail to resize input window");
                         }
                     }
                     #[cfg(feature = "debug_render")]

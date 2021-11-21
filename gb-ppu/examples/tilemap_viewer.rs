@@ -121,7 +121,9 @@ pub fn main() {
                 } => match win_event {
                     sdl2::event::WindowEvent::SizeChanged(_width, _height) => {
                         if gb_window.sdl_window().id() == window_id {
-                            gb_window.resize().expect("Fail to resize example window");
+                            gb_window
+                                .resize(&video_subsystem)
+                                .expect("Fail to resize example window");
                             display.resize(gb_window.sdl_window().size());
                         }
                     }
