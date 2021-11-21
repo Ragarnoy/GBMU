@@ -53,7 +53,7 @@ impl Default for Header {
     fn default() -> Self {
         Self {
             entry_point: Default::default(),
-            nitendo_logo: vec![0, 48],
+            nitendo_logo: [0; 48],
             title: Default::default(),
             new_license_code: Default::default(),
             sgb_flag: Default::default(),
