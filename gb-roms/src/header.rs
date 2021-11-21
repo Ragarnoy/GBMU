@@ -49,6 +49,27 @@ impl Header {
 }
 
 #[cfg(test)]
+impl Default for Header {
+    fn default() -> Self {
+        Self {
+            entry_point: Default::default(),
+            nitendo_logo: vec![0, 48],
+            title: Default::default(),
+            new_license_code: Default::default(),
+            sgb_flag: Default::default(),
+            cartridge_type: Default::default(),
+            rom_size: Default::default(),
+            ram_size: Default::default(),
+            destination_code: Default::default(),
+            old_license_code: Default::default(),
+            rom_version: Default::default(),
+            header_checksum: Default::default(),
+            global_checksum: Default::default(),
+        }
+    }
+}
+
+#[cfg(test)]
 mod test_from_chunk {
     use super::{
         CartridgeType, CgbFlag, DestinationCode, Header, NewLicenseCode, OldLicenseCode, RamSize,
@@ -191,6 +212,13 @@ pub enum Title {
         manufacturer: String,
         cgb_flag: CgbFlag,
     },
+}
+
+#[cfg(test)]
+impl Default for Title {
+    fn default() -> Self {
+        Self::Simple("PLACEHOLDER".to_string())
+    }
 }
 
 impl TryFrom<[u8; 16]> for Title {
