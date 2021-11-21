@@ -1,17 +1,16 @@
-use super::Controller;
+use super::{Controller, ROM_BANK_SIZE};
 use crate::header::Header;
 use gb_bus::{Address, Area, Error, FileOperation};
 use serde::{Deserialize, Serialize};
 use std::io::{self, Read};
 
 pub struct MBC2 {
-    rom_bank: Vec<[u8; MBC2::ROM_SIZE]>,
+    rom_bank: Vec<[u8; ROM_BANK_SIZE]>,
     ram_bank: [u8; MBC2::RAM_SIZE],
     regs: MBC2Reg,
 }
 
 impl MBC2 {
-    pub const ROM_SIZE: usize = 0x4000;
     pub const MAX_ROM_BANK: usize = 0x10;
     pub const RAM_SIZE: usize = 0x200;
 
@@ -19,7 +18,7 @@ impl MBC2 {
         let rom_banks_amount = header.rom_size.get_bank_amounts();
 
         Self {
-            rom_bank: vec![[0_u8; Self::ROM_SIZE]; rom_banks_amount],
+            rom_bank: vec![[0_u8; ROM_BANK_SIZE]; rom_banks_amount],
             ram_bank: [0_u8; Self::RAM_SIZE],
             regs: MBC2Reg::default(),
         }
@@ -62,7 +61,7 @@ impl MBC2 {
         }
     }
 
-    fn get_selected_rom(&self, is_root_bank: bool) -> &[u8; MBC2::ROM_SIZE] {
+    fn get_selected_rom(&self, is_root_bank: bool) -> &[u8; ROM_BANK_SIZE] {
         let index: usize = if is_root_bank {
             0
         } else {

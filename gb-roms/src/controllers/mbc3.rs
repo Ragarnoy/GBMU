@@ -1,12 +1,12 @@
-use super::Controller;
+use super::{Controller, RAM_BANK_SIZE, ROM_BANK_SIZE};
 use crate::header::Header;
 use gb_bus::{Address, Area, Error, FileOperation};
 use gb_rtc::{Naive, ReadRtcRegisters};
 use serde::{Deserialize, Serialize};
 use std::io::{self, Read};
 
-type RamBank = [u8; MBC3::RAM_BANK_SIZE];
-type RomBank = [u8; MBC3::ROM_BANK_SIZE];
+type RamBank = [u8; RAM_BANK_SIZE];
+type RomBank = [u8; ROM_BANK_SIZE];
 
 pub struct MBC3 {
     rom_banks: Vec<RomBank>,
@@ -16,9 +16,6 @@ pub struct MBC3 {
 }
 
 impl MBC3 {
-    pub const ROM_BANK_SIZE: usize = 0x4000;
-    pub const RAM_BANK_SIZE: usize = 0x2000;
-
     pub fn new(header: Header) -> Self {
         use crate::header::cartridge_type::CartridgeType::{
             Mbc3TimerBattery, Mbc3TimerRamBattery2,
@@ -31,8 +28,8 @@ impl MBC3 {
             _ => None,
         };
         Self {
-            ram_banks: vec![[0_u8; MBC3::RAM_BANK_SIZE]; ram_amount],
-            rom_banks: vec![[0_u8; MBC3::ROM_BANK_SIZE]; rom_amount],
+            ram_banks: vec![[0_u8; RAM_BANK_SIZE]; ram_amount],
+            rom_banks: vec![[0_u8; ROM_BANK_SIZE]; rom_amount],
             regs: MBC3Regs::default(),
             clock,
         }
@@ -206,12 +203,12 @@ impl Controller for MBC3 {
         self.ram_banks = data
             .ram_banks
             .into_iter()
-            .map(<[u8; MBC3::RAM_BANK_SIZE]>::try_from)
-            .collect::<Result<Vec<[u8; MBC3::RAM_BANK_SIZE]>, Vec<u8>>>()
+            .map(<[u8; RAM_BANK_SIZE]>::try_from)
+            .collect::<Result<Vec<[u8; RAM_BANK_SIZE]>, Vec<u8>>>()
             .map_err(|faulty| {
                 Error::invalid_length(
                     faulty.len(),
-                    &format!("a ram bank size of size {}", MBC3::RAM_BANK_SIZE).as_str(),
+                    &format!("a ram bank size of size {}", RAM_BANK_SIZE).as_str(),
                 )
             })?;
         Ok(())

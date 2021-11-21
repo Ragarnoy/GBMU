@@ -17,6 +17,15 @@ pub use mbc5::MBC5;
 pub use rom_only::RomOnlyController;
 use std::convert::From;
 
+/// Size of the ROM Area
+pub const ROM_AREA_SIZE: usize = 0x8000;
+
+/// Maximum size of a rom bank
+pub const ROM_BANK_SIZE: usize = 0x4000;
+
+/// Maximum size of a ram bank
+pub const RAM_BANK_SIZE: usize = 0x2000;
+
 pub trait Controller {
     /// Save the current controller into a Serializer file
     fn save<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
