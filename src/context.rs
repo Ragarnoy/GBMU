@@ -120,7 +120,7 @@ impl Game {
             tma: timer.clone(),
             tac: timer.clone(),
             sound: Rc::new(RefCell::new(SimpleRW::<0x17>::default())), // We don't handle sound
-            waveform_ram: Rc::new(RefCell::new(SimpleRW::<0xF>::default())), // We don't handle sound
+            waveform_ram: Rc::new(RefCell::new(SimpleRW::<0x10>::default())), // We don't handle sound
             lcd: ppu_reg.clone(),
             oam_dma: dma.clone(),
             vram_bank: ppu_reg.clone(),
