@@ -1,5 +1,5 @@
 use super::Controller;
-use crate::header::size::{RamSize, RomSize};
+use crate::header::Header;
 use gb_bus::{Address, Area, Error, FileOperation};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::io::{self, Read};
@@ -16,30 +16,26 @@ impl MBC5 {
     pub const RAM_BANK_SIZE: usize = 0x2000;
     pub const MAX_RAM_BANK: usize = 0x10;
 
-    /// initialize the controller using a file as the rom
-    pub fn from_file(
-        mut file: impl Read,
-        ram_size: RamSize,
-        rom_size: RomSize,
-    ) -> Result<MBC5, io::Error> {
-        let mut ctl = MBC5::empty(ram_size, rom_size);
-
-        for e in ctl.rom_banks.iter_mut() {
-            file.read_exact(e)?;
-        }
-        Ok(ctl)
-    }
-
     /// empty return an empty initialized controller
-    pub fn empty(ram_size: RamSize, rom_size: RomSize) -> MBC5 {
-        let ram_bank = ram_size.get_bank_amounts();
-        let rom_bank = rom_size.get_bank_amounts();
+    pub fn new(header: Header) -> MBC5 {
+        let ram_bank = header.ram_size.get_bank_amounts();
+        let rom_bank = header.rom_size.get_bank_amounts();
 
         Self {
             rom_banks: vec![[0_u8; MBC5::ROM_BANK_SIZE]; rom_bank],
             ram_banks: vec![[0_u8; MBC5::RAM_BANK_SIZE]; ram_bank],
             regs: MBC5Reg::default(),
         }
+    }
+
+    /// initialize the controller using a file as the rom
+    pub fn from_file(mut file: impl Read, header: Header) -> Result<MBC5, io::Error> {
+        let mut ctl = MBC5::new(header);
+
+        for e in ctl.rom_banks.iter_mut() {
+            file.read_exact(e)?;
+        }
+        Ok(ctl)
     }
 
     fn write_rom(&mut self, v: u8, addr: Box<dyn Address<Area>>) -> Result<(), Error> {

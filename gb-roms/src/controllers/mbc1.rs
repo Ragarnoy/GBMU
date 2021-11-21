@@ -1,5 +1,5 @@
 use super::Controller;
-use crate::header::size::{RamSize, RomSize};
+use crate::header::Header;
 use gb_bus::{Address, Area, Error, FileOperation};
 use serde::{Deserialize, Serialize};
 use std::io::{self, Read};
@@ -17,24 +17,20 @@ impl MBC1 {
     pub const RAM_SIZE: usize = 0x2000;
     pub const MAX_RAM_BANK: usize = 0x4;
 
-    pub fn new(ram_size: RamSize, rom_size: RomSize) -> Self {
-        let ram_bank = ram_size.get_bank_amounts();
-        let rom_bank = rom_size.get_bank_amounts();
+    pub fn new(header: Header) -> Self {
+        let ram_bank = header.ram_size.get_bank_amounts();
+        let rom_bank = header.rom_size.get_bank_amounts();
 
         Self {
-            configuration: Configuration::from_sizes(ram_size, rom_size),
+            configuration: Configuration::from_sizes(header.ram_size, header.rom_size),
             rom_bank: vec![[0_u8; MBC1::ROM_SIZE]; rom_bank],
             ram_bank: vec![[0_u8; MBC1::RAM_SIZE]; ram_bank],
             regs: MBC1Reg::default(),
         }
     }
 
-    pub fn from_file(
-        mut file: impl Read,
-        ram_size: RamSize,
-        rom_size: RomSize,
-    ) -> Result<Self, io::Error> {
-        let mut ctl = Self::new(ram_size, rom_size);
+    pub fn from_file(mut file: impl Read, header: Header) -> Result<Self, io::Error> {
+        let mut ctl = Self::new(header);
 
         for e in ctl.rom_bank.iter_mut() {
             file.read_exact(e)?;

@@ -19,16 +19,7 @@ impl MBC3 {
     pub const ROM_BANK_SIZE: usize = 0x4000;
     pub const RAM_BANK_SIZE: usize = 0x2000;
 
-    pub fn from_reader(mut reader: impl Read, header: Header) -> Result<Self, io::Error> {
-        let mut ctl = MBC3::empty(header);
-
-        for e in ctl.rom_banks.iter_mut() {
-            reader.read_exact(e)?;
-        }
-        Ok(ctl)
-    }
-
-    pub fn empty(header: Header) -> Self {
+    pub fn new(header: Header) -> Self {
         use crate::header::cartridge_type::CartridgeType::{
             Mbc3TimerBattery, Mbc3TimerRamBattery2,
         };
@@ -45,6 +36,15 @@ impl MBC3 {
             regs: MBC3Regs::default(),
             clock,
         }
+    }
+
+    pub fn from_reader(mut reader: impl Read, header: Header) -> Result<Self, io::Error> {
+        let mut ctl = Self::new(header);
+
+        for e in ctl.rom_banks.iter_mut() {
+            reader.read_exact(e)?;
+        }
+        Ok(ctl)
     }
 
     fn read_rom(&self, addr: Box<dyn Address<Area>>) -> Result<u8, Error> {

@@ -1,5 +1,5 @@
 use super::Controller;
-use crate::header::size::RomSize;
+use crate::header::Header;
 use gb_bus::{Address, Area, Error, FileOperation};
 use serde::{Deserialize, Serialize};
 use std::io::{self, Read};
@@ -15,8 +15,8 @@ impl MBC2 {
     pub const MAX_ROM_BANK: usize = 0x10;
     pub const RAM_SIZE: usize = 0x200;
 
-    fn new(rom_size: RomSize) -> Self {
-        let rom_banks_amount = rom_size.get_bank_amounts();
+    fn new(header: Header) -> Self {
+        let rom_banks_amount = header.rom_size.get_bank_amounts();
 
         Self {
             rom_bank: vec![[0_u8; Self::ROM_SIZE]; rom_banks_amount],
@@ -25,8 +25,8 @@ impl MBC2 {
         }
     }
 
-    pub fn from_file(mut file: impl Read, rom_size: RomSize) -> Result<Self, io::Error> {
-        let mut ctl = Self::new(rom_size);
+    pub fn from_file(mut file: impl Read, header: Header) -> Result<Self, io::Error> {
+        let mut ctl = Self::new(header);
 
         for e in ctl.rom_bank.iter_mut() {
             file.read_exact(e)?;
