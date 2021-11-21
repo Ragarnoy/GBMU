@@ -2,7 +2,7 @@ pub mod iter;
 
 use iter::Iter;
 
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use crate::{
     address::Address,
@@ -67,7 +67,7 @@ pub struct AddressBus {
     /// register to enable/disable all interrupts
     pub ie_reg: Rc<RefCell<dyn FileOperation<Area>>>,
     /// map a memory area to its current lock status
-    pub area_locks: HashMap<Area, Lock>,
+    pub area_locks: BTreeMap<Area, Lock>,
 }
 
 impl AddressBus {
@@ -191,7 +191,7 @@ impl crate::Bus<u16> for AddressBus {
 mod test_address_bus {
     use super::AddressBus;
     use crate::generic::CharDevice;
-    use std::collections::HashMap;
+    use std::collections::BTreeMap;
     use std::{cell::RefCell, rc::Rc};
 
     #[test]
@@ -206,7 +206,7 @@ mod test_address_bus {
             io_reg: Rc::new(RefCell::new(CharDevice(7))),
             hram: Rc::new(RefCell::new(CharDevice(8))),
             ie_reg: Rc::new(RefCell::new(CharDevice(9))),
-            area_locks: HashMap::new(),
+            area_locks: BTreeMap::new(),
         };
 
         assert_eq!(addr_bus.read_byte(0x10), Ok(1));
@@ -232,7 +232,7 @@ mod test_address_bus {
             io_reg: Rc::new(RefCell::new(CharDevice(7))),
             hram: Rc::new(RefCell::new(CharDevice(8))),
             ie_reg: Rc::new(RefCell::new(CharDevice(9))),
-            area_locks: HashMap::new(),
+            area_locks: BTreeMap::new(),
         };
 
         assert_eq!(addr_bus.write_byte(0x11, 0x30), Ok(()));
@@ -261,7 +261,7 @@ mod test_address_bus {
 mod memory_locking {
     use super::{AddressBus, Area, Lock, MemoryLock};
     use crate::generic::CharDevice;
-    use std::collections::HashMap;
+    use std::collections::BTreeMap;
     use std::{cell::RefCell, rc::Rc};
 
     #[test]
@@ -276,7 +276,7 @@ mod memory_locking {
             io_reg: Rc::new(RefCell::new(CharDevice(7))),
             hram: Rc::new(RefCell::new(CharDevice(8))),
             ie_reg: Rc::new(RefCell::new(CharDevice(9))),
-            area_locks: HashMap::new(),
+            area_locks: BTreeMap::new(),
         };
 
         assert!(addr_bus.is_available(Area::Vram, None));
@@ -315,7 +315,7 @@ mod memory_locking {
             io_reg: Rc::new(RefCell::new(CharDevice(7))),
             hram: Rc::new(RefCell::new(CharDevice(8))),
             ie_reg: Rc::new(RefCell::new(CharDevice(9))),
-            area_locks: HashMap::new(),
+            area_locks: BTreeMap::new(),
         };
 
         assert!(addr_bus.is_available(Area::Vram, None));

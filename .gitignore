@@ -23,3 +23,7 @@ settings.yaml
 # Apple
 
 *.DS_Store
+
+# perf file
+perf.data*
+perf.script

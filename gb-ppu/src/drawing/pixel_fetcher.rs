@@ -184,8 +184,8 @@ impl PixelFetcher {
     }
 
     fn append_to_fifo(&mut self, fifo: &mut PixelFIFO) -> bool {
-        if let Some(unused_pixels) = fifo.append(self.pixels.drain(0..).collect()) {
-            self.pixels = unused_pixels;
+        if fifo.append(&mut self.pixels) {
+            self.pixels.clear();
             false
         } else {
             true
@@ -193,8 +193,8 @@ impl PixelFetcher {
     }
 
     fn mix_to_fifo(&mut self, fifo: &mut PixelFIFO) -> bool {
-        if let Some(unused_pixels) = fifo.mix(self.pixels.drain(0..).collect()) {
-            self.pixels = unused_pixels;
+        if fifo.mix(&self.pixels) {
+            self.pixels.clear();
             false
         } else {
             true
