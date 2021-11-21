@@ -97,7 +97,7 @@ pub fn fetch_cb(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFl
                 OpcodeCB::Set0H => ctl.push_actions(&[read::h, bitwise::set_0, write::h]),
                 OpcodeCB::Set0L => ctl.push_actions(&[read::l, bitwise::set_0, write::l]),
                 OpcodeCB::Set0HL => {
-                    ctl.push_actions(&[read::hl, read::ind, bitwise::set_0, write::hl])
+                    ctl.push_actions(&[read::hl, read::ind, bitwise::set_0, read::hl, write::ind])
                 }
                 OpcodeCB::Set0A => ctl.push_actions(&[read::a, bitwise::set_0, write::a]),
 
@@ -108,7 +108,7 @@ pub fn fetch_cb(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFl
                 OpcodeCB::Set1H => ctl.push_actions(&[read::h, bitwise::set_1, write::h]),
                 OpcodeCB::Set1L => ctl.push_actions(&[read::l, bitwise::set_1, write::l]),
                 OpcodeCB::Set1HL => {
-                    ctl.push_actions(&[read::hl, read::ind, bitwise::set_1, write::hl])
+                    ctl.push_actions(&[read::hl, read::ind, bitwise::set_1, read::hl, write::ind])
                 }
                 OpcodeCB::Set1A => ctl.push_actions(&[read::a, bitwise::set_1, write::a]),
 
@@ -119,7 +119,7 @@ pub fn fetch_cb(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFl
                 OpcodeCB::Set2H => ctl.push_actions(&[read::h, bitwise::set_2, write::h]),
                 OpcodeCB::Set2L => ctl.push_actions(&[read::l, bitwise::set_2, write::l]),
                 OpcodeCB::Set2HL => {
-                    ctl.push_actions(&[read::hl, read::ind, bitwise::set_2, write::hl])
+                    ctl.push_actions(&[read::hl, read::ind, bitwise::set_2, read::hl, write::ind])
                 }
                 OpcodeCB::Set2A => ctl.push_actions(&[read::a, bitwise::set_2, write::a]),
 
@@ -130,7 +130,7 @@ pub fn fetch_cb(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFl
                 OpcodeCB::Set3H => ctl.push_actions(&[read::h, bitwise::set_3, write::h]),
                 OpcodeCB::Set3L => ctl.push_actions(&[read::l, bitwise::set_3, write::l]),
                 OpcodeCB::Set3HL => {
-                    ctl.push_actions(&[read::hl, read::ind, bitwise::set_3, write::hl])
+                    ctl.push_actions(&[read::hl, read::ind, bitwise::set_3, read::hl, write::ind])
                 }
                 OpcodeCB::Set3A => ctl.push_actions(&[read::a, bitwise::set_3, write::a]),
 
@@ -141,7 +141,7 @@ pub fn fetch_cb(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFl
                 OpcodeCB::Set4H => ctl.push_actions(&[read::h, bitwise::set_4, write::h]),
                 OpcodeCB::Set4L => ctl.push_actions(&[read::l, bitwise::set_4, write::l]),
                 OpcodeCB::Set4HL => {
-                    ctl.push_actions(&[read::hl, read::ind, bitwise::set_4, write::hl])
+                    ctl.push_actions(&[read::hl, read::ind, bitwise::set_4, read::hl, write::ind])
                 }
                 OpcodeCB::Set4A => ctl.push_actions(&[read::a, bitwise::set_4, write::a]),
 
@@ -152,7 +152,7 @@ pub fn fetch_cb(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFl
                 OpcodeCB::Set5H => ctl.push_actions(&[read::h, bitwise::set_5, write::h]),
                 OpcodeCB::Set5L => ctl.push_actions(&[read::l, bitwise::set_5, write::l]),
                 OpcodeCB::Set5HL => {
-                    ctl.push_actions(&[read::hl, read::ind, bitwise::set_5, write::hl])
+                    ctl.push_actions(&[read::hl, read::ind, bitwise::set_5, read::hl, write::ind])
                 }
                 OpcodeCB::Set5A => ctl.push_actions(&[read::a, bitwise::set_5, write::a]),
 
@@ -163,7 +163,7 @@ pub fn fetch_cb(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFl
                 OpcodeCB::Set6H => ctl.push_actions(&[read::h, bitwise::set_6, write::h]),
                 OpcodeCB::Set6L => ctl.push_actions(&[read::l, bitwise::set_6, write::l]),
                 OpcodeCB::Set6HL => {
-                    ctl.push_actions(&[read::hl, read::ind, bitwise::set_6, write::hl])
+                    ctl.push_actions(&[read::hl, read::ind, bitwise::set_6, read::hl, write::ind])
                 }
                 OpcodeCB::Set6A => ctl.push_actions(&[read::a, bitwise::set_6, write::a]),
 
@@ -174,7 +174,7 @@ pub fn fetch_cb(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFl
                 OpcodeCB::Set7H => ctl.push_actions(&[read::h, bitwise::set_7, write::h]),
                 OpcodeCB::Set7L => ctl.push_actions(&[read::l, bitwise::set_7, write::l]),
                 OpcodeCB::Set7HL => {
-                    ctl.push_actions(&[read::hl, read::ind, bitwise::set_7, write::hl])
+                    ctl.push_actions(&[read::hl, read::ind, bitwise::set_7, read::hl, write::ind])
                 }
                 OpcodeCB::Set7A => ctl.push_actions(&[read::a, bitwise::set_7, write::a]),
 
@@ -185,7 +185,7 @@ pub fn fetch_cb(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFl
                 OpcodeCB::Res0H => ctl.push_actions(&[read::h, bitwise::res_0, write::h]),
                 OpcodeCB::Res0L => ctl.push_actions(&[read::l, bitwise::res_0, write::l]),
                 OpcodeCB::Res0HL => {
-                    ctl.push_actions(&[read::hl, read::ind, bitwise::res_0, write::hl])
+                    ctl.push_actions(&[read::hl, read::ind, bitwise::res_0, read::hl, write::ind])
                 }
                 OpcodeCB::Res0A => ctl.push_actions(&[read::a, bitwise::res_0, write::a]),
 
@@ -196,7 +196,7 @@ pub fn fetch_cb(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFl
                 OpcodeCB::Res1H => ctl.push_actions(&[read::h, bitwise::res_1, write::h]),
                 OpcodeCB::Res1L => ctl.push_actions(&[read::l, bitwise::res_1, write::l]),
                 OpcodeCB::Res1HL => {
-                    ctl.push_actions(&[read::hl, read::ind, bitwise::res_1, write::hl])
+                    ctl.push_actions(&[read::hl, read::ind, bitwise::res_1, read::hl, write::ind])
                 }
                 OpcodeCB::Res1A => ctl.push_actions(&[read::a, bitwise::res_1, write::a]),
 
@@ -207,7 +207,7 @@ pub fn fetch_cb(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFl
                 OpcodeCB::Res2H => ctl.push_actions(&[read::h, bitwise::res_2, write::h]),
                 OpcodeCB::Res2L => ctl.push_actions(&[read::l, bitwise::res_2, write::l]),
                 OpcodeCB::Res2HL => {
-                    ctl.push_actions(&[read::hl, read::ind, bitwise::res_2, write::hl])
+                    ctl.push_actions(&[read::hl, read::ind, bitwise::res_2, read::hl, write::ind])
                 }
                 OpcodeCB::Res2A => ctl.push_actions(&[read::a, bitwise::res_2, write::a]),
 
@@ -218,7 +218,7 @@ pub fn fetch_cb(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFl
                 OpcodeCB::Res3H => ctl.push_actions(&[read::h, bitwise::res_3, write::h]),
                 OpcodeCB::Res3L => ctl.push_actions(&[read::l, bitwise::res_3, write::l]),
                 OpcodeCB::Res3HL => {
-                    ctl.push_actions(&[read::hl, read::ind, bitwise::res_3, write::hl])
+                    ctl.push_actions(&[read::hl, read::ind, bitwise::res_3, read::hl, write::ind])
                 }
                 OpcodeCB::Res3A => ctl.push_actions(&[read::a, bitwise::res_3, write::a]),
 
@@ -229,7 +229,7 @@ pub fn fetch_cb(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFl
                 OpcodeCB::Res4H => ctl.push_actions(&[read::h, bitwise::res_4, write::h]),
                 OpcodeCB::Res4L => ctl.push_actions(&[read::l, bitwise::res_4, write::l]),
                 OpcodeCB::Res4HL => {
-                    ctl.push_actions(&[read::hl, read::ind, bitwise::res_4, write::hl])
+                    ctl.push_actions(&[read::hl, read::ind, bitwise::res_4, read::hl, write::ind])
                 }
                 OpcodeCB::Res4A => ctl.push_actions(&[read::a, bitwise::res_4, write::a]),
 
@@ -240,7 +240,7 @@ pub fn fetch_cb(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFl
                 OpcodeCB::Res5H => ctl.push_actions(&[read::h, bitwise::res_5, write::h]),
                 OpcodeCB::Res5L => ctl.push_actions(&[read::l, bitwise::res_5, write::l]),
                 OpcodeCB::Res5HL => {
-                    ctl.push_actions(&[read::hl, read::ind, bitwise::res_5, write::hl])
+                    ctl.push_actions(&[read::hl, read::ind, bitwise::res_5, read::hl, write::ind])
                 }
                 OpcodeCB::Res5A => ctl.push_actions(&[read::a, bitwise::res_5, write::a]),
 
@@ -251,7 +251,7 @@ pub fn fetch_cb(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFl
                 OpcodeCB::Res6H => ctl.push_actions(&[read::h, bitwise::res_6, write::h]),
                 OpcodeCB::Res6L => ctl.push_actions(&[read::l, bitwise::res_6, write::l]),
                 OpcodeCB::Res6HL => {
-                    ctl.push_actions(&[read::hl, read::ind, bitwise::res_6, write::hl])
+                    ctl.push_actions(&[read::hl, read::ind, bitwise::res_6, read::hl, write::ind])
                 }
                 OpcodeCB::Res6A => ctl.push_actions(&[read::a, bitwise::res_6, write::a]),
 
@@ -262,7 +262,7 @@ pub fn fetch_cb(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFl
                 OpcodeCB::Res7H => ctl.push_actions(&[read::h, bitwise::res_7, write::h]),
                 OpcodeCB::Res7L => ctl.push_actions(&[read::l, bitwise::res_7, write::l]),
                 OpcodeCB::Res7HL => {
-                    ctl.push_actions(&[read::hl, read::ind, bitwise::res_7, write::hl])
+                    ctl.push_actions(&[read::hl, read::ind, bitwise::res_7, read::hl, write::ind])
                 }
                 OpcodeCB::Res7A => ctl.push_actions(&[read::a, bitwise::res_7, write::a]),
 
