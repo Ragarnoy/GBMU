@@ -117,12 +117,16 @@ impl GBWindow {
         Ok(())
     }
 
-    pub fn resize(&mut self) -> Result<(), Error> {
+    pub fn resize(&mut self, video_sys: &VideoSubsystem) -> Result<(), Error> {
         self.sdl_window
             .gl_make_current(&self.gl_ctx)
             .map_err(Error::GBWindowFrame)?;
-        let (egui_painter, egui_state) =
-            egui_sdl2_gl::with_sdl2(&self.sdl_window, DpiScaling::Default);
+        let (egui_painter, egui_state) = egui_sdl2_gl::with_sdl2(
+            &self.sdl_window,
+            DpiScaling::Custom(
+                video_sys.display_dpi(0).map_err(Error::GBWindowInit)?.0 / RESOLUTION_DOT,
+            ),
+        );
         self.egui_painter = egui_painter;
         self.egui_state = egui_state;
         Ok(())
