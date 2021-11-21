@@ -157,7 +157,13 @@ impl MicrocodeController {
 
     /// Pop the last pushed `byte` from the cache.
     pub fn pop(&mut self) -> u8 {
-        self.cache.pop().expect("not enough value stored in cache")
+        self.cache.pop().expect(
+            format!(
+                "not enough value stored in cache for opcode {:?}",
+                self.opcode
+            )
+            .as_str(),
+        )
     }
 
     /// Pop the last u16 from the cache.
