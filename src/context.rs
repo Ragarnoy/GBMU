@@ -275,9 +275,12 @@ impl Drop for Game {
             {
                 use core::ops::Deref;
                 use rmp_serde::encode::write_named;
+                use sdl2::filesystem::pref_path;
                 use std::fs::OpenOptions;
 
-                let filename = format!("/tmp/gbmu/{}-game-save.msgpack", rom_fmt_name);
+                let root = pref_path(crate::constant::ORG_NAME, crate::constant::APP_NAME)
+                    .expect("a prefered config");
+                let filename = format!("{}/{}-game-save.msgpack", root, rom_fmt_name);
                 match OpenOptions::new()
                     .create(true)
                     .write(true)
