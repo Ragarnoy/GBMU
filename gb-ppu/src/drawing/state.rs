@@ -12,7 +12,8 @@ pub struct State {
 }
 
 const INTERRUPT_FLAG: u16 = 0xFF0F;
-const INTERRUPT_BIT: u8 = 0b10;
+const INTERRUPT_STAT_BIT: u8 = 0b10;
+const INTERRUPT_VBLANK_BIT: u8 = 0b01;
 
 impl State {
     const LINE_COUNT: u8 = 154;
@@ -213,21 +214,30 @@ impl State {
             lcd_reg.stat.set_mode(self.mode);
         }
 
-        if state_updated
+        let update_vblank = state_updated && self.mode == Mode::VBlank;
+        let update_mode = state_updated
             && ((self.mode == Mode::OAMFetch && lcd_reg.stat.mode_2_interrupt())
                 || (self.mode == Mode::VBlank && lcd_reg.stat.mode_1_interrupt())
-                || (self.mode == Mode::HBlank && lcd_reg.stat.mode_0_interrupt()))
-            || line_updated && lcd_reg.stat.lyc_eq_ly_interrupt() && lcd_reg.stat.lyc_eq_ly()
-        {
-            let interrupts_val = adr_bus
+                || (self.mode == Mode::HBlank && lcd_reg.stat.mode_0_interrupt()));
+        let update_lyc_eq =
+            line_updated && lcd_reg.stat.lyc_eq_ly_interrupt() && lcd_reg.stat.lyc_eq_ly();
+        let update_stat = update_mode || update_lyc_eq;
+
+        if update_vblank || update_stat {
+            let mut interrupts_val = adr_bus
                 .read(INTERRUPT_FLAG, Some(Lock::Ppu))
-                .expect("Failed to read interrupt value for lcd stat");
-            if let Err(err) = adr_bus.write(
-                INTERRUPT_FLAG,
-                interrupts_val | INTERRUPT_BIT,
-                Some(Lock::Ppu),
-            ) {
-                log::error!("Failed to write interrupt value for lcd stat: {:?}", err)
+                .expect("Failed to read interrupt value for ppu interrupt");
+            if update_vblank {
+                interrupts_val |= INTERRUPT_VBLANK_BIT;
+            }
+            if update_stat {
+                interrupts_val |= INTERRUPT_STAT_BIT;
+            }
+            if let Err(err) = adr_bus.write(INTERRUPT_FLAG, interrupts_val, Some(Lock::Ppu)) {
+                log::error!(
+                    "Failed to write interrupt value for ppu interrupt: {:?}",
+                    err
+                )
             }
         }
     }
