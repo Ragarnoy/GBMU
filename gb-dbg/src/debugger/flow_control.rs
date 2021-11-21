@@ -8,6 +8,10 @@ impl FlowController {
     pub fn draw(&self, ui: &mut Ui) -> Option<ControlFlow<Until>> {
         let mut ret: Option<ControlFlow<Until>> = None;
         ui.horizontal(|ui| {
+            if ui.button("Reset").clicked() {
+                log::debug!("clicked on reset");
+                ret = Some(ControlFlow::Break(Until::Reset));
+            }
             if ui.button("Continue").clicked() {
                 log::debug!("clicked on continue");
                 ret = Some(ControlFlow::Continue(()));

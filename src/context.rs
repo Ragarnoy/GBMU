@@ -235,6 +235,12 @@ impl Game {
                 self.emulation_stopped = true;
                 self.scheduled_stop = None;
             }
+            Break(Until::Reset) => {
+                self.emulation_stopped = true;
+                self.cpu_set(CpuRegs::PC, 0x0000);
+                self.ppu_set(PpuRegs::Control, 0x00);
+                self.scheduled_stop = None;
+            }
             Break(Until::Step(count)) => {
                 self.emulation_stopped = false;
                 self.scheduled_stop = Some(ScheduledStop::Step(count));
@@ -337,6 +343,17 @@ impl RegisterDebugOperations for Game {
         }
     }
 
+    fn cpu_set(&mut self, key: CpuRegs, value: u16) {
+        match key {
+            CpuRegs::AF => self.cpu.registers.af = value,
+            CpuRegs::BC => self.cpu.registers.bc = value,
+            CpuRegs::DE => self.cpu.registers.de = value,
+            CpuRegs::HL => self.cpu.registers.hl = value,
+            CpuRegs::SP => self.cpu.registers.sp = value,
+            CpuRegs::PC => self.cpu.registers.pc = value,
+        }
+    }
+
     fn ppu_get(&self, key: PpuRegs) -> RegisterValue {
         use gb_bus::io_reg_constant::{
             PPU_BGP, PPU_CONTROL, PPU_DMA, PPU_LY, PPU_LYC, PPU_OBP0, PPU_OBP1, PPU_SCX, PPU_SCY,
@@ -357,6 +374,29 @@ impl RegisterDebugOperations for Game {
             PpuRegs::Wy => read_bus_reg!(self.addr_bus, PPU_WY),
             PpuRegs::Wx => read_bus_reg!(self.addr_bus, PPU_WX),
         }
+    }
+
+    fn ppu_set(&mut self, key: PpuRegs, value: u8) {
+        use gb_bus::io_reg_constant::{
+            PPU_BGP, PPU_CONTROL, PPU_DMA, PPU_LY, PPU_LYC, PPU_OBP0, PPU_OBP1, PPU_SCX, PPU_SCY,
+            PPU_STATUS, PPU_WX, PPU_WY,
+        };
+        match key {
+            PpuRegs::Control => self
+                .addr_bus
+                .write(PPU_CONTROL, value, Some(Lock::Debugger)),
+            PpuRegs::Status => self.addr_bus.write(PPU_STATUS, value, Some(Lock::Debugger)),
+            PpuRegs::Scy => self.addr_bus.write(PPU_SCY, value, Some(Lock::Debugger)),
+            PpuRegs::Scx => self.addr_bus.write(PPU_SCX, value, Some(Lock::Debugger)),
+            PpuRegs::Ly => self.addr_bus.write(PPU_LY, value, Some(Lock::Debugger)),
+            PpuRegs::Lyc => self.addr_bus.write(PPU_LYC, value, Some(Lock::Debugger)),
+            PpuRegs::Dma => self.addr_bus.write(PPU_DMA, value, Some(Lock::Debugger)),
+            PpuRegs::Bgp => self.addr_bus.write(PPU_BGP, value, Some(Lock::Debugger)),
+            PpuRegs::Obp0 => self.addr_bus.write(PPU_OBP0, value, Some(Lock::Debugger)),
+            PpuRegs::Obp1 => self.addr_bus.write(PPU_OBP1, value, Some(Lock::Debugger)),
+            PpuRegs::Wy => self.addr_bus.write(PPU_WY, value, Some(Lock::Debugger)),
+            PpuRegs::Wx => self.addr_bus.write(PPU_WX, value, Some(Lock::Debugger)),
+        };
     }
 
     fn io_get(&self, key: IORegs) -> RegisterValue {

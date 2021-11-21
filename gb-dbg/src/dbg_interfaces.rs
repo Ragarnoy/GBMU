@@ -40,7 +40,11 @@ pub trait MemoryDebugOperations {
 pub trait RegisterDebugOperations {
     fn cpu_get(&self, key: CpuRegs) -> RegisterValue;
 
+    fn cpu_set(&mut self, key: CpuRegs, value: u16);
+
     fn ppu_get(&self, key: PpuRegs) -> RegisterValue;
+
+    fn ppu_set(&mut self, key: PpuRegs, value: u8);
 
     fn io_get(&self, key: IORegs) -> RegisterValue;
 

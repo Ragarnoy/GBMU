@@ -3,5 +3,6 @@ pub enum Until {
     Step(usize),
     Frame(usize),
     Second(usize),
+    Reset,
     Null,
 }
