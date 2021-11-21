@@ -215,13 +215,13 @@ impl State {
         }
 
         let update_vblank = state_updated && self.mode == Mode::VBlank;
-        let udpate_mode = state_updated
+        let update_mode = state_updated
             && ((self.mode == Mode::OAMFetch && lcd_reg.stat.mode_2_interrupt())
                 || (self.mode == Mode::VBlank && lcd_reg.stat.mode_1_interrupt())
                 || (self.mode == Mode::HBlank && lcd_reg.stat.mode_0_interrupt()));
         let update_lyc_eq =
             line_updated && lcd_reg.stat.lyc_eq_ly_interrupt() && lcd_reg.stat.lyc_eq_ly();
-        let update_stat = udpate_mode || update_lyc_eq;
+        let update_stat = update_mode || update_lyc_eq;
 
         if update_vblank || update_stat {
             let mut interrupts_val = adr_bus
