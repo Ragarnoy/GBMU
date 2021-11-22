@@ -14,12 +14,10 @@ impl StatusBar {
             ui.colored_label(Color32::WHITE, "Status");
             ui.separator();
             ui.horizontal(|ui| {
+                ui.colored_label(Color32::GOLD, "Flags: ");
                 ui.colored_label(
                     Color32::WHITE,
-                    format!(
-                        "Flags: {}",
-                        display_flags(u16::from(regs.cpu_get(CpuRegs::AF)))
-                    ),
+                    format!("{}", display_flags(u16::from(regs.cpu_get(CpuRegs::AF)))),
                 );
             });
         });
