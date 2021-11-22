@@ -57,7 +57,7 @@ impl DisassemblyViewer {
 
     pub fn draw(&self, ui: &mut Ui) {
         ui.vertical(|ui| {
-            ui.label(Label::new("Disassembler").text_color(Color32::WHITE));
+            ui.label(Label::new("Disassembler").text_color(Color32::LIGHT_BLUE));
             ui.separator();
             ui.vertical(|ui| {
                 egui::Grid::new("dissas_".to_owned())

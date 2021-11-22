@@ -8,7 +8,7 @@ pub struct RegisterEditor;
 impl RegisterEditor {
     pub fn draw<REG: RegisterDebugOperations>(&mut self, ui: &mut Ui, register: &REG) {
         ui.vertical(|ui| {
-            ui.label(Label::new("Registers").text_color(Color32::WHITE));
+            ui.label(Label::new("Registers").text_color(Color32::LIGHT_BLUE));
             ui.separator();
             ui.add_space(8.0);
             ui.horizontal_top(|ui| {

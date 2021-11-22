@@ -11,7 +11,7 @@ pub struct StatusBar;
 impl StatusBar {
     pub fn draw<DBG: DebugOperations>(&self, ui: &mut Ui, regs: &DBG) {
         ui.vertical(|ui| {
-            ui.colored_label(Color32::WHITE, "Status");
+            ui.colored_label(Color32::LIGHT_BLUE, "Status");
             ui.separator();
             ui.horizontal(|ui| {
                 ui.colored_label(Color32::GOLD, "Flags: ");

@@ -46,7 +46,7 @@ impl BreakpointEditor {
 
     pub fn draw<DBG: DebugOperations>(&mut self, ui: &mut Ui, regs: &DBG) {
         ui.vertical(|ui| {
-            ui.label(Label::new("Breakpoints").text_color(Color32::WHITE));
+            ui.label(Label::new("Breakpoints").text_color(Color32::LIGHT_BLUE));
             self.draw_breakpoint_options(ui);
 
             ui.separator();

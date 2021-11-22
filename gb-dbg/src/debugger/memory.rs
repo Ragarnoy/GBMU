@@ -29,7 +29,7 @@ impl<MEM: MemoryDebugOperations> MemoryViewer<MEM> {
     }
 
     pub fn draw(&mut self, ui: &mut Ui, memory: &mut MEM) {
-        ui.label(Label::new("Memory Editor").text_color(Color32::WHITE));
+        ui.label(Label::new("Memory Editor").text_color(Color32::LIGHT_BLUE));
         self.memory_editor.draw_editor_contents(ui, memory);
     }
 }
