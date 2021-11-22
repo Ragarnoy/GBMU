@@ -62,7 +62,7 @@ impl DisassemblyViewer {
             ui.vertical(|ui| {
                 egui::Grid::new("dissas_".to_owned())
                     .striped(true)
-                    .spacing(Vec2::new(150.0, 2.5))
+                    .spacing(Vec2::new(224.0, 2.5))
                     .show(ui, |ui| {
                         DisassemblyViewer::draw_labels(ui);
                         let mut pc = self.cache_pc_valid_range.unwrap_or((0, 0)).0;
