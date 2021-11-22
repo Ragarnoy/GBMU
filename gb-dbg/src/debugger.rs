@@ -15,7 +15,7 @@ use crate::debugger::options::DebuggerOptions;
 use crate::debugger::registers::RegisterEditor;
 use crate::debugger::status_bar::StatusBar;
 use crate::until::Until;
-use egui::CtxRef;
+use egui::{vec2, Color32, CtxRef};
 use std::ops::ControlFlow;
 
 pub struct Debugger<MEM> {
@@ -31,9 +31,26 @@ pub struct Debugger<MEM> {
 impl<BUS: DebugOperations> Debugger<BUS> {
     pub fn draw(&mut self, ctx: &CtxRef, mut memory: &mut BUS) {
         // ctx.set_debug_on_hover(true);
-        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
-            self.flow_status = self.flow_controller.draw(ui);
-        });
+
+        egui::TopBottomPanel::top("top_panel")
+            .frame(egui::Frame {
+                margin: vec2(8., 8.),
+                fill: Color32::from_gray(20),
+                ..Default::default()
+            })
+            .show(ctx, |ui| {
+                let style = ui.style_mut();
+                style.spacing.button_padding = vec2(16., 4.);
+
+                ui.horizontal(|ui| {
+                    if ui.button("Reset").clicked() {
+                        log::debug!("clicked on reset");
+                    }
+                    ui.separator();
+                    self.flow_status = self.flow_controller.draw(ui);
+                });
+            });
+
         egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
             self.status_bar.draw(ui, memory);
         });
