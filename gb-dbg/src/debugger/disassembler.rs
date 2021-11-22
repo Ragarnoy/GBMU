@@ -56,36 +56,38 @@ impl DisassemblyViewer {
     }
 
     pub fn draw(&self, ui: &mut Ui) {
-        ui.label(Label::new("Disassembler").text_color(Color32::WHITE));
-        egui::CollapsingHeader::new("🛠 Options")
-            .id_source(55)
-            .default_open(false)
-            .show(ui, |ui| ui.label("Hello"));
-        ui.separator();
         ui.vertical(|ui| {
-            egui::Grid::new("dissas_".to_owned())
-                .striped(true)
-                .spacing(Vec2::new(150.0, 2.5))
-                .show(ui, |ui| {
-                    DisassemblyViewer::draw_labels(ui);
-                    let mut pc = self.cache_pc_valid_range.unwrap_or((0, 0)).0;
-                    for row in self.cache.iter().take(8) {
-                        DisassemblyViewer::draw_row(ui, &mut pc, row);
-                    }
-                    ui.end_row();
-                });
+            ui.label(Label::new("Disassembler").text_color(Color32::WHITE));
+            ui.separator();
+            ui.vertical(|ui| {
+                egui::Grid::new("dissas_".to_owned())
+                    .striped(true)
+                    .spacing(Vec2::new(150.0, 2.5))
+                    .show(ui, |ui| {
+                        DisassemblyViewer::draw_labels(ui);
+                        let mut pc = self.cache_pc_valid_range.unwrap_or((0, 0)).0;
+                        for (index, row) in self.cache.iter().take(8).enumerate() {
+                            DisassemblyViewer::draw_row(ui, &mut pc, row, index);
+                        }
+                        ui.end_row();
+                    });
+            });
         });
     }
 
     fn draw_labels(ui: &mut Ui) {
-        ui.label(egui::Label::new("Address").text_color(Color32::WHITE));
-        ui.label(egui::Label::new("Instruction").text_color(Color32::WHITE));
-        ui.label(egui::Label::new("Data").text_color(Color32::WHITE));
+        ui.label(egui::Label::new("Address").text_color(Color32::GOLD));
+        ui.label(egui::Label::new("Instruction").text_color(Color32::GOLD));
+        ui.label(egui::Label::new("Data").text_color(Color32::GOLD));
         ui.end_row();
     }
 
-    fn draw_row(ui: &mut Ui, pc: &mut u16, row: &Result<(Opcode, Vec<u8>), Error>) {
-        ui.label(egui::Label::new(format!("0x{:04X}", pc)));
+    fn draw_row(ui: &mut Ui, pc: &mut u16, row: &Result<(Opcode, Vec<u8>), Error>, index: usize) {
+        let mut text_color = Color32::GRAY;
+        if index == 0 {
+            text_color = Color32::WHITE;
+        }
+        ui.colored_label(text_color, egui::Label::new(format!("0x{:04X}", pc)));
         *pc += opcode_len(row);
         let opcode = row
             .as_ref()
@@ -104,8 +106,8 @@ impl DisassemblyViewer {
                     .join(" ")
             },
         );
-        ui.label(egui::Label::new(opcode));
-        ui.label(egui::Label::new(bytes));
+        ui.colored_label(text_color, egui::Label::new(opcode));
+        ui.colored_label(text_color, egui::Label::new(bytes));
         ui.end_row();
     }
 }

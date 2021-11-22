@@ -45,48 +45,50 @@ impl BreakpointEditor {
     }
 
     pub fn draw<DBG: DebugOperations>(&mut self, ui: &mut Ui, regs: &DBG) {
-        ui.label(Label::new("Breakpoints").text_color(Color32::WHITE));
-        self.draw_breakpoint_options(ui);
+        ui.vertical(|ui| {
+            ui.label(Label::new("Breakpoints").text_color(Color32::WHITE));
+            self.draw_breakpoint_options(ui);
 
-        ui.separator();
-        if self.options.is_advanced {
-            self.draw_advanced_breakpoint_widget(ui, regs);
-        } else {
-            self.draw_simple_breakpoint_widget(ui, regs);
-        }
+            ui.separator();
+            if self.options.is_advanced {
+                self.draw_advanced_breakpoint_widget(ui, regs);
+            } else {
+                self.draw_simple_breakpoint_widget(ui, regs);
+            }
 
-        let mut deletion_list: Vec<usize> = Vec::with_capacity(20);
-        egui::Grid::new("breakpoints_".to_owned())
-            .striped(true)
-            .spacing(Vec2::new(60.5, 6.5))
-            .show(ui, |ui| {
-                ui.label(egui::Label::new("Delete"));
-                ui.label(egui::Label::new("Enabled"));
-                ui.label(egui::Label::new("Condition"));
-                ui.end_row();
+            let mut deletion_list: Vec<usize> = Vec::with_capacity(20);
+            egui::Grid::new("breakpoints_".to_owned())
+                .striped(true)
+                .spacing(Vec2::new(60.5, 6.5))
+                .show(ui, |ui| {
+                    ui.label(egui::Label::new("Delete"));
+                    ui.label(egui::Label::new("Enabled"));
+                    ui.label(egui::Label::new("Condition"));
+                    ui.end_row();
 
-                for (i, breakpoint) in &mut self.breakpoints.iter_mut().enumerate() {
-                    if ui
-                        .add(egui::Button::new("-").text_color(Color32::RED))
-                        .clicked()
-                    {
-                        deletion_list.push(i)
-                    }
-                    ui.checkbox(&mut breakpoint.enabled, "");
-                    if breakpoint.is_triggered(regs) {
-                        ui.add(
-                            egui::Label::new(breakpoint.to_string().clone())
-                                .text_color(Color32::RED),
-                        );
-                    } else {
-                        ui.add(egui::Label::new(breakpoint.to_string().clone()));
+                    for (i, breakpoint) in &mut self.breakpoints.iter_mut().enumerate() {
+                        if ui
+                            .add(egui::Button::new("-").text_color(Color32::RED))
+                            .clicked()
+                        {
+                            deletion_list.push(i)
+                        }
+                        ui.checkbox(&mut breakpoint.enabled, "");
+                        if breakpoint.is_triggered(regs) {
+                            ui.add(
+                                egui::Label::new(breakpoint.to_string().clone())
+                                    .text_color(Color32::RED),
+                            );
+                        } else {
+                            ui.add(egui::Label::new(breakpoint.to_string().clone()));
+                        }
+                        ui.end_row();
                     }
                     ui.end_row();
-                }
-                ui.end_row();
+                });
+            deletion_list.into_iter().for_each(|i| {
+                self.breakpoints.remove(i);
             });
-        deletion_list.into_iter().for_each(|i| {
-            self.breakpoints.remove(i);
         });
     }
 
@@ -181,7 +183,7 @@ impl BreakpointEditor {
     fn draw_breakpoint_options(&mut self, ui: &mut Ui) {
         egui::CollapsingHeader::new("🛠 Options")
             .id_source(55)
-            .default_open(false)
+            .default_open(true)
             .show(ui, |ui| {
                 ui.checkbox(&mut self.options.is_advanced, "Advanced")
             });
