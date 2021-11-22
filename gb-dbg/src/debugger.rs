@@ -31,12 +31,14 @@ pub struct Debugger<MEM> {
 impl<BUS: DebugOperations> Debugger<BUS> {
     pub fn draw(&mut self, ctx: &CtxRef, mut memory: &mut BUS) {
         // ctx.set_debug_on_hover(true);
+
+        // Set style for all UI
         let mut style: Style = (*ctx.style()).clone();
-        //if you wanted to change the backround color for example
         style.visuals.faint_bg_color = Color32::from_gray(50);
         style.visuals.override_text_color = Some(Color32::WHITE);
         ctx.set_style(style);
 
+        // Update cache
         self.disassembler
             .may_update_cache(memory.cpu_get(CpuRegs::PC).into(), memory);
 
@@ -49,6 +51,7 @@ impl<BUS: DebugOperations> Debugger<BUS> {
             .show(ctx, |ui| {
                 self.memory_editor.draw(ui, &mut memory);
             });
+
         egui::SidePanel::right("right_panel")
             .frame(egui::Frame {
                 margin: vec2(16., 16.),
@@ -57,6 +60,7 @@ impl<BUS: DebugOperations> Debugger<BUS> {
             })
             .resizable(false)
             .show(ctx, |ui| self.breakpoint_editor.draw(ui, memory));
+
         egui::TopBottomPanel::top("top_panel")
             .frame(egui::Frame {
                 margin: vec2(8., 8.),
@@ -86,11 +90,11 @@ impl<BUS: DebugOperations> Debugger<BUS> {
                     .spacing(Vec2::new(16., 16.))
                     .show(ui, |ui| {
                         self.disassembler.draw(ui);
-
                         ui.end_row();
+
                         self.status_bar.draw(ui, memory);
-
                         ui.end_row();
+
                         self.register_editor.draw(ui, memory);
                     });
             });
