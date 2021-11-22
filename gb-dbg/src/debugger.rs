@@ -48,6 +48,7 @@ impl<BUS: DebugOperations> Debugger<BUS> {
                 fill: Color32::from_gray(20),
                 ..Default::default()
             })
+            .resizable(false)
             .show(ctx, |ui| {
                 self.memory_editor.draw(ui, &mut memory);
             });
