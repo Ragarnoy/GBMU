@@ -210,7 +210,7 @@ pub fn new_debug_window(video: &sdl2::VideoSubsystem) -> GBWindow {
     GBWindow::new(
         "GBMU Debug",
         (DEBUGGER_WIDTH as u32, DEBUGGER_HEIGHT as u32),
-        false,
+        true,
         video,
     )
     .expect("Error while building debug window")
