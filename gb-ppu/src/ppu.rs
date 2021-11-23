@@ -396,6 +396,13 @@ impl Ppu {
                         self.next_pixels[y as usize][x as usize] = Color::from(pixel).into();
                         self.state.draw_pixel();
                         x += 1;
+                        Self::check_next_pixel_mode(
+                            &lcd_reg,
+                            &mut self.pixel_fetcher,
+                            &mut self.pixel_fifo,
+                            &mut self.scanline_sprites,
+                            (x, y),
+                        );
                     };
                 }
                 self.pixel_fetcher.fetch(
@@ -405,7 +412,7 @@ impl Ppu {
                     x as usize,
                     self.pixel_fifo.count(),
                 );
-                if self.pixel_fetcher.push_to_fifo(&mut self.pixel_fifo) && x < SCREEN_WIDTH as u8 {
+                if self.pixel_fetcher.push_to_fifo(&mut self.pixel_fifo) {
                     Self::check_next_pixel_mode(
                         &lcd_reg,
                         &mut self.pixel_fetcher,
@@ -445,11 +452,11 @@ impl Ppu {
 
         if lcd_reg.control.win_enable() && lcd_reg.window_pos.wy <= y && lcd_reg.window_pos.wx <= x
         {
-            if pixel_fetcher.mode() == FetchMode::Background {
+            if pixel_fetcher.mode() != FetchMode::Window {
                 pixel_fetcher.set_mode(FetchMode::Window);
                 pixel_fifo.clear();
             }
-        } else if pixel_fetcher.mode() == FetchMode::Window {
+        } else if pixel_fetcher.mode() != FetchMode::Background {
             pixel_fetcher.set_mode(FetchMode::Background);
             pixel_fifo.clear();
         }

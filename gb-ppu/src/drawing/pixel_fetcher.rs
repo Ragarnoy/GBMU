@@ -7,7 +7,7 @@ use gb_lcd::render::{SCREEN_HEIGHT, SCREEN_WIDTH};
 use std::collections::VecDeque;
 use std::ops::Deref;
 
-#[derive(Eq, PartialEq, Clone, Copy)]
+#[derive(Eq, PartialEq, Clone, Copy, Debug)]
 pub enum FetchMode {
     Background,
     Window,
@@ -188,16 +188,16 @@ impl PixelFetcher {
             self.pixels.clear();
             false
         } else {
-            true
+            false
         }
     }
 
     fn mix_to_fifo(&mut self, fifo: &mut PixelFIFO) -> bool {
         if fifo.mix(&self.pixels) {
             self.pixels.clear();
-            false
-        } else {
             true
+        } else {
+            false
         }
     }
 }
