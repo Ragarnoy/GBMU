@@ -1,5 +1,5 @@
 use crate::dbg_interfaces::{CpuRegs, DebugOperations};
-use egui::Ui;
+use egui::{Color32, Ui};
 
 const Z_FLAG: u16 = 0b1000_0000;
 const N_FLAG: u16 = 0b0100_0000;
@@ -10,11 +10,16 @@ pub struct StatusBar;
 
 impl StatusBar {
     pub fn draw<DBG: DebugOperations>(&self, ui: &mut Ui, regs: &DBG) {
-        ui.horizontal(|ui| {
-            ui.label(format!(
-                "Flags: {}",
-                display_flags(u16::from(regs.cpu_get(CpuRegs::AF)))
-            ));
+        ui.vertical(|ui| {
+            ui.colored_label(Color32::LIGHT_BLUE, "Status");
+            ui.separator();
+            ui.horizontal(|ui| {
+                ui.colored_label(Color32::GOLD, "Flags: ");
+                ui.colored_label(
+                    Color32::WHITE,
+                    display_flags(u16::from(regs.cpu_get(CpuRegs::AF))),
+                );
+            });
         });
     }
 }

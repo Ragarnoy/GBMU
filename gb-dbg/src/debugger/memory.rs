@@ -11,8 +11,9 @@ pub struct MemoryViewer<MEM> {
 impl<MEM: MemoryDebugOperations> MemoryViewer<MEM> {
     pub fn new(address_ranges: Vec<(&'static str, Range<u16>)>) -> Self {
         let mut mem_options = MemoryEditorOptions::default();
+        mem_options.address_text_colour = Color32::DEBUG_COLOR;
         mem_options.is_resizable_column = false;
-        mem_options.is_options_collapsed = true;
+        mem_options.is_options_collapsed = false;
         let mut mem_edit = MemoryEditor::new(|mem, address| {
             <MEM as MemoryDebugOperations>::read(mem, address as u16)
         })
@@ -28,7 +29,7 @@ impl<MEM: MemoryDebugOperations> MemoryViewer<MEM> {
     }
 
     pub fn draw(&mut self, ui: &mut Ui, memory: &mut MEM) {
-        ui.label(Label::new("Memory Editor").text_color(Color32::WHITE));
+        ui.label(Label::new("Memory Editor").text_color(Color32::LIGHT_BLUE));
         self.memory_editor.draw_editor_contents(ui, memory);
     }
 }
