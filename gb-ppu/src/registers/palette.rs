@@ -26,6 +26,13 @@ impl Palette {
         }
     }
 
+    pub fn from(byte: u8, is_sprite: bool) -> Self {
+        Palette {
+            map: byte.into(),
+            is_sprite,
+        }
+    }
+
     pub fn is_sprite(&self) -> bool {
         self.is_sprite
     }
