@@ -107,7 +107,6 @@ fn main() {
                     Option::Some,
                 )
             });
-            drop(game);
             game = new_game;
         }
         if let Some(ref mut input_wind) = context.windows.input {
