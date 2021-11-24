@@ -68,7 +68,7 @@ mod tests {
 
     #[test]
     fn mix() {
-        let pal_0 = Rc::new(Cell::new(Palette::new(false)));
+        let pal_0 = Rc::new(Cell::new(Palette::new_background()));
         let mut pixels_0 = VecDeque::from_iter([
             Pixel::new(1, pal_0.clone(), false),
             Pixel::new(1, pal_0.clone(), false),
@@ -79,7 +79,7 @@ mod tests {
             Pixel::new(1, pal_0.clone(), false),
             Pixel::new(1, pal_0.clone(), false),
         ]);
-        let pal_1 = Rc::new(Cell::new(Palette::new(true)));
+        let pal_1 = Rc::new(Cell::new(Palette::new_sprite()));
         let pixels_1 = VecDeque::from_iter([
             Pixel::new(2, pal_1.clone(), false),
             Pixel::new(0, pal_1.clone(), false),
@@ -106,7 +106,7 @@ mod tests {
 
     #[test]
     fn append() {
-        let palette = Rc::new(Cell::new(Palette::new(false)));
+        let palette = Rc::new(Cell::new(Palette::new_background()));
         let mut pixels = VecDeque::from_iter([
             Pixel::new(0, palette.clone(), false),
             Pixel::new(1, palette.clone(), false),
@@ -128,7 +128,7 @@ mod tests {
 
     #[test]
     fn pop() {
-        let palette = Rc::new(Cell::new(Palette::new(false)));
+        let palette = Rc::new(Cell::new(Palette::new_background()));
         let mut pixels_0 = VecDeque::from_iter([
             Pixel::new(0, palette.clone(), false),
             Pixel::new(1, palette.clone(), false),
