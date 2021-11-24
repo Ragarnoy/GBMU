@@ -476,7 +476,7 @@ impl Ppu {
         let (x, _) = cursor;
 
         if let Some(sprite) = sprites.pop() {
-            if sprite.x_pos() == x {
+            if sprite.x_pos() - 8 == x {
                 pixel_fetcher.set_mode(FetchMode::Sprite(sprite));
                 pixel_fifo.enabled = false;
             } else {
