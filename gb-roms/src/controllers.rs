@@ -17,6 +17,15 @@ pub use mbc5::MBC5;
 pub use rom_only::RomOnlyController;
 use std::convert::From;
 
+/// Size of the ROM Area
+pub const ROM_AREA_SIZE: usize = 0x8000;
+
+/// Maximum size of a rom bank
+pub const ROM_BANK_SIZE: usize = 0x4000;
+
+/// Maximum size of a ram bank
+pub const RAM_BANK_SIZE: usize = 0x2000;
+
 pub trait Controller {
     /// Save the current controller into a Serializer file
     fn save<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -138,15 +147,13 @@ pub fn generate_rom_controller(
 
     Ok(match header.cartridge_type {
         RomOnly => RomOnlyController::from_file(reader)?.into(),
-        Mbc1 | Mbc1Ram | Mbc1RamBattery => {
-            MBC1::from_file(reader, header.ram_size, header.rom_size)?.into()
-        }
-        Mbc2 | Mbc2Battery => MBC2::from_file(reader, header.rom_size)?.into(),
+        Mbc1 | Mbc1Ram | Mbc1RamBattery => MBC1::from_file(reader, header)?.into(),
+        Mbc2 | Mbc2Battery => MBC2::from_file(reader, header)?.into(),
         Mbc3 | Mbc3Ram2 | Mbc3RamBattery2 | Mbc3TimerBattery | Mbc3TimerRamBattery2 => {
             MBC3::from_reader(reader, header)?.into()
         }
         Mbc5 | Mbc5Ram | Mbc5RamBattery | Mbc5Rumble | Mbc5RumbleRam | Mbc5RumbleRamBattery => {
-            MBC5::from_file(reader, header.ram_size, header.rom_size)?.into()
+            MBC5::from_file(reader, header)?.into()
         }
         _ => panic!("unhandle rom type"),
     })

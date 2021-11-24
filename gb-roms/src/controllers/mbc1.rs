@@ -1,40 +1,37 @@
-use super::Controller;
-use crate::header::size::{RamSize, RomSize};
+use super::{Controller, RAM_BANK_SIZE, ROM_BANK_SIZE};
+use crate::header::{
+    size::{RamSize, RomSize},
+    Header,
+};
 use gb_bus::{Address, Area, Error, FileOperation};
 use serde::{Deserialize, Serialize};
 use std::io::{self, Read};
 
 pub struct MBC1 {
     configuration: Configuration,
-    rom_bank: Vec<[u8; MBC1::ROM_SIZE]>,
-    ram_bank: Vec<[u8; MBC1::RAM_SIZE]>,
+    rom_bank: Vec<[u8; ROM_BANK_SIZE]>,
+    ram_bank: Vec<[u8; RAM_BANK_SIZE]>,
     regs: MBC1Reg,
 }
 
 impl MBC1 {
-    pub const ROM_SIZE: usize = 0x4000;
     pub const MAX_ROM_BANK: usize = 0x80;
-    pub const RAM_SIZE: usize = 0x2000;
     pub const MAX_RAM_BANK: usize = 0x4;
 
-    pub fn new(ram_size: RamSize, rom_size: RomSize) -> Self {
-        let ram_bank = ram_size.get_bank_amounts();
-        let rom_bank = rom_size.get_bank_amounts();
+    pub fn new(header: Header) -> Self {
+        let ram_bank = header.ram_size.get_bank_amounts();
+        let rom_bank = header.rom_size.get_bank_amounts();
 
         Self {
-            configuration: Configuration::from_sizes(ram_size, rom_size),
-            rom_bank: vec![[0_u8; MBC1::ROM_SIZE]; rom_bank],
-            ram_bank: vec![[0_u8; MBC1::RAM_SIZE]; ram_bank],
+            configuration: Configuration::from_sizes(header.ram_size, header.rom_size),
+            rom_bank: vec![[0_u8; ROM_BANK_SIZE]; rom_bank],
+            ram_bank: vec![[0_u8; RAM_BANK_SIZE]; ram_bank],
             regs: MBC1Reg::default(),
         }
     }
 
-    pub fn from_file(
-        mut file: impl Read,
-        ram_size: RamSize,
-        rom_size: RomSize,
-    ) -> Result<Self, io::Error> {
-        let mut ctl = Self::new(ram_size, rom_size);
+    pub fn from_file(mut file: impl Read, header: Header) -> Result<Self, io::Error> {
+        let mut ctl = Self::new(header);
 
         for e in ctl.rom_bank.iter_mut() {
             file.read_exact(e)?;
@@ -77,7 +74,7 @@ impl MBC1 {
         }
     }
 
-    fn get_selected_rom(&self, root_bank: bool) -> &[u8; MBC1::ROM_SIZE] {
+    fn get_selected_rom(&self, root_bank: bool) -> &[u8; ROM_BANK_SIZE] {
         let index = if root_bank {
             self.get_main_rom_index()
         } else {
@@ -133,13 +130,13 @@ impl MBC1 {
         Ok(ram[address])
     }
 
-    fn get_selected_ram_mut(&mut self) -> &mut [u8; MBC1::RAM_SIZE] {
+    fn get_selected_ram_mut(&mut self) -> &mut [u8; RAM_BANK_SIZE] {
         let index = self.get_ram_index();
 
         &mut self.ram_bank[index]
     }
 
-    fn get_selected_ram(&self) -> &[u8; MBC1::RAM_SIZE] {
+    fn get_selected_ram(&self) -> &[u8; RAM_BANK_SIZE] {
         &self.ram_bank[self.get_ram_index()]
     }
 
@@ -177,8 +174,8 @@ struct Mbc1Data {
     ram_banks: Vec<Vec<u8>>,
 }
 
-impl From<Vec<[u8; MBC1::RAM_SIZE]>> for Mbc1Data {
-    fn from(banks: Vec<[u8; MBC1::RAM_SIZE]>) -> Self {
+impl From<Vec<[u8; RAM_BANK_SIZE]>> for Mbc1Data {
+    fn from(banks: Vec<[u8; RAM_BANK_SIZE]>) -> Self {
         Self {
             ram_banks: banks.iter().map(|bank| bank.to_vec()).collect(),
         }
@@ -204,12 +201,12 @@ impl Controller for MBC1 {
         self.ram_bank = data
             .ram_banks
             .into_iter()
-            .map(<[u8; MBC1::RAM_SIZE]>::try_from)
-            .collect::<Result<Vec<[u8; MBC1::RAM_SIZE]>, Vec<u8>>>()
+            .map(<[u8; RAM_BANK_SIZE]>::try_from)
+            .collect::<Result<Vec<[u8; RAM_BANK_SIZE]>, Vec<u8>>>()
             .map_err(|faulty| {
                 Error::invalid_length(
                     faulty.len(),
-                    &format!("a ram bank size of size {}", MBC1::RAM_SIZE).as_str(),
+                    &format!("a ram bank size of size {}", RAM_BANK_SIZE).as_str(),
                 )
             })?;
         Ok(())
@@ -218,12 +215,20 @@ impl Controller for MBC1 {
 
 #[cfg(test)]
 mod test_mbc1 {
-    use super::{BankingMode, Configuration, RamSize, RomSize, MBC1};
+    use super::{BankingMode, Configuration, MBC1};
+    use crate::header::{
+        size::{RamSize, RomSize},
+        Header,
+    };
     use gb_bus::{address::Address, Area};
 
     #[test]
     fn test_extra_rom_default_selection() {
-        let mut ctl = MBC1::new(RamSize::KByte8, RomSize::KByte256);
+        let mut ctl = MBC1::new(Header {
+            ram_size: RamSize::KByte8,
+            rom_size: RomSize::KByte256,
+            ..Default::default()
+        });
 
         ctl.regs.rom_number = 0;
         assert_eq!(ctl.get_extra_rom_index(), 1);
@@ -234,7 +239,11 @@ mod test_mbc1 {
 
     #[test]
     fn basic_card() {
-        let mut ctl = MBC1::new(RamSize::KByte8, RomSize::KByte256);
+        let mut ctl = MBC1::new(Header {
+            ram_size: RamSize::KByte8,
+            rom_size: RomSize::KByte256,
+            ..Default::default()
+        });
 
         assert_eq!(ctl.configuration, Configuration::Basic);
         assert_eq!(ctl.ram_bank.len(), RamSize::KByte8.get_bank_amounts());
@@ -275,7 +284,11 @@ mod test_mbc1 {
 
     #[test]
     fn large_rom() {
-        let mut ctl = MBC1::new(RamSize::KByte8, RomSize::MByte1);
+        let mut ctl = MBC1::new(Header {
+            ram_size: RamSize::KByte8,
+            rom_size: RomSize::MByte1,
+            ..Default::default()
+        });
 
         assert_eq!(ctl.configuration, Configuration::LargeRom);
         assert_eq!(ctl.ram_bank.len(), RamSize::KByte8.get_bank_amounts());
@@ -301,7 +314,11 @@ mod test_mbc1 {
 
     #[test]
     fn large_ram() {
-        let mut ctl = MBC1::new(RamSize::KByte32, RomSize::KByte256);
+        let mut ctl = MBC1::new(Header {
+            ram_size: RamSize::KByte32,
+            rom_size: RomSize::KByte256,
+            ..Default::default()
+        });
 
         assert_eq!(ctl.configuration, Configuration::LargeRam);
         assert_eq!(ctl.ram_bank.len(), RamSize::KByte32.get_bank_amounts());

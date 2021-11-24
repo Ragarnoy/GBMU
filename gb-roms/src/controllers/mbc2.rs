@@ -1,32 +1,31 @@
-use super::Controller;
-use crate::header::size::RomSize;
+use super::{Controller, ROM_BANK_SIZE};
+use crate::header::Header;
 use gb_bus::{Address, Area, Error, FileOperation};
 use serde::{Deserialize, Serialize};
 use std::io::{self, Read};
 
 pub struct MBC2 {
-    rom_bank: Vec<[u8; MBC2::ROM_SIZE]>,
+    rom_bank: Vec<[u8; ROM_BANK_SIZE]>,
     ram_bank: [u8; MBC2::RAM_SIZE],
     regs: MBC2Reg,
 }
 
 impl MBC2 {
-    pub const ROM_SIZE: usize = 0x4000;
     pub const MAX_ROM_BANK: usize = 0x10;
     pub const RAM_SIZE: usize = 0x200;
 
-    fn new(rom_size: RomSize) -> Self {
-        let rom_banks_amount = rom_size.get_bank_amounts();
+    fn new(header: Header) -> Self {
+        let rom_banks_amount = header.rom_size.get_bank_amounts();
 
         Self {
-            rom_bank: vec![[0_u8; Self::ROM_SIZE]; rom_banks_amount],
+            rom_bank: vec![[0_u8; ROM_BANK_SIZE]; rom_banks_amount],
             ram_bank: [0_u8; Self::RAM_SIZE],
             regs: MBC2Reg::default(),
         }
     }
 
-    pub fn from_file(mut file: impl Read, rom_size: RomSize) -> Result<Self, io::Error> {
-        let mut ctl = Self::new(rom_size);
+    pub fn from_file(mut file: impl Read, header: Header) -> Result<Self, io::Error> {
+        let mut ctl = Self::new(header);
 
         for e in ctl.rom_bank.iter_mut() {
             file.read_exact(e)?;
@@ -62,7 +61,7 @@ impl MBC2 {
         }
     }
 
-    fn get_selected_rom(&self, is_root_bank: bool) -> &[u8; MBC2::ROM_SIZE] {
+    fn get_selected_rom(&self, is_root_bank: bool) -> &[u8; ROM_BANK_SIZE] {
         let index: usize = if is_root_bank {
             0
         } else {

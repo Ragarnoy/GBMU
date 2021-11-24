@@ -9,6 +9,13 @@ pub enum CgbFlag {
     CgbOnly,
 }
 
+#[cfg(test)]
+impl Default for CgbFlag {
+    fn default() -> Self {
+        Self::RetroCompatible
+    }
+}
+
 impl TryFrom<u8> for CgbFlag {
     type Error = Error;
 
@@ -31,6 +38,13 @@ fn test_convert_cgb_flag() {
 pub enum SgbFlag {
     Unsupported,
     Supported,
+}
+
+#[cfg(test)]
+impl Default for SgbFlag {
+    fn default() -> Self {
+        Self::Supported
+    }
 }
 
 impl TryFrom<u8> for SgbFlag {
