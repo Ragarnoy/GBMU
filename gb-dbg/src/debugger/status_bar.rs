@@ -1,4 +1,4 @@
-use crate::dbg_interfaces::{CpuRegs, DebugOperations};
+use crate::dbg_interfaces::{CpuRegs, DebugOperations, IORegs};
 use egui::{Color32, Ui};
 
 const Z_FLAG: u16 = 0b1000_0000;
@@ -22,6 +22,7 @@ impl StatusBar {
             ui.separator();
             ui.horizontal(|ui| {
                 display_flags(ui, u16::from(regs.cpu_get(CpuRegs::AF)));
+                display_key(ui, u16::from(regs.io_get(IORegs::Joy)))
             });
         });
     }
@@ -29,16 +30,26 @@ impl StatusBar {
 
 fn display_key(ui: &mut Ui, key: u16) {
     let mut key_display: Vec<char> = vec!['_'; 6];
-    if key & RIGHT_OR_A != 0 {
+    if key & RIGHT_OR_A == 0 {
         key_display[0] = 'R';
     }
-    if key & LEFT_OR_B != 0 {
+    if key & LEFT_OR_B == 0 {
         key_display[1] = 'L';
     }
-    if key & UP_OR_SELECT != 0 {
+    if key & UP_OR_SELECT == 0 {
         key_display[2] = 'U';
     }
-
+    if key & DOWN_OR_START == 0 {
+        key_display[3] = 'D';
+    }
+    if key & SELECT_DIRECTION == 0 {
+        key_display[4] = 'S';
+    }
+    if key & SELECT_ACTION == 0 {
+        key_display[5] = 'A';
+    }
+    ui.colored_label(Color32::GOLD, "Keys: ");
+    ui.colored_label(Color32::WHITE, key_display.into_iter().collect::<String>());
 }
 
 fn display_flags(ui: &mut Ui, af_reg: u16) {
