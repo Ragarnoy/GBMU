@@ -186,10 +186,8 @@ impl PixelFetcher {
     fn append_to_fifo(&mut self, fifo: &mut PixelFIFO) -> bool {
         if fifo.append(&mut self.pixels) {
             self.pixels.clear();
-            false
-        } else {
-            false
         }
+        false
     }
 
     fn mix_to_fifo(&mut self, fifo: &mut PixelFIFO) -> bool {
