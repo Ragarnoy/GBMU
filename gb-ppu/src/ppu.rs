@@ -454,11 +454,15 @@ impl Ppu {
         {
             if pixel_fetcher.mode() != FetchMode::Window {
                 pixel_fetcher.set_mode(FetchMode::Window);
-                pixel_fifo.clear();
+                if pixel_fetcher.mode() == FetchMode::Background {
+                    pixel_fifo.clear();
+                }
             }
         } else if pixel_fetcher.mode() != FetchMode::Background {
             pixel_fetcher.set_mode(FetchMode::Background);
-            pixel_fifo.clear();
+            if pixel_fetcher.mode() == FetchMode::Window {
+                pixel_fifo.clear();
+            }
         }
     }
 
