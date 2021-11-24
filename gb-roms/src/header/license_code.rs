@@ -62,6 +62,13 @@ pub enum NewLicenseCode {
     YonezawaSpal,
 }
 
+#[cfg(test)]
+impl Default for NewLicenseCode {
+    fn default() -> Self {
+        Self::None
+    }
+}
+
 // Convert New license code raw byte into enum
 // value from [new licensee code](https://gbdev.io/pandocs/The_Cartridge_Header.html#0144-0145---new-licensee-code)
 impl TryFrom<&str> for NewLicenseCode {
@@ -409,6 +416,13 @@ pub enum OldLicenseCode {
     Virgin,
     Yanoman,
     YonezawaSPal,
+}
+
+#[cfg(test)]
+impl Default for OldLicenseCode {
+    fn default() -> Self {
+        Self::None
+    }
 }
 
 impl TryFrom<u8> for OldLicenseCode {

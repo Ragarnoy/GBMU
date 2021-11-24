@@ -7,6 +7,13 @@ pub enum DestinationCode {
     Other,
 }
 
+#[cfg(test)]
+impl Default for DestinationCode {
+    fn default() -> Self {
+        Self::Other
+    }
+}
+
 impl TryFrom<u8> for DestinationCode {
     type Error = Error;
 

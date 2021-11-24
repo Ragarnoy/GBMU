@@ -131,7 +131,7 @@ impl FileOperation<Area> for IORegBus {
             VRAM_BANK_START => write_area!(VRAM_BANK_START, self.vram_bank, VRamBank, v, addr),
             BOOT_ROM_START => write_area!(BOOT_ROM_START, self.boot_rom, BootRom, v, addr),
             VRAM_DMA_START..=VRAM_DMA_END => {
-                write_area!(VRAM_BANK_START, self.vram_dma, VramDma, v, addr)
+                write_area!(VRAM_DMA_START, self.vram_dma, VramDma, v, addr)
             }
             BG_OBJ_PALETTES_START..=BG_OBJ_PALETTES_END => write_area!(
                 BG_OBJ_PALETTES_START,

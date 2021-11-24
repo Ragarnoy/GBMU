@@ -1,16 +1,15 @@
+use super::ROM_AREA_SIZE;
 use gb_bus::{Address, Area, Error, FileOperation};
 use std::io::{self, ErrorKind, Read};
 
-pub const MAX_ROM_ONLY_SIZE: usize = 32_768;
-
 pub struct RomOnlyController {
-    rom: [u8; MAX_ROM_ONLY_SIZE],
+    rom: [u8; ROM_AREA_SIZE],
 }
 
 impl Default for RomOnlyController {
     fn default() -> Self {
         Self {
-            rom: [0_u8; MAX_ROM_ONLY_SIZE],
+            rom: [0_u8; ROM_AREA_SIZE],
         }
     }
 }
@@ -44,7 +43,7 @@ fn test_romonly_impl() {
     use gb_bus::{address::Address, area::Area};
 
     let rom = RomOnlyController {
-        rom: [42; MAX_ROM_ONLY_SIZE],
+        rom: [42; ROM_AREA_SIZE],
     };
 
     assert_eq!(

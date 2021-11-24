@@ -34,6 +34,13 @@ pub enum CartridgeType {
     HuC1RamBattery,
 }
 
+#[cfg(test)]
+impl Default for CartridgeType {
+    fn default() -> Self {
+        Self::RomOnly
+    }
+}
+
 impl TryFrom<u8> for CartridgeType {
     type Error = Error;
 

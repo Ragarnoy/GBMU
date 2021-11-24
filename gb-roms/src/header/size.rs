@@ -15,6 +15,13 @@ pub enum RomSize {
     MByte8,
 }
 
+#[cfg(test)]
+impl Default for RomSize {
+    fn default() -> Self {
+        Self::KByte32
+    }
+}
+
 impl RomSize {
     const REF_SIZE: usize = 32_768;
     const REF_BANK: usize = 2;
@@ -94,6 +101,13 @@ pub enum RamSize {
     KByte32 = 3,
     KByte64,
     KByte128,
+}
+
+#[cfg(test)]
+impl Default for RamSize {
+    fn default() -> Self {
+        Self::NoRamOrUnused
+    }
 }
 
 impl RamSize {
