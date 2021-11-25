@@ -37,16 +37,16 @@ fn display_key(ui: &mut Ui, key: u16) {
         key_display[1] = "⬅/B ";
     }
     if key & UP_OR_SELECT == 0 {
-        key_display[2] = "⬆/S ";
+        key_display[2] = "⬆/SL ";
     }
     if key & DOWN_OR_START == 0 {
-        key_display[3] = "⬇/S ";
+        key_display[3] = "⬇/ST ";
     }
     if key & SELECT_DIRECTION == 0 {
-        key_display[4] = "SLD ";
+        key_display[4] = "SL_D ";
     }
     if key & SELECT_ACTION == 0 {
-        key_display[5] = "SLA ";
+        key_display[5] = "SL_A ";
     }
     ui.colored_label(Color32::GOLD, "Keys: ");
     ui.colored_label(Color32::WHITE, key_display.into_iter().collect::<String>());
