@@ -40,9 +40,29 @@ pub enum MbcController {
     Mbc5(MBC5),
 }
 
+impl MbcController {
+    pub fn name(&self) -> &'static str {
+        match self {
+            MbcController::RomOnly(_) => "romonly",
+            MbcController::Mbc1(_) => "Mbc1",
+            MbcController::Mbc2(_) => "Mbc2",
+            MbcController::Mbc3(_) => "Mbc3",
+            MbcController::Mbc5(_) => "Mbc5",
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize)]
 pub enum MbcState {
     Mbc1(mbc1::Mbc1State),
+}
+
+impl MbcState {
+    pub fn name(&self) -> &'static str {
+        match self {
+            MbcState::Mbc1(_) => "Mbc1",
+        }
+    }
 }
 
 impl From<RomOnlyController> for MbcController {
@@ -94,14 +114,23 @@ impl MbcController {
     where
         D: serde::Deserializer<'de>,
     {
-        unimplemented!();
-        // match self {
-        //     Self::RomOnly(_rom) => panic!("ROM has no data to load"),
-        //     Self::Mbc1(mbc1) => mbc1.load(deserializer),
-        //     Self::Mbc2(mbc2) => mbc2.load(deserializer),
-        //     Self::Mbc3(mbc3) => mbc3.load(deserializer),
-        //     Self::Mbc5(mbc5) => mbc5.load(deserializer),
-        // }
+        use serde::de::Error;
+
+        let mbc_state = MbcState::deserialize(deserializer)?;
+        match (self, mbc_state) {
+            (Self::Mbc1(mbc1), MbcState::Mbc1(state)) => {
+                mbc1.with_state(state).map_err(Error::custom)?;
+            }
+            (Self::RomOnly(_rom), _) => log::warn!("trying to load saved state for romonly"),
+            (_, _) => {
+                log::warn!(
+                    "miss match rom type with game save type ({} is incompatible with {})",
+                    self.name(),
+                    mbc_state.name(),
+                )
+            }
+        }
+        Ok(())
     }
 }
 
