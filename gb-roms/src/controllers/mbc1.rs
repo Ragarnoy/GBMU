@@ -4,13 +4,15 @@ use crate::header::{
     Header,
 };
 use gb_bus::{Address, Area, Error, FileOperation};
-use serde::{Deserialize, Serialize};
-use std::io::{self, Read};
+use std::{
+    io::{self, Read},
+    rc::Rc,
+};
 
 pub struct MBC1 {
     configuration: Configuration,
-    rom_bank: Vec<[u8; ROM_BANK_SIZE]>,
-    ram_bank: Vec<[u8; RAM_BANK_SIZE]>,
+    rom_banks: Vec<[u8; ROM_BANK_SIZE]>,
+    ram_banks: Vec<[u8; RAM_BANK_SIZE]>,
     regs: MBC1Reg,
 }
 
@@ -19,13 +21,13 @@ impl MBC1 {
     pub const MAX_RAM_BANK: usize = 0x4;
 
     pub fn new(header: Header) -> Self {
-        let ram_bank = header.ram_size.get_bank_amounts();
-        let rom_bank = header.rom_size.get_bank_amounts();
+        let ram_banks = header.ram_size.get_bank_amounts();
+        let rom_banks = header.rom_size.get_bank_amounts();
 
         Self {
             configuration: Configuration::from_sizes(header.ram_size, header.rom_size),
-            rom_bank: vec![[0_u8; ROM_BANK_SIZE]; rom_bank],
-            ram_bank: vec![[0_u8; RAM_BANK_SIZE]; ram_bank],
+            rom_banks: vec![[0_u8; ROM_BANK_SIZE]; rom_banks],
+            ram_banks: vec![[0_u8; RAM_BANK_SIZE]; ram_banks],
             regs: MBC1Reg::default(),
         }
     }
@@ -33,10 +35,27 @@ impl MBC1 {
     pub fn from_file(mut file: impl Read, header: Header) -> Result<Self, io::Error> {
         let mut ctl = Self::new(header);
 
-        for e in ctl.rom_bank.iter_mut() {
+        for e in ctl.rom_banks.iter_mut() {
             file.read_exact(e)?;
         }
         Ok(ctl)
+    }
+
+    pub fn with_state(mut self, state: Mbc1State) -> Result<Self, String> {
+        self.ram_banks = state
+            .ram_banks
+            .into_iter()
+            .map(<[u8; RAM_BANK_SIZE]>::try_from)
+            .collect::<Result<Vec<[u8; RAM_BANK_SIZE]>, Vec<u8>>>()
+            .map_err(|faulty| {
+                &format!(
+                    "invalid state banks size, expected {}, got {}",
+                    RAM_BANK_SIZE,
+                    faulty.len()
+                )
+            })?;
+
+        Ok(self)
     }
 
     fn write_rom(&mut self, v: u8, addr: Box<dyn Address<Area>>) -> Result<(), Error> {
@@ -81,7 +100,7 @@ impl MBC1 {
             self.get_extra_rom_index()
         };
 
-        &self.rom_bank[index]
+        &self.rom_banks[index]
     }
 
     /// Return the rom index for the area 0x0000-0x3fff
@@ -133,11 +152,11 @@ impl MBC1 {
     fn get_selected_ram_mut(&mut self) -> &mut [u8; RAM_BANK_SIZE] {
         let index = self.get_ram_index();
 
-        &mut self.ram_bank[index]
+        &mut self.ram_banks[index]
     }
 
     fn get_selected_ram(&self) -> &[u8; RAM_BANK_SIZE] {
-        &self.ram_bank[self.get_ram_index()]
+        &self.ram_banks[self.get_ram_index()]
     }
 
     fn get_ram_index(&self) -> usize {
@@ -170,11 +189,11 @@ impl FileOperation<Area> for MBC1 {
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
-struct Mbc1Data {
+pub struct Mbc1State {
     ram_banks: Vec<Vec<u8>>,
 }
 
-impl From<Vec<[u8; RAM_BANK_SIZE]>> for Mbc1Data {
+impl From<Vec<[u8; RAM_BANK_SIZE]>> for Mbc1State {
     fn from(banks: Vec<[u8; RAM_BANK_SIZE]>) -> Self {
         Self {
             ram_banks: banks.iter().map(|bank| bank.to_vec()).collect(),
@@ -183,33 +202,8 @@ impl From<Vec<[u8; RAM_BANK_SIZE]>> for Mbc1Data {
 }
 
 impl Controller for MBC1 {
-    fn save<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        let data = Mbc1Data::from(self.ram_bank.clone());
-        data.serialize(serializer)
-    }
-
-    fn load<'de, D>(&mut self, deserializer: D) -> Result<(), D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        use serde::de::Error;
-
-        let data = Mbc1Data::deserialize(deserializer)?;
-        self.ram_bank = data
-            .ram_banks
-            .into_iter()
-            .map(<[u8; RAM_BANK_SIZE]>::try_from)
-            .collect::<Result<Vec<[u8; RAM_BANK_SIZE]>, Vec<u8>>>()
-            .map_err(|faulty| {
-                Error::invalid_length(
-                    faulty.len(),
-                    &format!("a ram bank size of size {}", RAM_BANK_SIZE).as_str(),
-                )
-            })?;
-        Ok(())
+    fn save(&self) -> Box<dyn serde::Serialize> {
+        Box::new(Mbc1State::from(self.ram_banks.clone()))
     }
 }
 
@@ -246,8 +240,8 @@ mod test_mbc1 {
         });
 
         assert_eq!(ctl.configuration, Configuration::Basic);
-        assert_eq!(ctl.ram_bank.len(), RamSize::KByte8.get_bank_amounts());
-        assert_eq!(ctl.rom_bank.len(), RomSize::KByte256.get_bank_amounts());
+        assert_eq!(ctl.ram_banks.len(), RamSize::KByte8.get_bank_amounts());
+        assert_eq!(ctl.rom_banks.len(), RomSize::KByte256.get_bank_amounts());
 
         assert_eq!(ctl.get_main_rom_index(), 0);
         assert_eq!(ctl.get_extra_rom_index(), 1);
@@ -270,8 +264,8 @@ mod test_mbc1 {
         ctl.regs.special = 0;
         ctl.regs.banking_mode = BankingMode::Simple;
 
-        ctl.rom_bank[0][0x3fff] = 51;
-        ctl.rom_bank[1][0] = 42;
+        ctl.rom_banks[0][0x3fff] = 51;
+        ctl.rom_banks[1][0] = 42;
         let b = ctl
             .read_rom(Box::new(Address::from_offset(Area::Rom, 0x3fff, 0)))
             .expect("failed to read");
@@ -291,8 +285,8 @@ mod test_mbc1 {
         });
 
         assert_eq!(ctl.configuration, Configuration::LargeRom);
-        assert_eq!(ctl.ram_bank.len(), RamSize::KByte8.get_bank_amounts());
-        assert_eq!(ctl.rom_bank.len(), RomSize::MByte1.get_bank_amounts());
+        assert_eq!(ctl.ram_banks.len(), RamSize::KByte8.get_bank_amounts());
+        assert_eq!(ctl.rom_banks.len(), RomSize::MByte1.get_bank_amounts());
 
         assert_eq!(ctl.get_main_rom_index(), 0);
         assert_eq!(ctl.get_extra_rom_index(), 1);
@@ -321,8 +315,8 @@ mod test_mbc1 {
         });
 
         assert_eq!(ctl.configuration, Configuration::LargeRam);
-        assert_eq!(ctl.ram_bank.len(), RamSize::KByte32.get_bank_amounts());
-        assert_eq!(ctl.rom_bank.len(), RomSize::KByte256.get_bank_amounts());
+        assert_eq!(ctl.ram_banks.len(), RamSize::KByte32.get_bank_amounts());
+        assert_eq!(ctl.rom_banks.len(), RomSize::KByte256.get_bank_amounts());
 
         assert_eq!(ctl.get_main_rom_index(), 0);
         assert_eq!(ctl.get_extra_rom_index(), 1);
