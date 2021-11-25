@@ -38,7 +38,7 @@ impl MBC1 {
         Ok(ctl)
     }
 
-    pub fn with_state(mut self, state: Mbc1State) -> Result<Self, String> {
+    pub fn with_state(&mut self, state: Mbc1State) -> Result<&Self, String> {
         self.ram_banks = state
             .ram_banks
             .into_iter()
