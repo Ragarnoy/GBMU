@@ -1,13 +1,10 @@
-use super::{Controller, RAM_BANK_SIZE, ROM_BANK_SIZE};
+use super::{Controller, MbcState, RAM_BANK_SIZE, ROM_BANK_SIZE};
 use crate::header::{
     size::{RamSize, RomSize},
     Header,
 };
 use gb_bus::{Address, Area, Error, FileOperation};
-use std::{
-    io::{self, Read},
-    rc::Rc,
-};
+use std::io::{self, Read};
 
 pub struct MBC1 {
     configuration: Configuration,
@@ -56,6 +53,10 @@ impl MBC1 {
             })?;
 
         Ok(self)
+    }
+
+    pub fn get_state(&self) -> Mbc1State {
+        Mbc1State::from(self.ram_banks.clone())
     }
 
     fn write_rom(&mut self, v: u8, addr: Box<dyn Address<Area>>) -> Result<(), Error> {
@@ -202,8 +203,8 @@ impl From<Vec<[u8; RAM_BANK_SIZE]>> for Mbc1State {
 }
 
 impl Controller for MBC1 {
-    fn save(&self) -> Box<dyn serde::Serialize> {
-        Box::new(Mbc1State::from(self.ram_banks.clone()))
+    fn save(&self) -> MbcState {
+        MbcState::Mbc1(self.get_state())
     }
 }
 
