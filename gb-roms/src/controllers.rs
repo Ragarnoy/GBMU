@@ -15,6 +15,7 @@ pub use mbc2::MBC2;
 pub use mbc3::MBC3;
 pub use mbc5::MBC5;
 pub use rom_only::RomOnlyController;
+use serde::{Deserialize, Serialize};
 use std::convert::From;
 
 /// Size of the ROM Area
@@ -28,14 +29,7 @@ pub const RAM_BANK_SIZE: usize = 0x2000;
 
 pub trait Controller {
     /// Save the current controller into a Serializer file
-    fn save<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer;
-
-    /// Load data from a Deserializer file
-    fn load<'de, D>(&mut self, deserializer: D) -> Result<(), D::Error>
-    where
-        D: serde::Deserializer<'de>;
+    fn save(&self) -> MbcState;
 }
 
 pub enum MbcController {
@@ -44,6 +38,11 @@ pub enum MbcController {
     Mbc2(MBC2),
     Mbc3(MBC3),
     Mbc5(MBC5),
+}
+
+#[derive(Serialize, Deserialize)]
+pub enum MbcState {
+    Mbc1(mbc1::Mbc1State),
 }
 
 impl From<RomOnlyController> for MbcController {
@@ -76,40 +75,33 @@ impl From<MBC5> for MbcController {
     }
 }
 
-impl Controller for MbcController {
+impl MbcController {
     fn save<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
     {
-        match self {
+        let mbc_state = match self {
             Self::RomOnly(_rom) => panic!("ROM has no data to save"),
-            Self::Mbc1(mbc1) => mbc1.save(serializer),
-            Self::Mbc2(mbc2) => mbc2.save(serializer),
-            Self::Mbc3(mbc3) => mbc3.save(serializer),
-            Self::Mbc5(mbc5) => mbc5.save(serializer),
-        }
+            Self::Mbc1(mbc1) => mbc1.save(),
+            Self::Mbc2(mbc2) => mbc2.save(),
+            Self::Mbc3(mbc3) => mbc3.save(),
+            Self::Mbc5(mbc5) => mbc5.save(),
+        };
+        mbc_state.serialize(serializer)
     }
 
     fn load<'de, D>(&mut self, deserializer: D) -> Result<(), D::Error>
     where
         D: serde::Deserializer<'de>,
     {
-        match self {
-            Self::RomOnly(_rom) => panic!("ROM has no data to load"),
-            Self::Mbc1(mbc1) => mbc1.load(deserializer),
-            Self::Mbc2(mbc2) => mbc2.load(deserializer),
-            Self::Mbc3(mbc3) => mbc3.load(deserializer),
-            Self::Mbc5(mbc5) => mbc5.load(deserializer),
-        }
-    }
-}
-
-impl serde::Serialize for MbcController {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        self.save(serializer)
+        unimplemented!();
+        // match self {
+        //     Self::RomOnly(_rom) => panic!("ROM has no data to load"),
+        //     Self::Mbc1(mbc1) => mbc1.load(deserializer),
+        //     Self::Mbc2(mbc2) => mbc2.load(deserializer),
+        //     Self::Mbc3(mbc3) => mbc3.load(deserializer),
+        //     Self::Mbc5(mbc5) => mbc5.load(deserializer),
+        // }
     }
 }
 
