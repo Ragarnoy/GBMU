@@ -26,6 +26,7 @@ pub struct Debugger<MEM> {
     breakpoint_editor: BreakpointEditor,
     status_bar: StatusBar,
     flow_status: Option<ControlFlow<Until>>,
+    pub reset_triggered: bool,
 }
 
 impl<BUS: DebugOperations> Debugger<BUS> {
@@ -74,6 +75,7 @@ impl<BUS: DebugOperations> Debugger<BUS> {
                 ui.horizontal(|ui| {
                     if ui.button("Reset").clicked() {
                         log::debug!("clicked on reset");
+                        self.reset_triggered = true;
                     }
                     ui.separator();
                     self.flow_status = self.flow_controller.draw(ui);
@@ -140,6 +142,7 @@ impl DebuggerBuilder {
             breakpoint_editor: BreakpointEditor::new(self.options.unwrap_or_default().breakpoints),
             status_bar: StatusBar,
             flow_status: None,
+            reset_triggered: false,
         }
     }
 }
