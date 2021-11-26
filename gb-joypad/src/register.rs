@@ -26,6 +26,7 @@ struct RegisterBits {
 enum RegisterMode {
     Direction,
     Action,
+    Both,
     Unset,
 }
 
@@ -91,6 +92,7 @@ impl JoypadRegister {
     pub fn refresh(&mut self, addr_bus: &mut dyn Bus<u8>, state: &mut HashMap<InputType, bool>) {
         match self.mode {
             RegisterMode::Unset => {}
+            RegisterMode::Both => {}
             RegisterMode::Direction => {
                 self.bits.update(
                     [
@@ -139,7 +141,7 @@ impl From<JoypadRegister> for u8 {
 
 impl From<u8> for RegisterBits {
     fn from(byte: u8) -> RegisterBits {
-        RegisterBits::from_bytes([byte])
+        RegisterBits::from_bytes([byte | 0b11000000])
     }
 }
 
@@ -147,8 +149,9 @@ impl From<u8> for JoypadRegister {
     fn from(byte: u8) -> JoypadRegister {
         let bits: RegisterBits = byte.into();
         let mode = match (bits.p14(), bits.p15()) {
-            (n, _) if n != 0 => RegisterMode::Direction,
-            (_, n) if n != 0 => RegisterMode::Action,
+            (d, a) if d == 0 && a == 0 => RegisterMode::Both,
+            (n, _) if n == 0 => RegisterMode::Direction,
+            (_, n) if n == 0 => RegisterMode::Action,
             _ => RegisterMode::Unset,
         };
         JoypadRegister { bits, mode }
