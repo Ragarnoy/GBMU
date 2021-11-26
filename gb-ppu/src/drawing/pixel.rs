@@ -3,7 +3,7 @@ use crate::Color;
 use std::cell::Cell;
 use std::rc::Rc;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Pixel {
     pub color: u8,
     pub palette: Rc<Cell<Palette>>,
@@ -23,8 +23,9 @@ impl Pixel {
 
     pub fn mix(&mut self, other: &Pixel) {
         if !self.palette.get().is_sprite()
-            && (!other.background_priority && other.palette.get().is_sprite() && other.color != 0)
-            || (other.background_priority && other.palette.get().is_sprite() && self.color != 0)
+            && other.palette.get().is_sprite()
+            && ((!other.background_priority && other.color != 0)
+                || (other.background_priority && self.color != 0))
         {
             *self = other.clone();
         }

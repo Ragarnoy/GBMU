@@ -14,9 +14,9 @@ impl PalettesMono {
 
     pub fn new() -> Self {
         PalettesMono {
-            bg: Rc::new(Cell::new(Palette::new(false))),
-            obj_0: Rc::new(Cell::new(Palette::new(true))),
-            obj_1: Rc::new(Cell::new(Palette::new(true))),
+            bg: Rc::new(Cell::new(Palette::new_background())),
+            obj_0: Rc::new(Cell::new(Palette::new_sprite())),
+            obj_1: Rc::new(Cell::new(Palette::new_sprite())),
         }
     }
 
@@ -39,9 +39,9 @@ impl PalettesMono {
 
     pub fn write(&mut self, pos: usize, val: u8) {
         match pos {
-            0 => self.bg.set(val.into()),
-            1 => self.obj_0.set(val.into()),
-            2 => self.obj_1.set(val.into()),
+            0 => self.bg.set(Palette::new(val, false)),
+            1 => self.obj_0.set(Palette::new(val, true)),
+            2 => self.obj_1.set(Palette::new(val, true)),
             _ => {}
         }
     }
@@ -50,9 +50,9 @@ impl PalettesMono {
 impl From<[u8; 3]> for PalettesMono {
     fn from(bytes: [u8; 3]) -> PalettesMono {
         PalettesMono {
-            bg: Rc::new(Cell::new(bytes[0].into())),
-            obj_0: Rc::new(Cell::new(bytes[1].into())),
-            obj_1: Rc::new(Cell::new(bytes[2].into())),
+            bg: Rc::new(Cell::new(Palette::new(bytes[0], false))),
+            obj_0: Rc::new(Cell::new(Palette::new(bytes[1], true))),
+            obj_1: Rc::new(Cell::new(Palette::new(bytes[2], true))),
         }
     }
 }

@@ -19,10 +19,24 @@ pub struct Palette {
 }
 
 impl Palette {
-    pub fn new(is_sprite: bool) -> Self {
+    pub fn new(byte: u8, is_sprite: bool) -> Self {
+        Palette {
+            map: byte.into(),
+            is_sprite,
+        }
+    }
+
+    pub fn new_background() -> Self {
         Palette {
             map: MapField::new(),
-            is_sprite,
+            is_sprite: false,
+        }
+    }
+
+    pub fn new_sprite() -> Self {
+        Palette {
+            map: MapField::new(),
+            is_sprite: true,
         }
     }
 
