@@ -45,7 +45,7 @@ impl MBC2 {
     }
 
     pub fn get_state(&self) -> MbcState {
-        MbcState::from(self.ram_bank.clone())
+        MbcState::from(self.ram_bank)
     }
 
     fn write_rom(&mut self, v: u8, addr: Box<dyn Address<Area>>) -> Result<(), Error> {

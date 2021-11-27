@@ -137,7 +137,7 @@ impl MbcController {
                 mbc5.with_state(state).map_err(Error::custom)?;
             }
             (Self::RomOnly(_rom), _) => log::warn!("trying to load saved state for romonly"),
-            (ctl @ _, state @ _) => {
+            (ctl, state) => {
                 log::warn!(
                     "miss match rom type with game save type ({} is incompatible with {})",
                     ctl.name(),
