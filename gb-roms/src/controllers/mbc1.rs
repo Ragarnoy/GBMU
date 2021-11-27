@@ -1,4 +1,4 @@
-use super::{Controller, MbcState, RAM_BANK_SIZE, ROM_BANK_SIZE};
+use super::{Controller, MbcStates, RAM_BANK_SIZE, ROM_BANK_SIZE};
 use crate::header::{
     size::{RamSize, RomSize},
     Header,
@@ -38,14 +38,14 @@ impl MBC1 {
         Ok(ctl)
     }
 
-    pub fn with_state(&mut self, state: Mbc1State) -> Result<&Self, String> {
+    pub fn with_state(&mut self, state: MbcState) -> Result<&Self, String> {
         self.ram_banks = state
             .ram_banks
             .into_iter()
             .map(<[u8; RAM_BANK_SIZE]>::try_from)
             .collect::<Result<Vec<[u8; RAM_BANK_SIZE]>, Vec<u8>>>()
             .map_err(|faulty| {
-                &format!(
+                format!(
                     "invalid state banks size, expected {}, got {}",
                     RAM_BANK_SIZE,
                     faulty.len()
@@ -55,8 +55,8 @@ impl MBC1 {
         Ok(self)
     }
 
-    pub fn get_state(&self) -> Mbc1State {
-        Mbc1State::from(self.ram_banks.clone())
+    pub fn get_state(&self) -> MbcState {
+        MbcState::from(self.ram_banks.clone())
     }
 
     fn write_rom(&mut self, v: u8, addr: Box<dyn Address<Area>>) -> Result<(), Error> {
@@ -190,11 +190,11 @@ impl FileOperation<Area> for MBC1 {
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
-pub struct Mbc1State {
+pub struct MbcState {
     ram_banks: Vec<Vec<u8>>,
 }
 
-impl From<Vec<[u8; RAM_BANK_SIZE]>> for Mbc1State {
+impl From<Vec<[u8; RAM_BANK_SIZE]>> for MbcState {
     fn from(banks: Vec<[u8; RAM_BANK_SIZE]>) -> Self {
         Self {
             ram_banks: banks.iter().map(|bank| bank.to_vec()).collect(),
@@ -203,8 +203,8 @@ impl From<Vec<[u8; RAM_BANK_SIZE]>> for Mbc1State {
 }
 
 impl Controller for MBC1 {
-    fn save(&self) -> MbcState {
-        MbcState::Mbc1(self.get_state())
+    fn save(&self) -> MbcStates {
+        MbcStates::Mbc1(self.get_state())
     }
 }
 
