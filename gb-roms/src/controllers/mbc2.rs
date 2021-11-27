@@ -1,4 +1,4 @@
-use super::{Controller, ROM_BANK_SIZE};
+use super::{Controller, MbcStates, ROM_BANK_SIZE};
 use crate::header::Header;
 use gb_bus::{Address, Area, Error, FileOperation};
 use serde::{Deserialize, Serialize};
@@ -31,6 +31,21 @@ impl MBC2 {
             file.read_exact(e)?;
         }
         Ok(ctl)
+    }
+
+    pub fn with_state(&mut self, state: MbcState) -> Result<&Self, String> {
+        self.ram_bank = <[u8; MBC2::RAM_SIZE]>::try_from(state.ram_bank).map_err(|faulty| {
+            format!(
+                "invalid state bank size, expected {}, got {}",
+                MBC2::RAM_SIZE,
+                faulty.len()
+            )
+        })?;
+        Ok(self)
+    }
+
+    pub fn get_state(&self) -> MbcState {
+        MbcState::from(self.ram_bank.clone())
     }
 
     fn write_rom(&mut self, v: u8, addr: Box<dyn Address<Area>>) -> Result<(), Error> {
@@ -122,12 +137,12 @@ impl Default for MBC2Reg {
         }
     }
 }
-#[derive(serde::Serialize, serde::Deserialize)]
-struct Mbc2Data {
+#[derive(Serialize, Deserialize)]
+pub struct MbcState {
     ram_bank: Vec<u8>,
 }
 
-impl From<[u8; MBC2::RAM_SIZE]> for Mbc2Data {
+impl From<[u8; MBC2::RAM_SIZE]> for MbcState {
     fn from(bank: [u8; MBC2::RAM_SIZE]) -> Self {
         Self {
             ram_bank: bank.to_vec(),
@@ -136,28 +151,7 @@ impl From<[u8; MBC2::RAM_SIZE]> for Mbc2Data {
 }
 
 impl Controller for MBC2 {
-    fn save<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        let data = Mbc2Data::from(self.ram_bank);
-        data.serialize(serializer)
-    }
-
-    fn load<'de, D>(&mut self, deserializer: D) -> Result<(), D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        use serde::de::Error;
-
-        let data = Mbc2Data::deserialize(deserializer)?;
-
-        self.ram_bank = <[u8; MBC2::RAM_SIZE]>::try_from(data.ram_bank).map_err(|faulty| {
-            Error::invalid_length(
-                faulty.len(),
-                &format!("a ram bank size of size {}", MBC2::RAM_SIZE).as_str(),
-            )
-        })?;
-        Ok(())
+    fn save(&self) -> MbcStates {
+        MbcStates::Mbc2(self.get_state())
     }
 }

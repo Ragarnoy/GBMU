@@ -29,7 +29,7 @@ pub const RAM_BANK_SIZE: usize = 0x2000;
 
 pub trait Controller {
     /// Save the current controller into a Serializer file
-    fn save(&self) -> MbcState;
+    fn save(&self) -> MbcStates;
 }
 
 pub enum MbcController {
@@ -53,14 +53,16 @@ impl MbcController {
 }
 
 #[derive(Serialize, Deserialize)]
-pub enum MbcState {
-    Mbc1(mbc1::Mbc1State),
+pub enum MbcStates {
+    Mbc1(mbc1::MbcState),
+    Mbc2(mbc2::MbcState),
 }
 
-impl MbcState {
+impl MbcStates {
     pub fn name(&self) -> &'static str {
         match self {
-            MbcState::Mbc1(_) => "Mbc1",
+            MbcStates::Mbc1(_) => "Mbc1",
+            MbcStates::Mbc2(_) => "Mbc2",
         }
     }
 }
@@ -116,9 +118,9 @@ impl MbcController {
     {
         use serde::de::Error;
 
-        let mbc_state = MbcState::deserialize(deserializer)?;
+        let mbc_state = MbcStates::deserialize(deserializer)?;
         match (self, mbc_state) {
-            (Self::Mbc1(mbc1), MbcState::Mbc1(state)) => {
+            (Self::Mbc1(mbc1), MbcStates::Mbc1(state)) => {
                 mbc1.with_state(state).map_err(Error::custom)?;
             }
             (Self::RomOnly(_rom), _) => log::warn!("trying to load saved state for romonly"),
