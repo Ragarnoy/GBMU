@@ -320,7 +320,10 @@ fn game_save_path(rom_filename: &str) -> String {
     let rom_id = game_id(rom_filename);
     let root =
         pref_path(crate::constant::ORG_NAME, crate::constant::APP_NAME).expect("a prefered config");
-    format!("{}/{}-game-save.msgpack", root, rom_id)
+    std::path::Path::new(&root)
+        .join(format!("{}-game-save.msgpack", rom_id))
+        .to_string_lossy()
+        .to_string()
 }
 
 /// Create a standardize rom name id
