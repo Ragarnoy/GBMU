@@ -102,7 +102,42 @@ impl From<MBC5> for MbcController {
 }
 
 impl MbcController {
-    pub fn save<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    pub fn with_state(&mut self, state: MbcStates) {
+        match (self, state) {
+            (Self::Mbc1(mbc1), MbcStates::Mbc1(state)) => {
+                if let Err(e) = mbc1.with_state(state) {
+                    log::warn!("error while loading save state: {:?}", e)
+                }
+            }
+            (Self::Mbc2(mbc2), MbcStates::Mbc2(state)) => {
+                if let Err(e) = mbc2.with_state(state) {
+                    log::warn!("error while loading save state: {:?}", e)
+                }
+            }
+            (Self::Mbc3(mbc3), MbcStates::Mbc3(state)) => {
+                if let Err(e) = mbc3.with_state(state) {
+                    log::warn!("error while loading save state: {:?}", e)
+                }
+            }
+            (Self::Mbc5(mbc5), MbcStates::Mbc5(state)) => {
+                if let Err(e) = mbc5.with_state(state) {
+                    log::warn!("error while loading save state: {:?}", e)
+                }
+            }
+            (Self::RomOnly(_rom), _) => log::warn!("trying to load saved state for romonly"),
+            (ctl, state) => {
+                log::warn!(
+                    "miss match rom type with game save type ({} is incompatible with {})",
+                    ctl.name(),
+                    state.name(),
+                )
+            }
+        }
+    }
+}
+
+impl Serialize for MbcController {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
     {
@@ -114,38 +149,6 @@ impl MbcController {
             Self::Mbc5(mbc5) => mbc5.save(),
         };
         mbc_state.serialize(serializer)
-    }
-
-    pub fn load<'de, D>(&mut self, deserializer: D) -> Result<(), D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        use serde::de::Error;
-
-        let mbc_state = MbcStates::deserialize(deserializer)?;
-        match (self, mbc_state) {
-            (Self::Mbc1(mbc1), MbcStates::Mbc1(state)) => {
-                mbc1.with_state(state).map_err(Error::custom)?;
-            }
-            (Self::Mbc2(mbc2), MbcStates::Mbc2(state)) => {
-                mbc2.with_state(state).map_err(Error::custom)?;
-            }
-            (Self::Mbc3(mbc3), MbcStates::Mbc3(state)) => {
-                mbc3.with_state(state).map_err(Error::custom)?;
-            }
-            (Self::Mbc5(mbc5), MbcStates::Mbc5(state)) => {
-                mbc5.with_state(state).map_err(Error::custom)?;
-            }
-            (Self::RomOnly(_rom), _) => log::warn!("trying to load saved state for romonly"),
-            (ctl, state) => {
-                log::warn!(
-                    "miss match rom type with game save type ({} is incompatible with {})",
-                    ctl.name(),
-                    state.name(),
-                )
-            }
-        }
-        Ok(())
     }
 }
 
