@@ -261,42 +261,51 @@ impl Drop for Game {
     fn drop(&mut self) {
         if self.auto_save == Some(AutoSave::Ram) || self.auto_save == Some(AutoSave::RamTimer) {
             use anyhow::Error;
-            use std::path::Path;
+            use core::ops::Deref;
+            use rmp_serde::encode::write_named;
+            use std::fs::OpenOptions;
 
-            let rom_path = Path::new(&self.romname);
-            let rom_fmt_name = rom_path
-                .file_stem()
-                .map_or_else(
-                    || self.romname.clone(),
-                    |filename| filename.to_string_lossy().to_string(),
-                )
-                .replace(" ", "-")
-                .to_lowercase();
-            {
-                use core::ops::Deref;
-                use rmp_serde::encode::write_named;
-                use sdl2::filesystem::pref_path;
-                use std::fs::OpenOptions;
-
-                let root = pref_path(crate::constant::ORG_NAME, crate::constant::APP_NAME)
-                    .expect("a prefered config");
-                let filename = format!("{}/{}-game-save.msgpack", root, rom_fmt_name);
-                match OpenOptions::new()
-                    .create(true)
-                    .write(true)
-                    .open(&filename)
-                    .map_err(Error::from)
-                    .and_then(|mut file| {
-                        write_named(&mut file, self.mbc.borrow().deref()).map_err(Error::from)
-                    }) {
-                    Ok(_) => log::info!("successfuly save mbc data to {}", filename),
-                    Err(e) => {
-                        log::error!("failed to save mbc data to {}, got error: {}", filename, e)
-                    }
+            let filename = game_save_path(&self.romname);
+            match OpenOptions::new()
+                .create(true)
+                .write(true)
+                .open(&filename)
+                .map_err(Error::from)
+                .and_then(|mut file| {
+                    write_named(&mut file, self.mbc.borrow().deref()).map_err(Error::from)
+                }) {
+                Ok(_) => log::info!("successfuly save mbc data to {}", filename),
+                Err(e) => {
+                    log::error!("failed to save mbc data to {}, got error: {}", filename, e)
                 }
             }
         }
     }
+}
+
+/// Return the path where the game save file will be located
+fn game_save_path(rom_filename: &String) -> String {
+    use sdl2::filesystem::pref_path;
+
+    let rom_id = game_id(rom_filename);
+    let root =
+        pref_path(crate::constant::ORG_NAME, crate::constant::APP_NAME).expect("a prefered config");
+    format!("{}/{}-game-save.msgpack", root, rom_id)
+}
+
+/// Create a standardize rom name id
+fn game_id(rom_filename: &String) -> String {
+    use std::path::Path;
+
+    let rom_path = Path::new(rom_filename);
+    rom_path
+        .file_stem()
+        .map_or_else(
+            || rom_filename.clone(),
+            |filename| filename.to_string_lossy().to_string(),
+        )
+        .replace(" ", "-")
+        .to_lowercase()
 }
 
 impl DebugOperations for Game {
