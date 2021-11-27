@@ -127,6 +127,15 @@ impl MbcController {
             (Self::Mbc1(mbc1), MbcStates::Mbc1(state)) => {
                 mbc1.with_state(state).map_err(Error::custom)?;
             }
+            (Self::Mbc2(mbc2), MbcStates::Mbc2(state)) => {
+                mbc2.with_state(state).map_err(Error::custom)?;
+            }
+            (Self::Mbc3(mbc3), MbcStates::Mbc3(state)) => {
+                mbc3.with_state(state).map_err(Error::custom)?;
+            }
+            (Self::Mbc5(mbc5), MbcStates::Mbc5(state)) => {
+                mbc5.with_state(state).map_err(Error::custom)?;
+            }
             (Self::RomOnly(_rom), _) => log::warn!("trying to load saved state for romonly"),
             (ctl @ _, state @ _) => {
                 log::warn!(
