@@ -273,13 +273,14 @@ fn mbc_with_save_state(
         let filename = game_save_path(romname);
         if let Ok(file) = File::open(&filename) {
             log::info!("found auto save file at {}", filename);
-            let state: MbcStates = from_read(file)?;
-            if let Err(e) = mbc.with_state(state) {
+            if let Err(e) = from_read(file).map(|state: MbcStates| mbc.with_state(state)) {
                 log::error!(
-                    "while loading auto save into mbc, got the following error: {}",
+                    "while loading data into mbc, got the following error: {}",
                     e
                 )
-            };
+            } else {
+                log::info!("successfuly load mbc data from {}", filename);
+            }
         }
     }
 
