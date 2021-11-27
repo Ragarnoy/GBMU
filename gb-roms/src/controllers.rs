@@ -102,37 +102,48 @@ impl From<MBC5> for MbcController {
 }
 
 impl MbcController {
-    pub fn with_state(&mut self, state: MbcStates) {
-        match (self, state) {
-            (Self::Mbc1(mbc1), MbcStates::Mbc1(state)) => {
-                if let Err(e) = mbc1.with_state(state) {
-                    log::warn!("error while loading save state: {:?}", e)
+    pub fn with_state(&mut self, state: MbcStates) -> Result<&Self, String> {
+        fn incompatible_mbc_state(mbc_name: &str, state_name: &str) -> String {
+            format!(
+                "incompatible mbc / state, got {} as mbc will trying to use a save for {} mbc",
+                mbc_name, state_name
+            )
+        }
+
+        match self {
+            Self::Mbc1(ref mut mbc) => {
+                if let MbcStates::Mbc1(state) = state {
+                    mbc.with_state(state)?;
+                } else {
+                    return Err(incompatible_mbc_state(self.name(), state.name()));
                 }
             }
-            (Self::Mbc2(mbc2), MbcStates::Mbc2(state)) => {
-                if let Err(e) = mbc2.with_state(state) {
-                    log::warn!("error while loading save state: {:?}", e)
+            Self::Mbc2(ref mut mbc) => {
+                if let MbcStates::Mbc2(state) = state {
+                    mbc.with_state(state)?;
+                } else {
+                    return Err(incompatible_mbc_state(self.name(), state.name()));
                 }
             }
-            (Self::Mbc3(mbc3), MbcStates::Mbc3(state)) => {
-                if let Err(e) = mbc3.with_state(state) {
-                    log::warn!("error while loading save state: {:?}", e)
+            Self::Mbc3(ref mut mbc) => {
+                if let MbcStates::Mbc3(state) = state {
+                    mbc.with_state(state)?;
+                } else {
+                    return Err(incompatible_mbc_state(self.name(), state.name()));
                 }
             }
-            (Self::Mbc5(mbc5), MbcStates::Mbc5(state)) => {
-                if let Err(e) = mbc5.with_state(state) {
-                    log::warn!("error while loading save state: {:?}", e)
+            Self::Mbc5(ref mut mbc) => {
+                if let MbcStates::Mbc5(state) = state {
+                    mbc.with_state(state)?;
+                } else {
+                    return Err(incompatible_mbc_state(self.name(), state.name()));
                 }
             }
-            (Self::RomOnly(_rom), _) => log::warn!("trying to load saved state for romonly"),
-            (ctl, state) => {
-                log::warn!(
-                    "miss match rom type with game save type ({} is incompatible with {})",
-                    ctl.name(),
-                    state.name(),
-                )
+            Self::RomOnly(ref _rom) => {
+                return Err(format!("trying to load saved state for romonly"))
             }
         }
+        Ok(self)
     }
 }
 
