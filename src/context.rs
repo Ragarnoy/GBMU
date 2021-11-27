@@ -99,7 +99,7 @@ impl Game {
         log::debug!("header: {:?}", header);
 
         file.rewind()?;
-        let mbc = mbc_with_save_state(romname, &header, file)?;
+        let mbc = mbc_with_save_state(&romname, &header, file)?;
         let mbc = Rc::new(RefCell::new(mbc));
 
         let ppu = Ppu::new();
@@ -259,7 +259,7 @@ impl Game {
 
 /// Return an initalised MBCs with it auto game save if possible
 fn mbc_with_save_state(
-    romname: String,
+    romname: &str,
     header: &Header,
     file: std::fs::File,
 ) -> anyhow::Result<MbcController> {
@@ -270,7 +270,7 @@ fn mbc_with_save_state(
         use rmp_serde::decode::from_read;
         use std::fs::File;
 
-        let filename = game_save_path(&romname);
+        let filename = game_save_path(romname);
         if let Ok(file) = File::open(&filename) {
             log::info!("found auto save file at {}", filename);
             let state: MbcStates = from_read(file)?;
@@ -313,7 +313,7 @@ impl Drop for Game {
 }
 
 /// Return the path where the game save file will be located
-fn game_save_path(rom_filename: &String) -> String {
+fn game_save_path(rom_filename: &str) -> String {
     use sdl2::filesystem::pref_path;
 
     let rom_id = game_id(rom_filename);
@@ -323,14 +323,14 @@ fn game_save_path(rom_filename: &String) -> String {
 }
 
 /// Create a standardize rom name id
-fn game_id(rom_filename: &String) -> String {
+fn game_id(rom_filename: &str) -> String {
     use std::path::Path;
 
     let rom_path = Path::new(rom_filename);
     rom_path
         .file_stem()
         .map_or_else(
-            || rom_filename.clone(),
+            || rom_filename.to_string(),
             |filename| filename.to_string_lossy().to_string(),
         )
         .replace(" ", "-")
