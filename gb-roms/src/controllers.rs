@@ -102,7 +102,7 @@ impl From<MBC5> for MbcController {
 }
 
 impl MbcController {
-    fn save<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    pub fn save<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
     {
@@ -116,7 +116,7 @@ impl MbcController {
         mbc_state.serialize(serializer)
     }
 
-    fn load<'de, D>(&mut self, deserializer: D) -> Result<(), D::Error>
+    pub fn load<'de, D>(&mut self, deserializer: D) -> Result<(), D::Error>
     where
         D: serde::Deserializer<'de>,
     {
@@ -128,11 +128,11 @@ impl MbcController {
                 mbc1.with_state(state).map_err(Error::custom)?;
             }
             (Self::RomOnly(_rom), _) => log::warn!("trying to load saved state for romonly"),
-            (_, _) => {
+            (ctl @ _, state @ _) => {
                 log::warn!(
                     "miss match rom type with game save type ({} is incompatible with {})",
-                    self.name(),
-                    mbc_state.name(),
+                    ctl.name(),
+                    state.name(),
                 )
             }
         }
