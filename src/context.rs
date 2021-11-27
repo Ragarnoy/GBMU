@@ -263,7 +263,25 @@ fn mbc_with_save_state(
     header: &Header,
     file: std::fs::File,
 ) -> anyhow::Result<MbcController> {
-    let mbc = generate_rom_controller(file, header.clone())?;
+    let mut mbc = generate_rom_controller(file, header.clone())?;
+
+    {
+        use gb_roms::controllers::MbcStates;
+        use rmp_serde::decode::from_read;
+        use std::fs::File;
+
+        let filename = game_save_path(&romname);
+        if let Ok(file) = File::open(&filename) {
+            log::info!("found auto save file at {}", filename);
+            let state: MbcStates = from_read(file)?;
+            if let Err(e) = mbc.with_state(state) {
+                log::error!(
+                    "while loading auto save into mbc, got the following error: {}",
+                    e
+                )
+            };
+        }
+    }
 
     Ok(mbc)
 }
