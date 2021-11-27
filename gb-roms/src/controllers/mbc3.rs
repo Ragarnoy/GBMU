@@ -167,13 +167,13 @@ impl<T: ReadRtcRegisters> From<&T> for RTCRegs {
     }
 }
 
-#[derive(serde::Serialize, serde::Deserialize)]
-struct Mbc3Data {
+#[derive(Serialize, Deserialize)]
+pub struct MbcState {
     clock: Option<Naive>,
     ram_banks: Vec<Vec<u8>>,
 }
 
-impl From<&MBC3> for Mbc3Data {
+impl From<&MBC3> for MbcState {
     fn from(mbc3: &MBC3) -> Self {
         let clock = mbc3.clock.clone();
         let ram_banks = mbc3.ram_banks.iter().map(|bank| bank.to_vec()).collect();
@@ -186,7 +186,7 @@ impl Controller for MBC3 {
     where
         S: serde::Serializer,
     {
-        let data = Mbc3Data::from(self);
+        let data = MbcState::from(self);
         data.serialize(serializer)
     }
 
@@ -196,7 +196,7 @@ impl Controller for MBC3 {
     {
         use serde::de::Error;
 
-        let data = Mbc3Data::deserialize(deserializer)?;
+        let data = MbcState::deserialize(deserializer)?;
 
         self.clock = data.clock;
 
