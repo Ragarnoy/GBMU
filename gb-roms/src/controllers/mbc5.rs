@@ -183,11 +183,11 @@ impl Default for MBC5Reg {
 }
 
 #[derive(Deserialize, Serialize)]
-struct Mbc5RamData {
+pub struct MbcState {
     ram_banks: Vec<Vec<u8>>,
 }
 
-impl std::convert::From<Vec<[u8; RAM_BANK_SIZE]>> for Mbc5RamData {
+impl std::convert::From<Vec<[u8; RAM_BANK_SIZE]>> for MbcState {
     fn from(ram_banks: Vec<[u8; RAM_BANK_SIZE]>) -> Self {
         Self {
             ram_banks: ram_banks.iter().map(|bank| bank.to_vec()).collect(),
@@ -200,7 +200,7 @@ impl Controller for MBC5 {
     where
         S: Serializer,
     {
-        let data = Mbc5RamData::from(self.ram_banks.clone());
+        let data = MbcState::from(self.ram_banks.clone());
         data.serialize(serializer)
     }
 
@@ -210,7 +210,7 @@ impl Controller for MBC5 {
     {
         use serde::de::Error;
 
-        let ram_data = Mbc5RamData::deserialize(deserializer)?;
+        let ram_data = MbcState::deserialize(deserializer)?;
         if self.ram_banks.len() != ram_data.ram_banks.len() {
             Err(Error::invalid_length(
                 ram_data.ram_banks.len(),

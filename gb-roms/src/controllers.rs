@@ -57,6 +57,7 @@ pub enum MbcStates {
     Mbc1(mbc1::MbcState),
     Mbc2(mbc2::MbcState),
     Mbc3(mbc3::MbcState),
+    Mbc5(mbc5::MbcState),
 }
 
 impl MbcStates {
@@ -65,6 +66,7 @@ impl MbcStates {
             MbcStates::Mbc1(_) => "Mbc1",
             MbcStates::Mbc2(_) => "Mbc2",
             MbcStates::Mbc3(_) => "Mbc3",
+            MbcStates::Mbc5(_) => "Mbc5",
         }
     }
 }
