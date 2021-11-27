@@ -99,7 +99,7 @@ impl Game {
         log::debug!("header: {:?}", header);
 
         file.rewind()?;
-        let mbc = generate_rom_controller(file, header.clone())?;
+        let mbc = mbc_with_save_state(romname, &header, file)?;
         let mbc = Rc::new(RefCell::new(mbc));
 
         let ppu = Ppu::new();
@@ -255,6 +255,17 @@ impl Game {
             }
         }
     }
+}
+
+/// Return an initalised MBCs with it auto game save if possible
+fn mbc_with_save_state(
+    romname: String,
+    header: &Header,
+    file: std::fs::File,
+) -> anyhow::Result<MbcController> {
+    let mbc = generate_rom_controller(file, header.clone())?;
+
+    Ok(mbc)
 }
 
 impl Drop for Game {
