@@ -51,7 +51,7 @@ impl MBC5 {
         MbcState::from(self.ram_banks.clone())
     }
 
-    fn with_state(&mut self, state: MbcState) -> Result<&Self, String> {
+    pub fn with_state(&mut self, state: MbcState) -> Result<&Self, String> {
         if self.ram_banks.len() != state.ram_banks.len() {
             Err(format!(
                 "invalid ram bank count, expected {}, got {}",

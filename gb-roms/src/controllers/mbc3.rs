@@ -48,7 +48,7 @@ impl MBC3 {
         MbcState::from(self)
     }
 
-    fn with_state(&mut self, state: MbcState) -> Result<&Self, String> {
+    pub fn with_state(&mut self, state: MbcState) -> Result<&Self, String> {
         self.clock = state.clock;
 
         self.ram_banks = state
