@@ -140,7 +140,7 @@ impl MbcController {
                 }
             }
             Self::RomOnly(ref _rom) => {
-                return Err(format!("trying to load saved state for romonly"))
+                return Err("trying to load saved state for romonly".to_string())
             }
         }
         Ok(self)
