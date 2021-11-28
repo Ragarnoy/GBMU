@@ -32,10 +32,12 @@ struct Opts {
         short = 'b',
         about = "create and enable breakpoints at the start of the rom\n\
         breakpoints must be specified in the following format:\n\
-        ./gbmu -b \"PC == 0050\" \"AF == 0010\" -- <ROM>",
+        ./gbmu -b \"PC == 0050\" -b \"AF == 0010\" ...",
+        multiple_occurrences = true,
+        multiple_values = false,
         requires = "rom"
     )]
-    breakpoints: Option<Vec<String>>,
+    breakpoints: Vec<String>,
     #[clap(
         long = "debug",
         short = 'd',
@@ -180,15 +182,11 @@ fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
         )
     });
 
-    let dbg = if let Some(breakpoints) = &opts.breakpoints {
-        let dbg_options = DebuggerOptions {
-            breakpoints: breakpoints.clone(),
-            ..Default::default()
-        };
-        DebuggerBuilder::new().with_options(dbg_options).build()
-    } else {
-        DebuggerBuilder::new().build()
+    let dbg_options = DebuggerOptions {
+        breakpoints: opts.breakpoints.clone(),
+        ..Default::default()
     };
+    let dbg = DebuggerBuilder::new().with_options(dbg_options).build();
 
     let windows = Windows {
         main: gb_window,
