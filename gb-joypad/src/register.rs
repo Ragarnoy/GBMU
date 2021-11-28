@@ -39,30 +39,29 @@ pub struct JoypadRegister {
 impl RegisterBits {
     fn update(
         &mut self,
-        values: [InputType; 4],
-        state: &mut HashMap<InputType, bool>,
+        values: [bool; 4],
         addr_bus: &mut dyn Bus<u8>,
     ) {
         let old = self.p10();
-        self.set_p10((!state[&values[0]]).into());
+        self.set_p10((!&values[0]).into());
         if old != 0 && self.p10() == 0 {
             trigger_interrupt(addr_bus);
         };
 
         let old = self.p11();
-        self.set_p11((!state[&values[1]]).into());
+        self.set_p11((!&values[1]).into());
         if old != 0 && self.p11() == 0 {
             trigger_interrupt(addr_bus);
         };
 
         let old = self.p12();
-        self.set_p12((!state[&values[2]]).into());
+        self.set_p12((!&values[2]).into());
         if old != 0 && self.p12() == 0 {
             trigger_interrupt(addr_bus);
         };
 
         let old = self.p13();
-        self.set_p13((!state[&values[3]]).into());
+        self.set_p13((!&values[3]).into());
         if old != 0 && self.p13() == 0 {
             trigger_interrupt(addr_bus);
         };
@@ -92,28 +91,36 @@ impl JoypadRegister {
     pub fn refresh(&mut self, addr_bus: &mut dyn Bus<u8>, state: &mut HashMap<InputType, bool>) {
         match self.mode {
             RegisterMode::Unset => {}
-            RegisterMode::Both => {}
+            RegisterMode::Both => {
+                self.bits.update(
+                    [
+                        state[&InputType::Right] & state[&InputType::A],
+                        state[&InputType::Left] & state[&InputType::B],
+                        state[&InputType::Up] & state[&InputType::Select],
+                        state[&InputType::Down] & state[&InputType::Start],
+                    ],
+                    addr_bus,
+                );
+            }
             RegisterMode::Direction => {
                 self.bits.update(
                     [
-                        InputType::Right,
-                        InputType::Left,
-                        InputType::Up,
-                        InputType::Down,
+                        state[&InputType::Right],
+                        state[&InputType::Left],
+                        state[&InputType::Up],
+                        state[&InputType::Down],
                     ],
-                    state,
                     addr_bus,
                 );
             }
             RegisterMode::Action => {
                 self.bits.update(
                     [
-                        InputType::A,
-                        InputType::B,
-                        InputType::Select,
-                        InputType::Start,
+                        state[&InputType::A],
+                        state[&InputType::B],
+                        state[&InputType::Select],
+                        state[&InputType::Start],
                     ],
-                    state,
                     addr_bus,
                 );
             }
