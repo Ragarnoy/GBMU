@@ -1,4 +1,4 @@
-use super::{Controller, RAM_BANK_SIZE, ROM_BANK_SIZE};
+use super::{Controller, MbcStates, RAM_BANK_SIZE, ROM_BANK_SIZE};
 use crate::header::Header;
 use gb_bus::{Address, Area, Error, FileOperation};
 use gb_rtc::{Naive, ReadRtcRegisters};
@@ -42,6 +42,28 @@ impl MBC3 {
             reader.read_exact(e)?;
         }
         Ok(ctl)
+    }
+
+    pub fn get_state(&self) -> MbcState {
+        MbcState::from(self)
+    }
+
+    pub fn with_state(&mut self, state: MbcState) -> Result<&Self, String> {
+        self.clock = state.clock;
+
+        self.ram_banks = state
+            .ram_banks
+            .into_iter()
+            .map(<[u8; RAM_BANK_SIZE]>::try_from)
+            .collect::<Result<Vec<[u8; RAM_BANK_SIZE]>, Vec<u8>>>()
+            .map_err(|faulty| {
+                format!(
+                    "invalid state banks size, expected {}, got {}",
+                    RAM_BANK_SIZE,
+                    faulty.len()
+                )
+            })?;
+        Ok(self)
     }
 
     fn read_rom(&self, addr: Box<dyn Address<Area>>) -> Result<u8, Error> {
@@ -167,13 +189,13 @@ impl<T: ReadRtcRegisters> From<&T> for RTCRegs {
     }
 }
 
-#[derive(serde::Serialize, serde::Deserialize)]
-struct Mbc3Data {
+#[derive(Serialize, Deserialize)]
+pub struct MbcState {
     clock: Option<Naive>,
     ram_banks: Vec<Vec<u8>>,
 }
 
-impl From<&MBC3> for Mbc3Data {
+impl From<&MBC3> for MbcState {
     fn from(mbc3: &MBC3) -> Self {
         let clock = mbc3.clock.clone();
         let ram_banks = mbc3.ram_banks.iter().map(|bank| bank.to_vec()).collect();
@@ -182,35 +204,7 @@ impl From<&MBC3> for Mbc3Data {
 }
 
 impl Controller for MBC3 {
-    fn save<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        let data = Mbc3Data::from(self);
-        data.serialize(serializer)
-    }
-
-    fn load<'de, D>(&mut self, deserializer: D) -> Result<(), D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        use serde::de::Error;
-
-        let data = Mbc3Data::deserialize(deserializer)?;
-
-        self.clock = data.clock;
-
-        self.ram_banks = data
-            .ram_banks
-            .into_iter()
-            .map(<[u8; RAM_BANK_SIZE]>::try_from)
-            .collect::<Result<Vec<[u8; RAM_BANK_SIZE]>, Vec<u8>>>()
-            .map_err(|faulty| {
-                Error::invalid_length(
-                    faulty.len(),
-                    &format!("a ram bank size of size {}", RAM_BANK_SIZE).as_str(),
-                )
-            })?;
-        Ok(())
+    fn save(&self) -> MbcStates {
+        MbcStates::Mbc3(self.get_state())
     }
 }
