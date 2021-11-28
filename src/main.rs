@@ -96,7 +96,18 @@ fn main() {
                 }
             }
         }
-
+        if debugger.reset_triggered {
+            debugger.reset_triggered = false;
+            game = opts.rom.as_ref().and_then(|romname| {
+                Game::new(romname.clone(), context.joypad.clone(), true).map_or_else(
+                    |e| {
+                        log::error!("while creating game context for {}: {:?}", romname, e);
+                        None
+                    },
+                    Option::Some,
+                )
+            });
+        }
         if let Some(ref mut input_wind) = context.windows.input {
             input_wind
                 .start_frame()
