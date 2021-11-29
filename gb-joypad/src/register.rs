@@ -37,11 +37,7 @@ pub struct JoypadRegister {
 }
 
 impl RegisterBits {
-    fn update(
-        &mut self,
-        values: [bool; 4],
-        addr_bus: &mut dyn Bus<u8>,
-    ) {
+    fn update(&mut self, values: [bool; 4], addr_bus: &mut dyn Bus<u8>) {
         let old = self.p10();
         self.set_p10((!&values[0]).into());
         if old != 0 && self.p10() == 0 {
