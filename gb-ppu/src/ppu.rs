@@ -268,6 +268,7 @@ impl Ppu {
     fn vblank(&mut self, _adr_bus: &mut dyn Bus<u8>) {
         if self.state.line() == State::LAST_LINE && self.state.step() == State::LAST_STEP {
             std::mem::swap(&mut self.pixels, &mut self.next_pixels);
+            self.next_pixels = [[[255; 3]; SCREEN_WIDTH]; SCREEN_HEIGHT];
         }
     }
 
@@ -487,6 +488,12 @@ impl Ppu {
             Self::check_for_bg_win_mode(lcd_reg, pixel_fetcher, pixel_fifo, cursor);
         }
     }
+
+    fn pixel_drawing_disabled(&mut self) {
+        if self.state.pixel_drawn() < 160 {
+            self.state.draw_pixel();
+        }
+    }
 }
 
 impl Default for Ppu {
@@ -507,9 +514,23 @@ impl Ticker for Ppu {
             }
         }
         match self.state.mode() {
-            Mode::OAMFetch => self.oam_fetch(adr_bus),
-            Mode::PixelDrawing => self.pixel_drawing(adr_bus),
-            Mode::HBlank => self.hblank(adr_bus),
+            Mode::OAMFetch => {
+                if self.state.enabled() {
+                    self.oam_fetch(adr_bus)
+                }
+            }
+            Mode::PixelDrawing => {
+                if self.state.enabled() {
+                    self.pixel_drawing(adr_bus)
+                } else {
+                    self.pixel_drawing_disabled()
+                }
+            }
+            Mode::HBlank => {
+                if self.state.enabled() {
+                    self.hblank(adr_bus)
+                }
+            }
             Mode::VBlank => self.vblank(adr_bus),
         }
         // update state after executing tick
