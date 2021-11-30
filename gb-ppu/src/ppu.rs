@@ -508,11 +508,6 @@ impl Ticker for Ppu {
     }
 
     fn tick(&mut self, adr_bus: &mut dyn Bus<u8>) {
-        if let Ok(lcd_reg) = self.lcd_reg.try_borrow() {
-            if !lcd_reg.control.ppu_enable() {
-                return;
-            }
-        }
         match self.state.mode() {
             Mode::OAMFetch => {
                 if self.state.enabled() {
