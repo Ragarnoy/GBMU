@@ -182,13 +182,15 @@ impl Joypad {
         if let Some(scancode) = scancode {
             if let Some(input_type) = self.input_map.get(scancode) {
                 if self.input_states[input_type] != state {
+                    self.input_states.insert(*input_type, state);
+                    #[cfg(feature = "debug_state")]
                     log::debug!(
-                        "{:?} change state: {}",
+                        "change state: state={:08b}, key={:5?}, pressed={}",
+                        u8::from(self.register),
                         input_type,
-                        if state { "pressed" } else { "released" }
+                        state,
                     )
                 }
-                self.input_states.insert(*input_type, state);
             }
         }
     }
@@ -244,6 +246,7 @@ impl Ticker for Joypad {
     fn cycle_count(&self) -> Tick {
         Tick::MCycle
     }
+
     fn tick(&mut self, addr_bus: &mut dyn Bus<u8>) {
         match self.refresh {
             Some(0) => {
