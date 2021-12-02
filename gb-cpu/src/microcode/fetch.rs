@@ -628,6 +628,14 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
 
                 Opcode::Nop => &mut ctl,
 
+                Opcode::AddSp8 => ctl.push_actions(&[
+                    read::sp,
+                    read::byte,
+                    arithmetic::add_sp_i8,
+                    write::sp,
+                    utils::sleep,
+                ]),
+
                 Opcode::PrefixCb => ctl.push_action(fetch_cb),
                 _ => todo!("unimplemented opcode {:?}", opcode),
             };

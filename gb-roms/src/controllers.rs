@@ -15,6 +15,7 @@ pub use mbc2::MBC2;
 pub use mbc3::MBC3;
 pub use mbc5::MBC5;
 pub use rom_only::RomOnlyController;
+use serde::{Deserialize, Serialize};
 use std::convert::From;
 
 /// Size of the ROM Area
@@ -28,14 +29,7 @@ pub const RAM_BANK_SIZE: usize = 0x2000;
 
 pub trait Controller {
     /// Save the current controller into a Serializer file
-    fn save<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer;
-
-    /// Load data from a Deserializer file
-    fn load<'de, D>(&mut self, deserializer: D) -> Result<(), D::Error>
-    where
-        D: serde::Deserializer<'de>;
+    fn save(&self) -> MbcStates;
 }
 
 pub enum MbcController {
@@ -44,6 +38,37 @@ pub enum MbcController {
     Mbc2(MBC2),
     Mbc3(MBC3),
     Mbc5(MBC5),
+}
+
+impl MbcController {
+    pub fn name(&self) -> &'static str {
+        match self {
+            MbcController::RomOnly(_) => "romonly",
+            MbcController::Mbc1(_) => "Mbc1",
+            MbcController::Mbc2(_) => "Mbc2",
+            MbcController::Mbc3(_) => "Mbc3",
+            MbcController::Mbc5(_) => "Mbc5",
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+pub enum MbcStates {
+    Mbc1(mbc1::MbcState),
+    Mbc2(mbc2::MbcState),
+    Mbc3(mbc3::MbcState),
+    Mbc5(mbc5::MbcState),
+}
+
+impl MbcStates {
+    pub fn name(&self) -> &'static str {
+        match self {
+            MbcStates::Mbc1(_) => "Mbc1",
+            MbcStates::Mbc2(_) => "Mbc2",
+            MbcStates::Mbc3(_) => "Mbc3",
+            MbcStates::Mbc5(_) => "Mbc5",
+        }
+    }
 }
 
 impl From<RomOnlyController> for MbcController {
@@ -76,40 +101,65 @@ impl From<MBC5> for MbcController {
     }
 }
 
-impl Controller for MbcController {
-    fn save<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        match self {
-            Self::RomOnly(_rom) => panic!("ROM has no data to save"),
-            Self::Mbc1(mbc1) => mbc1.save(serializer),
-            Self::Mbc2(mbc2) => mbc2.save(serializer),
-            Self::Mbc3(mbc3) => mbc3.save(serializer),
-            Self::Mbc5(mbc5) => mbc5.save(serializer),
+impl MbcController {
+    pub fn with_state(&mut self, state: MbcStates) -> Result<&Self, String> {
+        fn incompatible_mbc_state(mbc_name: &str, state_name: &str) -> String {
+            format!(
+                "incompatible mbc / state, got {} as mbc will trying to use a save for {} mbc",
+                mbc_name, state_name
+            )
         }
-    }
 
-    fn load<'de, D>(&mut self, deserializer: D) -> Result<(), D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
         match self {
-            Self::RomOnly(_rom) => panic!("ROM has no data to load"),
-            Self::Mbc1(mbc1) => mbc1.load(deserializer),
-            Self::Mbc2(mbc2) => mbc2.load(deserializer),
-            Self::Mbc3(mbc3) => mbc3.load(deserializer),
-            Self::Mbc5(mbc5) => mbc5.load(deserializer),
+            Self::Mbc1(ref mut mbc) => {
+                if let MbcStates::Mbc1(state) = state {
+                    mbc.with_state(state)?;
+                } else {
+                    return Err(incompatible_mbc_state(self.name(), state.name()));
+                }
+            }
+            Self::Mbc2(ref mut mbc) => {
+                if let MbcStates::Mbc2(state) = state {
+                    mbc.with_state(state)?;
+                } else {
+                    return Err(incompatible_mbc_state(self.name(), state.name()));
+                }
+            }
+            Self::Mbc3(ref mut mbc) => {
+                if let MbcStates::Mbc3(state) = state {
+                    mbc.with_state(state)?;
+                } else {
+                    return Err(incompatible_mbc_state(self.name(), state.name()));
+                }
+            }
+            Self::Mbc5(ref mut mbc) => {
+                if let MbcStates::Mbc5(state) = state {
+                    mbc.with_state(state)?;
+                } else {
+                    return Err(incompatible_mbc_state(self.name(), state.name()));
+                }
+            }
+            Self::RomOnly(ref _rom) => {
+                return Err("trying to load saved state for romonly".to_string())
+            }
         }
+        Ok(self)
     }
 }
 
-impl serde::Serialize for MbcController {
+impl Serialize for MbcController {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
     {
-        self.save(serializer)
+        let mbc_state = match self {
+            Self::RomOnly(_rom) => panic!("ROM has no data to save"),
+            Self::Mbc1(mbc1) => mbc1.save(),
+            Self::Mbc2(mbc2) => mbc2.save(),
+            Self::Mbc3(mbc3) => mbc3.save(),
+            Self::Mbc5(mbc5) => mbc5.save(),
+        };
+        mbc_state.serialize(serializer)
     }
 }
 

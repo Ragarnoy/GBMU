@@ -1,7 +1,7 @@
-use super::{Controller, RAM_BANK_SIZE, ROM_BANK_SIZE};
+use super::{Controller, MbcStates, RAM_BANK_SIZE, ROM_BANK_SIZE};
 use crate::header::Header;
 use gb_bus::{Address, Area, Error, FileOperation};
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserialize, Serialize};
 use std::io::{self, Read};
 
 pub struct MBC5 {
@@ -45,6 +45,34 @@ impl MBC5 {
             _ => return Err(Error::new_segfault(addr)),
         }
         Ok(())
+    }
+
+    pub fn get_state(&self) -> MbcState {
+        MbcState::from(self.ram_banks.clone())
+    }
+
+    pub fn with_state(&mut self, state: MbcState) -> Result<&Self, String> {
+        if self.ram_banks.len() != state.ram_banks.len() {
+            Err(format!(
+                "invalid ram bank count, expected {}, got {}",
+                self.ram_banks.len(),
+                state.ram_banks.len()
+            ))
+        } else {
+            self.ram_banks = state
+                .ram_banks
+                .into_iter()
+                .map(<[u8; RAM_BANK_SIZE]>::try_from)
+                .collect::<Result<Vec<[u8; RAM_BANK_SIZE]>, Vec<u8>>>()
+                .map_err(|faulty| {
+                    format!(
+                        "invalid ram bank size, expected {}, got {}",
+                        RAM_BANK_SIZE,
+                        faulty.len()
+                    )
+                })?;
+            Ok(self)
+        }
     }
 
     fn read_rom(&self, addr: Box<dyn Address<Area>>) -> Result<u8, Error> {
@@ -183,11 +211,11 @@ impl Default for MBC5Reg {
 }
 
 #[derive(Deserialize, Serialize)]
-struct Mbc5RamData {
+pub struct MbcState {
     ram_banks: Vec<Vec<u8>>,
 }
 
-impl std::convert::From<Vec<[u8; RAM_BANK_SIZE]>> for Mbc5RamData {
+impl std::convert::From<Vec<[u8; RAM_BANK_SIZE]>> for MbcState {
     fn from(ram_banks: Vec<[u8; RAM_BANK_SIZE]>) -> Self {
         Self {
             ram_banks: ram_banks.iter().map(|bank| bank.to_vec()).collect(),
@@ -196,40 +224,8 @@ impl std::convert::From<Vec<[u8; RAM_BANK_SIZE]>> for Mbc5RamData {
 }
 
 impl Controller for MBC5 {
-    fn save<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let data = Mbc5RamData::from(self.ram_banks.clone());
-        data.serialize(serializer)
-    }
-
-    fn load<'de, D>(&mut self, deserializer: D) -> Result<(), D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        use serde::de::Error;
-
-        let ram_data = Mbc5RamData::deserialize(deserializer)?;
-        if self.ram_banks.len() != ram_data.ram_banks.len() {
-            Err(Error::invalid_length(
-                ram_data.ram_banks.len(),
-                &format!("{} ram bank", self.ram_banks.len()).as_str(),
-            ))
-        } else {
-            self.ram_banks = ram_data
-                .ram_banks
-                .into_iter()
-                .map(<[u8; RAM_BANK_SIZE]>::try_from)
-                .collect::<Result<Vec<[u8; RAM_BANK_SIZE]>, Vec<u8>>>()
-                .map_err(|faulty| {
-                    Error::invalid_length(
-                        faulty.len(),
-                        &format!("a ram bank of size {}", RAM_BANK_SIZE).as_str(),
-                    )
-                })?;
-            Ok(())
-        }
+    fn save(&self) -> MbcStates {
+        MbcStates::Mbc5(self.get_state())
     }
 }
 
