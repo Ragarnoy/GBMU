@@ -1,4 +1,7 @@
-use crate::{register::JoypadRegister, Config, InputType};
+use crate::{
+    utils::{register_from_state, trigger_interrupt, Mode},
+    Config, InputType,
+};
 use egui::{CtxRef, Direction, Layout, Separator, Ui};
 use gb_bus::{Address, Bus, Error, FileOperation, IORegArea};
 use gb_clock::{Tick, Ticker};
@@ -14,8 +17,9 @@ pub struct Joypad {
     input_map: HashMap<Scancode, InputType>,
     input_states: HashMap<InputType, bool>,
     listening: Option<InputType>,
-    register: JoypadRegister,
     refresh: Option<u8>,
+    mode: Mode,
+    reg_val: u8,
 }
 
 const DEFAULT_UP: Scancode = Scancode::Up;
@@ -65,8 +69,9 @@ impl Joypad {
                 (InputType::A, false),
             ]),
             listening: None,
-            register: JoypadRegister::default(),
             refresh: None,
+            mode: Default::default(),
+            reg_val: 0xff,
         }
     }
 
@@ -85,8 +90,9 @@ impl Joypad {
                 (InputType::A, false),
             ]),
             listening: None,
-            register: JoypadRegister::default(),
             refresh: None,
+            mode: Default::default(),
+            reg_val: 0xff,
         }
     }
 
@@ -105,7 +111,6 @@ impl Joypad {
     pub fn settings(&mut self, ctx: &CtxRef) {
         egui::CentralPanel::default().show(ctx, |ui| {
             let height = ui.available_size().y;
-            // ui.vertical(|ui| {
             egui::ScrollArea::from_max_height(height - 50.0).show(ui, |ui| {
                 ui.set_height(height - 60.0);
                 for i_type in Self::INPUT_LIST.iter() {
@@ -184,12 +189,16 @@ impl Joypad {
                 if self.input_states[input_type] != state {
                     self.input_states.insert(*input_type, state);
                     #[cfg(feature = "debug_state")]
-                    log::debug!(
-                        "change state: state={:08b}, key={:5?}, pressed={}",
-                        u8::from(self.register),
-                        input_type,
-                        state,
-                    )
+                    {
+                        let reg = register_from_state(self.mode, self.input_states.iter());
+                        log::debug!(
+                            "change state: state={:08b}, mode={:9?}, key={:5?}, pressed={}",
+                            reg,
+                            self.mode,
+                            input_type,
+                            state,
+                        )
+                    }
                 }
             }
         }
@@ -226,8 +235,8 @@ impl FileOperation<IORegArea> for Joypad {
     fn write(&mut self, v: u8, addr: Box<dyn Address<IORegArea>>) -> Result<(), Error> {
         match (addr.area_type(), addr.get_address()) {
             (IORegArea::Controller, 0x00) => {
-                self.register = (v & 0b0011_0000).into();
-                self.refresh = Some(Joypad::REFRESH_DELAY);
+                let v = v & 0b0011_0000;
+                self.mode = Mode::from(v);
                 Ok(())
             }
             _ => Err(Error::SegmentationFault(addr.into())),
@@ -236,7 +245,7 @@ impl FileOperation<IORegArea> for Joypad {
 
     fn read(&self, addr: Box<dyn Address<IORegArea>>) -> Result<u8, Error> {
         match (addr.area_type(), addr.get_address()) {
-            (IORegArea::Controller, 0x00) => Ok(self.register.into()),
+            (IORegArea::Controller, 0x00) => Ok(self.reg_val),
             _ => Err(Error::SegmentationFault(addr.into())),
         }
     }
@@ -248,13 +257,20 @@ impl Ticker for Joypad {
     }
 
     fn tick(&mut self, addr_bus: &mut dyn Bus<u8>) {
-        match self.refresh {
-            Some(0) => {
-                self.refresh = None;
-                self.register.refresh(addr_bus, &mut self.input_states);
-            } // update register
-            Some(n) => self.refresh = Some(n - 1), // decrease delay
-            None => {}                             // idle
+        macro_rules! fedge_detector {
+            ($old: expr, $new: expr, $mask: literal) => {
+                ($old & $mask) > ($new & $mask)
+            };
         }
+
+        let new_reg = register_from_state(self.mode, self.input_states.iter());
+
+        if fedge_detector!(self.reg_val, new_reg, 0b1)
+            || fedge_detector!(self.reg_val, new_reg, 0b10)
+            || fedge_detector!(self.reg_val, new_reg, 0b100)
+        {
+            trigger_interrupt(addr_bus);
+        }
+        self.reg_val = new_reg;
     }
 }
