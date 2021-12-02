@@ -4,7 +4,7 @@ use gb_bus::Bus;
 #[derive(Debug, Clone, Copy)]
 #[repr(u8)]
 pub enum Mode {
-    None = 0b0000_00000,
+    None = 0b0000_0000,
     Action = 0b0010_0000,
     Direction = 0b0001_0000,
     Both = 0b0011_0000,
