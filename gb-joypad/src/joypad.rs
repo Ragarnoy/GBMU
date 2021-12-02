@@ -17,7 +17,6 @@ pub struct Joypad {
     input_map: HashMap<Scancode, InputType>,
     input_states: HashMap<InputType, bool>,
     listening: Option<InputType>,
-    refresh: Option<u8>,
     mode: Mode,
     reg_val: u8,
 }
@@ -43,8 +42,6 @@ impl Joypad {
         InputType::A,
     ];
 
-    const REFRESH_DELAY: u8 = 5;
-
     pub fn new(window_id: u32) -> Self {
         Joypad {
             window_id,
@@ -69,7 +66,6 @@ impl Joypad {
                 (InputType::A, false),
             ]),
             listening: None,
-            refresh: None,
             mode: Default::default(),
             reg_val: 0xff,
         }
@@ -90,7 +86,6 @@ impl Joypad {
                 (InputType::A, false),
             ]),
             listening: None,
-            refresh: None,
             mode: Default::default(),
             reg_val: 0xff,
         }
