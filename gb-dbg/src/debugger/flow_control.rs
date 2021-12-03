@@ -20,10 +20,14 @@ impl FlowController {
             log::debug!("clicked on pause");
             ret = Some(ControlFlow::Break(Until::Null));
         }
-        if ui.button("Step").clicked() {
-            log::debug!("clicked on step");
-            ret = Some(ControlFlow::Break(Until::Step(1)));
-        }
+
+        // Feature currently not compatible with the 'Run instruction'
+
+        // if ui.button("Step").clicked() {
+        //     log::debug!("clicked on step");
+        //     ret = Some(ControlFlow::Break(Until::Step(1)));
+        // }
+
         if ui.button("Run instruction").clicked() {
             log::debug!("clicked on instruction");
 
