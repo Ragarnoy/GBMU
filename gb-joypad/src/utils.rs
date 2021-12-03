@@ -62,6 +62,21 @@ where
     !v
 }
 
+pub fn trigger_interrupt(addr_bus: &mut dyn Bus<u8>) {
+    const INTERRUPT_FLAG: u16 = 0xFF0F;
+    const INTERRUPT_BIT: u8 = 0b10000;
+
+    let interrupts_val = addr_bus
+        .read(INTERRUPT_FLAG, None)
+        .expect("Failed to read interrupt value for joypad interrupt");
+    if let Err(err) = addr_bus.write(INTERRUPT_FLAG, interrupts_val | INTERRUPT_BIT, None) {
+        log::error!(
+            "Failed to write interrupt value for joypad interrupt: {:?}",
+            err
+        )
+    }
+}
+
 #[cfg(test)]
 mod unit_reg_from_state {
     use super::{register_from_state, InputType, Mode};
@@ -144,20 +159,5 @@ mod unit_reg_from_state {
             register_from_state(Mode::Both, input.clone().into_iter()),
             0b1100_0010
         );
-    }
-}
-
-pub fn trigger_interrupt(addr_bus: &mut dyn Bus<u8>) {
-    const INTERRUPT_FLAG: u16 = 0xFF0F;
-    const INTERRUPT_BIT: u8 = 0b10000;
-
-    let interrupts_val = addr_bus
-        .read(INTERRUPT_FLAG, None)
-        .expect("Failed to read interrupt value for joypad interrupt");
-    if let Err(err) = addr_bus.write(INTERRUPT_FLAG, interrupts_val | INTERRUPT_BIT, None) {
-        log::error!(
-            "Failed to write interrupt value for joypad interrupt: {:?}",
-            err
-        )
     }
 }
