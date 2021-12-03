@@ -1,5 +1,6 @@
 mod constant;
 mod context;
+mod custom_event;
 mod event;
 mod logger;
 mod settings;
@@ -77,7 +78,7 @@ fn main() {
             }
             game.draw(&mut context);
         }
-        ui::draw_egui(&mut context);
+        let events = ui::draw_egui(&mut context);
         context
             .windows
             .main
@@ -100,15 +101,10 @@ fn main() {
         }
         if debugger.reset_triggered {
             debugger.reset_triggered = false;
-            game = opts.rom.as_ref().and_then(|romname| {
-                Game::new(romname.clone(), context.joypad.clone(), true).map_or_else(
-                    |e| {
-                        log::error!("while creating game context for {}: {:?}", romname, e);
-                        None
-                    },
-                    Option::Some,
-                )
-            });
+            game = opts
+                .rom
+                .as_ref()
+                .and_then(|romname| load_game(romname, context.joypad.clone(), true));
         }
         if let Some(ref mut input_wind) = context.windows.input {
             input_wind
@@ -122,6 +118,11 @@ fn main() {
 
         #[cfg(feature = "debug_render")]
         ui::draw_ppu_debug_ui(&mut context, &mut game);
+
+        for event in events.into_iter() {
+            let custom_event::CustomEvent::LoadFile(file) = event;
+            game = load_game(file, context.joypad.clone(), opts.debug);
+        }
 
         if std::ops::ControlFlow::Break(()) == event::process_event(&mut context, &mut event_pump) {
             break 'running;
@@ -172,15 +173,10 @@ fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
         }
     }));
 
-    let game_context: Option<Game> = opts.rom.as_ref().and_then(|romname| {
-        Game::new(romname.clone(), joypad.clone(), opts.debug).map_or_else(
-            |e| {
-                log::error!("while creating game context for {}: {:?}", romname, e);
-                None
-            },
-            Option::Some,
-        )
-    });
+    let game_context: Option<Game> = opts
+        .rom
+        .as_ref()
+        .and_then(|romname| load_game(&romname, joypad.clone(), opts.debug));
 
     let dbg_options = DebuggerOptions {
         breakpoints: opts.breakpoints.clone(),
@@ -217,5 +213,23 @@ fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
         game_context,
         dbg,
         event_pump,
+    )
+}
+
+fn load_game<P: AsRef<std::path::Path>>(
+    rompath: P,
+    joypad: std::rc::Rc<std::cell::RefCell<gb_joypad::Joypad>>,
+    stopped: bool,
+) -> Option<Game> {
+    Game::new(&rompath, joypad, stopped).map_or_else(
+        |e| {
+            log::error!(
+                "while creating game context for {:?}: {:?}",
+                rompath.as_ref(),
+                e
+            );
+            None
+        },
+        Option::Some,
     )
 }
