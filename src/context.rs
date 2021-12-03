@@ -80,7 +80,7 @@ pub struct Game {
 enum ScheduledStop {
     /// Schedule a stop after `usize` step
     Step(usize),
-    /// Schedule when instruction address `u16` is reached
+    /// Schedule a stop at `instruction changed` event
     Instruction(String),
     /// Schedule a stop after `usize` frame
     Frame(usize),
