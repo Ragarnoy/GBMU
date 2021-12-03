@@ -109,6 +109,7 @@ fn main() {
                     Option::Some,
                 )
             });
+            debugger = DebuggerBuilder::new().build();
         }
         if let Some(ref mut input_wind) = context.windows.input {
             input_wind
