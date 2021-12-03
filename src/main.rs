@@ -8,6 +8,8 @@ mod ui;
 use clap::{AppSettings, Clap};
 
 use context::{Context, Game, Windows};
+use gb_dbg::debugger::disassembler::DisassemblyViewer;
+use gb_dbg::debugger::flow_control::FlowController;
 use gb_dbg::debugger::options::DebuggerOptions;
 use gb_dbg::debugger::{Debugger, DebuggerBuilder};
 use gb_lcd::{render, window::GBWindow};
@@ -109,7 +111,7 @@ fn main() {
                     Option::Some,
                 )
             });
-            debugger = DebuggerBuilder::new().build();
+            debugger.disassembler = DisassemblyViewer::default();
         }
         if let Some(ref mut input_wind) = context.windows.input {
             input_wind

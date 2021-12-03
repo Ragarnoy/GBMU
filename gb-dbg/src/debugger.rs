@@ -22,7 +22,7 @@ pub struct Debugger<DBGOPS> {
     memory_editor: MemoryViewer<DBGOPS>,
     register_editor: RegisterEditor,
     flow_controller: FlowController,
-    disassembler: DisassemblyViewer,
+    pub disassembler: DisassemblyViewer,
     breakpoint_editor: BreakpointEditor,
     status_bar: StatusBar,
     flow_status: Option<ControlFlow<Until>>,
