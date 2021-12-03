@@ -217,8 +217,11 @@ impl Game {
                 ScheduledStop::Frame(count) => {
                     if frame_ended {
                         if *count == 1 {
-                            self.emulation_stopped = true;
-                            self.scheduled_stop = None;
+                            self.emulation_stopped = false;
+
+                            // Fetch current instruction
+                            self.scheduled_stop =
+                                Some(ScheduledStop::Instruction(self.current_opcode()));
                         } else {
                             *count -= 1;
                         }

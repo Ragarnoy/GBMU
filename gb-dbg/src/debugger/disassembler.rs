@@ -8,6 +8,8 @@ pub struct DisassemblyViewer {
     cache_pc_valid_range: Option<(u16, u16)>,
 }
 
+const MCYCLES_CONSUMED_TO_FETCH_INSTRUCTION: u16 = 1;
+
 impl DisassemblyViewer {
     fn init_cache<MEM: MemoryDebugOperations>(&mut self, pc: u16, memory: &MEM) {
         log::debug!("initialise opcode cache");
@@ -19,7 +21,8 @@ impl DisassemblyViewer {
         let current_opcode = &self.cache[0];
 
         // The "+ 1" delays the cache update so we can keep displaying the current instruction
-        let next_instr_start_address = opcode_len(current_opcode) + pc + 1;
+        let next_instr_start_address =
+            opcode_len(current_opcode) + pc + MCYCLES_CONSUMED_TO_FETCH_INSTRUCTION;
 
         self.cache_pc_valid_range = Some((pc, next_instr_start_address));
     }
@@ -36,7 +39,8 @@ impl DisassemblyViewer {
 
             let next_opcode = &self.cache[1];
 
-            let next_instr_start_address = opcode_len(next_opcode) + pc;
+            let next_instr_start_address =
+                start_address + opcode_len(next_opcode) + MCYCLES_CONSUMED_TO_FETCH_INSTRUCTION;
 
             let byte_it = ByteIterator::new(start_address, memory);
             let generator = OpcodeGenerator::from(byte_it);
