@@ -28,8 +28,7 @@ use gb_roms::{
     Header,
 };
 use gb_timer::Timer;
-use std::collections::BTreeMap;
-use std::{cell::RefCell, ops::DerefMut, rc::Rc};
+use std::{cell::RefCell, collections::BTreeMap, ops::DerefMut, path::Path, rc::Rc};
 
 pub struct Context<const WIDTH: usize, const HEIGHT: usize> {
     pub sdl: sdl2::Sdl,
@@ -89,14 +88,15 @@ enum ScheduledStop {
 }
 
 impl Game {
-    pub fn new(
-        romname: String,
+    pub fn new<P: AsRef<Path>>(
+        rompath: &P,
         joypad: Rc<RefCell<Joypad>>,
         stopped: bool,
     ) -> Result<Game, anyhow::Error> {
         use std::{fs::File, io::Seek};
 
-        let mut file = File::open(romname.clone())?;
+        let romname = rompath.as_ref().to_string_lossy().to_string();
+        let mut file = File::open(rompath)?;
         let header = Header::from_file(&mut file)?;
 
         log::debug!("header: {:?}", header);
@@ -350,8 +350,6 @@ fn game_save_path(rom_filename: &str) -> String {
 
 /// Create a standardize rom name id
 fn game_id(rom_filename: &str) -> String {
-    use std::path::Path;
-
     let rom_path = Path::new(rom_filename);
     rom_path
         .file_stem()

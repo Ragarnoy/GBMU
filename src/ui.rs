@@ -1,6 +1,6 @@
-use crate::Context;
 #[cfg(feature = "debug_render")]
 use crate::Game;
+use crate::{custom_event::CustomEvent, Context};
 use gb_dbg::{DEBUGGER_HEIGHT, DEBUGGER_WIDTH};
 use gb_lcd::{render, window::GBWindow};
 #[cfg(feature = "debug_render")]
@@ -10,18 +10,24 @@ use gb_ppu::{
 };
 use native_dialog::FileDialog;
 
-pub fn draw_egui<const WIDTH: usize, const HEIGHT: usize>(context: &mut Context<WIDTH, HEIGHT>) {
+pub fn draw_egui<const WIDTH: usize, const HEIGHT: usize>(
+    context: &mut Context<WIDTH, HEIGHT>,
+) -> Vec<CustomEvent> {
+    let mut events = Vec::new();
     egui::containers::TopBottomPanel::top("Top menu").show(context.windows.main.egui_ctx(), |ui| {
         egui::menu::bar(ui, |ui| {
             ui.set_height(render::MENU_BAR_SIZE);
             if ui.button("Load").clicked() {
-                let files = FileDialog::new()
+                let file = FileDialog::new()
                     .set_location(
                         &std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("/")),
                     )
                     .add_filter("rom", &["gb", "gbc", "rom"])
                     .show_open_single_file();
-                log::debug!("picked file: {:?}", files);
+                log::debug!("picked file: {:?}", file);
+                if let Ok(Some(path)) = file {
+                    events.push(CustomEvent::LoadFile(path));
+                }
             }
             if ui.button("Debug").clicked() && context.windows.debug.is_none() {
                 context
@@ -117,6 +123,7 @@ pub fn draw_egui<const WIDTH: usize, const HEIGHT: usize>(context: &mut Context<
             }
         })
     });
+    events
 }
 
 #[cfg(feature = "debug_render")]
