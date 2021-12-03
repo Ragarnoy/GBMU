@@ -5,7 +5,6 @@ use gb_bus::Bus;
 use std::cell::RefMut;
 
 pub struct State {
-    enabled: bool,
     mode: Mode,
     line: u8,
     step: u16,
@@ -30,16 +29,11 @@ impl State {
 
     pub fn new() -> Self {
         State {
-            enabled: false,
             mode: Mode::OAMFetch,
             line: 0,
             step: 0,
             pixel_drawn: 0,
         }
-    }
-
-    pub fn enabled(&self) -> bool {
-        self.enabled
     }
 
     pub fn mode(&self) -> Mode {
@@ -211,10 +205,6 @@ impl State {
         line_updated: bool,
     ) {
         if line_updated {
-            if self.line == 0 {
-                self.enabled = lcd_reg.control.ppu_enable();
-            }
-
             lcd_reg.scrolling.ly = self.line;
             let lyc_eq_ly = self.line == lcd_reg.scrolling.lyc;
             lcd_reg.stat.set_lyc_eq_ly(lyc_eq_ly);

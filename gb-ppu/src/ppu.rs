@@ -37,6 +37,7 @@ macro_rules! view_border {
 ///
 /// It owns the VRAM and the OAM, as well as a few registers.
 pub struct Ppu {
+    enabled: bool,
     vram: Rc<RefCell<Vram>>,
     oam: Rc<RefCell<Oam>>,
     lcd_reg: Rc<RefCell<LcdReg>>,
@@ -51,6 +52,7 @@ pub struct Ppu {
 impl Ppu {
     pub fn new() -> Self {
         Ppu {
+            enabled: false,
             vram: Rc::new(RefCell::new(Vram::new())),
             oam: Rc::new(RefCell::new(Oam::new())),
             lcd_reg: Rc::new(RefCell::new(LcdReg::new())),
@@ -273,6 +275,10 @@ impl Ppu {
     }
 
     fn hblank(&mut self, adr_bus: &mut dyn Bus<u8>) {
+        self.unlock_mem(adr_bus);
+    }
+
+    fn unlock_mem(&mut self, adr_bus: &mut dyn Bus<u8>) {
         let unlock_oam: bool;
         if let Ok(oam) = self.oam.try_borrow() {
             if let Some(Lock::Ppu) = oam.get_lock() {
@@ -281,7 +287,7 @@ impl Ppu {
                 unlock_oam = false;
             }
         } else {
-            log::error!("Oam borrow failed for ppu in mode 0");
+            log::error!("Oam borrow failed for ppu to unlock");
             unlock_oam = false;
         }
         if unlock_oam {
@@ -296,7 +302,7 @@ impl Ppu {
                 unlock_vram = false;
             }
         } else {
-            log::error!("Vram borrow failed for ppu in mode 0");
+            log::error!("Vram borrow failed for ppu to unlock");
             unlock_vram = false;
         }
         if unlock_vram {
@@ -508,21 +514,32 @@ impl Ticker for Ppu {
     }
 
     fn tick(&mut self, adr_bus: &mut dyn Bus<u8>) {
+        let enable = self.lcd_reg.borrow().control.ppu_enable();
+        if self.enabled && !enable {
+            log::info!("disabling lcd");
+            self.unlock_mem(adr_bus);
+            self.enabled = false;
+        }
+        if !self.enabled && enable && self.state.mode() == Mode::VBlank {
+            log::info!("enabling lcd");
+            self.enabled = true;
+        }
+
         match self.state.mode() {
             Mode::OAMFetch => {
-                if self.state.enabled() {
+                if self.enabled {
                     self.oam_fetch(adr_bus)
                 }
             }
             Mode::PixelDrawing => {
-                if self.state.enabled() {
+                if self.enabled {
                     self.pixel_drawing(adr_bus)
                 } else {
                     self.pixel_drawing_disabled()
                 }
             }
             Mode::HBlank => {
-                if self.state.enabled() {
+                if self.enabled {
                     self.hblank(adr_bus)
                 }
             }
