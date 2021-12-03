@@ -1,5 +1,6 @@
 use gb_bus::{generic::SimpleRW, AddressBus, Bus, IORegBus, Lock, WorkingRam};
 use gb_clock::{cycles, Clock};
+use gb_cpu::microcode::controller::OpcodeType;
 use gb_cpu::{cpu::Cpu, new_cpu};
 use gb_dbg::dbg_interfaces::AudioRegs;
 use gb_dbg::{
@@ -79,6 +80,8 @@ pub struct Game {
 enum ScheduledStop {
     /// Schedule a stop after `usize` step
     Step(usize),
+    /// Schedule when instruction address `u16` is reached
+    Instruction(String),
     /// Schedule a stop after `usize` frame
     Frame(usize),
     /// Schedule a stop after `time` delay
@@ -199,6 +202,18 @@ impl Game {
                         *count -= 1;
                     }
                 }
+                ScheduledStop::Instruction(opcode) => {
+                    if let Some(current_opcode) = &self.cpu.controller.opcode {
+                        let was_prefixed =
+                            matches!(current_opcode, OpcodeType::CBPrefixed(_opcode));
+                        let current_opcode = current_opcode.to_string();
+                        let opcode_changed = *opcode != current_opcode;
+                        if opcode_changed && !was_prefixed {
+                            self.emulation_stopped = true;
+                            self.scheduled_stop = None;
+                        }
+                    }
+                }
                 ScheduledStop::Frame(count) => {
                     if frame_ended {
                         if *count == 1 {
@@ -238,6 +253,10 @@ impl Game {
             Break(Until::Step(count)) => {
                 self.emulation_stopped = false;
                 self.scheduled_stop = Some(ScheduledStop::Step(count));
+            }
+            Break(Until::Instruction(opcode)) => {
+                self.emulation_stopped = false;
+                self.scheduled_stop = Some(ScheduledStop::Instruction(opcode));
             }
             Break(Until::Frame(count)) => {
                 self.emulation_stopped = false;
@@ -344,6 +363,13 @@ fn game_id(rom_filename: &str) -> String {
 impl DebugOperations for Game {
     fn cycle(&self) -> usize {
         self.cycle_count
+    }
+
+    fn current_opcode(&mut self) -> String {
+        if let Some(opcode) = &self.cpu.controller.opcode {
+            return opcode.to_string();
+        }
+        String::from("")
     }
 }
 

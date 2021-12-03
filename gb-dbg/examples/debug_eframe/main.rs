@@ -22,6 +22,7 @@ impl App for DebuggerApp {
             match flow {
                 ControlFlow::Break(x) => match x {
                     Until::Step(n) => self.memory.pc += (n << 1) as u16,
+                    Until::Instruction(_opcode) => self.memory.pc += 1 as u16,
                     Until::Frame(n) => self.memory.pc += (n << 2) as u16,
                     Until::Second(n) => self.memory.pc += (n << 3) as u16,
                     Until::Null => self.memory.pc = 0,

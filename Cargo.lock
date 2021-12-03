@@ -982,6 +982,7 @@ dependencies = [
  "egui",
  "egui_memory_editor",
  "gb-bus",
+ "gb-cpu",
  "gb-roms",
  "log",
  "nom",

@@ -25,16 +25,17 @@ impl DisassemblyViewer {
     }
 
     fn update_cache<MEM: MemoryDebugOperations>(&mut self, pc: u16, memory: &MEM) {
-        log::debug!("update opcode cache");
-
         let expected_pc = self.cache_pc_valid_range.unwrap().1;
+        let start_address = pc - 1;
+
         // After a jump/ret/call instructions
         if pc != expected_pc {
-            self.init_cache(pc, memory);
+            self.init_cache(start_address, memory);
         } else {
+            log::debug!("update opcode cache");
+
             let next_opcode = &self.cache[1];
 
-            let start_address = pc - 1;
             let next_instr_start_address = opcode_len(next_opcode) + pc;
 
             let byte_it = ByteIterator::new(start_address, memory);
