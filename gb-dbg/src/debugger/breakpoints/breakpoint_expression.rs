@@ -54,6 +54,45 @@ impl Display for Operator {
     }
 }
 
+/// ## Parser Definition
+///
+/// ```
+/// expr |= expr comb_op expr
+///      |= any_value bin_op any_value
+///
+/// comb_op |= '&&'
+///         |= '||'
+///         |= '^^'
+///
+/// bin_op |= '=='
+///        |= '!='
+///        |= '>'
+///        |= '<'
+///        |= '>='
+///        |= '<='
+///
+/// any_value |= unary
+///           |= value
+///
+/// unary = transformator
+///
+/// transformator = (L|U) '(' register ')'
+///
+/// register |= 'AF'
+///          |= 'BC'
+///          |= 'DE'
+///          |= 'HL'
+///          |= 'PC'
+///          |= 'SP'
+///
+/// value |= register
+///       |= address
+///       |= raw_value
+///
+/// address = '*' raw_value
+///
+/// raw_value = [A-Fa-f0-9]{1,4}
+/// ```
 #[derive(Debug)]
 pub enum Node {
     Register(CpuRegs),
