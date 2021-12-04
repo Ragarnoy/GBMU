@@ -8,42 +8,21 @@ use nom::IResult;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
-#[derive(Debug)]
-enum Operand {
-    Register(CpuRegs),
-    Value(u16),
-    Address(u16),
-}
-
-impl Operand {
-    fn realize<T: DebugOperations>(&self, regs: &T) -> u16 {
-        match self {
-            Operand::Register(r) => regs.cpu_get(*r).into(),
-            Operand::Value(v) => *v,
-            Operand::Address(a) => regs.read(*a).into(),
-        }
-    }
-}
-
-impl Display for Operand {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Operand::Register(r) => {
-                write!(f, "{:?}", r)
-            }
-            Operand::Value(v) => {
-                write!(f, "0x{:04X}", v)
-            }
-            Operand::Address(a) => {
-                write!(f, "0x{:04X}", a)
-            }
-        }
-    }
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+enum UnaryOperator {
+    Upper,
+    Lower,
+    //Raising,
+    //Falling,
+    //Update,
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 enum Operator {
     Eq,
+    And,
+    Xor,
+    Or,
     NotEq,
     Sup,
     Inf,
@@ -65,37 +44,19 @@ impl Display for Operator {
 }
 
 #[derive(Debug)]
-pub struct BreakpointExpression {
-    lhs: Operand,
-    op: Operator,
-    rhs: Operand,
-}
-
-impl Display for BreakpointExpression {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} {} {}", self.lhs, self.op, self.rhs)
-    }
-}
-
-impl BreakpointExpression {
-    pub fn compute<T: DebugOperations>(&self, regs: &T) -> bool {
-        match self.op {
-            Operator::Eq => self.lhs.realize(regs) == self.rhs.realize(regs),
-            Operator::NotEq => self.lhs.realize(regs) != self.rhs.realize(regs),
-            Operator::Sup => self.lhs.realize(regs) > self.rhs.realize(regs),
-            Operator::Inf => self.lhs.realize(regs) < self.rhs.realize(regs),
-            Operator::SupEq => self.lhs.realize(regs) >= self.rhs.realize(regs),
-            Operator::InfEq => self.lhs.realize(regs) <= self.rhs.realize(regs),
-        }
-    }
-
-    pub fn new_simple(address: u16) -> Self {
-        Self {
-            lhs: Operand::Register(CpuRegs::PC),
-            op: Operator::Eq,
-            rhs: Operand::Value(address),
-        }
-    }
+pub enum BNode {
+    Register(CpuRegs),
+    Address(u16),
+    Value(u16),
+    UnaryExpr {
+        op: Operator,
+        child: Box<Node>,
+    },
+    BinaryExpr {
+        op: Operator,
+        lhs: Box<Node>,
+        rhs: Box<Node>,
+    },
 }
 
 impl FromStr for BreakpointExpression {
