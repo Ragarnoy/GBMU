@@ -10,7 +10,9 @@ use std::str::FromStr;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 enum UnaryOperator {
+    /// Get the upper bound of a value, U(<r16>)
     Upper,
+    /// Get the lower bound of a value, L(<r16>)
     Lower,
     //Raising,
     //Falling,
@@ -19,14 +21,23 @@ enum UnaryOperator {
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 enum Operator {
+    /// Check for equality of value between another, `==`
     Eq,
+    /// Logical AND, `&&`
     And,
+    /// Logical XOR, `^^`
     Xor,
+    /// Logical OR, `||`
     Or,
+    /// Check for inequality of a value between another, `!=`
     NotEq,
+    /// Check if a value is greather than another, `>`
     Sup,
+    /// Check if a value is lower than another, `<`
     Inf,
+    /// Check if a value is greather or equal to another, `>=`
     SupEq,
+    /// Check if a value is lower or equal to another, `<=`
     InfEq,
 }
 
@@ -44,7 +55,7 @@ impl Display for Operator {
 }
 
 #[derive(Debug)]
-pub enum BNode {
+pub enum Node {
     Register(CpuRegs),
     Address(u16),
     Value(u16),
