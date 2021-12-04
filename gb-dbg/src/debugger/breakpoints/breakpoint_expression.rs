@@ -1,10 +1,12 @@
 use crate::dbg_interfaces::{CpuRegs, DebugOperations};
 use anyhow::anyhow;
-use nom::branch::alt;
-use nom::bytes::complete::{tag, take_while_m_n};
-use nom::combinator::map;
-use nom::sequence::tuple;
-use nom::IResult;
+use nom::{
+    branch::alt,
+    bytes::complete::{tag, take_while_m_n},
+    combinator::map,
+    sequence::tuple,
+    IResult,
+};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
@@ -99,7 +101,7 @@ pub enum Node {
     Address(u16),
     Value(u16),
     UnaryExpr {
-        op: Operator,
+        op: UnaryOperator,
         child: Box<Node>,
     },
     BinaryExpr {
@@ -109,26 +111,33 @@ pub enum Node {
     },
 }
 
-impl FromStr for BreakpointExpression {
+impl FromStr for Node {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let (rest, (reg, op, val)) = match tuple((operand_left, operator, operand_right))(s) {
+        let (rest, node) = match expr(s) {
             Ok(ret) => ret,
-            Err(_) => {
-                return Err(anyhow!("Invalid input"));
+            Err(e) => {
+                return Err(anyhow!("Invalid input: {:?}", e));
             }
         };
         if !rest.is_empty() {
-            Err(anyhow!("Invalid input"))
+            Err(anyhow!("Invalid input: not everything was consumed"))
         } else {
-            Ok(BreakpointExpression {
-                lhs: reg,
-                op,
-                rhs: val,
-            })
+            Ok(node)
         }
     }
+}
+
+fn expr(input: &str) -> IResult<&str, Node> {
+    alt((
+        map(tuple(expr, comb_op, expr), |(lhs, op, rhs)| {
+            Node::BinaryExpr { op, lhs, rhs }
+        }),
+        map(tuple(any_value, bin_op, any_value), |(lhs, op, rhs)| {
+            Node::BinaryExpr { op, lhs, rhs }
+        }),
+    ))(input)
 }
 
 fn operand_right(input: &str) -> IResult<&str, Operand> {
