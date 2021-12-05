@@ -42,7 +42,7 @@ use crate::dbg_interfaces::CpuRegs;
 use anyhow::anyhow;
 use nom::{
     branch::alt,
-    bytes::streaming::{tag, take_while_m_n},
+    bytes::streaming::tag,
     combinator::map,
     sequence::{delimited, tuple},
     IResult,
@@ -115,7 +115,7 @@ impl Display for Operator {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Node {
     Register(CpuRegs),
     Address(u16),
@@ -240,6 +240,8 @@ fn value(input: &str) -> IResult<&str, Node> {
 }
 
 fn raw_value(input: &str) -> IResult<&str, u16> {
+    use nom::bytes::complete::take_while_m_n;
+
     map(take_while_m_n(1, 4, |c: char| c.is_ascii_hexdigit()), |s| {
         u16::from_str_radix(s, 16).unwrap()
     })(input)
@@ -282,4 +284,25 @@ fn test_raw_register() {
     assert_eq!(raw_register("HL"), Ok(("", CpuRegs::HL)));
     assert_eq!(raw_register("PC"), Ok(("", CpuRegs::PC)));
     assert_eq!(raw_register("SP"), Ok(("", CpuRegs::SP)));
+}
+
+#[test]
+fn test_comb_op() {
+    assert_eq!(comb_op("&&"), Ok(("", Operator::And)));
+    assert_eq!(comb_op("||"), Ok(("", Operator::Or)));
+    assert_eq!(comb_op("^^"), Ok(("", Operator::Xor)));
+}
+
+#[test]
+fn test_raw_value() {
+    assert_eq!(raw_value("1"), Ok(("", 0x1_u16)));
+    assert_eq!(raw_value("1f"), Ok(("", 0x1f_u16)));
+    assert_eq!(raw_value("b1f"), Ok(("", 0xb1f_u16)));
+    assert_eq!(raw_value("ab1f"), Ok(("", 0xab1f_u16)));
+}
+
+#[test]
+fn test_address() {
+    assert_eq!(address("*1"), Ok(("", Node::Address(1))));
+    assert_eq!(address("*dead"), Ok(("", Node::Address(0xdead))));
 }
