@@ -174,7 +174,7 @@ pub fn expr_complete(input: &str) -> IResult<&str, Node> {
 
     alt((
         map(
-            complete(tuple((operation, comb_op, expr_complete))),
+            complete(tuple((operation, ws(comb_op), expr_complete))),
             |(lhs, op, rhs)| Node::BinaryExpr {
                 op,
                 lhs: boxed!(lhs),
@@ -187,7 +187,7 @@ pub fn expr_complete(input: &str) -> IResult<&str, Node> {
 
 pub fn expr(input: &str) -> IResult<&str, Node> {
     alt((
-        map(tuple((operation, comb_op, expr)), |(lhs, op, rhs)| {
+        map(tuple((operation, ws(comb_op), expr)), |(lhs, op, rhs)| {
             Node::BinaryExpr {
                 op,
                 lhs: boxed!(lhs),
@@ -199,13 +199,26 @@ pub fn expr(input: &str) -> IResult<&str, Node> {
 }
 
 fn operation(input: &str) -> IResult<&str, Node> {
-    map(tuple((any_value, bin_op, any_value)), |(lhs, op, rhs)| {
-        Node::BinaryExpr {
+    map(
+        tuple((any_value, ws(bin_op), any_value)),
+        |(lhs, op, rhs)| Node::BinaryExpr {
             op,
             lhs: boxed!(lhs),
             rhs: boxed!(rhs),
-        }
-    })(input)
+        },
+    )(input)
+}
+
+fn ws<I, O, E, P>(parser: P) -> impl FnMut(I) -> IResult<I, O, E>
+where
+    I: nom::InputTakeAtPosition,
+    <I as nom::InputTakeAtPosition>::Item: nom::AsChar + Clone,
+    E: nom::error::ParseError<I>,
+    P: nom::Parser<I, O, E>,
+{
+    use nom::character::complete::space0;
+
+    delimited(space0, parser, space0)
 }
 
 fn comb_op(input: &str) -> IResult<&str, Operator> {
@@ -361,20 +374,46 @@ where
     assert_eq!(expr.to_string(), expected);
 }
 
-#[test]
-fn test_operation() {
-    utils_test_expr(operation, "AF==42", "AF == 0x42");
-    utils_test_expr(operation, "SP<=fffe", "SP <= 0xFFFE");
-    utils_test_expr(operation, "HL!=*ff0f", "HL != *0xFF0F");
-    utils_test_expr(operation, "HL<DE", "HL < DE");
+#[cfg(test)]
+mod unit_operation {
+    use super::{operation, utils_test_expr};
+
+    #[test]
+    fn no_space() {
+        utils_test_expr(operation, "AF==42", "AF == 0x42");
+        utils_test_expr(operation, "SP<=fffe", "SP <= 0xFFFE");
+        utils_test_expr(operation, "HL!=*ff0f", "HL != *0xFF0F");
+        utils_test_expr(operation, "HL<DE", "HL < DE");
+    }
+
+    #[test]
+    fn space() {
+        utils_test_expr(operation, "AF ==42", "AF == 0x42");
+        utils_test_expr(operation, "SP<= fffe", "SP <= 0xFFFE");
+        utils_test_expr(operation, "HL != *ff0f", "HL != *0xFF0F");
+        utils_test_expr(operation, "HL < DE", "HL < DE");
+    }
 }
 
-#[test]
-fn test_expr() {
-    utils_test_expr(expr_complete, "AF==42", "AF == 0x42");
-    utils_test_expr(
-        expr_complete,
-        "AF==21||PC==dead",
-        "AF == 0x21 || PC == 0xDEAD",
-    );
+#[cfg(test)]
+mod unit_expr {
+    use super::{expr_complete, utils_test_expr};
+    #[test]
+    fn no_space() {
+        utils_test_expr(expr_complete, "AF==42", "AF == 0x42");
+        utils_test_expr(
+            expr_complete,
+            "AF==21||PC==dead",
+            "AF == 0x21 || PC == 0xDEAD",
+        );
+    }
+    #[test]
+    fn space() {
+        utils_test_expr(expr_complete, "AF ==42", "AF == 0x42");
+        utils_test_expr(
+            expr_complete,
+            "AF== 21 ||PC== dead",
+            "AF == 0x21 || PC == 0xDEAD",
+        );
+    }
 }
