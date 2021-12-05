@@ -1,8 +1,8 @@
 //! ## Parser Definition
 //!
 //! ```ignore
-//! expr |= expr comb_op expr
-//!      |= any_value bin_op any_value
+//! expr = operation comb_op expr
+//! operation = any_value bin_op any_value
 //!
 //! comb_op |= '&&'
 //!         |= '||'
@@ -138,7 +138,7 @@ impl Display for Node {
             Node::Address(addr) => write!(f, "*{:#X}", addr),
             Node::Value(v) => write!(f, "{:#X}", v),
             Node::UnaryExpr { op, child } => write!(f, "{}({})", op, child),
-            Node::BinaryExpr { op, lhs, rhs } => write!(f, "{} {} {}", lhs, rhs, op),
+            Node::BinaryExpr { op, lhs, rhs } => write!(f, "{} {} {}", lhs, op, rhs),
         }
     }
 }
@@ -159,37 +159,53 @@ impl FromStr for Node {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         use nom::combinator::all_consuming;
 
-        let (rest, node) = match all_consuming(expr)(s) {
+        let (_rest, node) = match all_consuming(expr_complete)(s) {
             Ok(ret) => ret,
             Err(e) => {
                 return Err(anyhow!("Invalid input: {}", e));
             }
         };
-        if !rest.is_empty() {
-            Err(anyhow!("Invalid input: not everything was consumed"))
-        } else {
-            Ok(node)
-        }
+        Ok(node)
     }
 }
 
-fn expr(input: &str) -> IResult<&str, Node> {
+pub fn expr_complete(input: &str) -> IResult<&str, Node> {
+    use nom::combinator::complete;
+
     alt((
-        map(tuple((any_value, bin_op, any_value)), |(lhs, op, rhs)| {
-            Node::BinaryExpr {
+        map(
+            complete(tuple((operation, comb_op, expr_complete))),
+            |(lhs, op, rhs)| Node::BinaryExpr {
                 op,
                 lhs: boxed!(lhs),
                 rhs: boxed!(rhs),
-            }
-        }),
-        map(tuple((expr, comb_op, expr)), |(lhs, op, rhs)| {
-            Node::BinaryExpr {
-                op,
-                lhs: boxed!(lhs),
-                rhs: boxed!(rhs),
-            }
-        }),
+            },
+        ),
+        complete(operation),
     ))(input)
+}
+
+pub fn expr(input: &str) -> IResult<&str, Node> {
+    alt((
+        map(tuple((operation, comb_op, expr)), |(lhs, op, rhs)| {
+            Node::BinaryExpr {
+                op,
+                lhs: boxed!(lhs),
+                rhs: boxed!(rhs),
+            }
+        }),
+        operation,
+    ))(input)
+}
+
+fn operation(input: &str) -> IResult<&str, Node> {
+    map(tuple((any_value, bin_op, any_value)), |(lhs, op, rhs)| {
+        Node::BinaryExpr {
+            op,
+            lhs: boxed!(lhs),
+            rhs: boxed!(rhs),
+        }
+    })(input)
 }
 
 fn comb_op(input: &str) -> IResult<&str, Operator> {
@@ -332,18 +348,33 @@ fn test_unary_expr() {
 }
 
 #[cfg(test)]
-fn utils_test_expr(input: &str, expected: &str) {
+fn utils_test_expr<'a, P>(parser: P, input: &'a str, expected: &str)
+where
+    P: nom::Parser<&'a str, Node, nom::error::Error<&'a str>>,
+{
     use nom::combinator::all_consuming;
 
-    let res = all_consuming(expr)(input);
-    assert!(res.is_ok(), "res is not ok: {:?}", res);
+    let res = all_consuming(parser)(input);
+    assert!(res.is_ok(), "for `{}': res is not ok: {:?}", input, res);
     let (left, expr) = res.unwrap();
     assert!(left.is_empty(), "data still need to be proceded: {}", left);
     assert_eq!(expr.to_string(), expected);
 }
 
 #[test]
+fn test_operation() {
+    utils_test_expr(operation, "AF==42", "AF == 0x42");
+    utils_test_expr(operation, "SP<=fffe", "SP <= 0xFFFE");
+    utils_test_expr(operation, "HL!=*ff0f", "HL != *0xFF0F");
+    utils_test_expr(operation, "HL<DE", "HL < DE");
+}
+
+#[test]
 fn test_expr() {
-    utils_test_expr("AF==42", "AF 0x42 ==");
-    utils_test_expr("AF==21||PC==dead", "AF 0x21 == PC 0xDEAD == ||");
+    utils_test_expr(expr_complete, "AF==42", "AF == 0x42");
+    utils_test_expr(
+        expr_complete,
+        "AF==21||PC==dead",
+        "AF == 0x21 || PC == 0xDEAD",
+    );
 }
