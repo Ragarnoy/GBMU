@@ -1,6 +1,12 @@
 use crate::dbg_interfaces::{CpuRegs, DebugOperations};
 use anyhow::anyhow;
-use nom::{bytes::streaming::tag, branch::alt, combinator::map, sequence::{tuple, delimited}, IResult};
+use nom::{
+    branch::alt,
+    bytes::streaming::{tag, take_while_m_n},
+    combinator::map,
+    sequence::{delimited, tuple},
+    IResult,
+};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
@@ -8,7 +14,7 @@ macro_rules! boxed {
     ($any:expr) => {
         Box::new($any)
     };
-};
+}
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 enum UnaryOperator {
@@ -132,10 +138,18 @@ impl FromStr for Node {
 fn expr(input: &str) -> IResult<&str, Node> {
     alt((
         map(tuple((expr, comb_op, expr)), |(lhs, op, rhs)| {
-            Node::BinaryExpr { op, lhs: boxed!(lhs), rhs: boxed!(rhs) }
+            Node::BinaryExpr {
+                op,
+                lhs: boxed!(lhs),
+                rhs: boxed!(rhs),
+            }
         }),
         map(tuple((any_value, bin_op, any_value)), |(lhs, op, rhs)| {
-            Node::BinaryExpr { op, lhs: boxed!(lhs), rhs: boxed!(rhs) }
+            Node::BinaryExpr {
+                op,
+                lhs: boxed!(lhs),
+                rhs: boxed!(rhs),
+            }
         }),
     ))(input)
 }
@@ -148,10 +162,7 @@ fn comb_op(input: &str) -> IResult<&str, Operator> {
 }
 
 fn any_value(input: &str) -> IResult<&str, Node> {
-    alt((
-        unary_expr,
-        value,
-    ))(input)
+    alt((unary_expr, value))(input)
 }
 
 fn unary_expr(input: &str) -> IResult<&str, Node> {
@@ -159,10 +170,15 @@ fn unary_expr(input: &str) -> IResult<&str, Node> {
     let unary_op = match unary_op {
         "L" => UnaryOperator::Lower,
         "H" => UnaryOperator::Upper,
-        _ => panic!("unexpected valid unary op `{}'", unary_op)
+        _ => panic!("unexpected valid unary op `{}'", unary_op),
     };
 
-    map(delimited(tag("("), register, tag(")")), |reg| Node::UnaryExpr{op: unary_op, child: boxed!(reg)})(input)
+    map(delimited(tag("("), register, tag(")")), |reg| {
+        Node::UnaryExpr {
+            op: unary_op,
+            child: boxed!(reg),
+        }
+    })(input)
 }
 
 fn register(input: &str) -> IResult<&str, Node> {
@@ -181,14 +197,22 @@ fn raw_register(input: &str) -> IResult<&str, CpuRegs> {
 }
 
 fn value(input: &str) -> IResult<&str, Node> {
-    alt((
-        register,
-        map(raw_value, Node::Value),
-        address,
-    ))(input)
+    alt((register, map(raw_value, Node::Value), address))(input)
 }
 
-fn raw_operator(input: &str) -> IResult<&str, Operator> {
+fn raw_value(input: &str) -> IResult<&str, u16> {
+    map(take_while_m_n(1, 4, |c: char| c.is_ascii_hexdigit()), |s| {
+        u16::from_str_radix(s, 16).unwrap()
+    })(input)
+}
+
+fn address(input: &str) -> IResult<&str, Node> {
+    let (input, _) = tag("*")(input)?;
+
+    map(raw_value, Node::Address)(input)
+}
+
+fn bin_op(input: &str) -> IResult<&str, Operator> {
     alt((
         map(tag("=="), |_| Operator::Eq),
         map(tag("!="), |_| Operator::NotEq),
@@ -197,12 +221,4 @@ fn raw_operator(input: &str) -> IResult<&str, Operator> {
         map(tag("<"), |_| Operator::Inf),
         map(tag("<="), |_| Operator::InfEq),
     ))(input.trim())
-}
-
-
-
-fn raw_value(input: &str) -> IResult<&str, u16> {
-    map(take_while_m_n(1, 4, |c: char| c.is_ascii_hexdigit()), |s| {
-        u16::from_str_radix(s, 16).unwrap()
-    })(input.trim())
 }
