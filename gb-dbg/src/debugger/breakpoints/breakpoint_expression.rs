@@ -135,8 +135,8 @@ impl Display for Node {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Node::Register(r) => write!(f, "{}", r),
-            Node::Address(addr) => write!(f, "*{}", addr),
-            Node::Value(v) => write!(f, "{}", v),
+            Node::Address(addr) => write!(f, "*{:#X}", addr),
+            Node::Value(v) => write!(f, "{:#X}", v),
             Node::UnaryExpr { op, child } => write!(f, "{}({})", op, child),
             Node::BinaryExpr { op, lhs, rhs } => write!(f, "{} {} {}", lhs, rhs, op),
         }
@@ -157,10 +157,12 @@ impl FromStr for Node {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let (rest, node) = match expr(s) {
+        use nom::combinator::all_consuming;
+
+        let (rest, node) = match all_consuming(expr)(s) {
             Ok(ret) => ret,
             Err(e) => {
-                return Err(anyhow!("Invalid input: {:?}", e));
+                return Err(anyhow!("Invalid input: {}", e));
             }
         };
         if !rest.is_empty() {
@@ -173,14 +175,14 @@ impl FromStr for Node {
 
 fn expr(input: &str) -> IResult<&str, Node> {
     alt((
-        map(tuple((expr, comb_op, expr)), |(lhs, op, rhs)| {
+        map(tuple((any_value, bin_op, any_value)), |(lhs, op, rhs)| {
             Node::BinaryExpr {
                 op,
                 lhs: boxed!(lhs),
                 rhs: boxed!(rhs),
             }
         }),
-        map(tuple((any_value, bin_op, any_value)), |(lhs, op, rhs)| {
+        map(tuple((expr, comb_op, expr)), |(lhs, op, rhs)| {
             Node::BinaryExpr {
                 op,
                 lhs: boxed!(lhs),
@@ -203,12 +205,7 @@ fn any_value(input: &str) -> IResult<&str, Node> {
 }
 
 fn unary_expr(input: &str) -> IResult<&str, Node> {
-    let (input, unary_op) = alt((tag("L"), tag("U")))(input)?;
-    let unary_op = match unary_op {
-        "L" => UnaryOperator::Lower,
-        "H" => UnaryOperator::Upper,
-        _ => panic!("unexpected valid unary op `{}'", unary_op),
-    };
+    let (input, unary_op) = unary_expr_id(input)?;
 
     let (input, reg) = delimited(tag("("), register, tag(")"))(input)?;
     Ok((
@@ -218,6 +215,13 @@ fn unary_expr(input: &str) -> IResult<&str, Node> {
             child: boxed!(reg),
         },
     ))
+}
+
+fn unary_expr_id(input: &str) -> IResult<&str, UnaryOperator> {
+    alt((
+        map(tag("L"), |_| UnaryOperator::Lower),
+        map(tag("U"), |_| UnaryOperator::Upper),
+    ))(input)
 }
 
 fn register(input: &str) -> IResult<&str, Node> {
@@ -305,4 +309,41 @@ fn test_raw_value() {
 fn test_address() {
     assert_eq!(address("*1"), Ok(("", Node::Address(1))));
     assert_eq!(address("*dead"), Ok(("", Node::Address(0xdead))));
+}
+
+#[test]
+fn test_unary_expr_id() {
+    assert_eq!(unary_expr_id("U"), Ok(("", UnaryOperator::Upper)));
+    assert_eq!(unary_expr_id("L"), Ok(("", UnaryOperator::Lower)));
+}
+
+#[test]
+fn test_unary_expr() {
+    assert_eq!(
+        unary_expr("U(AF)"),
+        Ok((
+            "",
+            Node::UnaryExpr {
+                op: UnaryOperator::Upper,
+                child: boxed!(Node::Register(CpuRegs::AF))
+            }
+        ))
+    );
+}
+
+#[cfg(test)]
+fn utils_test_expr(input: &str, expected: &str) {
+    use nom::combinator::all_consuming;
+
+    let res = all_consuming(expr)(input);
+    assert!(res.is_ok(), "res is not ok: {:?}", res);
+    let (left, expr) = res.unwrap();
+    assert!(left.is_empty(), "data still need to be proceded: {}", left);
+    assert_eq!(expr.to_string(), expected);
+}
+
+#[test]
+fn test_expr() {
+    utils_test_expr("AF==42", "AF 0x42 ==");
+    utils_test_expr("AF==21||PC==dead", "AF 0x21 == PC 0xDEAD == ||");
 }
