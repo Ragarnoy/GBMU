@@ -1,3 +1,43 @@
+//! ## Parser Definition
+//!
+//! ```ignore
+//! expr |= expr comb_op expr
+//!      |= any_value bin_op any_value
+//!
+//! comb_op |= '&&'
+//!         |= '||'
+//!         |= '^^'
+//!
+//! bin_op |= '=='
+//!        |= '!='
+//!        |= '>'
+//!        |= '<'
+//!        |= '>='
+//!        |= '<='
+//!
+//! any_value |= unary
+//!           |= value
+//!
+//! unary = transformator
+//!
+//! transformator = (L|U) '(' register ')'
+//!
+//! register |= 'AF'
+//!          |= 'BC'
+//!          |= 'DE'
+//!          |= 'HL'
+//!          |= 'PC'
+//!          |= 'SP'
+//!
+//! value |= register
+//!       |= address
+//!       |= raw_value
+//!
+//! address = '*' raw_value
+//!
+//! raw_value = [A-Fa-f0-9]{1,4}
+//! ```
+
 use crate::dbg_interfaces::CpuRegs;
 use anyhow::anyhow;
 use nom::{
@@ -75,45 +115,6 @@ impl Display for Operator {
     }
 }
 
-/// ## Parser Definition
-///
-/// ```
-/// expr |= expr comb_op expr
-///      |= any_value bin_op any_value
-///
-/// comb_op |= '&&'
-///         |= '||'
-///         |= '^^'
-///
-/// bin_op |= '=='
-///        |= '!='
-///        |= '>'
-///        |= '<'
-///        |= '>='
-///        |= '<='
-///
-/// any_value |= unary
-///           |= value
-///
-/// unary = transformator
-///
-/// transformator = (L|U) '(' register ')'
-///
-/// register |= 'AF'
-///          |= 'BC'
-///          |= 'DE'
-///          |= 'HL'
-///          |= 'PC'
-///          |= 'SP'
-///
-/// value |= register
-///       |= address
-///       |= raw_value
-///
-/// address = '*' raw_value
-///
-/// raw_value = [A-Fa-f0-9]{1,4}
-/// ```
 #[derive(Debug)]
 pub enum Node {
     Register(CpuRegs),
@@ -251,12 +252,34 @@ fn address(input: &str) -> IResult<&str, Node> {
 }
 
 fn bin_op(input: &str) -> IResult<&str, Operator> {
+    use nom::bytes::complete::tag;
+
     alt((
         map(tag("=="), |_| Operator::Eq),
         map(tag("!="), |_| Operator::NotEq),
-        map(tag(">"), |_| Operator::Sup),
-        map(tag(">="), |_| Operator::SupEq),
-        map(tag("<"), |_| Operator::Inf),
         map(tag("<="), |_| Operator::InfEq),
+        map(tag(">="), |_| Operator::SupEq),
+        map(tag(">"), |_| Operator::Sup),
+        map(tag("<"), |_| Operator::Inf),
     ))(input.trim())
+}
+
+#[test]
+fn test_bin_op() {
+    assert_eq!(bin_op("=="), Ok(("", Operator::Eq)));
+    assert_eq!(bin_op("!="), Ok(("", Operator::NotEq)));
+    assert_eq!(bin_op(">="), Ok(("", Operator::SupEq)));
+    assert_eq!(bin_op("<="), Ok(("", Operator::InfEq)));
+    assert_eq!(bin_op("<"), Ok(("", Operator::Inf)));
+    assert_eq!(bin_op(">"), Ok(("", Operator::Sup)));
+}
+
+#[test]
+fn test_raw_register() {
+    assert_eq!(raw_register("AF"), Ok(("", CpuRegs::AF)));
+    assert_eq!(raw_register("BC"), Ok(("", CpuRegs::BC)));
+    assert_eq!(raw_register("DE"), Ok(("", CpuRegs::DE)));
+    assert_eq!(raw_register("HL"), Ok(("", CpuRegs::HL)));
+    assert_eq!(raw_register("PC"), Ok(("", CpuRegs::PC)));
+    assert_eq!(raw_register("SP"), Ok(("", CpuRegs::SP)));
 }
