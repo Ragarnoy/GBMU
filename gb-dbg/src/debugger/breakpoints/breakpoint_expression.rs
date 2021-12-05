@@ -1,4 +1,4 @@
-use crate::dbg_interfaces::{CpuRegs, DebugOperations};
+use crate::dbg_interfaces::CpuRegs;
 use anyhow::anyhow;
 use nom::{
     branch::alt,
@@ -7,7 +7,7 @@ use nom::{
     sequence::{delimited, tuple},
     IResult,
 };
-use std::fmt::{Display, Formatter};
+use std::fmt::{self, Display};
 use std::str::FromStr;
 
 macro_rules! boxed {
@@ -17,7 +17,7 @@ macro_rules! boxed {
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
-enum UnaryOperator {
+pub enum UnaryOperator {
     /// Get the upper bound of a value, U(<r16>)
     Upper,
     /// Get the lower bound of a value, L(<r16>)
@@ -27,8 +27,17 @@ enum UnaryOperator {
     //Update,
 }
 
+impl Display for UnaryOperator {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            UnaryOperator::Upper => write!(f, "U"),
+            UnaryOperator::Lower => write!(f, "L"),
+        }
+    }
+}
+
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
-enum Operator {
+pub enum Operator {
     /// Check for equality of value between another, `==`
     Eq,
     /// Logical AND, `&&`
@@ -50,7 +59,7 @@ enum Operator {
 }
 
 impl Display for Operator {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Operator::Eq => write!(f, "=="),
             Operator::NotEq => write!(f, "!="),
@@ -58,6 +67,10 @@ impl Display for Operator {
             Operator::Inf => write!(f, "<"),
             Operator::SupEq => write!(f, ">="),
             Operator::InfEq => write!(f, "<="),
+
+            Operator::And => write!(f, "&&"),
+            Operator::Xor => write!(f, "^^"),
+            Operator::Or => write!(f, "||"),
         }
     }
 }
@@ -117,6 +130,28 @@ pub enum Node {
     },
 }
 
+impl Display for Node {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Node::Register(r) => write!(f, "{}", r),
+            Node::Address(addr) => write!(f, "*{}", addr),
+            Node::Value(v) => write!(f, "{}", v),
+            Node::UnaryExpr { op, child } => write!(f, "{}({})", op, child),
+            Node::BinaryExpr { op, lhs, rhs } => write!(f, "{} {} {}", lhs, rhs, op),
+        }
+    }
+}
+
+impl Node {
+    pub fn simple(address: u16) -> Self {
+        Self::BinaryExpr {
+            op: Operator::Eq,
+            lhs: boxed!(Self::Register(CpuRegs::PC)),
+            rhs: boxed!(Self::Value(address)),
+        }
+    }
+}
+
 impl FromStr for Node {
     type Err = anyhow::Error;
 
@@ -158,6 +193,7 @@ fn comb_op(input: &str) -> IResult<&str, Operator> {
     alt((
         map(tag("&&"), |_| Operator::And),
         map(tag("||"), |_| Operator::Or),
+        map(tag("^^"), |_| Operator::Xor),
     ))(input)
 }
 
@@ -173,12 +209,14 @@ fn unary_expr(input: &str) -> IResult<&str, Node> {
         _ => panic!("unexpected valid unary op `{}'", unary_op),
     };
 
-    map(delimited(tag("("), register, tag(")")), |reg| {
+    let (input, reg) = delimited(tag("("), register, tag(")"))(input)?;
+    Ok((
+        input,
         Node::UnaryExpr {
             op: unary_op,
             child: boxed!(reg),
-        }
-    })(input)
+        },
+    ))
 }
 
 fn register(input: &str) -> IResult<&str, Node> {
