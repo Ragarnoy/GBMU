@@ -12,6 +12,9 @@ fn test_bin_op() {
     assert_eq!(bin_op("<="), Ok(("", Operator::InfEq)));
     assert_eq!(bin_op("<"), Ok(("", Operator::Inf)));
     assert_eq!(bin_op(">"), Ok(("", Operator::Sup)));
+    assert_eq!(bin_op("|"), Ok(("", Operator::BinaryOr)));
+    assert_eq!(bin_op("&"), Ok(("", Operator::BinaryAnd)));
+    assert_eq!(bin_op("^"), Ok(("", Operator::BinaryXor)));
 }
 
 #[test]

@@ -90,6 +90,12 @@ pub enum Operator {
     LogicXor,
     /// Logical OR, `||`
     LogicOr,
+    /// Binary AND, `&`
+    BinaryAnd,
+    /// Binary XOR, `^`
+    BinaryXor,
+    /// Binary OR, `|`
+    BinaryOr,
     /// Check for inequality of a value between another, `!=`
     NotEq,
     /// Check if a value is greather than another, `>`
@@ -111,6 +117,10 @@ impl Display for Operator {
             Operator::Inf => write!(f, "<"),
             Operator::SupEq => write!(f, ">="),
             Operator::InfEq => write!(f, "<="),
+
+            Operator::BinaryAnd => write!(f, "&"),
+            Operator::BinaryXor => write!(f, "^"),
+            Operator::BinaryOr => write!(f, "|"),
 
             Operator::LogicAnd => write!(f, "&&"),
             Operator::LogicXor => write!(f, "^^"),
@@ -300,5 +310,8 @@ pub fn bin_op(input: &str) -> IResult<&str, Operator> {
         map(tag(">="), |_| Operator::SupEq),
         map(tag(">"), |_| Operator::Sup),
         map(tag("<"), |_| Operator::Inf),
+        map(tag("|"), |_| Operator::BinaryOr),
+        map(tag("&"), |_| Operator::BinaryAnd),
+        map(tag("^"), |_| Operator::BinaryXor),
     ))(input.trim())
 }
