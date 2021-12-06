@@ -50,6 +50,7 @@ use nom::{
 use std::fmt::{self, Display};
 use std::str::FromStr;
 
+#[macro_export]
 macro_rules! boxed {
     ($any:expr) => {
         Box::new($any)
@@ -198,7 +199,7 @@ pub fn expr(input: &str) -> IResult<&str, Node> {
     ))(input)
 }
 
-fn operation(input: &str) -> IResult<&str, Node> {
+pub fn operation(input: &str) -> IResult<&str, Node> {
     map(
         tuple((any_value, ws(bin_op), any_value)),
         |(lhs, op, rhs)| Node::BinaryExpr {
@@ -221,7 +222,7 @@ where
     delimited(space0, parser, space0)
 }
 
-fn comb_op(input: &str) -> IResult<&str, Operator> {
+pub fn comb_op(input: &str) -> IResult<&str, Operator> {
     alt((
         map(tag("&&"), |_| Operator::And),
         map(tag("||"), |_| Operator::Or),
@@ -229,11 +230,11 @@ fn comb_op(input: &str) -> IResult<&str, Operator> {
     ))(input)
 }
 
-fn any_value(input: &str) -> IResult<&str, Node> {
+pub fn any_value(input: &str) -> IResult<&str, Node> {
     alt((unary_expr, value))(input)
 }
 
-fn unary_expr(input: &str) -> IResult<&str, Node> {
+pub fn unary_expr(input: &str) -> IResult<&str, Node> {
     let (input, unary_op) = unary_expr_id(input)?;
 
     let (input, reg) = delimited(tag("("), register, tag(")"))(input)?;
@@ -246,18 +247,18 @@ fn unary_expr(input: &str) -> IResult<&str, Node> {
     ))
 }
 
-fn unary_expr_id(input: &str) -> IResult<&str, UnaryOperator> {
+pub fn unary_expr_id(input: &str) -> IResult<&str, UnaryOperator> {
     alt((
         map(tag("L"), |_| UnaryOperator::Lower),
         map(tag("U"), |_| UnaryOperator::Upper),
     ))(input)
 }
 
-fn register(input: &str) -> IResult<&str, Node> {
+pub fn register(input: &str) -> IResult<&str, Node> {
     map(raw_register, Node::Register)(input)
 }
 
-fn raw_register(input: &str) -> IResult<&str, CpuRegs> {
+pub fn raw_register(input: &str) -> IResult<&str, CpuRegs> {
     alt((
         map(tag("AF"), |_| CpuRegs::AF),
         map(tag("BC"), |_| CpuRegs::BC),
@@ -268,11 +269,11 @@ fn raw_register(input: &str) -> IResult<&str, CpuRegs> {
     ))(input)
 }
 
-fn value(input: &str) -> IResult<&str, Node> {
+pub fn value(input: &str) -> IResult<&str, Node> {
     alt((register, map(raw_value, Node::Value), address))(input)
 }
 
-fn raw_value(input: &str) -> IResult<&str, u16> {
+pub fn raw_value(input: &str) -> IResult<&str, u16> {
     use nom::bytes::complete::take_while_m_n;
 
     map(take_while_m_n(1, 4, |c: char| c.is_ascii_hexdigit()), |s| {
@@ -280,13 +281,13 @@ fn raw_value(input: &str) -> IResult<&str, u16> {
     })(input)
 }
 
-fn address(input: &str) -> IResult<&str, Node> {
+pub fn address(input: &str) -> IResult<&str, Node> {
     let (input, _) = tag("*")(input)?;
 
     map(raw_value, Node::Address)(input)
 }
 
-fn bin_op(input: &str) -> IResult<&str, Operator> {
+pub fn bin_op(input: &str) -> IResult<&str, Operator> {
     use nom::bytes::complete::tag;
 
     alt((
@@ -297,123 +298,4 @@ fn bin_op(input: &str) -> IResult<&str, Operator> {
         map(tag(">"), |_| Operator::Sup),
         map(tag("<"), |_| Operator::Inf),
     ))(input.trim())
-}
-
-#[test]
-fn test_bin_op() {
-    assert_eq!(bin_op("=="), Ok(("", Operator::Eq)));
-    assert_eq!(bin_op("!="), Ok(("", Operator::NotEq)));
-    assert_eq!(bin_op(">="), Ok(("", Operator::SupEq)));
-    assert_eq!(bin_op("<="), Ok(("", Operator::InfEq)));
-    assert_eq!(bin_op("<"), Ok(("", Operator::Inf)));
-    assert_eq!(bin_op(">"), Ok(("", Operator::Sup)));
-}
-
-#[test]
-fn test_raw_register() {
-    assert_eq!(raw_register("AF"), Ok(("", CpuRegs::AF)));
-    assert_eq!(raw_register("BC"), Ok(("", CpuRegs::BC)));
-    assert_eq!(raw_register("DE"), Ok(("", CpuRegs::DE)));
-    assert_eq!(raw_register("HL"), Ok(("", CpuRegs::HL)));
-    assert_eq!(raw_register("PC"), Ok(("", CpuRegs::PC)));
-    assert_eq!(raw_register("SP"), Ok(("", CpuRegs::SP)));
-}
-
-#[test]
-fn test_comb_op() {
-    assert_eq!(comb_op("&&"), Ok(("", Operator::And)));
-    assert_eq!(comb_op("||"), Ok(("", Operator::Or)));
-    assert_eq!(comb_op("^^"), Ok(("", Operator::Xor)));
-}
-
-#[test]
-fn test_raw_value() {
-    assert_eq!(raw_value("1"), Ok(("", 0x1_u16)));
-    assert_eq!(raw_value("1f"), Ok(("", 0x1f_u16)));
-    assert_eq!(raw_value("b1f"), Ok(("", 0xb1f_u16)));
-    assert_eq!(raw_value("ab1f"), Ok(("", 0xab1f_u16)));
-}
-
-#[test]
-fn test_address() {
-    assert_eq!(address("*1"), Ok(("", Node::Address(1))));
-    assert_eq!(address("*dead"), Ok(("", Node::Address(0xdead))));
-}
-
-#[test]
-fn test_unary_expr_id() {
-    assert_eq!(unary_expr_id("U"), Ok(("", UnaryOperator::Upper)));
-    assert_eq!(unary_expr_id("L"), Ok(("", UnaryOperator::Lower)));
-}
-
-#[test]
-fn test_unary_expr() {
-    assert_eq!(
-        unary_expr("U(AF)"),
-        Ok((
-            "",
-            Node::UnaryExpr {
-                op: UnaryOperator::Upper,
-                child: boxed!(Node::Register(CpuRegs::AF))
-            }
-        ))
-    );
-}
-
-#[cfg(test)]
-fn utils_test_expr<'a, P>(parser: P, input: &'a str, expected: &str)
-where
-    P: nom::Parser<&'a str, Node, nom::error::Error<&'a str>>,
-{
-    use nom::combinator::all_consuming;
-
-    let res = all_consuming(parser)(input);
-    assert!(res.is_ok(), "for `{}': res is not ok: {:?}", input, res);
-    let (left, expr) = res.unwrap();
-    assert!(left.is_empty(), "data still need to be proceded: {}", left);
-    assert_eq!(expr.to_string(), expected);
-}
-
-#[cfg(test)]
-mod unit_operation {
-    use super::{operation, utils_test_expr};
-
-    #[test]
-    fn no_space() {
-        utils_test_expr(operation, "AF==42", "AF == 0x42");
-        utils_test_expr(operation, "SP<=fffe", "SP <= 0xFFFE");
-        utils_test_expr(operation, "HL!=*ff0f", "HL != *0xFF0F");
-        utils_test_expr(operation, "HL<DE", "HL < DE");
-    }
-
-    #[test]
-    fn space() {
-        utils_test_expr(operation, "AF ==42", "AF == 0x42");
-        utils_test_expr(operation, "SP<= fffe", "SP <= 0xFFFE");
-        utils_test_expr(operation, "HL != *ff0f", "HL != *0xFF0F");
-        utils_test_expr(operation, "HL < DE", "HL < DE");
-    }
-}
-
-#[cfg(test)]
-mod unit_expr {
-    use super::{expr_complete, utils_test_expr};
-    #[test]
-    fn no_space() {
-        utils_test_expr(expr_complete, "AF==42", "AF == 0x42");
-        utils_test_expr(
-            expr_complete,
-            "AF==21||PC==dead",
-            "AF == 0x21 || PC == 0xDEAD",
-        );
-    }
-    #[test]
-    fn space() {
-        utils_test_expr(expr_complete, "AF ==42", "AF == 0x42");
-        utils_test_expr(
-            expr_complete,
-            "AF== 21 ||PC== dead",
-            "AF == 0x21 || PC == 0xDEAD",
-        );
-    }
 }
