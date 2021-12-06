@@ -1,5 +1,5 @@
 mod breakpoint;
-mod breakpoint_expression;
+mod parser;
 
 use crate::dbg_interfaces::DebugOperations;
 use crate::debugger::breakpoints::breakpoint::Breakpoint;

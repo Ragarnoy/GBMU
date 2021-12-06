@@ -1,4 +1,4 @@
-use super::breakpoint_expression::Node;
+use super::parser::Node;
 use crate::dbg_interfaces::DebugOperations;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
