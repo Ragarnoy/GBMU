@@ -14,6 +14,9 @@
 //!        |= '<'
 //!        |= '>='
 //!        |= '<='
+//!        |= '&'
+//!        |= '|'
+//!        |= '^'
 //!
 //! any_value |= unary
 //!           |= value
@@ -82,11 +85,11 @@ pub enum Operator {
     /// Check for equality of value between another, `==`
     Eq,
     /// Logical AND, `&&`
-    And,
+    LogicAnd,
     /// Logical XOR, `^^`
-    Xor,
+    LogicXor,
     /// Logical OR, `||`
-    Or,
+    LogicOr,
     /// Check for inequality of a value between another, `!=`
     NotEq,
     /// Check if a value is greather than another, `>`
@@ -109,9 +112,9 @@ impl Display for Operator {
             Operator::SupEq => write!(f, ">="),
             Operator::InfEq => write!(f, "<="),
 
-            Operator::And => write!(f, "&&"),
-            Operator::Xor => write!(f, "^^"),
-            Operator::Or => write!(f, "||"),
+            Operator::LogicAnd => write!(f, "&&"),
+            Operator::LogicXor => write!(f, "^^"),
+            Operator::LogicOr => write!(f, "||"),
         }
     }
 }
@@ -224,9 +227,9 @@ where
 
 pub fn comb_op(input: &str) -> IResult<&str, Operator> {
     alt((
-        map(tag("&&"), |_| Operator::And),
-        map(tag("||"), |_| Operator::Or),
-        map(tag("^^"), |_| Operator::Xor),
+        map(tag("&&"), |_| Operator::LogicAnd),
+        map(tag("||"), |_| Operator::LogicOr),
+        map(tag("^^"), |_| Operator::LogicXor),
     ))(input)
 }
 

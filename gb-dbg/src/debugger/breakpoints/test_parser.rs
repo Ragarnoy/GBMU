@@ -26,9 +26,9 @@ fn test_raw_register() {
 
 #[test]
 fn test_comb_op() {
-    assert_eq!(comb_op("&&"), Ok(("", Operator::And)));
-    assert_eq!(comb_op("||"), Ok(("", Operator::Or)));
-    assert_eq!(comb_op("^^"), Ok(("", Operator::Xor)));
+    assert_eq!(comb_op("&&"), Ok(("", Operator::LogicAnd)));
+    assert_eq!(comb_op("||"), Ok(("", Operator::LogicOr)));
+    assert_eq!(comb_op("^^"), Ok(("", Operator::LogicXor)));
 }
 
 #[test]
