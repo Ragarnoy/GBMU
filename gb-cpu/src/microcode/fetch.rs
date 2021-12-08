@@ -14,7 +14,7 @@ use std::{cell::RefCell, convert::TryFrom, rc::Rc};
 pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     let current_pc = state.regs.pc;
     let ctl_ref = Rc::new(RefCell::new(ctl));
-    let byte = state.read();
+    let byte = state.read_bus(current_pc);
     Opcode::try_from(byte).map_or_else(
         |e| {
             ctl_ref.borrow_mut().opcode = None;
@@ -639,6 +639,7 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                 Opcode::PrefixCb => ctl.push_action(fetch_cb),
                 _ => todo!("unimplemented opcode {:?}", opcode),
             };
+            ctl.push_action(utils::inc_pc);
             MicrocodeFlow::Continue(CycleDigest::Consume)
         },
     )

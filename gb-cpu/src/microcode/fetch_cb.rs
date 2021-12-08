@@ -1,4 +1,4 @@
-use crate::microcode::write;
+use crate::microcode::{utils, write};
 
 use super::{
     bitwise, opcode_cb::OpcodeCB, read, CycleDigest, MicrocodeController, MicrocodeFlow, State,
@@ -6,7 +6,7 @@ use super::{
 use std::convert::TryFrom;
 
 pub fn fetch_cb(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
-    let byte = state.read();
+    let byte = state.read_bus(state.regs.pc);
     OpcodeCB::try_from(byte).map_or_else(
         |e| {
             panic!(
@@ -354,6 +354,7 @@ pub fn fetch_cb(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFl
                 }
                 OpcodeCB::SwapA => ctl.push_actions(&[read::a, bitwise::swap, write::a]),
             };
+            ctl.push_action(utils::inc_pc);
             MicrocodeFlow::Continue(CycleDigest::Consume)
         },
     )
