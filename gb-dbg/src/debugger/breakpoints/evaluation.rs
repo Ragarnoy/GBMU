@@ -1,15 +1,18 @@
 use crate::dbg_interfaces::DebugOperations;
 use crate::debugger::breakpoints::breakpoint::{Node, Operator, UnaryOperator};
 
-pub fn compute_expression<DBG: DebugOperations>(node: &Node, dbg: &DBG) {
+const TRUE: u16 = 0xffff;
+const FALSE: u16 = 0x0000;
+
+pub fn compute_expression<DBG: DebugOperations>(node: &Node, dbg: &DBG)-> u16 {
     let current = node;
 
     match current {
-        Node::Register(r) => {}
-        Node::Address(a) => {}
-        Node::Value(v) => {}
-        Node::UnaryExpr { op, child } => {}
-        Node::BinaryExpr { op, lhs, rhs } => {}
+        Node::Register(r) => u16::from(dbg.cpu_get(*r)),
+        Node::Address(a) => u16::from(dbg.read(*a)),
+        Node::Value(v) => *v,
+        Node::UnaryExpr { op, child } => eval_unary_op(op, compute_expression(child, dbg)),
+        Node::BinaryExpr { op, lhs, rhs } => eval_binary_op(op, compute_expression(lhs, dbg), compute_expression(rhs, dbg)),
     }
 }
 
@@ -22,17 +25,17 @@ pub fn eval_unary_op(op: &UnaryOperator, value: u16) -> u16 {
 
 pub fn eval_binary_op(op: &Operator, lhs: u16, rhs: u16) -> u16 {
     match op {
-        Operator::Eq => {}
-        Operator::LogicAnd => {}
-        Operator::LogicXor => {}
-        Operator::LogicOr => {}
-        Operator::BinaryAnd => {}
-        Operator::BinaryXor => {}
-        Operator::BinaryOr => {}
-        Operator::NotEq => {}
-        Operator::Sup => {}
-        Operator::Inf => {}
-        Operator::SupEq => {}
-        Operator::InfEq => {}
+        Operator::Eq => if lhs == rhs { TRUE } else { FALSE },
+        Operator::LogicAnd => if lhs != FALSE && rhs != FALSE { TRUE } else { FALSE },
+        Operator::LogicXor => if lhs != rhs { TRUE } else { FALSE },
+        Operator::LogicOr => if lhs != FALSE || rhs != FALSE { TRUE } else { FALSE },
+        Operator::BinaryAnd => lhs & rhs,
+        Operator::BinaryXor => lhs ^ rhs,
+        Operator::BinaryOr => lhs | rhs,
+        Operator::NotEq => if lhs != rhs { TRUE } else { FALSE },
+        Operator::Sup => if lhs > rhs { TRUE } else { FALSE },
+        Operator::Inf => if lhs < rhs { TRUE } else { FALSE },
+        Operator::SupEq => if lhs >= rhs { TRUE } else { FALSE },
+        Operator::InfEq => if lhs <= rhs { TRUE } else { FALSE },
     }
 }

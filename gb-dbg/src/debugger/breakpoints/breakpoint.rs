@@ -2,6 +2,7 @@ use crate::dbg_interfaces::{CpuRegs, DebugOperations};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 use std::fmt;
+use crate::debugger::breakpoints::evaluation::compute_expression;
 
 #[derive(Debug)]
 pub struct Breakpoint {
@@ -35,7 +36,7 @@ impl Breakpoint {
     }
 
     pub fn is_triggered<T: DebugOperations>(&self, regs: &T) -> bool {
-        self.enabled && false // self.expr.compute(regs)
+        self.enabled && compute_expression(&self.expr, regs) != 0
     }
 
     /// check if breakpoint is active
