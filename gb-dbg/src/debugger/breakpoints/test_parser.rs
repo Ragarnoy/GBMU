@@ -2,8 +2,8 @@ use super::parser::{
     address, bin_op, comb_op, expr_complete, operation, raw_register, raw_value, unary_expr,
     unary_expr_id,
 };
-use crate::dbg_interfaces::CpuRegs;
-use crate::debugger::breakpoints::breakpoint::{Node, Operator, UnaryOperator};
+
+use crate::debugger::breakpoints::breakpoint::{Operator, UnaryOperator};
 
 #[test]
 fn test_bin_op() {
