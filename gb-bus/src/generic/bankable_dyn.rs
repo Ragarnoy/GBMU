@@ -2,7 +2,7 @@ use std::ops::{Index, IndexMut};
 
 pub struct DynBankableStorage<const BANK_SIZE: usize> {
     banks: Vec<[u8; BANK_SIZE]>,
-    current_bank_index: usize,
+    pub current_bank_index: usize,
 }
 
 impl<const BANK_SIZE: usize> Default for DynBankableStorage<BANK_SIZE> {

@@ -2,7 +2,7 @@ use std::ops::{Index, IndexMut};
 
 pub struct BankableStorage<const BANK_COUNT: usize, const BANK_SIZE: usize> {
     banks: [[u8; BANK_SIZE]; BANK_COUNT],
-    current_bank_index: usize,
+    pub current_bank_index: usize,
 }
 
 impl<const BANK_COUNT: usize, const BANK_SIZE: usize> Default
