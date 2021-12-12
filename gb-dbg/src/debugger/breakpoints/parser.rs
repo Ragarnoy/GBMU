@@ -50,8 +50,6 @@ use nom::{
     sequence::{delimited, tuple},
     IResult,
 };
-use std::fmt::{self, Display};
-
 
 #[macro_export]
 macro_rules! boxed {

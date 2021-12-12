@@ -8,6 +8,8 @@ use crate::debugger::breakpoints::breakpoint::Breakpoint;
 
 use egui::{Color32, Label, Ui, Vec2, Visuals};
 
+const VALID_CHARS: &[char] = &['&', '|', '!', '=', '<', '>', '*', '%', '^', '(', ')'];
+
 #[derive(Default, Debug)]
 pub struct BreakpointOptions {
     is_advanced: bool,
@@ -127,7 +129,7 @@ impl BreakpointEditor {
             let add_button_response =
                 ui.add(egui::Button::new("+").enabled(is_valid_expression(&self.breakpoint_field)));
             let text_field_response = ui.add(
-                egui::TextEdit::singleline(&mut self.breakpoint_field)
+                egui::TextEdit::multiline(&mut self.breakpoint_field)
                     .desired_width(150.0)
                     .hint_text("AF == 0x80"),
             );
@@ -198,7 +200,7 @@ fn is_valid_address(address: &str) -> bool {
 
 fn is_valid_expression(expr: &str) -> bool {
     expr.chars().all(|c| {
-        c.is_alphanumeric() || c.is_whitespace() || c == '=' || c == '>' || c == '<' || c == '!'
+        c.is_alphanumeric() || c.is_whitespace() || VALID_CHARS.contains(&c)
     }) && !expr.is_empty()
         && expr.split_whitespace().count() == 3
 }
