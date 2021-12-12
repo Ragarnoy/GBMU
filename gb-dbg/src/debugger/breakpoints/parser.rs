@@ -43,7 +43,6 @@
 
 use crate::dbg_interfaces::CpuRegs;
 use crate::debugger::breakpoints::breakpoint::{Node, Operator, UnaryOperator};
-use anyhow::anyhow;
 use nom::{
     branch::alt,
     bytes::streaming::tag,
@@ -52,7 +51,7 @@ use nom::{
     IResult,
 };
 use std::fmt::{self, Display};
-use std::str::FromStr;
+
 
 #[macro_export]
 macro_rules! boxed {

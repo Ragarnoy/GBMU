@@ -2,6 +2,8 @@ use crate::dbg_interfaces::{CpuRegs, DebugOperations};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 use std::fmt;
+use anyhow::anyhow;
+use crate::boxed;
 use crate::debugger::breakpoints::evaluation::compute_expression;
 
 #[derive(Debug)]
