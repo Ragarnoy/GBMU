@@ -1,6 +1,7 @@
 mod breakpoint;
 mod parser;
 mod evaluation;
+#[cfg(test)]
 mod test_parser;
 
 use crate::dbg_interfaces::DebugOperations;

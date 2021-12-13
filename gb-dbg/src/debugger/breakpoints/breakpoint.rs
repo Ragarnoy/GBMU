@@ -4,7 +4,7 @@ use std::str::FromStr;
 use std::fmt;
 use anyhow::anyhow;
 use crate::boxed;
-use crate::debugger::breakpoints::evaluation::{compute_expression, is_expression_true};
+use crate::debugger::breakpoints::evaluation::is_expression_true;
 
 #[derive(Debug)]
 pub struct Breakpoint {
