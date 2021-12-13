@@ -4,7 +4,7 @@ use std::str::FromStr;
 use std::fmt;
 use anyhow::anyhow;
 use crate::boxed;
-use crate::debugger::breakpoints::evaluation::compute_expression;
+use crate::debugger::breakpoints::evaluation::{compute_expression, is_expression_true};
 
 #[derive(Debug)]
 pub struct Breakpoint {
@@ -38,7 +38,7 @@ impl Breakpoint {
     }
 
     pub fn is_triggered<T: DebugOperations>(&self, regs: &T) -> bool {
-        self.enabled && compute_expression(&self.expr, regs) != 0
+        self.enabled && is_expression_true(&self.expr, regs)
     }
 
     /// check if breakpoint is active

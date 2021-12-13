@@ -4,6 +4,10 @@ use crate::debugger::breakpoints::breakpoint::{Node, Operator, UnaryOperator};
 const TRUE: u16 = 0xffff;
 const FALSE: u16 = 0x0000;
 
+pub fn is_expression_true<DBG: DebugOperations>(node: &Node, dbg: &DBG) -> bool {
+    compute_expression(node, dbg) != FALSE
+}
+
 pub fn compute_expression<DBG: DebugOperations>(node: &Node, dbg: &DBG) -> u16 {
     let current = node;
 
