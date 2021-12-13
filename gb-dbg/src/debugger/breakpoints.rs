@@ -200,8 +200,8 @@ fn is_valid_address(address: &str) -> bool {
 }
 
 fn is_valid_expression(expr: &str) -> bool {
-    expr.chars().all(|c| {
-        c.is_alphanumeric() || c.is_whitespace() || VALID_CHARS.contains(&c)
-    }) && !expr.is_empty()
+    expr.chars()
+        .all(|c| c.is_alphanumeric() || c.is_whitespace() || VALID_CHARS.contains(&c))
+        && !expr.is_empty()
         && expr.split_whitespace().count() % 2 != 0
 }
