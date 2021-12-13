@@ -127,6 +127,7 @@ impl MicrocodeController {
     pub fn clear(&mut self) {
         self.cache.clear();
         self.current_cycle.clear();
+        self.cycles.clear();
     }
 
     /// Push the action a the back of the queue.
