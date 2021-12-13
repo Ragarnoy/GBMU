@@ -43,7 +43,7 @@ pub struct MicrocodeController {
     /// Microcode actions, their role is to execute one step of an Opcode
     /// Each Actions take at most 1 `M-Cycle`
     /// Used like a LOFI queue
-    pub actions: Vec<ActionFn>,
+    pub current_cycle: Vec<ActionFn>,
     /// Cache use for microcode action
     cache: Vec<u8>,
 
@@ -57,7 +57,7 @@ impl Debug for MicrocodeController {
             f,
             "MicrocodeController {{ opcode: {:?}, actions: {}, cache: {:?} }}",
             self.opcode,
-            self.actions.len(),
+            self.current_cycle.len(),
             self.cache
         )
     }
@@ -71,7 +71,7 @@ impl Default for MicrocodeController {
         let file = MicrocodeController::create_new_file().unwrap();
         Self {
             opcode: None,
-            actions: Vec::with_capacity(12),
+            current_cycle: Vec::with_capacity(12),
             cache: Vec::with_capacity(6),
             #[cfg(feature = "registers_logs")]
             file: Rc::new(RefCell::new(file)),
@@ -89,7 +89,7 @@ impl MicrocodeController {
         use std::ops::ControlFlow;
 
         let mut state = State::new(regs, bus, int_flags.clone());
-        let action = self.actions.pop().unwrap_or_else(|| {
+        let action = self.current_cycle.pop().unwrap_or_else(|| {
             self.clear();
             let previous_opcode = match self.opcode {
                 Some(OpcodeType::Unprefixed(opcode)) => opcode,
@@ -122,13 +122,13 @@ impl MicrocodeController {
     /// Clear volatile date saved in controller.
     pub fn clear(&mut self) {
         self.cache.clear();
-        self.actions.clear();
+        self.current_cycle.clear();
     }
 
     /// Push the action a the back of the queue.
     /// The last pushed action will be the first to be executed
     pub fn push_action(&mut self, action: ActionFn) -> &mut Self {
-        self.actions.push(action);
+        self.current_cycle.push(action);
         self
     }
 
