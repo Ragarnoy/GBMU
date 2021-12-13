@@ -40,9 +40,7 @@ impl From<OpcodeCB> for OpcodeType {
 pub struct MicrocodeController {
     /// current opcode
     pub opcode: Option<OpcodeType>,
-    /// Microcode actions, their role is to execute one step of an Opcode
-    /// Each Actions take at most 1 `M-Cycle`
-    /// Used like a LOFI queue
+    /// Stores the next microcode actions to execute
     pub current_cycle: Vec<ActionFn>,
     /// Cache use for microcode action
     cache: Vec<u8>,
