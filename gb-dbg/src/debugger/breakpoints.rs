@@ -7,7 +7,7 @@ mod test_parser;
 use crate::dbg_interfaces::DebugOperations;
 use crate::debugger::breakpoints::breakpoint::Breakpoint;
 
-use egui::{Color32, Label, Ui, Vec2, Visuals};
+use egui::{Color32, Label, Ui, Vec2};
 
 const VALID_CHARS: &[char] = &['&', '|', '!', '=', '<', '>', '*', '%', '^', '(', ')'];
 
@@ -140,13 +140,12 @@ impl BreakpointEditor {
                     && is_valid_expression(&self.breakpoint_field))
                 && self
                     .add_expr_breakpoint(&self.breakpoint_field.clone(), regs)
-                    .is_err()
+                    .is_ok()
             {
-                log::error!("Debugger input is invalid")
-            }
-            if text_field_response.lost_focus() {
+                println!("hello");
                 self.breakpoint_field.clear();
-                text_field_response.ctx.set_visuals(Visuals::default())
+            } else {
+                log::error!("Debugger input is invalid")
             }
         });
     }

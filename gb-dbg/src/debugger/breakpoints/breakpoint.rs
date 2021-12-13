@@ -18,7 +18,7 @@ impl Display for Breakpoint {
         if self.expr.to_string().split_whitespace().count() > 3 {
             let mut ret = String::with_capacity(self.expr.to_string().len() + 2);
             for (i, token) in self.expr.to_string().split_whitespace().enumerate() {
-                if i % 4 == 0 {
+                if i != 0 && i % 4 == 0 {
                     ret.push('\n');
                 } else {
                     ret.push(' ');
