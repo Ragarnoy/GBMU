@@ -136,7 +136,7 @@ impl BreakpointEditor {
             );
             if (add_button_response.clicked()
                 || text_field_response.clicked()
-                    && ui.input().key_pressed(egui::Key::Enter)
+                    && is_enter_not_modified(ui)
                     && is_valid_expression(&self.breakpoint_field))
                 && self
                     .add_expr_breakpoint(&self.breakpoint_field.clone(), regs)
@@ -204,4 +204,8 @@ fn is_valid_expression(expr: &str) -> bool {
         .all(|c| c.is_alphanumeric() || c.is_whitespace() || VALID_CHARS.contains(&c))
         && !expr.is_empty()
         && expr.split_whitespace().count() % 2 != 0
+}
+
+fn is_enter_not_modified(ui: &Ui) -> bool {
+    ui.input().key_pressed(egui::Key::Enter) && ui.input().modifiers.is_none()
 }
