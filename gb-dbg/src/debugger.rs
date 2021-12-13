@@ -51,7 +51,7 @@ impl<BUS: DebugOperations> Debugger<BUS> {
             })
             .resizable(false)
             .show(ctx, |ui| {
-                self.memory_editor.draw(ui, &mut memory);
+                self.memory_editor.draw(ui, memory);
             });
 
         egui::SidePanel::right("right_panel")
