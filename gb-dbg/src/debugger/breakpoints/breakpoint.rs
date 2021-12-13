@@ -1,10 +1,10 @@
+use crate::boxed;
 use crate::dbg_interfaces::{CpuRegs, DebugOperations};
+use crate::debugger::breakpoints::evaluation::is_expression_true;
+use anyhow::anyhow;
+use std::fmt;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
-use std::fmt;
-use anyhow::anyhow;
-use crate::boxed;
-use crate::debugger::breakpoints::evaluation::is_expression_true;
 
 #[derive(Debug)]
 pub struct Breakpoint {
@@ -164,8 +164,8 @@ impl FromStr for Node {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        use nom::combinator::all_consuming;
         use crate::debugger::breakpoints::parser;
+        use nom::combinator::all_consuming;
 
         let (_rest, node) = match all_consuming(parser::expr_complete)(s) {
             Ok(ret) => ret,

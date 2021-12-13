@@ -1,6 +1,6 @@
 mod breakpoint;
-mod parser;
 mod evaluation;
+mod parser;
 #[cfg(test)]
 mod test_parser;
 

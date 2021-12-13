@@ -1,6 +1,8 @@
 use crate::dbg_interfaces::CpuRegs;
 use crate::debugger::breakpoints::breakpoint::{Node, Operator, UnaryOperator};
-use crate::debugger::breakpoints::parser::{address, bin_op, comb_op, raw_register, raw_value, unary_expr, unary_expr_id};
+use crate::debugger::breakpoints::parser::{
+    address, bin_op, comb_op, raw_register, raw_value, unary_expr, unary_expr_id,
+};
 
 #[test]
 fn test_bin_op() {
@@ -82,8 +84,8 @@ where
 
 #[cfg(test)]
 mod unit_operation {
+    use super::utils_test_expr;
     use crate::debugger::breakpoints::parser::operation;
-    use super::{utils_test_expr};
 
     #[test]
     fn no_space() {
@@ -104,8 +106,8 @@ mod unit_operation {
 
 #[cfg(test)]
 mod unit_expr {
+    use super::utils_test_expr;
     use crate::debugger::breakpoints::parser::expr_complete;
-    use super::{utils_test_expr};
     #[test]
     fn no_space() {
         utils_test_expr(expr_complete, "AF==42", "AF == 0x42");
