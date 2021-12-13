@@ -8,8 +8,6 @@ use crate::debugger::breakpoints::breakpoint::Breakpoint;
 
 use egui::{Color32, Label, Ui, Vec2, Visuals};
 
-const VALID_CHARS: &[char] = &['&', '|', '!', '=', '<', '>', '*', '%', '^', '(', ')'];
-
 #[derive(Default, Debug)]
 pub struct BreakpointOptions {
     is_advanced: bool,
