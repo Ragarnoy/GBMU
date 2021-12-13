@@ -48,9 +48,7 @@ pub fn eval_binary_op(op: &Operator, lhs: u16, rhs: u16) -> u16 {
             }
         }
         Operator::LogicXor => {
-            if lhs != FALSE && rhs == FALSE {
-                TRUE
-            } else if lhs == FALSE && rhs != TRUE {
+            if lhs != FALSE && rhs == FALSE || lhs == FALSE && rhs != FALSE {
                 TRUE
             } else {
                 FALSE
