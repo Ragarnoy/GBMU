@@ -64,7 +64,7 @@ impl BreakpointEditor {
             let mut deletion_list: Vec<usize> = Vec::with_capacity(20);
             egui::Grid::new("breakpoints_".to_owned())
                 .striped(true)
-                .spacing(Vec2::new(60.5, 6.5))
+                .spacing(Vec2::new(50.0, 6.5))
                 .show(ui, |ui| {
                     ui.label(egui::Label::new("Delete"));
                     ui.label(egui::Label::new("Enabled"));

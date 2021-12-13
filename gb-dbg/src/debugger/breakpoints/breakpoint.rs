@@ -15,7 +15,22 @@ pub struct Breakpoint {
 
 impl Display for Breakpoint {
     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
-        write!(f, "{}", self.expr)
+        if self.expr.to_string().split_whitespace().count() > 3 {
+            let mut ret = String::with_capacity(self.expr.to_string().len() + 2);
+            for (i, token) in self.expr.to_string().split_whitespace().enumerate() {
+                if i % 4 == 0 {
+                    ret.push('\n');
+                }
+                else {
+                    ret.push(' ');
+                }
+                ret.push_str(token);
+            }
+            write!(f, "{}", ret)
+        }
+        else {
+            write!(f, "{}", self.expr)
+        }
     }
 }
 

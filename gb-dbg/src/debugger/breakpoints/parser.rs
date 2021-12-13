@@ -74,7 +74,7 @@ pub fn expr_complete(input: &str) -> IResult<&str, Node> {
     ))(input)
 }
 
-pub fn expr(input: &str) -> IResult<&str, Node> {
+/*pub fn expr(input: &str) -> IResult<&str, Node> {
     alt((
         map(tuple((operation, ws(comb_op), expr)), |(lhs, op, rhs)| {
             Node::BinaryExpr {
@@ -86,7 +86,7 @@ pub fn expr(input: &str) -> IResult<&str, Node> {
         operation,
     ))(input)
 }
-
+*/
 pub fn operation(input: &str) -> IResult<&str, Node> {
     map(
         tuple((any_value, ws(bin_op), any_value)),
