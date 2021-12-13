@@ -30,7 +30,7 @@ pub struct Debugger<MEM> {
 }
 
 impl<BUS: DebugOperations> Debugger<BUS> {
-    pub fn draw(&mut self, ctx: &CtxRef, mut memory: &mut BUS) {
+    pub fn draw(&mut self, ctx: &CtxRef, memory: &mut BUS) {
         // ctx.set_debug_on_hover(true);
 
         // Set style for all UI
