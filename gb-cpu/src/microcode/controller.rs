@@ -146,6 +146,14 @@ impl MicrocodeController {
         self
     }
 
+    pub fn push_cycles(&mut self, cycles: &[&[ActionFn]]) -> &mut Self {
+        self.cycles = cycles
+            .into_iter()
+            .map(|actions| actions.to_vec())
+            .collect::<Vec<Vec<ActionFn>>>();
+        self
+    }
+
     /// Push the `byte` to the cache.
     /// The last `byte` pushed will be the first accessed by `MicrocodeController::pop`.
     pub fn push(&mut self, byte: u8) {
