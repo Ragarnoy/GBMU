@@ -9,6 +9,8 @@ use crate::debugger::breakpoints::breakpoint::Breakpoint;
 
 use egui::{Color32, Label, Ui, Vec2, Visuals};
 
+const VALID_CHARS: &[char] = &['&', '|', '!', '=', '<', '>', '*', '%', '^', '(', ')'];
+
 #[derive(Default, Debug)]
 pub struct BreakpointOptions {
     is_advanced: bool,
@@ -198,5 +200,8 @@ fn is_valid_address(address: &str) -> bool {
 }
 
 fn is_valid_expression(expr: &str) -> bool {
-    parser::expr(expr).is_ok()
+    expr.chars().all(|c| {
+        c.is_alphanumeric() || c.is_whitespace() || VALID_CHARS.contains(&c)
+    }) && !expr.is_empty()
+        && expr.split_whitespace().count() % 2 != 0
 }
