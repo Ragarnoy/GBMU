@@ -2,7 +2,10 @@ use super::{
     fetch::fetch, interrupts::handle_interrupts, opcode::Opcode, opcode_cb::OpcodeCB, CycleDigest,
     MicrocodeFlow, State,
 };
-use crate::{interrupt_flags::InterruptFlags, microcode::utils::sleep, registers::Registers};
+use crate::{
+    interrupt_flags::InterruptFlags, microcode::utils::sleep, registers::Registers, CACHE_LEN,
+    NB_MAX_ACTIONS, NB_MAX_CYCLES,
+};
 use gb_bus::Bus;
 use std::fmt::{self, Debug, Display};
 #[cfg(feature = "registers_logs")]
@@ -40,6 +43,8 @@ impl From<OpcodeCB> for OpcodeType {
 pub struct MicrocodeController {
     /// current opcode
     pub opcode: Option<OpcodeType>,
+    /// Stores all the cycles to do of the current opcode
+    pub cycles: Vec<Vec<ActionFn>>,
     /// Stores the next microcode actions to execute
     pub current_cycle: Vec<ActionFn>,
     /// Cache use for microcode action
@@ -69,8 +74,9 @@ impl Default for MicrocodeController {
         let file = MicrocodeController::create_new_file().unwrap();
         Self {
             opcode: None,
-            current_cycle: Vec::with_capacity(12),
-            cache: Vec::with_capacity(6),
+            cycles: Vec::with_capacity(NB_MAX_CYCLES),
+            current_cycle: Vec::with_capacity(NB_MAX_ACTIONS),
+            cache: Vec::with_capacity(CACHE_LEN),
             #[cfg(feature = "registers_logs")]
             file: Rc::new(RefCell::new(file)),
         }
