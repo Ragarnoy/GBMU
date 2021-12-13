@@ -20,15 +20,13 @@ impl Display for Breakpoint {
             for (i, token) in self.expr.to_string().split_whitespace().enumerate() {
                 if i % 4 == 0 {
                     ret.push('\n');
-                }
-                else {
+                } else {
                     ret.push(' ');
                 }
                 ret.push_str(token);
             }
             write!(f, "{}", ret)
-        }
-        else {
+        } else {
             write!(f, "{}", self.expr)
         }
     }
