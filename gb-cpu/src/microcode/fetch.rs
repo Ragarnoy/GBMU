@@ -645,12 +645,10 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
 
                 Opcode::Nop => &mut ctl,
 
-                Opcode::AddSp8 => ctl.push_to_current_cycle(&[
-                    read::sp,
-                    read::byte,
-                    arithmetic::add_sp_i8,
-                    write::sp,
-                    utils::sleep,
+                Opcode::AddSp8 => ctl.push_cycles(&[
+                    &[read::sp, read::byte],
+                    &[arithmetic::add_sp_i8],
+                    &[write::sp],
                 ]),
 
                 Opcode::PrefixCb => ctl.push_cycle(&[fetch_cb]),
