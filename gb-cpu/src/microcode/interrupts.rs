@@ -1,6 +1,5 @@
 use super::{
-    dec, jump::jump, read, utils::sleep, write, MicrocodeController, MicrocodeFlow, State,
-    OK_PLAY_NEXT_ACTION,
+    dec, jump::jump, read, utils::sleep, write, MicrocodeController, MicrocodeFlow, State, CONTINUE,
 };
 
 pub fn handle_interrupts(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
@@ -20,7 +19,7 @@ pub fn handle_interrupts(ctl: &mut MicrocodeController, state: &mut State) -> Mi
         source_bit += 1;
     }
     if source_bit > 4 {
-        return OK_PLAY_NEXT_ACTION;
+        return CONTINUE;
     }
     // Reset IME to avoid any new interrupt while processing current one
     int_flags.master_enable = false;
@@ -47,15 +46,15 @@ pub fn handle_interrupts(ctl: &mut MicrocodeController, state: &mut State) -> Mi
         // Jump to interrupt source address (1 mcycle)
         jump,
     ]);
-    OK_PLAY_NEXT_ACTION
+    CONTINUE
 }
 
 pub fn disable_ime(_ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     state.int_flags.borrow_mut().master_enable = false;
-    OK_PLAY_NEXT_ACTION
+    CONTINUE
 }
 
 pub fn enable_ime(_ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     state.int_flags.borrow_mut().master_enable = true;
-    OK_PLAY_NEXT_ACTION
+    CONTINUE
 }

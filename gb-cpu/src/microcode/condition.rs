@@ -1,34 +1,34 @@
-use super::{CycleDigest, MicrocodeController, MicrocodeFlow, State};
+use super::{MicrocodeController, MicrocodeFlow, State, BREAK, CONTINUE};
 use crate::interfaces::ReadFlagReg;
 
 pub fn carry(_clt: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     if state.regs.carry() {
-        MicrocodeFlow::Continue(CycleDigest::Again)
+        CONTINUE
     } else {
-        MicrocodeFlow::Break(CycleDigest::Again)
+        BREAK
     }
 }
 
 pub fn not_carry(_clt: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     if !state.regs.carry() {
-        MicrocodeFlow::Continue(CycleDigest::Again)
+        CONTINUE
     } else {
-        MicrocodeFlow::Break(CycleDigest::Again)
+        BREAK
     }
 }
 
 pub fn zero(_clt: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     if state.regs.zero() {
-        MicrocodeFlow::Continue(CycleDigest::Again)
+        CONTINUE
     } else {
-        MicrocodeFlow::Break(CycleDigest::Again)
+        BREAK
     }
 }
 
 pub fn not_zero(_clt: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     if !state.regs.zero() {
-        MicrocodeFlow::Continue(CycleDigest::Again)
+        CONTINUE
     } else {
-        MicrocodeFlow::Break(CycleDigest::Again)
+        BREAK
     }
 }

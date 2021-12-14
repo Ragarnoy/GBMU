@@ -1,10 +1,9 @@
 use super::{
-    fetch::fetch, interrupts::handle_interrupts, opcode::Opcode, opcode_cb::OpcodeCB, CycleDigest,
+    fetch::fetch, interrupts::handle_interrupts, opcode::Opcode, opcode_cb::OpcodeCB,
     MicrocodeFlow, State,
 };
 use crate::{
-    interrupt_flags::InterruptFlags, microcode::utils::sleep, registers::Registers, CACHE_LEN,
-    NB_MAX_ACTIONS, NB_MAX_CYCLES,
+    interrupt_flags::InterruptFlags, registers::Registers, CACHE_LEN, NB_MAX_ACTIONS, NB_MAX_CYCLES,
 };
 use gb_bus::Bus;
 use std::fmt::{self, Debug, Display};
@@ -90,37 +89,50 @@ impl MicrocodeController {
         regs: &mut Registers,
         bus: &mut dyn Bus<u8>,
     ) {
+        let mut state = State::new(regs, bus, int_flags.clone());
+
+        if let Some(cycle) = self.cycles.pop() {
+            self.push_to_current_cycle(&cycle);
+        } else {
+            self.clear();
+            self.pull_next_task(&mut state, int_flags);
+        }
+
+        self.execute_actions(&mut state);
+    }
+
+    fn pull_next_task(&mut self, state: &mut State, int_flags: Rc<RefCell<InterruptFlags>>) {
+        let previous_opcode = match self.opcode {
+            Some(OpcodeType::Unprefixed(opcode)) => opcode,
+            _ => Opcode::Nop,
+        };
+        if previous_opcode != Opcode::Ei && int_flags.borrow().is_interrupt_ready() {
+            handle_interrupts(self, state);
+        } else if previous_opcode != Opcode::Halt {
+            #[cfg(feature = "registers_logs")]
+            self.log_registers_to_file(format!("{:?}", state).as_str())
+                .unwrap_or_default();
+            fetch(self, state);
+        } else {
+            self.halt()
+        }
+    }
+
+    fn execute_actions(&mut self, state: &mut State) {
         use std::ops::ControlFlow;
 
-        let mut state = State::new(regs, bus, int_flags.clone());
-        let action = self.current_cycle.pop().unwrap_or_else(|| {
-            self.clear();
-            let previous_opcode = match self.opcode {
-                Some(OpcodeType::Unprefixed(opcode)) => opcode,
-                _ => Opcode::Nop,
-            };
-            if previous_opcode != Opcode::Ei && int_flags.borrow().is_interrupt_ready() {
-                handle_interrupts
-            } else if previous_opcode != Opcode::Halt {
-                #[cfg(feature = "registers_logs")]
-                self.log_registers_to_file(format!("{:?}", state).as_str())
-                    .unwrap_or_default();
-                fetch
-            } else {
-                sleep
-            }
-        });
-
-        match action(self, &mut state) {
-            ControlFlow::Continue(CycleDigest::Again) => self.step(int_flags, regs, bus),
-            ControlFlow::Break(cycle_digest) => {
-                self.clear();
-                if cycle_digest == CycleDigest::Again {
-                    self.step(int_flags, regs, bus);
+        if let Some(action) = self.current_cycle.pop() {
+            match action(self, state) {
+                ControlFlow::Continue(()) => self.execute_actions(state),
+                ControlFlow::Break(()) => {
+                    self.clear();
                 }
             }
-            ControlFlow::Continue(CycleDigest::Consume) => {}
         }
+    }
+
+    fn halt(&mut self) {
+        self.push_cycles(&[&[]]);
     }
 
     /// Clear volatile date saved in controller.

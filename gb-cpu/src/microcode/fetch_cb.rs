@@ -1,7 +1,7 @@
 use crate::microcode::write;
 
 use super::{
-    bitwise, opcode_cb::OpcodeCB, read, CycleDigest, MicrocodeController, MicrocodeFlow, State,
+    bitwise, opcode_cb::OpcodeCB, read, MicrocodeController, MicrocodeFlow, State, CONTINUE,
 };
 use std::convert::TryFrom;
 
@@ -466,7 +466,7 @@ pub fn fetch_cb(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFl
                 ]),
                 OpcodeCB::SwapA => ctl.push_to_current_cycle(&[read::a, bitwise::swap, write::a]),
             };
-            MicrocodeFlow::Continue(CycleDigest::Consume)
+            CONTINUE
         },
     )
 }

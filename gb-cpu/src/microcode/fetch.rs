@@ -1,4 +1,4 @@
-use crate::microcode::{bitwise, flag, interrupts, push, utils};
+use crate::microcode::{bitwise, flag, interrupts, push, utils, BREAK, CONTINUE};
 
 use super::{
     arithmetic,
@@ -7,7 +7,7 @@ use super::{
     fetch_cb::fetch_cb,
     inc, jump, logic,
     opcode::Opcode,
-    read, write, CycleDigest, MicrocodeController, MicrocodeFlow, State,
+    read, write, MicrocodeController, MicrocodeFlow, State,
 };
 use std::{cell::RefCell, convert::TryFrom, rc::Rc};
 
@@ -19,7 +19,7 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
         |e| {
             ctl_ref.borrow_mut().opcode = None;
             log::warn!("invalid opcode {}", e);
-            MicrocodeFlow::Break(CycleDigest::Consume)
+            BREAK
         },
         |opcode| {
             let mut ctl = ctl_ref.borrow_mut();
@@ -791,7 +791,7 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                 Opcode::PrefixCb => ctl.push_action(fetch_cb),
                 _ => todo!("unimplemented opcode {:?}", opcode),
             };
-            MicrocodeFlow::Continue(CycleDigest::Consume)
+            CONTINUE
         },
     )
 }
