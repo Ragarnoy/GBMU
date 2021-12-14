@@ -280,88 +280,48 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                 }
                 Opcode::AdcA8 => ctl.push_cycle(&[read::byte, read::a, arithmetic::adc, write::a]),
 
+                Opcode::PushBc => ctl.push_cycles(&[
+                    &[read::bc],
+                    &[dec::sp, read::sp, write::ind],
+                    &[dec::sp, read::sp, write::ind],
+                ]),
+                Opcode::PushDe => ctl.push_cycles(&[
+                    &[read::de],
+                    &[dec::sp, read::sp, write::ind],
+                    &[dec::sp, read::sp, write::ind],
+                ]),
+                Opcode::PushHl => ctl.push_cycles(&[
+                    &[read::hl],
+                    &[dec::sp, read::sp, write::ind],
+                    &[dec::sp, read::sp, write::ind],
+                ]),
+                Opcode::PushAf => ctl.push_cycles(&[
+                    &[read::af],
+                    &[dec::sp, read::sp, write::ind],
+                    &[dec::sp, read::sp, write::ind],
+                ]),
+
+                Opcode::PopBc => ctl.push_cycles(&[
+                    &[read::sp, read::ind, inc::sp],
+                    &[read::sp, read::ind, inc::sp, write::bc],
+                ]),
+                Opcode::PopDe => ctl.push_cycles(&[
+                    &[read::sp, read::ind, inc::sp],
+                    &[read::sp, read::ind, inc::sp, write::de],
+                ]),
+                Opcode::PopHl => ctl.push_cycles(&[
+                    &[read::sp, read::ind, inc::sp],
+                    &[read::sp, read::ind, inc::sp, write::hl],
+                ]),
+                Opcode::PopAf => ctl.push_cycles(&[
+                    &[read::sp, read::ind, inc::sp],
+                    &[read::sp, read::ind, inc::sp, write::af],
+                ]),
+
                 Opcode::LdBC16 => ctl.push_to_current_cycle(&[read::byte, read::byte, write::bc]),
                 Opcode::LdDE16 => ctl.push_to_current_cycle(&[read::byte, read::byte, write::de]),
                 Opcode::LdHL16 => ctl.push_to_current_cycle(&[read::byte, read::byte, write::hl]),
                 Opcode::LdSP16 => ctl.push_to_current_cycle(&[read::byte, read::byte, write::sp]),
-
-                Opcode::PushBc => ctl.push_to_current_cycle(&[
-                    utils::sleep,
-                    read::bc,
-                    dec::sp,
-                    read::sp,
-                    write::ind,
-                    dec::sp,
-                    read::sp,
-                    write::ind,
-                ]),
-                Opcode::PushDe => ctl.push_to_current_cycle(&[
-                    utils::sleep,
-                    read::de,
-                    dec::sp,
-                    read::sp,
-                    write::ind,
-                    dec::sp,
-                    read::sp,
-                    write::ind,
-                ]),
-                Opcode::PushHl => ctl.push_to_current_cycle(&[
-                    utils::sleep,
-                    read::hl,
-                    dec::sp,
-                    read::sp,
-                    write::ind,
-                    dec::sp,
-                    read::sp,
-                    write::ind,
-                ]),
-                Opcode::PushAf => ctl.push_to_current_cycle(&[
-                    utils::sleep,
-                    read::af,
-                    dec::sp,
-                    read::sp,
-                    write::ind,
-                    dec::sp,
-                    read::sp,
-                    write::ind,
-                ]),
-
-                Opcode::PopBc => ctl.push_to_current_cycle(&[
-                    read::sp,
-                    read::ind,
-                    inc::sp,
-                    read::sp,
-                    read::ind,
-                    inc::sp,
-                    write::bc,
-                ]),
-                Opcode::PopDe => ctl.push_to_current_cycle(&[
-                    read::sp,
-                    read::ind,
-                    inc::sp,
-                    read::sp,
-                    read::ind,
-                    inc::sp,
-                    write::de,
-                ]),
-                Opcode::PopHl => ctl.push_to_current_cycle(&[
-                    read::sp,
-                    read::ind,
-                    inc::sp,
-                    read::sp,
-                    read::ind,
-                    inc::sp,
-                    write::hl,
-                ]),
-                Opcode::PopAf => ctl.push_to_current_cycle(&[
-                    read::sp,
-                    read::ind,
-                    inc::sp,
-                    read::sp,
-                    read::ind,
-                    inc::sp,
-                    write::af,
-                ]),
 
                 Opcode::Ld16A => {
                     ctl.push_to_current_cycle(&[read::a, read::byte, read::byte, write::ind])
