@@ -142,7 +142,6 @@ impl BreakpointEditor {
                     .add_expr_breakpoint(&self.breakpoint_field.clone(), regs)
                     .is_ok()
             {
-                println!("hello");
                 self.breakpoint_field.clear();
             } else {
                 log::error!("Debugger input is invalid")
