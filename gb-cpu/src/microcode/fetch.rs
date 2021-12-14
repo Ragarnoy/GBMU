@@ -636,15 +636,10 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
 
                 Opcode::Ei => ctl.push_to_current_cycle(&[interrupts::enable_ime]),
                 Opcode::Di => ctl.push_to_current_cycle(&[interrupts::disable_ime]),
-                Opcode::Reti => ctl.push_to_current_cycle(&[
-                    read::sp,
-                    read::ind,
-                    inc::sp,
-                    read::sp,
-                    read::ind,
-                    inc::sp,
-                    jump::jump,
-                    interrupts::enable_ime,
+                Opcode::Reti => ctl.push_cycles(&[
+                    &[read::sp, read::ind, inc::sp],
+                    &[read::sp, read::ind, inc::sp],
+                    &[jump::jump, interrupts::enable_ime],
                 ]),
                 Opcode::Halt => &mut ctl,
 
