@@ -14,3 +14,4 @@ gb-clock = { path = "../gb-clock" }
 
 [features]
 debug_state = []
+toggle_joypad = []
