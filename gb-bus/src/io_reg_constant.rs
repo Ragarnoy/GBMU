@@ -15,8 +15,6 @@ pub const LCD_START: u16 = 0xFF40;
 pub const LCD_END: u16 = 0xFF4B;
 pub const VRAM_BANK_START: u16 = 0xFF4F;
 pub const BOOT_ROM_START: u16 = 0xFF50;
-pub const VRAM_DMA_START: u16 = 0xFF51;
-pub const VRAM_DMA_END: u16 = 0xFF55;
 pub const BG_OBJ_PALETTES_START: u16 = 0xFF68;
 pub const BG_OBJ_PALETTES_END: u16 = 0xFF69;
 pub const WRAM_BANK_START: u16 = 0xFF70;
@@ -72,3 +70,8 @@ pub const AUD_OUTPUT_MAP: u16 = 0xFF24;
 pub const AUD_MAP: u16 = 0xFF25;
 pub const AUD_CHANNEL_CTL: u16 = 0xFF26;
 pub const AUD_WAVE: u16 = 0xFF30;
+
+#[cfg(feature = "cgb")]
+pub const VRAM_DMA_START: u16 = 0xFF51;
+#[cfg(feature = "cgb")]
+pub const VRAM_DMA_END: u16 = 0xFF55;
