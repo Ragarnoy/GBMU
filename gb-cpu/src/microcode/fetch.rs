@@ -26,29 +26,27 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
             log::debug!("new opcode pc={:04x}, opcode={:?}", current_pc, opcode);
             ctl.opcode = Some(opcode.into());
             match opcode {
-                Opcode::Jp => ctl.push_to_current_cycle(&[read::byte, read::byte, jump::jump]),
+                Opcode::Jp => ctl.push_cycles(&[&[read::byte], &[read::byte], &[jump::jump]]),
                 Opcode::JpZ => {
-                    ctl.push_to_current_cycle(&[read::byte, read::byte, zero, jump::jump])
+                    ctl.push_cycles(&[&[read::byte, read::byte], &[zero], &[jump::jump]])
                 }
                 Opcode::JpNz => {
-                    ctl.push_to_current_cycle(&[read::byte, read::byte, not_zero, jump::jump])
+                    ctl.push_cycles(&[&[read::byte, read::byte], &[not_zero], &[jump::jump]])
                 }
                 Opcode::JpC => {
-                    ctl.push_to_current_cycle(&[read::byte, read::byte, carry, jump::jump])
+                    ctl.push_cycles(&[&[read::byte, read::byte], &[carry], &[jump::jump]])
                 }
                 Opcode::JpNc => {
-                    ctl.push_to_current_cycle(&[read::byte, read::byte, not_carry, jump::jump])
+                    ctl.push_cycles(&[&[read::byte, read::byte], &[not_carry], &[jump::jump]])
                 }
                 Opcode::JpHl => ctl.push_to_current_cycle(&[jump::jump_hl]),
 
-                Opcode::Jr => ctl.push_to_current_cycle(&[read::byte, jump::jump_relative]),
-                Opcode::JrZ => ctl.push_to_current_cycle(&[read::byte, zero, jump::jump_relative]),
-                Opcode::JrNz => {
-                    ctl.push_to_current_cycle(&[read::byte, not_zero, jump::jump_relative])
-                }
-                Opcode::JrC => ctl.push_to_current_cycle(&[read::byte, carry, jump::jump_relative]),
+                Opcode::Jr => ctl.push_cycles(&[&[read::byte], &[jump::jump_relative]]),
+                Opcode::JrZ => ctl.push_cycles(&[&[read::byte, zero], &[jump::jump_relative]]),
+                Opcode::JrNz => ctl.push_cycles(&[&[read::byte, not_zero], &[jump::jump_relative]]),
+                Opcode::JrC => ctl.push_cycles(&[&[read::byte, carry], &[jump::jump_relative]]),
                 Opcode::JrNc => {
-                    ctl.push_to_current_cycle(&[read::byte, not_carry, jump::jump_relative])
+                    ctl.push_cycles(&[&[read::byte, not_carry], &[jump::jump_relative]])
                 }
 
                 Opcode::IncBC => ctl.push_to_current_cycle(&[read::bc, inc::inc16, write::bc]),
