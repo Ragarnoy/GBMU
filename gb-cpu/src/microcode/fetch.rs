@@ -634,8 +634,8 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                 Opcode::Cpl => ctl.push_to_current_cycle(&[read::a, logic::cpl, write::a]),
                 Opcode::Ccf => ctl.push_to_current_cycle(&[flag::ccf]),
 
-                Opcode::Ei => ctl.push_action(interrupts::enable_ime),
-                Opcode::Di => ctl.push_action(interrupts::disable_ime),
+                Opcode::Ei => ctl.push_to_current_cycle(&[interrupts::enable_ime]),
+                Opcode::Di => ctl.push_to_current_cycle(&[interrupts::disable_ime]),
                 Opcode::Reti => ctl.push_to_current_cycle(&[
                     read::sp,
                     read::ind,
@@ -658,7 +658,7 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                     utils::sleep,
                 ]),
 
-                Opcode::PrefixCb => ctl.push_action(fetch_cb),
+                Opcode::PrefixCb => ctl.push_cycle(&[fetch_cb]),
                 _ => todo!("unimplemented opcode {:?}", opcode),
             };
             CONTINUE
