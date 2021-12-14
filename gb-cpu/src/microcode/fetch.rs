@@ -88,10 +88,9 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                 Opcode::CpAE => ctl.push_to_current_cycle(&[read::e, read::a, logic::cp]),
                 Opcode::CpAH => ctl.push_to_current_cycle(&[read::h, read::a, logic::cp]),
                 Opcode::CpAL => ctl.push_to_current_cycle(&[read::l, read::a, logic::cp]),
-                Opcode::CpAHL => {
-                    ctl.push_to_current_cycle(&[read::hl, read::ind, read::a, logic::cp])
-                }
-                Opcode::CpA8 => ctl.push_to_current_cycle(&[read::byte, read::a, logic::cp]),
+
+                Opcode::CpAHL => ctl.push_cycles(&[&[read::hl, read::ind, read::a, logic::cp]]),
+                Opcode::CpA8 => ctl.push_cycles(&[&[read::byte, read::a, logic::cp]]),
 
                 Opcode::XorAA => {
                     ctl.push_to_current_cycle(&[read::a, read::a, logic::xor, write::a])
@@ -114,12 +113,11 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                 Opcode::XorAL => {
                     ctl.push_to_current_cycle(&[read::l, read::a, logic::xor, write::a])
                 }
+
                 Opcode::XorAHL => {
-                    ctl.push_to_current_cycle(&[read::hl, read::ind, read::a, logic::xor, write::a])
+                    ctl.push_cycles(&[&[read::hl, read::ind, read::a, logic::xor, write::a]])
                 }
-                Opcode::XorA8 => {
-                    ctl.push_to_current_cycle(&[read::byte, read::a, logic::xor, write::a])
-                }
+                Opcode::XorA8 => ctl.push_cycles(&[&[read::byte, read::a, logic::xor, write::a]]),
 
                 Opcode::AndAA => {
                     ctl.push_to_current_cycle(&[read::a, read::a, logic::and, write::a])
@@ -142,12 +140,11 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                 Opcode::AndAL => {
                     ctl.push_to_current_cycle(&[read::l, read::a, logic::and, write::a])
                 }
+
                 Opcode::AndAHL => {
-                    ctl.push_to_current_cycle(&[read::hl, read::ind, read::a, logic::and, write::a])
+                    ctl.push_cycles(&[&[read::hl, read::ind, read::a, logic::and, write::a]])
                 }
-                Opcode::AndA8 => {
-                    ctl.push_to_current_cycle(&[read::byte, read::a, logic::and, write::a])
-                }
+                Opcode::AndA8 => ctl.push_cycles(&[&[read::byte, read::a, logic::and, write::a]]),
 
                 Opcode::OrAA => ctl.push_to_current_cycle(&[read::a, read::a, logic::or, write::a]),
                 Opcode::OrAB => ctl.push_to_current_cycle(&[read::b, read::a, logic::or, write::a]),
@@ -156,12 +153,11 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                 Opcode::OrAE => ctl.push_to_current_cycle(&[read::e, read::a, logic::or, write::a]),
                 Opcode::OrAH => ctl.push_to_current_cycle(&[read::h, read::a, logic::or, write::a]),
                 Opcode::OrAL => ctl.push_to_current_cycle(&[read::l, read::a, logic::or, write::a]),
+
                 Opcode::OrAHL => {
-                    ctl.push_to_current_cycle(&[read::hl, read::ind, read::a, logic::or, write::a])
+                    ctl.push_cycles(&[&[read::hl, read::ind, read::a, logic::or, write::a]])
                 }
-                Opcode::OrA8 => {
-                    ctl.push_to_current_cycle(&[read::byte, read::a, logic::or, write::a])
-                }
+                Opcode::OrA8 => ctl.push_cycles(&[&[read::byte, read::a, logic::or, write::a]]),
 
                 Opcode::SubAA => {
                     ctl.push_to_current_cycle(&[read::a, read::a, arithmetic::sub, write::a])
