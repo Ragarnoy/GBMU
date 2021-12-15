@@ -1,6 +1,6 @@
 use crate::interfaces::{ReadFlagReg, WriteFlagReg};
 
-use super::{MicrocodeController, MicrocodeFlow, State, OK_PLAY_NEXT_ACTION};
+use super::{MicrocodeController, MicrocodeFlow, State, CONTINUE};
 
 #[derive(Default, Debug, PartialEq, Eq)]
 pub struct Flag {
@@ -14,17 +14,17 @@ pub fn scf(_ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     state.regs.set_carry(true);
     state.regs.set_half_carry(false);
     state.regs.set_subtraction(false);
-    OK_PLAY_NEXT_ACTION
+    CONTINUE
 }
 
 pub fn ccf(_ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     state.regs.set_carry(!state.regs.carry());
     state.regs.set_half_carry(false);
     state.regs.set_subtraction(false);
-    OK_PLAY_NEXT_ACTION
+    CONTINUE
 }
 
 pub fn reset_flag_zero(_ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     state.regs.set_zero(false);
-    OK_PLAY_NEXT_ACTION
+    CONTINUE
 }

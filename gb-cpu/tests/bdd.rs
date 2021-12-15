@@ -83,7 +83,7 @@ async fn check_parsed_opcode(world: &mut CpuWorld, opcode: String) {
 
 #[then(regex = r"the cpu has no action left")]
 async fn check_no_action_left(world: &mut CpuWorld) {
-    assert_eq!(world.cpu.controller.actions.len(), 0);
+    assert_eq!(world.cpu.controller.current_cycle.len(), 0);
 }
 
 #[then(regex = r"the register (\w\w) is set to ([A-F0-9]{1,4})")]

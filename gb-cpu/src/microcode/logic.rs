@@ -1,4 +1,4 @@
-use super::{math::sub_components, MicrocodeController, MicrocodeFlow, State, OK_PLAY_NEXT_ACTION};
+use super::{math::sub_components, MicrocodeController, MicrocodeFlow, State, CONTINUE};
 use crate::interfaces::WriteFlagReg;
 
 pub fn cp(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
@@ -9,7 +9,7 @@ pub fn cp(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     state.regs.set_half_carry(flag.half_carry);
     state.regs.set_carry(flag.carry);
     state.regs.set_zero(flag.zero);
-    OK_PLAY_NEXT_ACTION
+    CONTINUE
 }
 
 pub fn xor(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
@@ -22,7 +22,7 @@ pub fn xor(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     state.regs.set_carry(false);
 
     ctl.push(value);
-    OK_PLAY_NEXT_ACTION
+    CONTINUE
 }
 
 pub fn cpl(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
@@ -31,7 +31,7 @@ pub fn cpl(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     ctl.push(!value);
     state.regs.set_half_carry(true);
     state.regs.set_subtraction(true);
-    OK_PLAY_NEXT_ACTION
+    CONTINUE
 }
 
 pub fn and(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
@@ -44,7 +44,7 @@ pub fn and(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     state.regs.set_carry(false);
 
     ctl.push(value);
-    OK_PLAY_NEXT_ACTION
+    CONTINUE
 }
 
 pub fn or(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
@@ -57,5 +57,5 @@ pub fn or(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     state.regs.set_carry(false);
 
     ctl.push(value);
-    OK_PLAY_NEXT_ACTION
+    CONTINUE
 }

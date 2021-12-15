@@ -33,9 +33,9 @@ pub trait Controller {
 }
 
 pub enum MbcController {
-    RomOnly(RomOnlyController),
+    RomOnly(Box<RomOnlyController>),
     Mbc1(MBC1),
-    Mbc2(MBC2),
+    Mbc2(Box<MBC2>),
     Mbc3(MBC3),
     Mbc5(MBC5),
 }
@@ -73,7 +73,7 @@ impl MbcStates {
 
 impl From<RomOnlyController> for MbcController {
     fn from(rom_only: RomOnlyController) -> Self {
-        Self::RomOnly(rom_only)
+        Self::RomOnly(Box::new(rom_only))
     }
 }
 
@@ -85,7 +85,7 @@ impl From<MBC1> for MbcController {
 
 impl From<MBC2> for MbcController {
     fn from(mbc2: MBC2) -> Self {
-        Self::Mbc2(mbc2)
+        Self::Mbc2(Box::new(mbc2))
     }
 }
 
