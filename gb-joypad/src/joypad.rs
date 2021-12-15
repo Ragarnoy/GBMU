@@ -230,7 +230,7 @@ impl FileOperation<IORegArea> for Joypad {
     fn write(&mut self, v: u8, addr: Box<dyn Address<IORegArea>>) -> Result<(), Error> {
         match (addr.area_type(), addr.get_address()) {
             (IORegArea::Controller, 0x00) => {
-                let v = v & 0b0011_0000;
+                let v = !v & 0b0011_0000;
                 self.mode = Mode::from(v);
                 Ok(())
             }
