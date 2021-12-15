@@ -159,7 +159,7 @@ impl MicrocodeController {
 
     pub fn push_cycles(&mut self, cycles: &[&[ActionFn]]) -> &mut Self {
         self.cycles = cycles
-            .into_iter()
+            .iter()
             .rev()
             .map(|actions| actions.to_vec())
             .collect::<Vec<Vec<ActionFn>>>();

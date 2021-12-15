@@ -1,4 +1,5 @@
 /// Ensure that the various process unit execute their instructions in the right order.
+#[derive(Default)]
 pub struct Clock {
     pub curr_frame_cycle: usize,
 }
@@ -29,13 +30,5 @@ impl Clock {
     pub fn frame_ready(&mut self) -> bool {
         self.curr_frame_cycle %= Self::CYCLES_PER_FRAME;
         self.curr_frame_cycle == 0
-    }
-}
-
-impl Default for Clock {
-    fn default() -> Self {
-        Self {
-            curr_frame_cycle: 0,
-        }
     }
 }
