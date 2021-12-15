@@ -123,10 +123,13 @@ impl Game {
             waveform_ram: Rc::new(RefCell::new(SimpleRW::<0x10>::default())), // We don't handle sound
             lcd: ppu_reg.clone(),
             oam_dma: dma.clone(),
+            #[cfg(feature = "cgb")]
             vram_bank: ppu_reg.clone(),
             boot_rom: bios_wrapper.clone(),
+            #[cfg(feature = "cgb")]
             vram_dma: Rc::new(RefCell::new(SimpleRW::<6>::default())), // TODO: link the part that handle the DMA
             bg_obj_palettes: ppu_reg,
+            #[cfg(feature = "cgb")]
             wram_bank: wram.clone(),
             interrupt_flag: cpu_io_reg.clone(),
         }));
