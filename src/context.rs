@@ -108,7 +108,11 @@ impl Game {
         let (cpu, cpu_io_reg) = new_cpu();
         let wram = Rc::new(RefCell::new(WorkingRam::new(false)));
         let timer = Rc::new(RefCell::new(Timer::default()));
-        let bios = Rc::new(RefCell::new(bios::dmg()));
+        let bios = Rc::new(RefCell::new(if cfg!(feature = "cgb") {
+            bios::cgb()
+        } else {
+            bios::dmg()
+        }));
         let bios_wrapper = Rc::new(RefCell::new(BiosWrapper::new(bios, mbc.clone())));
         let dma = Rc::new(RefCell::new(Dma::new()));
 
