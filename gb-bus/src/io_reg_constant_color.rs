@@ -9,7 +9,7 @@ pub const HDMA5: u16 = 0xFF55;
 /// Vram Bank
 pub const VRAM_BANK: u16 = 0xFF4F;
 
-/// Key1 or Double
+/// Key1 or Double Speed Mode
 pub const KEY1: u16 = 0xFF4D;
 
 /// Infrared Communications Port
@@ -19,4 +19,4 @@ pub const RP: u16 = 0xFF56;
 pub const OPRI: u16 = 0xFF6C;
 
 /// Wram Bank
-pub const SVBK: u16 = 0xFF70;
+pub const WRAM_BANK: u16 = 0xFF70;
