@@ -72,6 +72,4 @@ pub const AUD_CHANNEL_CTL: u16 = 0xFF26;
 pub const AUD_WAVE: u16 = 0xFF30;
 
 #[cfg(feature = "cgb")]
-pub const VRAM_DMA_START: u16 = 0xFF51;
-#[cfg(feature = "cgb")]
-pub const VRAM_DMA_END: u16 = 0xFF55;
+pub use crate::io_reg_constant_color::*;
