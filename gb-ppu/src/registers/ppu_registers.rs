@@ -46,10 +46,12 @@ impl FileOperation<IORegArea> for PPURegisters {
                     Ok(UNDEFINED_VALUE)
                 }
             },
+            #[cfg(feature = "cgb")]
             IORegArea::VRamBank => {
                 log::warn!("missing ppu VramBank register");
                 Ok(UNDEFINED_VALUE)
             }
+            #[cfg(feature = "cgb")]
             IORegArea::VramDma => {
                 log::warn!("missing ppu VramDma register");
                 Ok(UNDEFINED_VALUE)
@@ -71,10 +73,12 @@ impl FileOperation<IORegArea> for PPURegisters {
                     Ok(())
                 }
             },
+            #[cfg(feature = "cgb")]
             IORegArea::VRamBank => {
                 log::warn!("missing ppu VRamBank registers write");
                 Ok(())
             }
+            #[cfg(feature = "cgb")]
             IORegArea::VramDma => {
                 log::warn!("missing ppu VRamDma registers write");
                 Ok(())
