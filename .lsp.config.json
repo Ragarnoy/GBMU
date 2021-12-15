@@ -1,0 +1,11 @@
+{
+  "rust-analyzer": {
+    "cargo": {
+      "features": [ "cgb" ]
+    },
+    "checkOnSave": {
+      "features": [ "cgb" ]
+    }
+  }
+}
+
