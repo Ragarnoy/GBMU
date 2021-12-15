@@ -153,17 +153,19 @@ impl MicrocodeController {
     /// The actions while be push in the queue in a way that allow the first action of the slice
     /// to be executed in first.
     pub fn push_to_current_cycle(&mut self, actions: &[ActionFn]) -> &mut Self {
-        self.current_cycle.extend_from_slice(actions);
+        self.current_cycle.extend(actions.iter().rev());
         self
     }
 
     pub fn push_cycles(&mut self, cycles: &[&[ActionFn]]) -> &mut Self {
         self.cycles = cycles
             .into_iter()
+            .rev()
             .map(|actions| actions.to_vec())
             .collect::<Vec<Vec<ActionFn>>>();
         self
     }
+
     pub fn push_cycle(&mut self, cycle: &[ActionFn]) -> &mut Self {
         self.cycles.push(cycle.to_vec());
         self
