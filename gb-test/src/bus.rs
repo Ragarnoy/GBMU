@@ -55,17 +55,9 @@ pub mod binary {
     use gb_bus::{Area, Bus, Error, Lock, MemoryLock};
     use std::collections::BTreeMap;
 
-    #[derive(Clone, Debug)]
+    #[derive(Clone, Debug, Default)]
     pub struct Mock {
         store: BTreeMap<u16, u8>,
-    }
-
-    impl Default for Mock {
-        fn default() -> Self {
-            Self {
-                store: BTreeMap::new(),
-            }
-        }
     }
 
     impl Bus<u8> for Mock {
