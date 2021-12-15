@@ -8,8 +8,6 @@ pub struct DisassemblyViewer {
     cache_pc_valid_range: Option<(u16, u16)>,
 }
 
-const MCYCLES_CONSUMED_TO_FETCH_INSTRUCTION: u16 = 1;
-
 impl DisassemblyViewer {
     fn update_cache<MEM: MemoryDebugOperations>(&mut self, pc: u16, memory: &MEM) {
         log::debug!("update opcode cache");
