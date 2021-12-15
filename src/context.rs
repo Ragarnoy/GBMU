@@ -108,12 +108,16 @@ impl Game {
         let (cpu, cpu_io_reg) = new_cpu();
         let wram = Rc::new(RefCell::new(WorkingRam::new(false)));
         let timer = Rc::new(RefCell::new(Timer::default()));
-        let bios = Rc::new(RefCell::new(if cfg!(feature = "cgb") {
-            bios::cgb()
+        let bios_wrapper = if cfg!(feature = "bios") {
+            let bios = Rc::new(RefCell::new(if cfg!(feature = "cgb") {
+                bios::cgb()
+            } else {
+                bios::dmg()
+            }));
+            Rc::new(RefCell::new(BiosWrapper::new(bios, mbc.clone())))
         } else {
-            bios::dmg()
-        }));
-        let bios_wrapper = Rc::new(RefCell::new(BiosWrapper::new(bios, mbc.clone())));
+            todo!("allow to run without the bios")
+        };
         let dma = Rc::new(RefCell::new(Dma::new()));
 
         let io_bus = Rc::new(RefCell::new(IORegBus {
