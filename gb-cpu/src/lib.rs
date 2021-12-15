@@ -11,5 +11,5 @@ mod registers_test;
 pub use builder::new_cpu;
 
 pub const NB_MAX_CYCLES: usize = 6;
-pub const NB_MAX_ACTIONS: usize = 12;
+pub const NB_MAX_ACTIONS: usize = 8;
 pub const CACHE_LEN: usize = 6;
