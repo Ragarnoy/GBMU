@@ -84,6 +84,7 @@ You can customize the build by activating certain feature by using the `--featur
 | gb-lcd/debug_render          | allow the lcd's part to be debugged such as VRAM, OAM |                                                               |
 | debug_render                 | change the UI to be able to lauch lcd's debug tools   | `gb-lcd/debug_render`                                         |
 | gb-cpu/registers_logs        | at each opcode log the state of the cpu register      |                                                               |
+| gb-cpu/trace_jump            | enable trace for jump microcode                       |                                                               |
 | registers_logs               | alias of `gb-cpu/registers_logs`                      |                                                               |
 | gb-bus/trace_bus_full        | enable read/write trace for the bus                   | `gb-bus/trace_bus_write`, `gb-bus/trace_bus_read`             |
 | gb-bus/trace_bus_write       | enable write trace for the bus                        |                                                               |
