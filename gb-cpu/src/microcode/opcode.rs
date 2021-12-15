@@ -27,7 +27,7 @@ pub enum Opcode {
     LdABC = 0x0a,
     /// `DEC BC`: decrement `BC`, 2m
     DecBC = 0x0b,
-    /// `INC BC`: increment `BC`, 2m
+    /// `INC C`: increment `C`, 1m
     IncC = 0x0c,
     /// `DEC C`: decrement `C`, 1m
     DecC = 0x0d,

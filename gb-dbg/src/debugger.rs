@@ -30,7 +30,7 @@ pub struct Debugger<DBGOPS> {
 }
 
 impl<DBGOPS: DebugOperations> Debugger<DBGOPS> {
-    pub fn draw(&mut self, ui_ctx: &CtxRef, mut game_ctx: &mut DBGOPS) {
+    pub fn draw(&mut self, ui_ctx: &CtxRef, game_ctx: &mut DBGOPS) {
         // ctx.set_debug_on_hover(true);
 
         // Set style for all UI
@@ -51,7 +51,7 @@ impl<DBGOPS: DebugOperations> Debugger<DBGOPS> {
             })
             .resizable(false)
             .show(ui_ctx, |ui| {
-                self.memory_editor.draw(ui, &mut game_ctx);
+                self.memory_editor.draw(ui, game_ctx);
             });
 
         egui::SidePanel::right("right_panel")
