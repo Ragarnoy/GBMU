@@ -1,11 +1,12 @@
+#[cfg(feature = "cgb")]
+use crate::io_reg_constant::{VRAM_BANK_START, VRAM_DMA_END, VRAM_DMA_START, WRAM_BANK_START};
 use crate::{
     address::Address,
     io_reg_constant::{
         BG_OBJ_PALETTES_END, BG_OBJ_PALETTES_START, BOOT_ROM_START, COMMUNICATION_END,
         COMMUNICATION_START, CONTROLLER_START, DIV_TIMER_START, INTERRUPT_FLAG, LCD_END, LCD_START,
         OAM_DMA_START, SOUND_END, SOUND_START, TIMER_CONTROL_START, TIMER_COUNTER_START,
-        TIMER_MODULO_START, VRAM_BANK_START, VRAM_DMA_END, VRAM_DMA_START, WAVEFORM_RAM_END,
-        WAVEFORM_RAM_START, WRAM_BANK_START,
+        TIMER_MODULO_START, WAVEFORM_RAM_END, WAVEFORM_RAM_START,
     },
     Address as PseudoAddress, Area, Error, FileOperation, IORegArea,
 };
@@ -55,10 +56,13 @@ pub struct IORegBus {
     pub waveform_ram: Rc<RefCell<dyn FileOperation<IORegArea>>>,
     pub lcd: Rc<RefCell<dyn FileOperation<IORegArea>>>,
     pub oam_dma: Rc<RefCell<dyn FileOperation<IORegArea>>>,
+    #[cfg(feature = "cgb")]
     pub vram_bank: Rc<RefCell<dyn FileOperation<IORegArea>>>,
     pub boot_rom: Rc<RefCell<dyn FileOperation<IORegArea>>>,
+    #[cfg(feature = "cgb")]
     pub vram_dma: Rc<RefCell<dyn FileOperation<IORegArea>>>,
     pub bg_obj_palettes: Rc<RefCell<dyn FileOperation<IORegArea>>>,
+    #[cfg(feature = "cgb")]
     pub wram_bank: Rc<RefCell<dyn FileOperation<IORegArea>>>,
 }
 
@@ -82,8 +86,10 @@ impl FileOperation<Area> for IORegBus {
             }
             OAM_DMA_START => read_area!(OAM_DMA_START, self.oam_dma, OamDma, addr),
             LCD_START..=LCD_END => read_area!(LCD_START, self.lcd, Lcd, addr),
+            #[cfg(feature = "cgb")]
             VRAM_BANK_START => read_area!(VRAM_BANK_START, self.vram_bank, VRamBank, addr),
             BOOT_ROM_START => read_area!(BOOT_ROM_START, self.boot_rom, BootRom, addr),
+            #[cfg(feature = "cgb")]
             VRAM_DMA_START..=VRAM_DMA_END => {
                 read_area!(VRAM_DMA_START, self.vram_dma, VramDma, addr)
             }
@@ -95,6 +101,7 @@ impl FileOperation<Area> for IORegBus {
                     addr
                 )
             }
+            #[cfg(feature = "cgb")]
             WRAM_BANK_START => read_area!(WRAM_BANK_START, self.wram_bank, WRamBank, addr),
             _ => Err(Error::BusError(addr)),
         }
@@ -128,8 +135,10 @@ impl FileOperation<Area> for IORegBus {
             }
             OAM_DMA_START => write_area!(OAM_DMA_START, self.oam_dma, OamDma, v, addr),
             LCD_START..=LCD_END => write_area!(LCD_START, self.lcd, Lcd, v, addr),
+            #[cfg(feature = "cgb")]
             VRAM_BANK_START => write_area!(VRAM_BANK_START, self.vram_bank, VRamBank, v, addr),
             BOOT_ROM_START => write_area!(BOOT_ROM_START, self.boot_rom, BootRom, v, addr),
+            #[cfg(feature = "cgb")]
             VRAM_DMA_START..=VRAM_DMA_END => {
                 write_area!(VRAM_DMA_START, self.vram_dma, VramDma, v, addr)
             }
@@ -140,6 +149,7 @@ impl FileOperation<Area> for IORegBus {
                 v,
                 addr
             ),
+            #[cfg(feature = "cgb")]
             WRAM_BANK_START => write_area!(WRAM_BANK_START, self.wram_bank, WRamBank, v, addr),
             _ => Err(Error::BusError(addr)),
         }
