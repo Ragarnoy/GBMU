@@ -60,6 +60,7 @@ impl<BUS: DebugOperations> Debugger<BUS> {
                 fill: Color32::from_gray(20),
                 ..Default::default()
             })
+            .default_width(300.0)
             .resizable(false)
             .show(ctx, |ui| self.breakpoint_editor.draw(ui, memory));
 
