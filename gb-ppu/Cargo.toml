@@ -16,3 +16,6 @@ log = { version = "0.4" }
 [dev-dependencies]
 sdl2 = { version = "0.34", features = ["bundled", "static-link"] }
 egui = "0.14"
+
+[features]
+cgb = ["gb-bus/cgb"]
