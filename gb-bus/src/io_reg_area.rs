@@ -21,7 +21,7 @@ pub enum IORegArea {
     WRamBank,
     #[cfg(feature = "cgb")]
     DoubleSpeed,
-    #[cfg(feature = "cbg")]
+    #[cfg(feature = "cgb")]
     ObjectPriorityMode,
 }
 
@@ -33,7 +33,7 @@ impl std::convert::From<IORegArea> for u16 {
             TIMER_CONTROL_START, TIMER_COUNTER_START, TIMER_MODULO_START, WAVEFORM_RAM_START,
         };
         #[cfg(feature = "cgb")]
-        use crate::io_reg_constant::{VRAM_BANK_START, VRAM_DMA_START, WRAM_BANK};
+        use crate::io_reg_constant::{KEY1, OPRI, VRAM_BANK_START, VRAM_DMA_START, WRAM_BANK};
 
         match area {
             IORegArea::Controller => CONTROLLER_START,
@@ -56,7 +56,9 @@ impl std::convert::From<IORegArea> for u16 {
             #[cfg(feature = "cgb")]
             IORegArea::WRamBank => WRAM_BANK,
             #[cfg(feature = "cgb")]
-            IORegArea::DoubleSpeed => todo!(),
+            IORegArea::DoubleSpeed => KEY1,
+            #[cfg(feature = "cgb")]
+            IORegArea::ObjectPriorityMode => OPRI,
         }
     }
 }
