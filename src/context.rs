@@ -152,6 +152,8 @@ impl Game {
             #[cfg(feature = "cgb")]
             wram_bank: wram.clone(),
             interrupt_flag: cpu_io_reg.clone(),
+            #[cfg(feature = "cgb")]
+            double_speed: cpu_io_reg.clone(),
         }));
 
         let bus = AddressBus {
