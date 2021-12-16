@@ -3,7 +3,7 @@ use super::{
     MicrocodeFlow, State,
 };
 use crate::{
-    interrupt_flags::InterruptFlags, registers::Registers, CACHE_LEN, NB_MAX_ACTIONS, NB_MAX_CYCLES,
+    io_registers::IORegisters, registers::Registers, CACHE_LEN, NB_MAX_ACTIONS, NB_MAX_CYCLES,
 };
 use gb_bus::Bus;
 use std::fmt::{self, Debug, Display};
@@ -85,7 +85,7 @@ impl Default for MicrocodeController {
 impl MicrocodeController {
     pub fn step(
         &mut self,
-        int_flags: Rc<RefCell<InterruptFlags>>,
+        int_flags: Rc<RefCell<IORegisters>>,
         regs: &mut Registers,
         bus: &mut dyn Bus<u8>,
     ) {
@@ -101,7 +101,7 @@ impl MicrocodeController {
         self.execute_actions(&mut state);
     }
 
-    fn pull_next_task(&mut self, state: &mut State, int_flags: Rc<RefCell<InterruptFlags>>) {
+    fn pull_next_task(&mut self, state: &mut State, int_flags: Rc<RefCell<IORegisters>>) {
         let previous_opcode = match self.opcode {
             Some(OpcodeType::Unprefixed(opcode)) => opcode,
             _ => Opcode::Nop,

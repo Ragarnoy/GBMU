@@ -1,5 +1,6 @@
 use crate::{
-    interrupt_flags::InterruptFlags, microcode::controller::MicrocodeController,
+    microcode::controller::MicrocodeController,
+    io_registers::IORegisters,
     registers::Registers,
 };
 use gb_bus::Bus;
@@ -10,11 +11,11 @@ use std::{cell::RefCell, rc::Rc};
 pub struct Cpu {
     pub registers: Registers,
     pub controller: MicrocodeController,
-    interrupt_flags: Rc<RefCell<InterruptFlags>>,
+    interrupt_flags: Rc<RefCell<IORegisters>>,
 }
 
 impl Cpu {
-    pub fn interrupt_flags(&self) -> Rc<RefCell<InterruptFlags>> {
+    pub fn interrupt_flags(&self) -> Rc<RefCell<IORegisters>> {
         self.interrupt_flags.clone()
     }
 

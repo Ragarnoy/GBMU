@@ -1,4 +1,4 @@
-use crate::{interrupt_flags::InterruptFlags, registers::Registers};
+use crate::{io_registers::IORegisters, registers::Registers};
 #[cfg(feature = "registers_logs")]
 use core::fmt::{self, Debug};
 use gb_bus::Bus;
@@ -7,7 +7,7 @@ use std::{cell::RefCell, rc::Rc};
 pub struct State<'a> {
     bus: &'a mut dyn Bus<u8>,
     pub regs: &'a mut Registers,
-    pub int_flags: Rc<RefCell<InterruptFlags>>,
+    pub int_flags: Rc<RefCell<IORegisters>>,
 }
 
 #[cfg(feature = "registers_logs")]
@@ -39,7 +39,7 @@ impl<'a> State<'a> {
     pub fn new(
         regs: &'a mut Registers,
         bus: &'a mut dyn Bus<u8>,
-        int_flags: Rc<RefCell<InterruptFlags>>,
+        int_flags: Rc<RefCell<IORegisters>>,
     ) -> Self {
         Self {
             bus,
