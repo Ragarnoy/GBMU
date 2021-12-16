@@ -16,8 +16,27 @@ use crate::{
 
 use std::{cell::RefCell, rc::Rc};
 
+macro_rules! match_area {
+    ($sub_macro:ident, $self:expr, $addr:expr $(,$args:expr)*) => {
+        match $addr {
+            ROM_START..=ROM_STOP => $sub_macro!(ROM_START, $self.rom, Rom, $addr $(,$args)*),
+            VRAM_START..=VRAM_STOP => $sub_macro!(VRAM_START, $self.vram, Vram, $addr $(,$args)*),
+            EXT_RAM_START..=EXT_RAM_STOP => {
+                $sub_macro!(EXT_RAM_START, $self.ext_ram, ExtRam, $addr $(,$args)*)
+            }
+            RAM_START..=RAM_STOP => $sub_macro!(RAM_START, $self.ram, Ram, $addr $(,$args)*),
+            ERAM_START..=ERAM_STOP => $sub_macro!(ERAM_START, $self.eram, ERam, $addr $(,$args)*),
+            OAM_START..=OAM_STOP => $sub_macro!(OAM_START, $self.oam, Oam, $addr $(,$args)*),
+            IO_REG_START..=IO_REG_STOP => $sub_macro!(IO_REG_START, $self.io_reg, IoReg, $addr $(,$args)*),
+            HRAM_START..=HRAM_STOP => $sub_macro!(HRAM_START, $self.hram, HighRam, $addr $(,$args)*),
+            IE_REG_START => $sub_macro!(IE_REG_START, $self.ie_reg, IEReg, $addr $(,$args)*),
+            _ => Err(Error::BusError($addr)),
+        }
+    };
+}
+
 macro_rules! write_area {
-    ($start:expr, $field:expr, $area_type:ident, $value:expr, $addr:expr) => {{
+    ($start:expr, $field:expr, $area_type:ident, $addr:expr, $value:expr) => {{
         #[cfg(features = "trace_bus_write")]
         log::trace!(
             "writing at {:4x} the value {:2x} in area {:?}",
@@ -72,41 +91,11 @@ pub struct AddressBus {
 
 impl AddressBus {
     pub fn write_byte(&mut self, addr: u16, v: u8) -> Result<(), Error> {
-        match addr {
-            ROM_START..=ROM_STOP => write_area!(ROM_START, self.rom, Rom, v, addr),
-            VRAM_START..=VRAM_STOP => write_area!(VRAM_START, self.vram, Vram, v, addr),
-            EXT_RAM_START..=EXT_RAM_STOP => {
-                write_area!(EXT_RAM_START, self.ext_ram, ExtRam, v, addr)
-            }
-            RAM_START..=RAM_STOP => write_area!(RAM_START, self.ram, Ram, v, addr),
-            ERAM_START..=ERAM_STOP => write_area!(ERAM_START, self.eram, ERam, v, addr),
-            OAM_START..=OAM_STOP => write_area!(OAM_START, self.oam, Oam, v, addr),
-            IO_REG_START..=IO_REG_STOP => write_area!(IO_REG_START, self.io_reg, IoReg, v, addr),
-            HRAM_START..=HRAM_STOP => write_area!(HRAM_START, self.hram, HighRam, v, addr),
-            IE_REG_START => write_area!(IE_REG_START, self.ie_reg, IEReg, v, addr),
-            _ => Err(Error::BusError(addr)),
-        }
+        match_area!(write_area, self, addr, v)
     }
 
     pub fn read_byte(&self, addr: u16) -> Result<u8, Error> {
-        match addr {
-            ROM_START..=ROM_STOP => {
-                read_area!(ROM_START, self.rom, Rom, addr)
-            }
-            VRAM_START..=VRAM_STOP => read_area!(VRAM_START, self.vram, Vram, addr),
-            EXT_RAM_START..=EXT_RAM_STOP => read_area!(EXT_RAM_START, self.ext_ram, ExtRam, addr),
-            RAM_START..=RAM_STOP => {
-                read_area!(RAM_START, self.ram, Ram, addr)
-            }
-            ERAM_START..=ERAM_STOP => read_area!(ERAM_START, self.eram, ERam, addr),
-            OAM_START..=OAM_STOP => {
-                read_area!(OAM_START, self.oam, Oam, addr)
-            }
-            IO_REG_START..=IO_REG_STOP => read_area!(IO_REG_START, self.io_reg, IoReg, addr),
-            HRAM_START..=HRAM_STOP => read_area!(HRAM_START, self.hram, HighRam, addr),
-            IE_REG_START => read_area!(IE_REG_START, self.ie_reg, IEReg, addr),
-            _ => Err(Error::BusError(addr)),
-        }
+        match_area!(read_area, self, addr)
     }
 
     pub fn iter(&self) -> Iter {
