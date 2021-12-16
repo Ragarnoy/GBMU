@@ -1,20 +1,19 @@
 use super::{
-    flag::Flag, math::sub_components, MicrocodeController, MicrocodeFlow, State, OK_CONSUME_CYCLE,
-    OK_PLAY_NEXT_ACTION,
+    flag::Flag, math::sub_components, MicrocodeController, MicrocodeFlow, State, CONTINUE,
 };
 use crate::interfaces::WriteFlagReg;
 
 pub fn dec16(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow {
     let (value, _) = ctl.pop_u16().overflowing_sub(1);
     ctl.push_u16(value);
-    OK_CONSUME_CYCLE
+    CONTINUE
 }
 
 pub fn dec8(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     let (value, flag) = sub_components(ctl.pop(), 1);
     update_dec_flag(state.regs, flag);
     ctl.push(value);
-    OK_PLAY_NEXT_ACTION
+    CONTINUE
 }
 
 fn update_dec_flag(state: &mut impl WriteFlagReg, flag: Flag) {
@@ -26,11 +25,11 @@ fn update_dec_flag(state: &mut impl WriteFlagReg, flag: Flag) {
 /// decrease sp by one
 pub fn sp(_ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     state.regs.sp -= 1;
-    OK_PLAY_NEXT_ACTION
+    CONTINUE
 }
 
 /// decrease hl by one
 pub fn hl(_ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     state.regs.hl -= 1;
-    OK_PLAY_NEXT_ACTION
+    CONTINUE
 }

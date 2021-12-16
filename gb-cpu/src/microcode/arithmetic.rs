@@ -1,6 +1,4 @@
-use super::{
-    math, MicrocodeController, MicrocodeFlow, State, OK_CONSUME_CYCLE, OK_PLAY_NEXT_ACTION,
-};
+use super::{math, MicrocodeController, MicrocodeFlow, State, CONTINUE};
 use crate::interfaces::{ReadFlagReg, WriteFlagReg};
 
 pub fn sub(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
@@ -10,7 +8,7 @@ pub fn sub(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     state.regs.set_half_carry(flag.half_carry);
     state.regs.set_carry(flag.carry);
     ctl.push(value);
-    OK_PLAY_NEXT_ACTION
+    CONTINUE
 }
 
 pub fn add(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
@@ -20,7 +18,7 @@ pub fn add(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     state.regs.set_half_carry(flag.half_carry);
     state.regs.set_carry(flag.carry);
     ctl.push(value);
-    OK_PLAY_NEXT_ACTION
+    CONTINUE
 }
 
 pub fn add_16(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
@@ -31,7 +29,7 @@ pub fn add_16(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow
     state.regs.set_half_carry((a & 0xf) + (b & 0xf) > 0xf);
     state.regs.set_carry(overflow);
     ctl.push_u16(res);
-    OK_CONSUME_CYCLE
+    CONTINUE
 }
 
 /// Daa perform an operation on a byte to format it in Binary Coded Decimal number (BCD)
@@ -59,7 +57,7 @@ pub fn daa(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     state.regs.set_half_carry(false);
     state.regs.set_zero(value == 0);
 
-    OK_PLAY_NEXT_ACTION
+    CONTINUE
 }
 
 fn daa_addition(value: u8, carry: bool, half_carry: bool) -> (u8, bool) {
@@ -139,7 +137,7 @@ pub fn adc(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     state.regs.set_half_carry(flag.half_carry);
     state.regs.set_carry(flag.carry);
     ctl.push(value);
-    OK_PLAY_NEXT_ACTION
+    CONTINUE
 }
 
 pub fn sbc(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
@@ -152,7 +150,7 @@ pub fn sbc(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     state.regs.set_half_carry(flag.half_carry);
     state.regs.set_carry(flag.carry);
     ctl.push(value);
-    OK_PLAY_NEXT_ACTION
+    CONTINUE
 }
 
 pub fn add_sp_i8(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
@@ -168,5 +166,5 @@ pub fn add_sp_i8(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeF
     state.regs.set_carry(flag.carry);
     ctl.push_u16(value);
 
-    OK_CONSUME_CYCLE
+    CONTINUE
 }

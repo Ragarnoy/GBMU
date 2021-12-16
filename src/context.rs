@@ -105,11 +105,31 @@ impl Game {
         let ppu = Ppu::new();
         let ppu_mem = Rc::new(RefCell::new(ppu.memory()));
         let ppu_reg = Rc::new(RefCell::new(ppu.registers()));
-        let (cpu, cpu_io_reg) = new_cpu();
+        let (cpu, cpu_io_reg) = if cfg!(feature = "bios") {
+            new_cpu()
+        } else {
+            let (mut cpu, cpu_io_reg) = new_cpu();
+            cpu.set_pc(0x100);
+            cpu.set_sp(0xfffe);
+            (cpu, cpu_io_reg)
+        };
         let wram = Rc::new(RefCell::new(WorkingRam::new(false)));
         let timer = Rc::new(RefCell::new(Timer::default()));
-        let bios = Rc::new(RefCell::new(bios::dmg()));
-        let bios_wrapper = Rc::new(RefCell::new(BiosWrapper::new(bios, mbc.clone())));
+        let bios_wrapper = {
+            let bios = Rc::new(RefCell::new(if cfg!(feature = "cgb") {
+                bios::cgb()
+            } else {
+                bios::dmg()
+            }));
+            let wrapper = if cfg!(feature = "bios") {
+                BiosWrapper::new(bios, mbc.clone())
+            } else {
+                let mut wp = BiosWrapper::new(bios, mbc.clone());
+                wp.bios_enabling_reg = 0xa;
+                wp
+            };
+            Rc::new(RefCell::new(wrapper))
+        };
         let dma = Rc::new(RefCell::new(Dma::new()));
 
         let io_bus = Rc::new(RefCell::new(IORegBus {
