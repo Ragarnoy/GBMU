@@ -110,8 +110,7 @@ impl MicrocodeController {
             handle_interrupts(self, state);
         } else if previous_opcode != Opcode::Halt {
             #[cfg(feature = "registers_logs")]
-            self.log_registers_to_file(format!("{:?}", state).as_str())
-                .unwrap_or_default();
+            self.log_registers_to_file(&state).unwrap_or_default();
             fetch(self, state);
         } else {
             self.halt()
@@ -200,13 +199,12 @@ impl MicrocodeController {
     }
 
     #[cfg(feature = "registers_logs")]
-    fn log_registers_to_file(&mut self, opcode_logs: &str) -> std::io::Result<()> {
-        use std::io::prelude::*;
+    fn log_registers_to_file(&mut self, state: &State) -> std::io::Result<()> {
+        use std::io::Write;
+        let mut file = self.file.borrow_mut();
 
-        let mut file = &*self.file.borrow_mut();
-
-        if let Err(e) = writeln!(file, "{}", opcode_logs) {
-            eprintln!("Couldn't write to file: {}", e);
+        if let Err(e) = writeln!(file, "{:?}", state) {
+            log::error!("Couldn't write to file: {}", e);
         }
         Ok(())
     }
@@ -215,13 +213,18 @@ impl MicrocodeController {
     fn create_new_file() -> std::io::Result<File> {
         use std::{env, fs::OpenOptions};
 
-        let project_path = env::current_dir()?.into_os_string();
-
-        OpenOptions::new().write(true).create(true).open(format!(
-            "{}/debug/registers_logs/ours.txt",
+        let registers_logs = {
+            use env::{current_dir, var};
+            let mut project_path = var("LOG_DIR")
+                .map(std::path::PathBuf::from)
+                .or_else(|_| current_dir())?;
+            project_path.push("registers.log");
             project_path
-                .to_str()
-                .expect("Could not get project's path from env."),
-        ))
+        };
+
+        OpenOptions::new()
+            .write(true)
+            .create(true)
+            .open(registers_logs)
     }
 }
