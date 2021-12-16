@@ -7,9 +7,9 @@ use crate::{
 };
 use gb_bus::Bus;
 use std::fmt::{self, Debug, Display};
-#[cfg(feature = "registers_logs")]
-use std::fs::File;
 use std::{cell::RefCell, rc::Rc};
+#[cfg(feature = "registers_logs")]
+use std::{fs::File, io::BufWriter};
 
 #[derive(Clone, Debug)]
 pub enum OpcodeType {
@@ -50,7 +50,7 @@ pub struct MicrocodeController {
     cache: Vec<u8>,
 
     #[cfg(feature = "registers_logs")]
-    file: Rc<RefCell<File>>,
+    file: Rc<RefCell<BufWriter<File>>>,
 }
 
 impl Debug for MicrocodeController {
@@ -210,7 +210,7 @@ impl MicrocodeController {
     }
 
     #[cfg(feature = "registers_logs")]
-    fn create_new_file() -> std::io::Result<File> {
+    fn create_new_file() -> std::io::Result<BufWriter<File>> {
         use std::{env, fs::OpenOptions};
 
         let registers_logs = {
@@ -222,9 +222,10 @@ impl MicrocodeController {
             project_path
         };
 
-        OpenOptions::new()
+        let file = OpenOptions::new()
             .write(true)
             .create(true)
-            .open(registers_logs)
+            .open(registers_logs)?;
+        Ok(BufWriter::new(file))
     }
 }
