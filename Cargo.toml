@@ -16,7 +16,7 @@ default = ["bios"]
 debug_render = ["gb-lcd/debug_render"]
 registers_logs = ["gb-cpu/registers_logs"]
 time_frame = []
-cgb = ["gb-bus/cgb", "gb-ppu/cgb"]
+cgb = ["gb-bus/cgb", "gb-ppu/cgb", "gb-cpu/cgb" ]
 bios = []
 
 [dependencies]
