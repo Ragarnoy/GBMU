@@ -5,7 +5,7 @@ use std::{cell::RefCell, rc::Rc};
 pub struct BiosWrapper {
     bios: Rc<RefCell<Bios>>,
     mbc: Rc<RefCell<dyn FileOperation<Area>>>,
-    bios_enabling_reg: u8,
+    pub bios_enabling_reg: u8,
 }
 
 impl BiosWrapper {
