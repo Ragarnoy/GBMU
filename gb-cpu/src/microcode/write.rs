@@ -61,7 +61,7 @@ pub fn hl(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     CONTINUE
 }
 
-/// Write the value stored in cache to `HL`, do not consume the cycle
+/// Write the value stored in cache to `AF`, do not consume the cycle
 pub fn af(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     state.regs.af = ctl.pop_u16();
     CONTINUE
