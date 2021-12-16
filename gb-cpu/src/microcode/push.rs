@@ -1,8 +1,8 @@
-use super::{MicrocodeController, MicrocodeFlow, State, OK_PLAY_NEXT_ACTION};
+use super::{MicrocodeController, MicrocodeFlow, State, CONTINUE};
 
 fn push_addr(ctl: &mut MicrocodeController, addr: u8) -> MicrocodeFlow {
     ctl.push_u16(addr as u16);
-    OK_PLAY_NEXT_ACTION
+    CONTINUE
 }
 
 pub fn addr_0000(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow {

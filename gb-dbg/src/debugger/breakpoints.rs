@@ -1,10 +1,15 @@
 mod breakpoint;
-mod breakpoint_expression;
+mod evaluation;
+mod parser;
+#[cfg(test)]
+mod test_parser;
 
 use crate::dbg_interfaces::DebugOperations;
 use crate::debugger::breakpoints::breakpoint::Breakpoint;
 
-use egui::{Color32, Label, Ui, Vec2, Visuals};
+use egui::{Color32, Label, Ui, Vec2};
+
+const VALID_CHARS: &[char] = &['&', '|', '!', '=', '<', '>', '*', '%', '^', '(', ')'];
 
 #[derive(Default, Debug)]
 pub struct BreakpointOptions {
@@ -59,7 +64,7 @@ impl BreakpointEditor {
             let mut deletion_list: Vec<usize> = Vec::with_capacity(20);
             egui::Grid::new("breakpoints_".to_owned())
                 .striped(true)
-                .spacing(Vec2::new(60.5, 6.5))
+                .spacing(Vec2::new(47.0, 7.0))
                 .show(ui, |ui| {
                     ui.label(egui::Label::new("Delete"));
                     ui.label(egui::Label::new("Enabled"));
@@ -125,23 +130,21 @@ impl BreakpointEditor {
             let add_button_response =
                 ui.add(egui::Button::new("+").enabled(is_valid_expression(&self.breakpoint_field)));
             let text_field_response = ui.add(
-                egui::TextEdit::singleline(&mut self.breakpoint_field)
+                egui::TextEdit::multiline(&mut self.breakpoint_field)
                     .desired_width(150.0)
                     .hint_text("AF == 0x80"),
             );
             if (add_button_response.clicked()
                 || text_field_response.clicked()
-                    && ui.input().key_pressed(egui::Key::Enter)
+                    && is_enter_not_modified(ui)
                     && is_valid_expression(&self.breakpoint_field))
                 && self
                     .add_expr_breakpoint(&self.breakpoint_field.clone(), regs)
-                    .is_err()
+                    .is_ok()
             {
-                log::error!("Debugger input is invalid")
-            }
-            if text_field_response.lost_focus() {
                 self.breakpoint_field.clear();
-                text_field_response.ctx.set_visuals(Visuals::default())
+            } else {
+                log::error!("Debugger input is invalid")
             }
         });
     }
@@ -195,8 +198,12 @@ fn is_valid_address(address: &str) -> bool {
 }
 
 fn is_valid_expression(expr: &str) -> bool {
-    expr.chars().all(|c| {
-        c.is_alphanumeric() || c.is_whitespace() || c == '=' || c == '>' || c == '<' || c == '!'
-    }) && !expr.is_empty()
-        && expr.split_whitespace().count() == 3
+    expr.chars()
+        .all(|c| c.is_alphanumeric() || c.is_whitespace() || VALID_CHARS.contains(&c))
+        && !expr.is_empty()
+        && expr.split_whitespace().count() % 2 != 0
+}
+
+fn is_enter_not_modified(ui: &Ui) -> bool {
+    ui.input().key_pressed(egui::Key::Enter) && ui.input().modifiers.is_none()
 }

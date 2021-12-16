@@ -1,5 +1,5 @@
-use super::{MicrocodeController, MicrocodeFlow, State, OK_CONSUME_CYCLE};
+use super::{MicrocodeController, MicrocodeFlow, State, CONTINUE};
 
 pub fn sleep(_ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow {
-    OK_CONSUME_CYCLE
+    CONTINUE
 }
