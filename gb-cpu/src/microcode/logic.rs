@@ -4,7 +4,7 @@ use crate::interfaces::WriteFlagReg;
 pub fn cp(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     let left = ctl.pop();
     let right = ctl.pop();
-    let (_, flag) = sub_components(left, right);
+    let (_, flag) = sub_components(left, right, false);
     state.regs.set_subtraction(true);
     state.regs.set_half_carry(flag.half_carry);
     state.regs.set_carry(flag.carry);
