@@ -246,4 +246,3 @@ pub fn swap(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     state.regs.set_subtraction(false);
     CONTINUE
 }
-
