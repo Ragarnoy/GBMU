@@ -26,7 +26,7 @@ pub fn add_16(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow
     let a = ctl.pop_u16();
     let (res, overflow) = a.overflowing_add(b);
     state.regs.set_subtraction(false);
-    state.regs.set_half_carry((a & 0xf) + (b & 0xf) > 0xf);
+    state.regs.set_half_carry((a & 0xfff) + (b & 0xfff) > 0xfff);
     state.regs.set_carry(overflow);
     ctl.push_u16(res);
     CONTINUE
