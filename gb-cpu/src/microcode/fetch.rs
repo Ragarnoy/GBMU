@@ -657,14 +657,10 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                 Opcode::PrefixCb => ctl.push_cycle(&[fetch_cb]),
                 Opcode::LdhlSp8 => ctl.push_cycles(&[
                     &[read::byte, |ctl, state| -> MicrocodeFlow {
-                        use super::math::{add_components_u16, sub_components_u16};
-                        let byte = ctl.pop() as i8;
+                        use super::math::add_components_u16;
+                        let byte = ctl.pop() as u16;
                         let sp = state.regs.sp;
-                        let (res, flag) = if byte < 0 {
-                            sub_components_u16(sp, byte.abs() as u16)
-                        } else {
-                            add_components_u16(sp, byte as u16)
-                        };
+                        let (res, flag) = add_components_u16(sp, byte);
                         ctl.push_u16(res);
                         state.regs.set_subtraction(false);
                         state.regs.set_zero(false);
