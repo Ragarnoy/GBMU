@@ -1,5 +1,7 @@
-use super::{math, MicrocodeController, MicrocodeFlow, State, CONTINUE};
 use crate::interfaces::{ReadFlagReg, WriteFlagReg};
+use crate::microcode::math::add_components_u16;
+
+use super::{CONTINUE, math, MicrocodeController, MicrocodeFlow, State};
 
 pub fn sub(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     let (value, flag) = math::sub_components(ctl.pop(), ctl.pop(), false);
@@ -24,10 +26,10 @@ pub fn add(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
 pub fn add_16(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     let b = ctl.pop_u16();
     let a = ctl.pop_u16();
-    let (res, overflow) = a.overflowing_add(b);
+    let (res, flag) = add_components_u16(a, b);
     state.regs.set_subtraction(false);
-    state.regs.set_half_carry((a & 0xfff) + (b & 0xfff) > 0xfff);
-    state.regs.set_carry(overflow);
+    state.regs.set_half_carry(flag.half_carry);
+    state.regs.set_carry(flag.carry);
     ctl.push_u16(res);
     CONTINUE
 }
@@ -139,16 +141,13 @@ pub fn sbc(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
 }
 
 pub fn add_sp_i8(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
-    let addend = ctl.pop() as i8;
+    let addend = ctl.pop() as u16;
     let sp = ctl.pop_u16();
-    let (value, flag) = match addend {
-        v if v >= 0 => math::add_components_u16(sp, v as u16),
-        v => math::sub_components_u16(sp, v as u16),
-    };
+    let (value, _flag) = math::add_components_u16(sp, addend);
     state.regs.set_subtraction(false);
     state.regs.set_zero(false);
-    state.regs.set_half_carry(flag.half_carry);
-    state.regs.set_carry(flag.carry);
+    state.regs.set_half_carry((sp & 0xf) + (addend & 0xf) > 0xf);
+    state.regs.set_carry((sp & 0xff) + (addend & 0xff) > 0xff);
     ctl.push_u16(value);
 
     CONTINUE
