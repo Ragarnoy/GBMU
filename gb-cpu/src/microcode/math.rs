@@ -36,9 +36,13 @@ fn test_sub_components() {
         }
     }
     sub!((4, 2, false, 2));
-    sub!((2, 4, false, 0xff - 2 + 1) half_carry | carry);
+    sub!((2, 4, false, u8::MAX - 2 + 1) half_carry | carry);
     sub!((2,2,false,0) zero);
-    sub!((5, 34, false, 0xff - 29 + 1) carry);
+    sub!((5, 34, false, u8::MAX - 29 + 1) carry);
+    sub!((5, 2, false, 3));
+    sub!((0, 1, false, u8::MAX) carry | half_carry);
+    sub!((5, 2, true, 2));
+    sub!((0, 1, true, u8::MAX - 1) carry | half_carry);
 }
 
 pub fn sub_components_u16(a: u16, b: u16) -> (u16, Flag) {
