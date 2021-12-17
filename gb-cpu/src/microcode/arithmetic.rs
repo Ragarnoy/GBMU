@@ -49,20 +49,13 @@ pub fn daa(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     let was_a_subtraction = state.regs.subtraction();
 
     if !was_a_subtraction {
-        if carry || a > 0x99 {
-            a += 0x60;
-            carry = true;
-        }
-        if half_carry || (a & 0x0f) > 0x09 {
-            a += 0x6;
-        }
+        let res = daa_addition(a, carry, half_carry);
+        a = res.0;
+        carry = res.1;
     } else {
-        if carry {
-            a -= 0x60;
-        }
-        if half_carry {
-            a -= 0x6;
-        }
+        let res = daa_subtraction(a, carry, half_carry);
+        a = res.0;
+        carry = res.1;
     }
 
     ctl.push(a);
@@ -71,6 +64,37 @@ pub fn daa(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     state.regs.set_zero(a == 0);
 
     CONTINUE
+}
+
+fn daa_subtraction(mut a: u8, carry: bool, half_carry: bool) -> (u8, bool) {
+    if carry {
+        a -= 0x60;
+    }
+    if half_carry {
+        a -= 0x6;
+    }
+    (a, carry)
+}
+
+fn daa_addition(mut a: u8, mut carry: bool, half_carry: bool) -> (u8, bool) {
+    if carry || a > 0x99 {
+        a += 0x60;
+        carry = true;
+    }
+    if half_carry || (a & 0x0f) > 0x09 {
+        a += 0x6;
+    }
+    (a, carry)
+}
+
+#[test]
+fn test_daa_addition() {
+    assert_eq!(daa_addition(0x7D, false, false), (0x83, false));
+}
+
+#[test]
+fn test_daa_subtraction() {
+    assert_eq!(daa_subtraction(0x4b, false, true), (0x45, false));
 }
 
 /// return the upper/lower bound of a byte
