@@ -524,6 +524,8 @@ impl RegisterDebugOperations for Game {
             IO_BOOTROM, IO_DIV, IO_IE, IO_IF, IO_JOY, IO_SERIALBYTE, IO_SERIALCTL, IO_TAC, IO_TIMA,
             IO_TMA,
         };
+        #[cfg(feature = "cgb")]
+        use gb_bus::io_reg_constant::{KEY1, VRAM_BANK, VRAM_DMA_START, WRAM_BANK};
 
         vec![
             // joypad regs
@@ -541,6 +543,14 @@ impl RegisterDebugOperations for Game {
             read_bus_reg!(IORegs::Ie, self.addr_bus, IO_IE),
             // Boot ROM
             read_bus_reg!(IORegs::BootRom, self.addr_bus, IO_BOOTROM),
+            #[cfg(feature = "cgb")]
+            read_bus_reg!(IORegs::VramBank, self.addr_bus, VRAM_BANK),
+            #[cfg(feature = "cgb")]
+            read_bus_reg!(IORegs::Key1, self.addr_bus, KEY1),
+            #[cfg(feature = "cgb")]
+            read_bus_reg!(IORegs::WRamBank, self.addr_bus, WRAM_BANK),
+            #[cfg(feature = "cgb")]
+            read_bus_reg!(IORegs::VramDma, self.addr_bus, VRAM_DMA_START),
         ]
     }
 
