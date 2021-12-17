@@ -123,13 +123,15 @@ fn test_sub_components_u16() {
 
 /// Add `b` to `a` (`a + b`)
 /// Return a Flag set of triggered flag.
-pub fn add_components(a: u8, b: u8) -> (u8, Flag) {
-    let (res, overflowing) = a.overflowing_add(b);
+pub fn add_components(a: u8, b: u8, carry: bool) -> (u8, Flag) {
+    let carry = u8::from(carry);
+    let (res, overflowing_1) = a.overflowing_add(b);
+    let (res, overflowing_2) = res.overflowing_add(carry);
     (
         res,
         Flag {
-            half_carry: (a & 0xf) + (b & 0xf) > 0xf,
-            carry: overflowing,
+            half_carry: (a & 0xf) + (b & 0xf) + carry > 0xf,
+            carry: overflowing_1 || overflowing_2,
             negative: false,
             zero: res == 0,
         },
@@ -139,7 +141,7 @@ pub fn add_components(a: u8, b: u8) -> (u8, Flag) {
 #[test]
 fn test_add_components() {
     assert_eq!(
-        add_components(4, 4),
+        add_components(4, 4, false),
         (
             8,
             Flag {
@@ -147,6 +149,18 @@ fn test_add_components() {
                 carry: false,
                 negative: false,
                 zero: false
+            }
+        )
+    );
+    assert_eq!(
+        add_components(0, 0xf, true),
+        (
+            0x10,
+            Flag {
+                half_carry: true,
+                carry: false,
+                negative: false,
+                zero: false,
             }
         )
     );

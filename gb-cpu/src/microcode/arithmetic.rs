@@ -12,7 +12,7 @@ pub fn sub(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
 }
 
 pub fn add(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
-    let (value, flag) = math::add_components(ctl.pop(), ctl.pop());
+    let (value, flag) = math::add_components(ctl.pop(), ctl.pop(), false);
     state.regs.set_subtraction(false);
     state.regs.set_zero(flag.zero);
     state.regs.set_half_carry(flag.half_carry);
@@ -129,8 +129,8 @@ fn test_slice_byte() {
 
 pub fn adc(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     let left = ctl.pop();
-    let right = ctl.pop() + (state.regs.carry() as u8);
-    let (value, flag) = math::add_components(left, right);
+    let right = ctl.pop();
+    let (value, flag) = math::add_components(left, right, state.regs.carry());
 
     state.regs.set_subtraction(false);
     state.regs.set_zero(flag.zero);
