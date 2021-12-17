@@ -2,6 +2,8 @@
 assets/roms.zip
 assets/roms
 assets/bios
+assets/cpu_instrs.zip
+assets/cpu_instrs
 
 # Rust
 target
