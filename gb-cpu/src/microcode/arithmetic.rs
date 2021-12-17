@@ -141,7 +141,7 @@ pub fn sbc(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
 }
 
 pub fn add_sp_i8(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
-    let addend = ctl.pop() as u16;
+    let addend = (ctl.pop() as i8) as u16;
     let sp = ctl.pop_u16();
     let (value, _flag) = math::add_components_u16(sp, addend);
     state.regs.set_subtraction(false);
