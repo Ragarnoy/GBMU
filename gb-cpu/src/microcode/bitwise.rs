@@ -245,3 +245,10 @@ pub fn swap(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     state.regs.set_subtraction(false);
     CONTINUE
 }
+
+pub fn swap_16(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow {
+    let (a, b) = (ctl.pop(), ctl.pop());
+    ctl.push(a);
+    ctl.push(b);
+    CONTINUE
+}
