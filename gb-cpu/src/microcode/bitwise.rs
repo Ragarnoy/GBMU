@@ -1,5 +1,6 @@
-use super::{arithmetic, MicrocodeController, MicrocodeFlow, State, CONTINUE};
 use crate::interfaces::{ReadFlagReg, WriteFlagReg};
+
+use super::{arithmetic, MicrocodeController, MicrocodeFlow, State, CONTINUE};
 
 fn read_bit(ctl: &mut MicrocodeController, state: &mut State, bit: u8) -> MicrocodeFlow {
     let value = ctl.pop();
@@ -243,12 +244,5 @@ pub fn swap(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     state.regs.set_carry(false);
     state.regs.set_half_carry(false);
     state.regs.set_subtraction(false);
-    CONTINUE
-}
-
-pub fn swap_16(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow {
-    let (a, b) = (ctl.pop(), ctl.pop());
-    ctl.push(a);
-    ctl.push(b);
     CONTINUE
 }
