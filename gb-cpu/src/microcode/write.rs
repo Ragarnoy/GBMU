@@ -1,6 +1,8 @@
 use super::{MicrocodeController, MicrocodeFlow, State, CONTINUE};
 use crate::interfaces::Write8BitsReg;
 
+const FLAG_MASK: u16 = 0xfff0;
+
 /// Write the value stored in cache to `A`, do not consume the cycle
 pub fn a(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     state.regs.set_a(ctl.pop());
@@ -63,7 +65,7 @@ pub fn hl(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
 
 /// Write the value stored in cache to `AF`, do not consume the cycle
 pub fn af(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
-    state.regs.af = ctl.pop_u16();
+    state.regs.af = ctl.pop_u16() & FLAG_MASK;
     CONTINUE
 }
 
