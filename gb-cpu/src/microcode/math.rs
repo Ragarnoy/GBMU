@@ -1,5 +1,18 @@
 use super::flag::Flag;
 
+#[cfg(test)]
+macro_rules! flag {
+    () => {
+        Flag::default()
+    };
+    ($($flag:ident),*) => {
+        Flag {
+            $($flag: true,)*
+            ..Default::default()
+        }
+    }
+}
+
 /// Subtract `b` to `a` (`a - b`).
 /// Return a Flag set of triggered flag.
 pub fn sub_components(a: u8, b: u8, borrow: bool) -> (u8, Flag) {
@@ -19,19 +32,8 @@ pub fn sub_components(a: u8, b: u8, borrow: bool) -> (u8, Flag) {
 
 #[test]
 fn test_sub_components() {
-    macro_rules! flag {
-        () => {
-            Flag::default()
-        };
-        ($($flag:ident),*) => {
-            Flag {
-                $($flag: true,)*
-                ..Default::default()
-            }
-        }
-    }
     macro_rules! sub {
-        (($a:literal, $b:literal, $carry:literal, $res:expr) $($flag:ident)|*) => {
+        (($a:expr, $b:expr, $carry:expr, $res:expr) $($flag:ident)|*) => {
             assert_eq!(sub_components($a, $b, $carry), ($res, flag!(negative $(,$flag)*)))
         }
     }
@@ -61,42 +63,14 @@ pub fn sub_components_u16(a: u16, b: u16) -> (u16, Flag) {
 #[test]
 
 fn test_sub_components_u16() {
-    assert_eq!(
-        sub_components_u16(2, 2),
-        (
-            0,
-            Flag {
-                half_carry: false,
-                carry: false,
-                negative: true,
-                zero: true,
-            }
-        )
-    );
-    assert_eq!(
-        sub_components_u16(2, 4),
-        (
-            0xFFFF - 2 + 1,
-            Flag {
-                half_carry: true,
-                carry: true,
-                negative: true,
-                zero: false,
-            }
-        )
-    );
-    assert_eq!(
-        sub_components_u16(0x00FF, 0xFF00),
-        (
-            0x01FF,
-            Flag {
-                half_carry: false,
-                carry: true,
-                negative: true,
-                zero: false,
-            }
-        )
-    );
+    macro_rules! sub {
+        (($a:expr, $b:expr, $res:expr) $($flag:ident)|*) => {
+            assert_eq!(sub_components_u16($a, $b), ($res, flag!(negative $(,$flag)*)))
+        }
+    }
+    sub!((2, 2, 0) zero);
+    sub!((2, 4, u16::MAX - 2 + 1) half_carry | carry);
+    sub!((0x00ff, 0xff00, 0x1ff) carry);
 }
 
 /// Add `b` to `a` (`a + b`)
@@ -118,30 +92,13 @@ pub fn add_components(a: u8, b: u8, carry: bool) -> (u8, Flag) {
 
 #[test]
 fn test_add_components() {
-    assert_eq!(
-        add_components(4, 4, false),
-        (
-            8,
-            Flag {
-                half_carry: false,
-                carry: false,
-                negative: false,
-                zero: false
-            }
-        )
-    );
-    assert_eq!(
-        add_components(0, 0xf, true),
-        (
-            0x10,
-            Flag {
-                half_carry: true,
-                carry: false,
-                negative: false,
-                zero: false,
-            }
-        )
-    );
+    macro_rules! add {
+        (($a:expr, $b:expr, $carry:expr, $res:expr) $($flag:ident)|*) => {
+            assert_eq!(add_components($a, $b, $carry), ($res, flag!($($flag),*)))
+        }
+    }
+    add!((4, 4, false, 8));
+    add!((0, 0xf, true, 0x10) half_carry);
 }
 
 /// Add `b` to `a` (`a + b`)
@@ -161,40 +118,12 @@ pub fn add_components_u16(a: u16, b: u16) -> (u16, Flag) {
 
 #[test]
 fn test_add_components_u16() {
-    assert_eq!(
-        add_components_u16(4, 4),
-        (
-            8,
-            Flag {
-                half_carry: false,
-                carry: false,
-                negative: false,
-                zero: false
-            }
-        )
-    );
-    assert_eq!(
-        add_components_u16(0xFFFF, 1),
-        (
-            0,
-            Flag {
-                half_carry: true,
-                carry: true,
-                negative: false,
-                zero: true
-            }
-        )
-    );
-    assert_eq!(
-        add_components_u16(0x00FF, 1),
-        (
-            256,
-            Flag {
-                half_carry: true,
-                carry: false,
-                negative: false,
-                zero: false
-            }
-        )
-    );
+    macro_rules! add {
+        (($a:expr, $b:expr, $res:expr) $($flag:ident)|*) => {
+            assert_eq!(add_components_u16($a, $b), ($res, flag!($($flag),*)))
+        }
+    }
+    add!((4, 4, 8));
+    add!((u16::MAX, 1, 0) half_carry | carry | zero);
+    add!((0xff, 1, 0x100) half_carry);
 }
