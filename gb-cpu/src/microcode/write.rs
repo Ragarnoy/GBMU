@@ -95,7 +95,8 @@ pub fn hram(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
 /// cycle
 pub fn ind16(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     let addr = ctl.pop_u16();
+    let value = ctl.pop();
     state.write_bus(addr, ctl.pop());
-    state.write_bus(addr + 1, ctl.pop());
+    state.write_bus(addr + 1, value);
     CONTINUE
 }
