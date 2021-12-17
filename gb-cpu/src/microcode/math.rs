@@ -99,5 +99,5 @@ fn test_add_components_u16() {
     }
     add!((4, 4, 8));
     add!((u16::MAX, 1, 0) half_carry | carry | zero);
-    add!((0xff, 1, 0x100) half_carry);
+    add!((0xff, 1, 0x100));
 }
