@@ -52,7 +52,7 @@ pub fn sub_components_u16(a: u16, b: u16) -> (u16, Flag) {
     (
         res,
         Flag {
-            half_carry: (a & 0xff) < (b & 0xff),
+            half_carry: (a & 0xfff) < (b & 0xfff),
             carry: overflowing,
             negative: true,
             zero: res == 0,
