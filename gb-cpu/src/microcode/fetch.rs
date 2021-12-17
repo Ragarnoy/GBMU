@@ -1,8 +1,6 @@
 use std::{cell::RefCell, convert::TryFrom, rc::Rc};
 
-use crate::{
-    microcode::{bitwise, BREAK, CONTINUE, flag, interrupts, push, utils},
-};
+use crate::microcode::{bitwise, BREAK, CONTINUE, flag, interrupts, push, utils};
 
 use super::{
     arithmetic,
@@ -655,12 +653,16 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                 ]),
 
                 Opcode::PrefixCb => ctl.push_cycle(&[fetch_cb]),
-                Opcode::LdhlSp8 => {
-                    ctl.push_cycles(&[
-                        &[read::sp, bitwise::swap_16, read::byte, arithmetic::add, bitwise::swap_16],
-                        &[write::hl],
-                    ])
-                },
+                Opcode::LdhlSp8 => ctl.push_cycles(&[
+                    &[
+                        read::sp,
+                        bitwise::swap_16,
+                        read::byte,
+                        arithmetic::add,
+                        bitwise::swap_16,
+                    ],
+                    &[write::hl],
+                ]),
                 _ => todo!("unimplemented opcode {:?}", opcode),
             };
             CONTINUE

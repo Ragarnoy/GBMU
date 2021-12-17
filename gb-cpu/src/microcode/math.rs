@@ -47,7 +47,6 @@ fn test_sub_components() {
     sub!((0, 1, true, u8::MAX - 1) carry | half_carry);
 }
 
-
 /// Add `b` to `a` (`a + b`)
 /// Return a Flag set of triggered flag.
 pub fn add_components(a: u8, b: u8, carry: bool) -> (u8, Flag) {
