@@ -43,70 +43,48 @@ pub fn add_16(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow
 /// Note: the hex representation of `Daa(A + B) = 0x83` is the result of their hex representation added
 /// together in a base10 context
 pub fn daa(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
-    let value = ctl.pop();
+    let mut a = ctl.pop();
+    let mut carry = state.regs.carry();
+    let half_carry = state.regs.half_carry();
     let was_a_subtraction = state.regs.subtraction();
 
-    let (value, carry) = if was_a_subtraction {
-        daa_subtraction(value, state.regs.carry(), state.regs.half_carry())
+    if !was_a_subtraction {
+        let res = daa_addition(a, carry, half_carry);
+        a = res.0;
+        carry = res.1;
     } else {
-        daa_addition(value, state.regs.carry(), state.regs.half_carry())
-    };
+        let res = daa_subtraction(a, carry, half_carry);
+        a = res.0;
+        carry = res.1;
+    }
 
-    ctl.push(value);
+    ctl.push(a);
     state.regs.set_carry(carry);
     state.regs.set_half_carry(false);
-    state.regs.set_zero(value == 0);
+    state.regs.set_zero(a == 0);
 
     CONTINUE
 }
 
-fn daa_addition(value: u8, carry: bool, half_carry: bool) -> (u8, bool) {
-    let (upper, lower) = slice_byte(value);
-    let offset = if carry {
-        match (upper, lower, half_carry) {
-            (0..=2, 0..=9, false) => 0x60,
-            (0..=2, 0xa..=0xf, false) => 0x66,
-            (0..=3, 0..=3, true) => 0x66,
-            _ => 0,
-        }
-    } else {
-        match (upper, lower, half_carry) {
-            (0..=9, 0..=9, false) => 0,
-            (0..=8, 0xa..=0xf, false) => 6,
-            (0..=9, 0..=3, true) => 6,
-            (0xa..=0xf, 0..=9, false) => 0x60,
-            (9..=0xf, 0xa..=0xf, false) => 0x66,
-            (0xa..=0xf, 0..=3, true) => 0x66,
-            _ => 0,
-        }
-    };
-    value.overflowing_add(offset)
+fn daa_subtraction(mut a: u8, carry: bool, half_carry: bool) -> (u8, bool) {
+    if carry {
+        a -= 0x60;
+    }
+    if half_carry {
+        a -= 0x6;
+    }
+    (a, carry)
 }
 
-fn daa_subtraction(value: u8, carry: bool, half_carry: bool) -> (u8, bool) {
-    let (upper, lower) = slice_byte(value);
-    let offset = if carry {
-        match (upper, lower, half_carry) {
-            (7..=0xf, 0..=9, false) => 0xa0,
-            (6..=0xf, 6..=0xf, true) => 0x9a,
-            _ => 0,
-        }
-    } else {
-        match (upper, lower, half_carry) {
-            (0..=9, 0..=9, false) => 0,
-            (0..=8, 6..=0xf, true) => 0xfa,
-            _ => 0,
-        }
-    };
-    let (value, _) = value.overflowing_add(offset);
-    (value, carry)
-}
-
-/// return the upper/lower bound of a byte
-pub fn slice_byte(value: u8) -> (u8, u8) {
-    let upper = value >> 4;
-    let lower = value & 0xf;
-    (upper, lower)
+fn daa_addition(mut a: u8, mut carry: bool, half_carry: bool) -> (u8, bool) {
+    if carry || a > 0x99 {
+        a += 0x60;
+        carry = true;
+    }
+    if half_carry || (a & 0x0f) > 0x09 {
+        a += 0x6;
+    }
+    (a, carry)
 }
 
 #[test]
@@ -117,6 +95,13 @@ fn test_daa_addition() {
 #[test]
 fn test_daa_subtraction() {
     assert_eq!(daa_subtraction(0x4b, false, true), (0x45, false));
+}
+
+/// return the upper/lower bound of a byte
+pub fn slice_byte(value: u8) -> (u8, u8) {
+    let upper = value >> 4;
+    let lower = value & 0xf;
+    (upper, lower)
 }
 
 #[test]
