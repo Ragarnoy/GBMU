@@ -1,6 +1,7 @@
+use std::{cell::RefCell, convert::TryFrom, rc::Rc};
+
 use crate::{
-    interfaces::WriteFlagReg,
-    microcode::{bitwise, flag, interrupts, push, utils, BREAK, CONTINUE},
+    microcode::{bitwise, BREAK, CONTINUE, flag, interrupts, push, utils},
 };
 
 use super::{
@@ -9,10 +10,9 @@ use super::{
     dec,
     fetch_cb::fetch_cb,
     inc, jump, logic,
-    opcode::Opcode,
-    read, write, MicrocodeController, MicrocodeFlow, State,
+    MicrocodeController,
+    MicrocodeFlow, opcode::Opcode, read, State, write,
 };
-use std::{cell::RefCell, convert::TryFrom, rc::Rc};
 
 pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     let current_pc = state.regs.pc;
