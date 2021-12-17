@@ -655,21 +655,12 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                 ]),
 
                 Opcode::PrefixCb => ctl.push_cycle(&[fetch_cb]),
-                Opcode::LdhlSp8 => ctl.push_cycles(&[
-                    &[read::byte, |ctl, state| -> MicrocodeFlow {
-                        use super::math::add_components_u16;
-                        let byte = ctl.pop() as u16;
-                        let sp = state.regs.sp;
-                        let (res, flag) = add_components_u16(sp, byte);
-                        ctl.push_u16(res);
-                        state.regs.set_subtraction(false);
-                        state.regs.set_zero(false);
-                        state.regs.set_half_carry(flag.half_carry);
-                        state.regs.set_carry(flag.carry);
-                        CONTINUE
-                    }],
-                    &[write::hl],
-                ]),
+                Opcode::LdhlSp8 => {
+                    ctl.push_cycles(&[
+                        &[read::sp, bitwise::swap_16, read::byte, arithmetic::add, bitwise::swap_16],
+                        &[write::hl],
+                    ])
+                },
                 _ => todo!("unimplemented opcode {:?}", opcode),
             };
             CONTINUE
