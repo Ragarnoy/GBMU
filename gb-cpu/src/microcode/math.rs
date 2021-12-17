@@ -2,13 +2,15 @@ use super::flag::Flag;
 
 /// Subtract `b` to `a` (`a - b`).
 /// Return a Flag set of triggered flag.
-pub fn sub_components(a: u8, b: u8) -> (u8, Flag) {
-    let (res, overflowing) = a.overflowing_sub(b);
+pub fn sub_components(a: u8, b: u8, borrow: bool) -> (u8, Flag) {
+    let borrow = u8::from(borrow);
+    let (res, borrowing_1) = a.overflowing_sub(b);
+    let (res, borrowing_2) = res.overflowing_sub(borrow);
     (
         res,
         Flag {
-            half_carry: (a & 0xf) < (b & 0xf),
-            carry: overflowing,
+            half_carry: (a & 0xf) < (b & 0xf) + borrow,
+            carry: borrowing_1 || borrowing_2,
             negative: true,
             zero: res == 0,
         },
@@ -17,54 +19,26 @@ pub fn sub_components(a: u8, b: u8) -> (u8, Flag) {
 
 #[test]
 fn test_sub_components() {
-    assert_eq!(
-        sub_components(4, 2),
-        (
-            2,
+    macro_rules! flag {
+        () => {
+            Flag::default()
+        };
+        ($($flag:ident),*) => {
             Flag {
-                half_carry: false,
-                carry: false,
-                negative: true,
-                zero: false
+                $($flag: true,)*
+                ..Default::default()
             }
-        )
-    );
-    assert_eq!(
-        sub_components(2, 4),
-        (
-            0xff - 2 + 1,
-            Flag {
-                half_carry: true,
-                carry: true,
-                negative: true,
-                zero: false,
-            }
-        )
-    );
-    assert_eq!(
-        sub_components(2, 2),
-        (
-            0,
-            Flag {
-                half_carry: false,
-                carry: false,
-                negative: true,
-                zero: true
-            }
-        )
-    );
-    assert_eq!(
-        sub_components(5, 34),
-        (
-            0xff - 29 + 1,
-            Flag {
-                half_carry: false,
-                carry: true,
-                negative: true,
-                zero: false,
-            }
-        )
-    )
+        }
+    }
+    macro_rules! sub {
+        (($a:literal, $b:literal, $carry:literal, $res:expr) $($flag:ident)|*) => {
+            assert_eq!(sub_components($a, $b, $carry), ($res, flag!(negative $(,$flag)*)))
+        }
+    }
+    sub!((4, 2, false, 2));
+    sub!((2, 4, false, 0xff - 2 + 1) half_carry | carry);
+    sub!((2,2,false,0) zero);
+    sub!((5, 34, false, 0xff - 29 + 1) carry);
 }
 
 pub fn sub_components_u16(a: u16, b: u16) -> (u16, Flag) {
