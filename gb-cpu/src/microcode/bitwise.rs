@@ -1,6 +1,6 @@
 use crate::interfaces::{ReadFlagReg, WriteFlagReg};
 
-use super::{arithmetic, CONTINUE, MicrocodeController, MicrocodeFlow, State};
+use super::{arithmetic, MicrocodeController, MicrocodeFlow, State, CONTINUE};
 
 fn read_bit(ctl: &mut MicrocodeController, state: &mut State, bit: u8) -> MicrocodeFlow {
     let value = ctl.pop();

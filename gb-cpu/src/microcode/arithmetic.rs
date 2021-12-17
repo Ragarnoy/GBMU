@@ -1,7 +1,7 @@
 use crate::interfaces::{ReadFlagReg, WriteFlagReg};
 use crate::microcode::math::add_components_u16;
 
-use super::{CONTINUE, math, MicrocodeController, MicrocodeFlow, State};
+use super::{math, MicrocodeController, MicrocodeFlow, State, CONTINUE};
 
 pub fn sub(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     let (value, flag) = math::sub_components(ctl.pop(), ctl.pop(), false);
