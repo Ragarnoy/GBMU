@@ -1,5 +1,6 @@
 use gb_bus::{generic::SimpleRW, AddressBus, Bus, IORegBus, Lock, WorkingRam};
 use gb_clock::{cycles, Clock};
+use gb_cpu::registers::Registers;
 use gb_cpu::{cpu::Cpu, new_cpu};
 use gb_dbg::dbg_interfaces::AudioRegs;
 use gb_dbg::{
@@ -109,8 +110,7 @@ impl Game {
             new_cpu()
         } else {
             let (mut cpu, cpu_io_reg) = new_cpu();
-            cpu.set_pc(0x100);
-            cpu.set_sp(0xfffe);
+            cpu.set_registers(Registers::DMG);
             (cpu, cpu_io_reg)
         };
         let wram = Rc::new(RefCell::new(WorkingRam::new(false)));

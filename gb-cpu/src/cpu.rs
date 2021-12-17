@@ -18,12 +18,8 @@ impl Cpu {
         self.interrupt_flags.clone()
     }
 
-    pub fn set_pc(&mut self, pc: u16) {
-        self.registers.pc = pc;
-    }
-
-    pub fn set_sp(&mut self, sp: u16) {
-        self.registers.sp = sp;
+    pub fn set_registers(&mut self, regs: Registers) {
+        self.registers = regs;
     }
 }
 
