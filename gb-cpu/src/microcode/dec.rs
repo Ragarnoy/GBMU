@@ -10,7 +10,7 @@ pub fn dec16(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow
 }
 
 pub fn dec8(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
-    let (value, flag) = sub_components(ctl.pop(), 1);
+    let (value, flag) = sub_components(ctl.pop(), 1, false);
     update_dec_flag(state.regs, flag);
     ctl.push(value);
     CONTINUE

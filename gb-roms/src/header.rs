@@ -221,6 +221,19 @@ impl Default for Title {
     }
 }
 
+impl Title {
+    pub fn is_cgb_cartridge(&self) -> bool {
+        matches!(
+            self,
+            Title::Advanced {
+                title: _,
+                manufacturer: _,
+                cgb_flag: _,
+            }
+        )
+    }
+}
+
 impl TryFrom<[u8; 16]> for Title {
     type Error = Error;
 

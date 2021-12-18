@@ -154,3 +154,14 @@ impl WriteFlagReg for Registers {
         self.set_f(value)
     }
 }
+
+impl Registers {
+    pub const DMG: Registers = Registers {
+        af: 0x01B0,
+        bc: 0x0013,
+        de: 0x00D8,
+        hl: 0x014D,
+        sp: 0xFFFE,
+        pc: 0x0100,
+    };
+}

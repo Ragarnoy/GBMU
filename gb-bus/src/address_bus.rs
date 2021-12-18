@@ -37,7 +37,7 @@ macro_rules! match_area {
 
 macro_rules! write_area {
     ($start:expr, $field:expr, $area_type:ident, $addr:expr, $value:expr) => {{
-        #[cfg(features = "trace_bus_write")]
+        #[cfg(feature = "trace_bus_write")]
         log::trace!(
             "writing at {:4x} the value {:2x} in area {:?}",
             $addr,
@@ -53,7 +53,7 @@ macro_rules! write_area {
 
 macro_rules! read_area {
     ($start:expr, $field:expr, $area_type:ident, $addr: expr) => {{
-        #[cfg(features = "trace_bus_read")]
+        #[cfg(feature = "trace_bus_read")]
         log::trace!("reading at {:4x} in area {:?}", $addr, Area::$area_type);
         $field.borrow().read(Box::new(Address::from_offset(
             Area::$area_type,

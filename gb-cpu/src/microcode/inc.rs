@@ -10,7 +10,7 @@ pub fn inc16(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow
 }
 
 pub fn inc8(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
-    let (value, flag) = add_components(ctl.pop(), 1);
+    let (value, flag) = add_components(ctl.pop(), 1, false);
     update_inc_flag(state.regs, flag);
     ctl.push(value);
     CONTINUE
