@@ -15,19 +15,15 @@ impl Timer {
     const TIMER_INT_MASK: u8 = 0b100;
 
     pub fn div(&self) -> u8 {
-        self.system_clock.to_be_bytes()[1]
+        self.system_clock.to_le_bytes()[1]
     }
 
     fn edge_detector_timer(&self) -> bool {
         let mask: u16 = match self.tac & 0b11 {
-            0b00 => 0x3ff,
-            0b01 => 0xf,
-            0b10 => 0x3f,
-            0b11 => 0xff,
-            _ => unreachable!(
-                "invalid tac value ({:x}) that shouldn't be possible",
-                self.tac
-            ),
+            0b01 => 0x10,
+            0b10 => 0x40,
+            0b11 => 0x100,
+            _ => 0x400,
         };
         self.system_clock & mask != 0
     }
@@ -40,20 +36,18 @@ impl Ticker for Timer {
 
     fn tick(&mut self, addr_bus: &mut dyn Bus<u8>) {
         let old_bit = self.edge_detector_timer();
-        self.system_clock += u16::from(u8::from(self.cycle_count()));
+        self.system_clock = self.system_clock.wrapping_add(4);
         let new_bit = self.edge_detector_timer();
 
         log::trace!(
-            "tac={:b}, system_clock={:4x} old_bit={}, new_bit={}",
-            self.tac,
-            self.system_clock,
+            "timer={:x?}, old_bit={}, new_bit={}",
+            self,
             old_bit,
             new_bit
         );
         if (self.tac & 0b100) != 0 && old_bit && !new_bit {
             let (new_tima, overflowing) = self.tima.overflowing_add(1);
             if overflowing {
-                // panic!("overflowing");
                 let int_mask = addr_bus.read(0xff0f, None).unwrap_or_else(|e| {
                     log::warn!("cannot read IF register: {:?}", e);
                     0
