@@ -1,7 +1,9 @@
 use gb_bus::{Address, Bus, Error, FileOperation, IORegArea};
 use gb_clock::Ticker;
+#[cfg(test)]
+mod test_timer;
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Timer {
     system_clock: u16,
     tima: u8,
@@ -10,7 +12,7 @@ pub struct Timer {
 }
 
 impl Timer {
-    const TIMER_INT_MASK: u8 = 0b001;
+    const TIMER_INT_MASK: u8 = 0b100;
 
     pub fn div(&self) -> u8 {
         self.system_clock.to_be_bytes()[1]
@@ -19,7 +21,7 @@ impl Timer {
     fn edge_detector_timer(&self) -> bool {
         let mask: u16 = match self.tac & 0b11 {
             0b00 => 0x200,
-            0b01 => 0x16,
+            0b01 => 0x10,
             0b10 => 0x40,
             0b11 => 0x100,
             _ => unreachable!(
@@ -50,7 +52,8 @@ impl Ticker for Timer {
         );
         if (self.tac & 0b100) != 0 && old_bit && !new_bit {
             let (new_tima, overflowing) = self.tima.overflowing_add(1);
-            self.tima = if overflowing {
+            if overflowing {
+                // panic!("overflowing");
                 let int_mask = addr_bus.read(0xff0f, None).unwrap_or_else(|e| {
                     log::warn!("cannot read IF register: {:?}", e);
                     0
@@ -58,10 +61,10 @@ impl Ticker for Timer {
                 if let Err(err) = addr_bus.write(0xff0f, int_mask | Timer::TIMER_INT_MASK, None) {
                     log::warn!("failed to update interrupt bitfield: {:?}", err);
                 }
-                self.tma
+                self.tima = self.tma
             } else {
-                new_tima
-            };
+                self.tima = new_tima
+            }
         }
     }
 }
