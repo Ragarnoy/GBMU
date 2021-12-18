@@ -11,25 +11,27 @@ macro_rules! test_mode {
             let mut timer = Timer::default();
             timer.tac = 0b100 | $tac;
             timer.tima = 0xff;
-            for i in 0..$step {
+            for i in 0..$step - 1 {
                 timer.tick(&mut fake_bus);
                 let int_flag: u8 = fake_bus
                     .read(0xff0f, Some(Lock::Debugger))
                     .unwrap_or_default();
                 assert_eq!(
                     int_flag, 0,
-                    "failed step {:04x}/{:04x}: expected 0, got {:#04b} ",
-                    i, $step, int_flag
+                    "failed step {:04x}/{:04x}: expected 0, got {:#04b} ({:x?})",
+                    i, $step, int_flag, timer
                 );
             }
+            timer.tick(&mut fake_bus);
             let int_flag: u8 = fake_bus
                 .read(0xff0f, Some(Lock::Debugger))
                 .unwrap_or_default();
             assert!(
                 int_flag & Timer::TIMER_INT_MASK != 0,
-                "expected mask {} but got {}",
+                "expected mask {:#b} but got {:#b} ({:x?})",
                 Timer::TIMER_INT_MASK,
-                int_flag
+                int_flag,
+                timer
             );
         }
     };
@@ -39,20 +41,3 @@ test_mode!(test_mode_0, 0, 1024);
 test_mode!(test_mode_1, 1, 16);
 test_mode!(test_mode_2, 2, 64);
 test_mode!(test_mode_3, 3, 256);
-
-#[test]
-fn foo() {
-    let mut fake_bus = MockBus::default();
-    let mut timer = Timer::default();
-    timer.tac = 0b101;
-    timer.tima = 0xff;
-    let mut i = 0;
-    loop {
-        timer.tick(&mut fake_bus);
-        let int_flag: u8 = fake_bus
-            .read(0xff0f, Some(Lock::Debugger))
-            .unwrap_or_default();
-        assert_eq!(int_flag, 0, "update at {}: {:?}", i, timer);
-        i += 1;
-    }
-}
