@@ -20,10 +20,10 @@ impl Timer {
 
     fn edge_detector_timer(&self) -> bool {
         let mask: u16 = match self.tac & 0b11 {
-            0b00 => 0x200,
-            0b01 => 0x10,
-            0b10 => 0x40,
-            0b11 => 0x100,
+            0b00 => 0x3ff,
+            0b01 => 0xf,
+            0b10 => 0x3f,
+            0b11 => 0xff,
             _ => unreachable!(
                 "invalid tac value ({:x}) that shouldn't be possible",
                 self.tac
