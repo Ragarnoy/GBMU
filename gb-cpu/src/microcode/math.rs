@@ -47,32 +47,6 @@ fn test_sub_components() {
     sub!((0, 1, true, u8::MAX - 1) carry | half_carry);
 }
 
-pub fn sub_components_u16(a: u16, b: u16) -> (u16, Flag) {
-    let (res, overflowing) = a.overflowing_sub(b);
-    (
-        res,
-        Flag {
-            half_carry: (a & 0xff) < (b & 0xff),
-            carry: overflowing,
-            negative: true,
-            zero: res == 0,
-        },
-    )
-}
-
-#[test]
-
-fn test_sub_components_u16() {
-    macro_rules! sub {
-        (($a:expr, $b:expr, $res:expr) $($flag:ident)|*) => {
-            assert_eq!(sub_components_u16($a, $b), ($res, flag!(negative $(,$flag)*)))
-        }
-    }
-    sub!((2, 2, 0) zero);
-    sub!((2, 4, u16::MAX - 2 + 1) half_carry | carry);
-    sub!((0x00ff, 0xff00, 0x1ff) carry);
-}
-
 /// Add `b` to `a` (`a + b`)
 /// Return a Flag set of triggered flag.
 pub fn add_components(a: u8, b: u8, carry: bool) -> (u8, Flag) {
@@ -108,7 +82,7 @@ pub fn add_components_u16(a: u16, b: u16) -> (u16, Flag) {
     (
         res,
         Flag {
-            half_carry: (a & 0xff) + (b & 0xff) > 0xff,
+            half_carry: (a & 0xfff) + (b & 0xfff) > 0xfff,
             carry: overflowing,
             negative: false,
             zero: res == 0,
@@ -125,5 +99,5 @@ fn test_add_components_u16() {
     }
     add!((4, 4, 8));
     add!((u16::MAX, 1, 0) half_carry | carry | zero);
-    add!((0xff, 1, 0x100) half_carry);
+    add!((0xff, 1, 0x100));
 }
