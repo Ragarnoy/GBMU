@@ -24,10 +24,10 @@ impl Timer {
 
     fn edge_detector_timer(&self) -> bool {
         let mask: u16 = match self.tac & 0b11 {
-            0b01 => 0x10,
-            0b10 => 0x40,
-            0b11 => 0x100,
-            _ => 0x400,
+            0b01 => 0xf,
+            0b10 => 0x3f,
+            0b11 => 0xff,
+            _ => 0x3ff,
         };
         self.system_clock & mask != 0
     }
@@ -49,7 +49,7 @@ impl Ticker for Timer {
             old_bit,
             new_bit
         );
-        if (self.tac & Self::TAC_ENABLED) != 0 && !old_bit && new_bit {
+        if (self.tac & Self::TAC_ENABLED) != 0 && old_bit && !new_bit {
             let (new_tima, overflowing) = self.tima.overflowing_add(1);
             if overflowing {
                 let int_mask = addr_bus.read(0xff0f, None).unwrap_or_else(|e| {
