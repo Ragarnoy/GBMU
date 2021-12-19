@@ -214,7 +214,8 @@ pub fn draw_ppu_debug_ui<const WIDTH: usize, const HEIGHT: usize>(
                     .update_render(&game.ppu.sprites_image(cfg.invert_color));
                 cfg.viewport.draw();
             } else {
-                cfg.list.update_render(&game.ppu.sprites_list_image());
+                cfg.list
+                    .update_render(&game.ppu.sprites_list_image(cfg.invert_color));
                 cfg.list.draw();
             }
         }
