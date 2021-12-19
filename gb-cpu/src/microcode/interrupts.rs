@@ -1,6 +1,4 @@
-use super::{
-    dec, jump::jump, read, utils::sleep, write, MicrocodeController, MicrocodeFlow, State, CONTINUE,
-};
+use super::{dec, jump::jump, read, write, MicrocodeController, MicrocodeFlow, State, CONTINUE};
 
 pub fn handle_interrupts(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     let mut int_flags = state.int_flags.borrow_mut();
