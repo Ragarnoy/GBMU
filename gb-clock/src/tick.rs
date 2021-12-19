@@ -1,5 +1,5 @@
-#[derive(PartialEq, Eq)]
 /// Identify a type of a tick.
+#[derive(Debug, PartialEq, Eq)]
 pub enum Tick {
     /// a CPU tick, executing once per clock cycle.
     MCycle,

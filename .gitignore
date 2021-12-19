@@ -2,6 +2,8 @@
 assets/roms.zip
 assets/roms
 assets/bios
+assets/cpu_instrs.zip
+assets/cpu_instrs
 
 # Rust
 target
@@ -18,7 +20,7 @@ settings.yaml
 
 # registers_logs
 
-*ours.txt
+registers.log
 
 # Apple
 
