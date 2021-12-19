@@ -188,7 +188,10 @@ impl Ppu {
     /// Create an image of the currents sprites placed relatively to the viewport.
     ///
     /// This function is used for debugging purpose.
-    pub fn sprites_image(&self) -> RenderData<SPRITE_RENDER_WIDTH, SPRITE_RENDER_HEIGHT> {
+    pub fn sprites_image(
+        &self,
+        invert_pixel: bool,
+    ) -> RenderData<SPRITE_RENDER_WIDTH, SPRITE_RENDER_HEIGHT> {
         let mut image = [[[255; 3]; SPRITE_RENDER_WIDTH]; SPRITE_RENDER_HEIGHT];
         let sprites = self
             .oam
@@ -209,7 +212,13 @@ impl Ppu {
                 for (i, (pixel_value, pixel_color)) in pixels_values.iter().rev().enumerate() {
                     if *pixel_value != 0 {
                         let x_img = x + i;
-                        image[y_img][x_img] = (*pixel_color).into();
+                        let mut rgb: [u8; 3] = (*pixel_color).into();
+                        if invert_pixel {
+                            rgb[0] = 255 - rgb[0];
+                            rgb[1] = 255 - rgb[1];
+                            rgb[2] = 255 - rgb[2];
+                        }
+                        image[y_img][x_img] = rgb;
                     }
                 }
             }
