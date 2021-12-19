@@ -42,13 +42,13 @@ macro_rules! test_tima {
     };
 }
 
-test_tima!(test_mode_0, 0, 4096);
-test_tima!(test_mode_1, 1, 16);
-test_tima!(test_mode_2, 2, 64);
-test_tima!(test_mode_3, 3, 256);
+test_tima!(tima_mode_0, 0, 1024);
+test_tima!(tima_mode_1, 1, 16);
+test_tima!(tima_mode_2, 2, 64);
+test_tima!(tima_mode_3, 3, 256);
 
 #[test]
-fn test_div() {
+fn div() {
     const DIV_INC_INTERVAL: u16 = 256;
     let mut fake_bus = MockBus::default();
     let mut timer = Timer::default();
