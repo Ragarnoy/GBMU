@@ -106,9 +106,9 @@ impl MicrocodeController {
             Some(OpcodeType::Unprefixed(opcode)) => opcode,
             _ => Opcode::Nop,
         };
-        if previous_opcode != Opcode::Ei && int_flags.borrow().is_interrupt_ready() {
+        if previous_opcode != Opcode::Ei && int_flags.borrow().interrupt_to_handle() {
             handle_interrupts(self, state);
-        } else if previous_opcode != Opcode::Halt {
+        } else if previous_opcode != Opcode::Halt || int_flags.borrow().is_interrupt_ready() {
             #[cfg(feature = "registers_logs")]
             self.log_registers_to_file(&state).unwrap_or_default();
             fetch(self, state);
