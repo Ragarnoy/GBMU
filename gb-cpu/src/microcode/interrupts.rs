@@ -31,21 +31,16 @@ pub fn handle_interrupts(ctl: &mut MicrocodeController, state: &mut State) -> Mi
     // Push interrupt source address to cache
     ctl.push_u16(0x0040 | ((source_bit as u16) << 3));
 
-    ctl.push_to_current_cycle(&[
-        // Sleep (2 mcycles)
-        sleep,
-        sleep,
-        // Store pc into stack (2 mcycles)
-        read::pc,
-        dec::sp,
-        read::sp,
-        write::ind,
-        dec::sp,
-        read::sp,
-        write::ind,
-        // Jump to interrupt source address (1 mcycle)
-        jump,
+    ctl.push_cycles(&[
+        // Store pc into stack
+        &[read::pc, dec::sp, read::sp],
+        &[write::ind],
+        &[dec::sp, read::sp],
+        &[write::ind],
+        // Jump to interrupt source address
+        &[jump],
     ]);
+
     CONTINUE
 }
 
