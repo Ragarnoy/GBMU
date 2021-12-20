@@ -1,13 +1,14 @@
+use simplelog::{Config, WriteLogger};
+use std::{fs::File, io::BufWriter};
+
 #[cfg(debug_assertions)]
 pub fn init_logger(level: log::LevelFilter) {
-    use simplelog::Config;
-
     setup_terminal_logger(level, Config::default());
 }
 
 #[cfg(not(debug_assertions))]
 pub fn init_logger(level: log::LevelFilter) {
-    use simplelog::{Config, WriteLogger};
+    use simplelog::WriteLogger;
     use std::fs::File;
 
     const LOG_FILE: &'static str = "/tmp/gbmu.log";
@@ -41,4 +42,15 @@ fn setup_terminal_logger(level: log::LevelFilter, config: simplelog::Config) {
 
     TermLogger::init(level, config, TerminalMode::Mixed, ColorChoice::Auto)
         .expect("cannot setup terminal logger")
+}
+
+fn trace_buffered_logger(config: Config) -> anyhow::Result<Box<WriteLogger<BufWriter<File>>>> {
+    const TRACE_FILE: &'static str = "/tmp/gbmu-trace.log";
+    let file = File::create(TRACE_FILE)?;
+
+    Ok(WriteLogger::new(
+        log::LevelFilter::Trace,
+        config,
+        BufWriter::new(file),
+    ))
 }
