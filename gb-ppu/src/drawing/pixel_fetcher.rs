@@ -3,7 +3,6 @@ use crate::memory::Vram;
 use crate::registers::LcdReg;
 use crate::Sprite;
 use crate::TILEMAP_TILE_DIM_COUNT;
-use gb_lcd::render::{SCREEN_HEIGHT, SCREEN_WIDTH};
 use std::collections::VecDeque;
 use std::ops::Deref;
 
@@ -63,14 +62,13 @@ impl PixelFetcher {
         x: usize,
         x_queued: usize,
     ) {
-        let scy = lcd_reg.scrolling.scy as usize;
         if self.internal_tick % 2 == 1 {
             // the fetcher take 2 tick to process one step
             match self.internal_tick / 2 {
                 0 => self.get_tile_index(vram, lcd_reg, y, x, x_queued), // get the tile index.
-                1 => {} // get the high data of the tile
-                2 => self.fetch_full_row(vram, lcd_reg, (y + scy) % 8), // get the low data of the tile, the pixels are ready after this step
-                _ => {}                                                 // idle on the last step
+                1 => {}                                     // get the high data of the tile
+                2 => self.fetch_full_row(vram, lcd_reg, y), // get the low data of the tile, the pixels are ready after this step
+                _ => {}                                     // idle on the last step
             }
         }
         self.internal_tick = (self.internal_tick + 1) % 8
@@ -84,11 +82,11 @@ impl PixelFetcher {
         x: usize,
         x_queued: usize,
     ) {
-        let scx = lcd_reg.scrolling.scx as usize;
-        let scy = lcd_reg.scrolling.scy as usize;
         self.tile = match self.mode {
-            FetchMode::Background => vram
-                .get_map_tile_index(
+            FetchMode::Background => {
+                let scx = lcd_reg.scrolling.scx as usize;
+                let scy = lcd_reg.scrolling.scy as usize;
+                vram.get_map_tile_index(
                     ((x + x_queued + scx) % 255) / 8
                         + ((y + scy) % 255) / 8 * TILEMAP_TILE_DIM_COUNT,
                     lcd_reg.control.bg_tilemap_area(),
@@ -97,17 +95,22 @@ impl PixelFetcher {
                 .unwrap_or_else(|err| {
                     log::error!("Failed to get background tile index: {}", err);
                     0xFF
-                }),
-            FetchMode::Window => vram
-                .get_map_tile_index(
-                    x % SCREEN_WIDTH / 8 + y % SCREEN_HEIGHT / 8 * SCREEN_WIDTH / 8,
+                })
+            }
+            FetchMode::Window => {
+                let wx = lcd_reg.window_pos.wx as usize;
+                let wy = lcd_reg.window_pos.wy as usize;
+                vram.get_map_tile_index(
+                    ((x + x_queued + 7 - wx) % 255) / 8
+                        + ((y - wy) % 255) / 8 * TILEMAP_TILE_DIM_COUNT,
                     lcd_reg.control.win_tilemap_area(),
                     lcd_reg.control.bg_win_tiledata_area(),
                 )
                 .unwrap_or_else(|err| {
                     log::error!("Failed to get window tile index: {}", err);
                     0xFF
-                }),
+                })
+            }
             FetchMode::Sprite(sprite) => sprite.tile_index() as usize,
         };
     }
@@ -118,9 +121,11 @@ impl PixelFetcher {
         lcd_reg: &dyn Deref<Target = LcdReg>,
         line: usize,
     ) {
+        let scy = lcd_reg.scrolling.scy as usize;
+        let wy = lcd_reg.window_pos.wy as usize;
         match self.mode {
-            FetchMode::Background => self.fetch_bg_win_row(vram, lcd_reg, line),
-            FetchMode::Window => self.fetch_bg_win_row(vram, lcd_reg, line),
+            FetchMode::Background => self.fetch_bg_win_row(vram, lcd_reg, (line + scy) % 8),
+            FetchMode::Window => self.fetch_bg_win_row(vram, lcd_reg, (line + wy) % 8),
             FetchMode::Sprite(sprite) => self.fetch_spr_row(vram, lcd_reg, line, &sprite),
         }
     }
