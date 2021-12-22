@@ -1,5 +1,8 @@
 use log::{set_boxed_logger, LevelFilter};
-use simplelog::{Config, TermLogger, WriteLogger};
+#[cfg(not(debug_assertions))]
+use simplelog::WriteLogger;
+use simplelog::{Config, TermLogger};
+#[cfg(not(debug_assertions))]
 use std::{fs::File, io::BufWriter};
 
 #[cfg(debug_assertions)]
@@ -20,8 +23,8 @@ pub fn init_logger(level: log::LevelFilter) {
 
 #[cfg(not(debug_assertions))]
 fn init_file_logger(level: log::LevelFilter, config: Config) -> anyhow::Result<()> {
-    const LOG_FILE: &'static str = "/tmp/gbmu.log";
-    const TRACE_LOG_FILE: &'static str = "/tmp/gbmu-trace.log";
+    const LOG_FILE: &str = "/tmp/gbmu.log";
+    const TRACE_LOG_FILE: &str = "/tmp/gbmu-trace.log";
     const LEVEL_BEFORE_BUFFERING: LevelFilter = LevelFilter::Info;
 
     if level > LEVEL_BEFORE_BUFFERING {
