@@ -43,6 +43,7 @@ impl Ticker for Timer {
         self.system_clock = self.system_clock.wrapping_add(Self::INC_PER_TICK);
         let new_bit = self.edge_detector_timer();
 
+        #[cfg(feature = "trace")]
         log::trace!(
             "timer={:x?}, old_bit={}, new_bit={}",
             self,
