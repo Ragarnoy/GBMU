@@ -452,7 +452,7 @@ impl Ppu {
 
         if lcd_reg.control.win_enable()
             && lcd_reg.window_pos.wy <= y
-            && lcd_reg.window_pos.wx <= x + 7
+            && lcd_reg.window_pos.wx <= x + PixelFetcher::WINDOW_BASE_OFFSET as u8
         {
             if pixel_fetcher.mode() != FetchMode::Window {
                 if pixel_fetcher.mode() == FetchMode::Background {

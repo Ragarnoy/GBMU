@@ -27,6 +27,8 @@ pub struct PixelFetcher {
 }
 
 impl PixelFetcher {
+    pub const WINDOW_BASE_OFFSET: usize = 7;
+
     pub fn new() -> Self {
         PixelFetcher {
             pixels: VecDeque::with_capacity(8),
@@ -101,7 +103,7 @@ impl PixelFetcher {
                 let wx = lcd_reg.window_pos.wx as usize;
                 let wy = lcd_reg.window_pos.wy as usize;
                 vram.get_map_tile_index(
-                    ((x + x_queued + 7 - wx) % 255) / 8
+                    ((x + x_queued + Self::WINDOW_BASE_OFFSET - wx) % 255) / 8
                         + ((y - wy) % 255) / 8 * TILEMAP_TILE_DIM_COUNT,
                     lcd_reg.control.win_tilemap_area(),
                     lcd_reg.control.bg_win_tiledata_area(),
