@@ -9,13 +9,17 @@ pub fn fetch_cb(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFl
     let byte = state.read();
     OpcodeCB::try_from(byte).map_or_else(
         |e| {
-            panic!(
+            unreachable!(
                 "how it's possible for an u8({}) to be outside the range of 0..ff: {}",
                 byte, e
             );
         },
         |opcode| {
-            log::debug!("new cb opcode: {:?}", opcode);
+            #[cfg(feature = "debug_decoded_opcode")]
+            {
+                let current_pc = state.regs.pc;
+                log::debug!("new cb opcode pc={:04x}, opcode={:?}", current_pc, opcode);
+            }
             ctl.opcode = Some(opcode.into());
             match opcode {
                 OpcodeCB::Bit0B => ctl.push_to_current_cycle(&[read::b, bitwise::bit_0]),
