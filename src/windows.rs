@@ -1,4 +1,6 @@
-use gb_lcd::{render::RenderImage, window::GBWindow};
+#[cfg(feature = "debug_render")]
+use gb_lcd::render::RenderImage;
+use gb_lcd::window::GBWindow;
 #[cfg(feature = "debug_render")]
 use gb_ppu::{
     SPRITE_LIST_RENDER_HEIGHT, SPRITE_LIST_RENDER_WIDTH, SPRITE_RENDER_HEIGHT, SPRITE_RENDER_WIDTH,
