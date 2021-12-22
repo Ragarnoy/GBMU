@@ -9,3 +9,7 @@ edition = "2021"
 log = "0.4"
 gb-bus = { path = "../gb-bus" }
 gb-clock = { path = "../gb-clock" }
+gb-test = { path = "../gb-test" }
+
+[features]
+trace = []

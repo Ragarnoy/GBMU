@@ -42,6 +42,12 @@ impl<A> Address<A> {
     }
 }
 
+impl<A: Copy + Clone> From<Address<A>> for u16 {
+    fn from(addr: Address<A>) -> Self {
+        addr.absolute
+    }
+}
+
 impl<A: Copy + Clone> crate::file_operation::Address<A> for Address<A> {
     fn get_address(&self) -> usize {
         self.relative as usize

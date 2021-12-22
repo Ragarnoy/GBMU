@@ -17,6 +17,10 @@ impl Cpu {
     pub fn interrupt_flags(&self) -> Rc<RefCell<InterruptFlags>> {
         self.interrupt_flags.clone()
     }
+
+    pub fn set_registers(&mut self, regs: Registers) {
+        self.registers = regs;
+    }
 }
 
 impl Ticker for Cpu {

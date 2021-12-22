@@ -145,7 +145,7 @@ impl Display for IORegs {
             IORegs::Div => "Div",
             IORegs::Tima => "Tima",
             IORegs::Tma => "Tma",
-            IORegs::Tac => "TAc",
+            IORegs::Tac => "Tac",
             IORegs::If => "Interrupt Flag",
             IORegs::Ie => "Interrupt Enable",
             IORegs::BootRom => "BootRom",

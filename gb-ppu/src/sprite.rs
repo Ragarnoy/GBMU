@@ -119,7 +119,7 @@ impl<'r> Sprite {
         let tile_row = vram.read_tile_line(self.tile_index as usize, y)?;
         for (i, pixel) in row.iter_mut().enumerate() {
             let x = if self.x_flip() { 7 - i } else { i };
-            let value = palette.get_value(tile_row[x])?;
+            let value = tile_row[x];
             let color = palette.get_color(tile_row[x])?;
             *pixel = (value, color);
         }
@@ -157,7 +157,7 @@ impl<'r> Sprite {
         let tile_line = vram.read_tile_line(index, y).unwrap();
         for (i, pixel) in row.iter_mut().enumerate() {
             let x = if self.x_flip() { 7 - i } else { i };
-            let value = palette.get_value(tile_line[x])?;
+            let value = tile_line[x];
             let color = palette.get_color(tile_line[x])?;
             *pixel = (value, color);
         }

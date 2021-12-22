@@ -153,7 +153,7 @@ impl PixelFetcher {
         sprite: &Sprite,
     ) {
         match sprite.get_pixels_row(
-            line,
+            (line - sprite.y_pos() as usize) % 8,
             vram,
             lcd_reg.control.obj_size(),
             lcd_reg.pal_mono.obj(),

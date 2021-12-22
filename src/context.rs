@@ -1,6 +1,7 @@
 use gb_bus::{generic::SimpleRW, AddressBus, Bus, IORegBus, Lock, WorkingRam};
 use gb_clock::{cycles, Clock};
 use gb_cpu::microcode::controller::OpcodeType;
+use gb_cpu::registers::Registers;
 use gb_cpu::{cpu::Cpu, new_cpu};
 use gb_dbg::dbg_interfaces::AudioRegs;
 use gb_dbg::{
@@ -108,11 +109,30 @@ impl Game {
         let ppu = Ppu::new();
         let ppu_mem = Rc::new(RefCell::new(ppu.memory()));
         let ppu_reg = Rc::new(RefCell::new(ppu.registers()));
-        let (cpu, cpu_io_reg) = new_cpu();
+        let (cpu, cpu_io_reg) = if cfg!(feature = "bios") {
+            new_cpu()
+        } else {
+            let (mut cpu, cpu_io_reg) = new_cpu();
+            cpu.set_registers(Registers::DMG);
+            (cpu, cpu_io_reg)
+        };
         let wram = Rc::new(RefCell::new(WorkingRam::new(false)));
         let timer = Rc::new(RefCell::new(Timer::default()));
-        let bios = Rc::new(RefCell::new(bios::dmg()));
-        let bios_wrapper = Rc::new(RefCell::new(BiosWrapper::new(bios, mbc.clone())));
+        let bios_wrapper = {
+            let bios = Rc::new(RefCell::new(if cfg!(feature = "cgb") {
+                bios::cgb()
+            } else {
+                bios::dmg()
+            }));
+            let wrapper = if cfg!(feature = "bios") {
+                BiosWrapper::new(bios, mbc.clone())
+            } else {
+                let mut wp = BiosWrapper::new(bios, mbc.clone());
+                wp.bios_enabling_reg = 0xa;
+                wp
+            };
+            Rc::new(RefCell::new(wrapper))
+        };
         let dma = Rc::new(RefCell::new(Dma::new()));
 
         let io_bus = Rc::new(RefCell::new(IORegBus {
@@ -126,10 +146,13 @@ impl Game {
             waveform_ram: Rc::new(RefCell::new(SimpleRW::<0x10>::default())), // We don't handle sound
             lcd: ppu_reg.clone(),
             oam_dma: dma.clone(),
+            #[cfg(feature = "cgb")]
             vram_bank: ppu_reg.clone(),
             boot_rom: bios_wrapper.clone(),
+            #[cfg(feature = "cgb")]
             vram_dma: Rc::new(RefCell::new(SimpleRW::<6>::default())), // TODO: link the part that handle the DMA
             bg_obj_palettes: ppu_reg,
+            #[cfg(feature = "cgb")]
             wram_bank: wram.clone(),
             interrupt_flag: cpu_io_reg.clone(),
         }));

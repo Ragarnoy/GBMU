@@ -12,9 +12,12 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
+default = ["bios"]
 debug_render = ["gb-lcd/debug_render"]
 registers_logs = ["gb-cpu/registers_logs"]
 time_frame = []
+cgb = ["gb-bus/cgb", "gb-ppu/cgb"]
+bios = []
 
 [dependencies]
 sdl2 = { version = "0.34", features = ["bundled", "static-link"] }

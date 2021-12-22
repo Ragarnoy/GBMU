@@ -1,3 +1,5 @@
+use std::{cell::RefCell, convert::TryFrom, rc::Rc};
+
 use crate::microcode::{bitwise, flag, interrupts, push, utils, BREAK, CONTINUE};
 
 use super::{
@@ -9,7 +11,6 @@ use super::{
     opcode::Opcode,
     read, write, MicrocodeController, MicrocodeFlow, State,
 };
-use std::{cell::RefCell, convert::TryFrom, rc::Rc};
 
 pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     let current_pc = state.regs.pc;
@@ -652,6 +653,9 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                 ]),
 
                 Opcode::PrefixCb => ctl.push_cycle(&[fetch_cb]),
+                Opcode::LdhlSp8 => {
+                    ctl.push_cycles(&[&[read::sp, read::byte, arithmetic::add_sp_i8], &[write::hl]])
+                }
                 _ => todo!("unimplemented opcode {:?}", opcode),
             };
             CONTINUE
