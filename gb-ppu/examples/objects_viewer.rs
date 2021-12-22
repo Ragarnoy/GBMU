@@ -1,3 +1,4 @@
+use gb_lcd::render::RenderData;
 use sdl2::{event::Event, keyboard::Keycode};
 
 use gb_lcd::{render, window::GBWindow};
@@ -93,12 +94,17 @@ pub fn main() {
                     for (title, vram, oam, io_reg) in dumps {
                         if ui.button(title).clicked() {
                             overwrite_memory(&ppu_mem, &ppu_reg, (title, vram, oam, io_reg));
-                            view_image = ppu.sprites_image(invert_color);
-                            list_image = ppu.sprites_list_image(invert_color);
+                            let (view, list) = refresh_display(&ppu, invert_color);
+                            view_image = view;
+                            list_image = list;
                         }
                     }
                 });
-                ui.checkbox(&mut invert_color, "Invert");
+                if ui.checkbox(&mut invert_color, "Invert").clicked() {
+                    let (view, list) = refresh_display(&ppu, invert_color);
+                    view_image = view;
+                    list_image = list;
+                };
                 egui::menu::menu(ui, "mode", |ui| {
                     if ui.button("viewport").clicked() {
                         list_mode = false;
@@ -155,4 +161,17 @@ pub fn main() {
         }
         // std::thread::sleep(::std::time::Duration::new(0, 1_000_000_000u32 / 60));
     }
+}
+
+fn refresh_display(
+    ppu: &Ppu,
+    invert_color: bool,
+) -> (
+    RenderData<SPRITE_RENDER_WIDTH, SPRITE_RENDER_HEIGHT>,
+    RenderData<SPRITE_LIST_RENDER_WIDTH, SPRITE_LIST_RENDER_HEIGHT>,
+) {
+    (
+        ppu.sprites_image(invert_color),
+        ppu.sprites_list_image(invert_color),
+    )
 }
