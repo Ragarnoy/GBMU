@@ -56,7 +56,7 @@ jobs:
       - name: check lint
         run: cargo clippy --workspace --verbose -- -D warning
 
-  test and build:
+  test_and_build:
     runs-on: ubuntu-latest
     steps:
       - name: cache cargo artifact
