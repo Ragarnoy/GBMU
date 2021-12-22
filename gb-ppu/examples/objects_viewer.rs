@@ -76,9 +76,10 @@ pub fn main() {
         ),
     ];
     overwrite_memory(&ppu_mem, &ppu_reg, dumps[0]);
+    let mut invert_color = false;
     let mut list_mode = false;
-    let mut view_image = ppu.sprites_image();
-    let mut list_image = ppu.sprites_list_image();
+    let mut view_image = ppu.sprites_image(invert_color);
+    let mut list_image = ppu.sprites_list_image(invert_color);
 
     'running: loop {
         gb_window
@@ -92,11 +93,12 @@ pub fn main() {
                     for (title, vram, oam, io_reg) in dumps {
                         if ui.button(title).clicked() {
                             overwrite_memory(&ppu_mem, &ppu_reg, (title, vram, oam, io_reg));
-                            view_image = ppu.sprites_image();
-                            list_image = ppu.sprites_list_image();
+                            view_image = ppu.sprites_image(invert_color);
+                            list_image = ppu.sprites_list_image(invert_color);
                         }
                     }
                 });
+                ui.checkbox(&mut invert_color, "Invert");
                 egui::menu::menu(ui, "mode", |ui| {
                     if ui.button("viewport").clicked() {
                         list_mode = false;
