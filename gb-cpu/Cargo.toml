@@ -9,6 +9,7 @@ edition = "2021"
 [features]
 registers_logs = []
 trace_jump = []
+debug_decoded_opcode = []
 
 [dependencies]
 gb-clock = { path = "../gb-clock" }
