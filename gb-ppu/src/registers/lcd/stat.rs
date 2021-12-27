@@ -23,57 +23,50 @@ impl Stat {
     }
 
     pub fn lyc_eq_ly_interrupt(&self) -> bool {
-        self.bits.lyc_eq_ly_interrupt() != 0
-    }
-    pub fn set_lyc_eq_ly_interrupt(&mut self, flag: bool) {
-        self.bits.set_lyc_eq_ly_interrupt(if flag { 1 } else { 0 })
+        self.bits & Self::LYC_EQ_LY_INTERRUPT != 0
     }
 
     pub fn mode_2_interrupt(&self) -> bool {
-        self.bits.mode_2_interrupt() != 0
-    }
-    pub fn set_mode_2_interrupt(&mut self, flag: bool) {
-        self.bits.set_mode_2_interrupt(if flag { 1 } else { 0 })
+        self.bits & Self::MODE_2_INTERRUPT != 0
     }
 
     pub fn mode_1_interrupt(&self) -> bool {
-        self.bits.mode_1_interrupt() != 0
-    }
-    pub fn set_mode_1_interrupt(&mut self, flag: bool) {
-        self.bits.set_mode_1_interrupt(if flag { 1 } else { 0 })
+        self.bits & Self::MODE_1_INTERRUPT != 0
     }
 
     pub fn mode_0_interrupt(&self) -> bool {
-        self.bits.mode_0_interrupt() != 0
-    }
-    pub fn set_mode_0_interrupt(&mut self, flag: bool) {
-        self.bits.set_mode_0_interrupt(if flag { 1 } else { 0 })
+        self.bits & Self::MODE_0_INTERRUPT != 0
     }
 
     pub fn lyc_eq_ly(&self) -> bool {
-        self.bits.lyc_eq_ly() != 0
+        self.bits & Self::LYC_EQ_LY != 0
     }
     pub fn set_lyc_eq_ly(&mut self, flag: bool) {
-        self.bits.set_lyc_eq_ly(if flag { 1 } else { 0 })
+        if flag {
+            self.bits |= Self::LYC_EQ_LY;
+        } else {
+            self.bits &= !Self::LYC_EQ_LY;
+        }
     }
 
     pub fn mode(&self) -> PPUResult<Mode> {
-        self.bits.mode().try_into()
+        (self.bits & Self::MODE).try_into()
     }
     pub fn set_mode(&mut self, mode: Mode) {
-        self.bits.set_mode(mode.into())
+        let mode_byte: u8 = mode.into();
+        self.bits = (self.bits & !Self::MODE) | (mode_byte & Self::MODE);
     }
 }
 
 impl From<u8> for Stat {
     fn from(byte: u8) -> Stat {
-        Stat { bits: byte.into() }
+        Stat { bits: byte }
     }
 }
 
 impl From<Stat> for u8 {
     fn from(register: Stat) -> u8 {
-        register.bits.into()
+        register.bits
     }
 }
 
