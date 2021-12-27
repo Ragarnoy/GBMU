@@ -20,7 +20,7 @@ cgb = ["gb-bus/cgb", "gb-ppu/cgb"]
 bios = []
 
 [dependencies]
-sdl2 = { version = "0.35", features = ["bundled", "static-link"] }
+sdl2 = { version = "0.35", features = [] }
 egui = "0.15"
 native-dialog = { version ="0.5" }
 log = "0.4"

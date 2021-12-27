@@ -4,7 +4,7 @@ version = "0.0.0"
 edition = "2021"
 
 [dependencies]
-sdl2 = { version = "0.35", features = ["bundled", "static-link"] }
+sdl2 = { version = "0.35", features = [] }
 egui = "0.15"
 log = { version = "0.4" }
 serde = { version = "1.0", features = ["derive"] }
