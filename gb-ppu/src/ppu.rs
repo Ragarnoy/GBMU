@@ -46,6 +46,7 @@ pub struct Ppu {
     pixel_fetcher: PixelFetcher,
     state: State,
     scanline_sprites: Vec<Sprite>,
+    offset: u8,
 }
 
 impl Ppu {
@@ -60,6 +61,7 @@ impl Ppu {
             pixel_fetcher: PixelFetcher::new(),
             state: State::new(),
             scanline_sprites: Vec::with_capacity(10),
+            offset: 0,
         }
     }
 
@@ -388,6 +390,7 @@ impl Ppu {
                     &mut self.scanline_sprites,
                     (x, y),
                 );
+                self.offset = 0;
             }
             if let Some(Lock::Ppu) = lock {
                 let vram = self.vram.borrow();
@@ -410,7 +413,7 @@ impl Ppu {
                     &lcd_reg,
                     y as usize,
                     x as usize,
-                    self.pixel_fifo.count(),
+                    self.pixel_fifo.count() + self.offset as usize,
                 );
                 if self.pixel_fetcher.push_to_fifo(&mut self.pixel_fifo) {
                     Self::check_next_pixel_mode(
