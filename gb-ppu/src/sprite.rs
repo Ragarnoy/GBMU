@@ -34,6 +34,7 @@ pub struct Sprite {
 
 impl<'r> Sprite {
     pub const VERTICAL_OFFSET: u8 = 16;
+    pub const HORIZONTAL_OFFSET: u8 = 8;
 
     pub fn new() -> Self {
         Sprite {

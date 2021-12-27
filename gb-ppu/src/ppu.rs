@@ -478,7 +478,7 @@ impl Ppu {
         let (x, _) = cursor;
 
         if let Some(sprite) = sprites.pop() {
-            if sprite.x_pos() - 8 == x {
+            if sprite.x_pos() == x + Sprite::HORIZONTAL_OFFSET {
                 pixel_fetcher.set_mode(FetchMode::Sprite(sprite));
                 pixel_fifo.enabled = false;
             } else {
