@@ -15,4 +15,4 @@ gb-roms = { path = "../gb-roms" }
 gb-bus = { path = "../gb-bus" }
 
 [dev-dependencies]
-eframe = "0.14.0"
+eframe = "0.15.0"
