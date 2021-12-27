@@ -4,36 +4,22 @@ use crate::error::PPUResult;
 
 use std::convert::TryInto;
 
-use modular_bitfield::{
-    bitfield,
-    specifiers::{B1, B2},
-};
-
-#[bitfield]
-#[derive(Clone, Copy, Debug, Default)]
-struct StatBits {
-    #[allow(dead_code)]
-    pub unused_bit: B1,
-    pub lyc_eq_ly_interrupt: B1,
-    pub mode_2_interrupt: B1,
-    pub mode_1_interrupt: B1,
-    pub mode_0_interrupt: B1,
-    pub lyc_eq_ly: B1,
-    pub mode: B2,
-}
-
 #[derive(Default, Clone, Copy, Debug)]
 pub struct Stat {
-    bits: StatBits,
+    bits: u8,
 }
 
 impl Stat {
     pub const SIZE: usize = 1;
+    const MODE: u8 = 0b11;
+    const LYC_EQ_LY: u8 = 0b100;
+    const MODE_0_INTERRUPT: u8 = 0b1000;
+    const MODE_1_INTERRUPT: u8 = 0b1_0000;
+    const MODE_2_INTERRUPT: u8 = 0b10_0000;
+    const LYC_EQ_LY_INTERRUPT: u8 = 0b100_0000;
 
     pub fn new() -> Self {
-        Stat {
-            bits: StatBits::new(),
-        }
+        Stat { bits: 0x80 }
     }
 
     pub fn lyc_eq_ly_interrupt(&self) -> bool {
@@ -79,21 +65,9 @@ impl Stat {
     }
 }
 
-impl From<u8> for StatBits {
-    fn from(byte: u8) -> StatBits {
-        StatBits::from_bytes([byte])
-    }
-}
-
 impl From<u8> for Stat {
     fn from(byte: u8) -> Stat {
         Stat { bits: byte.into() }
-    }
-}
-
-impl From<StatBits> for u8 {
-    fn from(bits: StatBits) -> u8 {
-        bits.into_bytes()[0]
     }
 }
 
