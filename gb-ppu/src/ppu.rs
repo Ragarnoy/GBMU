@@ -396,16 +396,21 @@ impl Ppu {
                 let vram = self.vram.borrow();
                 if self.pixel_fifo.enabled && x < SCREEN_WIDTH as u8 {
                     if let Some(pixel) = self.pixel_fifo.pop() {
-                        self.next_pixels[y as usize][x as usize] = Color::from(pixel).into();
-                        self.state.draw_pixel();
-                        x += 1;
-                        Self::check_next_pixel_mode(
-                            &lcd_reg,
-                            &mut self.pixel_fetcher,
-                            &mut self.pixel_fifo,
-                            &mut self.scanline_sprites,
-                            (x, y),
-                        );
+                        let offset = lcd_reg.scrolling.scx % 8;
+                        if self.state.pixel_drawn() > 0 || self.offset >= offset {
+                            self.next_pixels[y as usize][x as usize] = Color::from(pixel).into();
+                            self.state.draw_pixel();
+                            x += 1;
+                            Self::check_next_pixel_mode(
+                                &lcd_reg,
+                                &mut self.pixel_fetcher,
+                                &mut self.pixel_fifo,
+                                &mut self.scanline_sprites,
+                                (x, y),
+                            );
+                        } else {
+                            self.offset += 1;
+                        }
                     };
                 }
                 self.pixel_fetcher.fetch(
