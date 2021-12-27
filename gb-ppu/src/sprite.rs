@@ -33,6 +33,8 @@ pub struct Sprite {
 }
 
 impl<'r> Sprite {
+    pub const VERTICAL_OFFSET: u8 = 16;
+
     pub fn new() -> Self {
         Sprite {
             y_pos: 0,
