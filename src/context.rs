@@ -1,12 +1,10 @@
 use gb_bus::{generic::SimpleRW, AddressBus, Bus, IORegBus, Lock, WorkingRam};
 use gb_clock::{cycles, Clock};
-use gb_cpu::registers::Registers;
-use gb_cpu::{cpu::Cpu, new_cpu};
-use gb_dbg::dbg_interfaces::AudioRegs;
+use gb_cpu::{cpu::Cpu, new_cpu, registers::Registers};
 use gb_dbg::{
     dbg_interfaces::{
-        CpuRegs, DebugOperations, IORegs, MemoryDebugOperations, PpuRegs, RegisterDebugOperations,
-        RegisterMap, RegisterValue,
+        AudioRegs, CpuRegs, DebugOperations, IORegs, MemoryDebugOperations, PpuRegs,
+        RegisterDebugOperations, RegisterMap, RegisterValue,
     },
     until::Until,
 };
@@ -432,6 +430,8 @@ impl RegisterDebugOperations for Game {
             IO_BOOTROM, IO_DIV, IO_IE, IO_IF, IO_JOY, IO_SERIALBYTE, IO_SERIALCTL, IO_TAC, IO_TIMA,
             IO_TMA,
         };
+        #[cfg(feature = "cgb")]
+        use gb_bus::io_reg_constant::{KEY1, VRAM_BANK, VRAM_DMA_START, WRAM_BANK};
 
         match key {
             // joypad regs
@@ -449,6 +449,14 @@ impl RegisterDebugOperations for Game {
             IORegs::Ie => read_bus_reg!(self.addr_bus, IO_IE),
             // Boot ROM
             IORegs::BootRom => read_bus_reg!(self.addr_bus, IO_BOOTROM),
+            #[cfg(feature = "cgb")]
+            IORegs::Key1 => read_bus_reg!(self.addr_bus, KEY1),
+            #[cfg(feature = "cgb")]
+            IORegs::VramBank => read_bus_reg!(self.addr_bus, VRAM_BANK),
+            #[cfg(feature = "cgb")]
+            IORegs::WRamBank => read_bus_reg!(self.addr_bus, WRAM_BANK),
+            #[cfg(feature = "cgb")]
+            IORegs::VramDma => read_bus_reg!(self.addr_bus, VRAM_DMA_START),
         }
     }
 
