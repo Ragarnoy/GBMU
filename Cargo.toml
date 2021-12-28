@@ -20,7 +20,7 @@ cgb = ["gb-bus/cgb", "gb-ppu/cgb"]
 bios = []
 
 [dependencies]
-sdl2 = { version = "0.35", features = [] }
+sdl2 = { version = "0.35", features = ["bundled", "static-link"] }
 egui = "0.15"
 native-dialog = { version ="0.5" }
 log = "0.4"
@@ -55,3 +55,6 @@ members = [
   "gb-timer",
   "gb-test"
 ]
+
+[patch.crates-io]
+sdl2 = { git = "https://github.com/Rust-SDL2/rust-sdl2" }

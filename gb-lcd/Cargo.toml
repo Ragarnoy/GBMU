@@ -10,7 +10,7 @@ edition = "2021"
 debug_render = []
 
 [dependencies]
-sdl2 = { version = "0.35", features = [] }
+sdl2 = { version = "0.35", features = ["bundled", "static-link"] }
 egui = "0.15"
 gl = { version = "0.14" }
 egui_sdl2_gl = { git = "https://github.com/ArjunNair/egui_sdl2_gl", default-features = false }
