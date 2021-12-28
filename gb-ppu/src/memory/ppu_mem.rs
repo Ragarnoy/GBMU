@@ -1,7 +1,7 @@
 use super::{Lock, Lockable, Oam, Vram};
 use crate::error::{PPUError, PPUResult};
 use crate::UNDEFINED_VALUE;
-use gb_bus::{Address, Area, Error, FileOperation, InternalLock, MemoryLock};
+use gb_bus::{Addr, Address, Area, Error, FileOperation, InternalLock, MemoryLock};
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -54,7 +54,7 @@ impl PPUMem {
     }
 }
 
-impl InternalLock<Area> for PPUMem {}
+impl InternalLock<Addr<Area>, Area> for PPUMem {}
 
 impl MemoryLock for PPUMem {
     fn lock(&mut self, area: Area, lock: Lock) {
@@ -90,9 +90,9 @@ impl MemoryLock for PPUMem {
     }
 }
 
-impl FileOperation<Area> for PPUMem {
+impl FileOperation<Addr<Area>, Area> for PPUMem {
     /// Read a value from memory. If the concerned memory area is currently locked an undefined value is returned.
-    fn read(&self, addr: Box<dyn Address<Area>>) -> Result<u8, Error> {
+    fn read(&self, addr: Addr<Area>) -> Result<u8, Error> {
         match addr.area_type() {
             Area::Vram => match self.vram.try_borrow() {
                 Ok(vram) => vram
@@ -117,7 +117,7 @@ impl FileOperation<Area> for PPUMem {
     }
 
     /// Write value into memory. If the concerned memory area is currently locked, nothing is done.
-    fn write(&mut self, v: u8, addr: Box<dyn Address<Area>>) -> Result<(), Error> {
+    fn write(&mut self, v: u8, addr: Addr<Area>) -> Result<(), Error> {
         match addr.area_type() {
             Area::Vram => match self.vram.try_borrow_mut() {
                 Ok(mut vram) => vram

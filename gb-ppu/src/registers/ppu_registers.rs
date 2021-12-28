@@ -1,7 +1,7 @@
 use super::LcdReg;
 use crate::error::{PPUError, PPUResult};
 use crate::UNDEFINED_VALUE;
-use gb_bus::{Address, Error, FileOperation, IORegArea};
+use gb_bus::{Addr, Address, Error, FileOperation, IORegArea};
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -36,8 +36,8 @@ impl PPURegisters {
     }
 }
 
-impl FileOperation<IORegArea> for PPURegisters {
-    fn read(&self, addr: Box<dyn Address<IORegArea>>) -> Result<u8, Error> {
+impl FileOperation<Addr<IORegArea>, IORegArea> for PPURegisters {
+    fn read(&self, addr: Addr<IORegArea>) -> Result<u8, Error> {
         match addr.area_type() {
             IORegArea::Lcd => match self.lcd.try_borrow() {
                 Ok(lcd) => lcd.read(addr),
@@ -64,7 +64,7 @@ impl FileOperation<IORegArea> for PPURegisters {
         }
     }
 
-    fn write(&mut self, v: u8, addr: Box<dyn Address<IORegArea>>) -> Result<(), Error> {
+    fn write(&mut self, v: u8, addr: Addr<IORegArea>) -> Result<(), Error> {
         match addr.area_type() {
             IORegArea::Lcd => match self.lcd.try_borrow_mut() {
                 Ok(mut lcd) => lcd.write(addr, v),

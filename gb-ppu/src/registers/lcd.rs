@@ -11,7 +11,7 @@ pub use stat::Stat;
 pub use window_pos::WindowPos;
 
 use super::{Register, RegisterArray};
-use gb_bus::{Address, Error, IORegArea};
+use gb_bus::{Addr, Address, Error, IORegArea};
 use std::convert::TryInto;
 
 /// Regroup the registers of the Lcd IOregister area.
@@ -32,7 +32,7 @@ impl LcdReg {
         LcdReg::default()
     }
 
-    pub fn read(&self, addr: Box<dyn Address<IORegArea>>) -> Result<u8, Error> {
+    pub fn read(&self, addr: Addr<IORegArea>) -> Result<u8, Error> {
         match addr.get_address() {
             0x00 => Ok(self.control.read()),
             0x01 => Ok(self.stat.read()),
@@ -43,7 +43,7 @@ impl LcdReg {
         }
     }
 
-    pub fn write(&mut self, addr: Box<dyn Address<IORegArea>>, v: u8) -> Result<(), Error> {
+    pub fn write(&mut self, addr: Addr<IORegArea>, v: u8) -> Result<(), Error> {
         match addr.get_address() {
             0x00 => self.control.write(v),
             0x01 => self.stat.write(v),

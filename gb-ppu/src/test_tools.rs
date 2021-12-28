@@ -1,4 +1,4 @@
-use gb_bus::{Address, Area, IORegArea};
+use gb_bus::{Addr, Area, IORegArea};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct TestAddress {
@@ -25,7 +25,7 @@ impl TestAddress {
     }
 }
 
-impl Address<Area> for TestAddress {
+impl Addr<Area> for TestAddress {
     fn get_address(&self) -> usize {
         self.relative as usize
     }
@@ -84,7 +84,7 @@ impl TestIORegAddress {
     }
 }
 
-impl Address<IORegArea> for TestIORegAddress {
+impl Addr<IORegArea> for TestIORegAddress {
     fn get_address(&self) -> usize {
         self.relative as usize
     }
