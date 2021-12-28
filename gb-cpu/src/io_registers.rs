@@ -7,9 +7,21 @@ pub struct IORegisters {
     pub enable_mask: u8,
 
     #[cfg(feature = "cgb")]
-    pub current_speed: bool,
+    pub current_speed: Speed,
     #[cfg(feature = "cgb")]
-    pub desired_speed: bool,
+    pub desired_speed: Speed,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Speed {
+    Normal,
+    Double,
+}
+
+impl Default for Speed {
+    fn default() -> Self {
+        Self::Normal
+    }
 }
 
 impl IORegisters {
@@ -68,13 +80,13 @@ impl FileOperation<IORegArea> for IORegisters {
 
 /// generate the key1 register from to current & desired speed mode
 #[cfg(feature = "cgb")]
-fn double_speed_register(current_speed: bool, desired_speed: bool) -> u8 {
+fn double_speed_register(current_speed: Speed, desired_speed: Speed) -> u8 {
     let mut v = 0;
 
-    if current_speed {
+    if current_speed == Speed::Double {
         v |= 0x80;
     }
-    if desired_speed {
+    if desired_speed == Speed::Double {
         v |= 0x1;
     }
 
@@ -84,8 +96,29 @@ fn double_speed_register(current_speed: bool, desired_speed: bool) -> u8 {
 #[cfg(feature = "cgb")]
 #[test]
 fn test_double_speed_regs() {
-    assert_eq!(double_speed_register(false, false), 0x00);
-    assert_eq!(double_speed_register(true, false), 0x80);
-    assert_eq!(double_speed_register(true, true), 0x81);
-    assert_eq!(double_speed_register(false, true), 0x01);
+    use Speed::{Double, Normal};
+
+    assert_eq!(double_speed_register(Normal, Normal), 0x00);
+    assert_eq!(double_speed_register(Double, Normal), 0x80);
+    assert_eq!(double_speed_register(Double, Double), 0x81);
+    assert_eq!(double_speed_register(Normal, Double), 0x01);
+}
+
+#[cfg(feature = "cgb")]
+#[test]
+fn test_change_speed() {
+    use Speed::{Double, Normal};
+
+    fn new_io_reg_speed(current: Speed, desired: Speed) -> IORegisters {
+        IORegisters {
+            current_speed: current,
+            desired_speed: desired,
+            ..Default::default()
+        }
+    }
+
+    assert!(!new_io_reg_speed(Normal, Normal).need_to_change_speed());
+    assert!(!new_io_reg_speed(Double, Double).need_to_change_speed());
+    assert!(new_io_reg_speed(Normal, Double).need_to_change_speed());
+    assert!(new_io_reg_speed(Double, Normal).need_to_change_speed());
 }
