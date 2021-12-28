@@ -3,13 +3,13 @@ use crate::Error;
 /// FileOperation basic trait to implement for a RAM Emulator or other area.
 pub trait FileOperation<A, T>
 where
+    u16: From<A>,
     T: Into<u16>,
     A: Address<T>,
 {
     fn write(&mut self, v: u8, addr: A) -> Result<(), Error> {
         let _v = v;
-        // Err(Error::new_segfault(addr))
-        Ok(())
+        Err(Error::new_segfault(addr.into()))
     }
 
     fn read(&self, addr: A) -> Result<u8, Error>;

@@ -16,7 +16,13 @@ pub trait MemoryLock {
     fn is_available(&self, area: Area, lock_key: Option<Lock>) -> bool;
 }
 
-pub trait InternalLock<A: Address<T>, T: Into<u16>>: MemoryLock + FileOperation<A, T> {}
+pub trait InternalLock<A, T>: MemoryLock + FileOperation<A, T>
+where
+    u16: From<A>,
+    A: Address<T>,
+    T: Into<u16>,
+{
+}
 
 #[test]
 fn test_comparing_lock_order() {
