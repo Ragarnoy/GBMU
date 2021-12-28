@@ -1,4 +1,4 @@
-use gb_bus::{Address, Bus, Error, FileOperation, IORegArea};
+use gb_bus::{Addr, Address, Bus, Error, FileOperation, IORegArea};
 use gb_clock::Ticker;
 #[cfg(test)]
 mod test_timer;
@@ -68,24 +68,24 @@ impl Ticker for Timer {
     }
 }
 
-impl FileOperation<IORegArea> for Timer {
-    fn read(&self, addr: Box<dyn Address<IORegArea>>) -> Result<u8, Error> {
+impl FileOperation<Addr<IORegArea>, IORegArea> for Timer {
+    fn read(&self, addr: Addr<IORegArea>) -> Result<u8, Error> {
         match addr.area_type() {
             IORegArea::DivTimer => Ok(self.div()),
             IORegArea::TimerCounter => Ok(self.tima),
             IORegArea::TimerModulo => Ok(self.tma),
             IORegArea::TimerControl => Ok(!Self::TAC_MASK | self.tac),
-            _ => Err(Error::bus_error(addr)),
+            _ => Err(Error::bus_error(addr.into())),
         }
     }
 
-    fn write(&mut self, v: u8, addr: Box<dyn Address<IORegArea>>) -> Result<(), Error> {
+    fn write(&mut self, v: u8, addr: Addr<IORegArea>) -> Result<(), Error> {
         match addr.area_type() {
             IORegArea::DivTimer => self.system_clock = 0,
             IORegArea::TimerCounter => self.tima = v,
             IORegArea::TimerModulo => self.tma = v,
             IORegArea::TimerControl => self.tac = v & Self::TAC_MASK,
-            _ => return Err(Error::bus_error(addr)),
+            _ => return Err(Error::bus_error(addr.into())),
         }
         Ok(())
     }
