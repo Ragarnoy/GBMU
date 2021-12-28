@@ -1,4 +1,4 @@
-use gb_bus::{Address, Area, Bus, Error, FileOperation, IORegArea, Lock};
+use gb_bus::{Addr, Address, Area, Bus, Error, FileOperation, IORegArea, Lock};
 use gb_clock::{Tick, Ticker};
 
 #[derive(Default)]
@@ -16,8 +16,8 @@ impl Dma {
     }
 }
 
-impl FileOperation<IORegArea> for Dma {
-    fn read(&self, addr: Box<dyn Address<IORegArea>>) -> Result<u8, Error> {
+impl FileOperation<Addr<IORegArea>, IORegArea> for Dma {
+    fn read(&self, addr: Addr<IORegArea>) -> Result<u8, Error> {
         if let IORegArea::OamDma = addr.area_type() {
             Ok(self.oam_register)
         } else {
@@ -25,7 +25,7 @@ impl FileOperation<IORegArea> for Dma {
         }
     }
 
-    fn write(&mut self, v: u8, addr: Box<dyn Address<IORegArea>>) -> Result<(), Error> {
+    fn write(&mut self, v: u8, addr: Addr<IORegArea>) -> Result<(), Error> {
         if let IORegArea::OamDma = addr.area_type() {
             self.oam_register = v;
             self.oam_transfer = Some(0);
