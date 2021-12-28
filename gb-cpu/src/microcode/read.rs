@@ -4,7 +4,6 @@ use crate::interfaces::Read8BitsReg;
 /// Read a byte and push it to the cache stack
 pub fn byte(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     let byte = state.read();
-    log::trace!("[microcode] byte read: {:02x}", byte);
     ctl.push(byte);
     CONTINUE
 }
