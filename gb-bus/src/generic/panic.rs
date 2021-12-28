@@ -1,11 +1,11 @@
-use crate::{Address, Area, Error, FileOperation, IORegArea, InternalLock, Lock, MemoryLock};
+use crate::{Addr, Area, Error, FileOperation, IORegArea, InternalLock, Lock, MemoryLock};
 
 /// A device that always panic when interracting with it
 #[derive(Default)]
 pub struct PanicDevice;
 
-impl FileOperation<Area> for PanicDevice {
-    fn write(&mut self, v: u8, addr: Box<dyn Address<Area>>) -> Result<(), Error> {
+impl FileOperation<Addr<Area>, Area> for PanicDevice {
+    fn write(&mut self, v: u8, addr: Addr<Area>) -> Result<(), Error> {
         panic!(
             "writing to a panic device, v={:x}, addr={:?}",
             v,
@@ -13,13 +13,13 @@ impl FileOperation<Area> for PanicDevice {
         );
     }
 
-    fn read(&self, addr: Box<dyn Address<Area>>) -> Result<u8, Error> {
+    fn read(&self, addr: Addr<Area>) -> Result<u8, Error> {
         panic!("reading to a panic device, addr={:?}", u16::from(addr));
     }
 }
 
-impl FileOperation<IORegArea> for PanicDevice {
-    fn write(&mut self, v: u8, addr: Box<dyn Address<IORegArea>>) -> Result<(), Error> {
+impl FileOperation<Addr<IORegArea>, IORegArea> for PanicDevice {
+    fn write(&mut self, v: u8, addr: Addr<IORegArea>) -> Result<(), Error> {
         panic!(
             "writing to a panic device, v={:x}, addr={:?}",
             v,
@@ -27,7 +27,7 @@ impl FileOperation<IORegArea> for PanicDevice {
         );
     }
 
-    fn read(&self, addr: Box<dyn Address<IORegArea>>) -> Result<u8, Error> {
+    fn read(&self, addr: Addr<IORegArea>) -> Result<u8, Error> {
         panic!("reading to a panic device, addr={:?}", u16::from(addr));
     }
 }
@@ -42,34 +42,28 @@ impl MemoryLock for PanicDevice {
     }
 }
 
-impl InternalLock<Area> for PanicDevice {}
+impl InternalLock<Addr<Area>, Area> for PanicDevice {}
 
 #[test]
 #[should_panic]
 fn test_reading_panic_device() {
-    use crate::address::Address;
+    use crate::address::Addr;
     use crate::Area;
 
     let dev = PanicDevice;
-    let op: Box<dyn FileOperation<Area>> = Box::new(dev);
+    let op: Box<dyn FileOperation<Addr<Area>, Area>> = Box::new(dev);
 
-    assert_eq!(
-        op.read(Box::new(Address::from_offset(Area::Rom, 35, 24))),
-        Ok(42)
-    );
+    assert_eq!(op.read(Addr::from_offset(Area::Rom, 35, 24)), Ok(42));
 }
 
 #[test]
 #[should_panic]
 fn test_writing_panic_device() {
-    use crate::address::Address;
+    use crate::address::Addr;
     use crate::Area;
 
     let dev = PanicDevice;
-    let mut op: Box<dyn FileOperation<Area>> = Box::new(dev);
+    let mut op: Box<dyn FileOperation<Addr<Area>, Area>> = Box::new(dev);
 
-    assert_eq!(
-        op.write(5, Box::new(Address::from_offset(Area::Rom, 4, 4))),
-        Ok(())
-    );
+    assert_eq!(op.write(5, Addr::from_offset(Area::Rom, 4, 4)), Ok(()));
 }

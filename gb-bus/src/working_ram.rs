@@ -1,4 +1,4 @@
-use crate::{generic::DynBankableStorage, Address, Area, Error, FileOperation, IORegArea};
+use crate::{generic::DynBankableStorage, Addr, Address, Area, Error, FileOperation, IORegArea};
 
 pub const RAM_BANK_SIZE: usize = 0x1000;
 pub const CGB_MAX_BANKS: usize = 8;
@@ -24,8 +24,8 @@ impl WorkingRam {
     }
 }
 
-impl FileOperation<Area> for WorkingRam {
-    fn write(&mut self, value: u8, addr: Box<dyn Address<Area>>) -> Result<(), Error> {
+impl FileOperation<Addr<Area>, Area> for WorkingRam {
+    fn write(&mut self, value: u8, addr: Addr<Area>) -> Result<(), Error> {
         let address = addr.get_address();
         match address {
             0..=0xfff => self.storage.root_bank_mut()[address] = value,
@@ -33,12 +33,12 @@ impl FileOperation<Area> for WorkingRam {
                 let address = address - 0x1000;
                 self.storage[address] = value;
             }
-            _ => return Err(Error::bus_error(addr)),
+            _ => return Err(Error::bus_error(addr.into())),
         }
         Ok(())
     }
 
-    fn read(&self, addr: Box<dyn Address<Area>>) -> Result<u8, Error> {
+    fn read(&self, addr: Addr<Area>) -> Result<u8, Error> {
         let address = addr.get_address();
         match address {
             0..=0xfff => Ok(self.storage.root_bank()[address]),
@@ -46,26 +46,26 @@ impl FileOperation<Area> for WorkingRam {
                 let address = address - 0x1000;
                 Ok(self.storage[address])
             }
-            _ => Err(Error::bus_error(addr)),
+            _ => Err(Error::bus_error(addr.into())),
         }
     }
 }
 
-impl FileOperation<IORegArea> for WorkingRam {
-    fn write(&mut self, value: u8, addr: Box<dyn Address<IORegArea>>) -> Result<(), Error> {
+impl FileOperation<Addr<IORegArea>, IORegArea> for WorkingRam {
+    fn write(&mut self, value: u8, addr: Addr<IORegArea>) -> Result<(), Error> {
         if self.enable_cgb_feature {
             self.storage.set_bank_index((value & 0x7).min(1) as usize);
             Ok(())
         } else {
-            Err(Error::new_segfault(addr))
+            Err(Error::new_segfault(addr.into()))
         }
     }
 
-    fn read(&self, addr: Box<dyn Address<IORegArea>>) -> Result<u8, Error> {
+    fn read(&self, addr: Addr<IORegArea>) -> Result<u8, Error> {
         if self.enable_cgb_feature {
             Ok(self.storage.current_bank_index as u8)
         } else {
-            Err(Error::new_segfault(addr))
+            Err(Error::new_segfault(addr.into()))
         }
     }
 }

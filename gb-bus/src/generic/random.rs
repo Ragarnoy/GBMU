@@ -1,4 +1,4 @@
-use crate::{Address, Area, Error, FileOperation, IORegArea};
+use crate::{Addr, Area, Error, FileOperation, IORegArea};
 use rand::{rngs::SmallRng, Rng, SeedableRng};
 use std::cell::RefCell;
 
@@ -15,22 +15,22 @@ impl Default for RandomDevice {
     }
 }
 
-impl FileOperation<Area> for RandomDevice {
-    fn read(&self, _addr: Box<dyn Address<Area>>) -> Result<u8, Error> {
+impl FileOperation<Addr<Area>, Area> for RandomDevice {
+    fn read(&self, _addr: Addr<Area>) -> Result<u8, Error> {
         Ok(self.gen.borrow_mut().gen::<u8>())
     }
 
-    fn write(&mut self, _v: u8, addr: Box<dyn Address<Area>>) -> Result<(), Error> {
-        Err(Error::new_segfault(addr))
+    fn write(&mut self, _v: u8, addr: Addr<Area>) -> Result<(), Error> {
+        Err(Error::new_segfault(addr.into()))
     }
 }
 
-impl FileOperation<IORegArea> for RandomDevice {
-    fn read(&self, _addr: Box<dyn Address<IORegArea>>) -> Result<u8, Error> {
+impl FileOperation<Addr<IORegArea>, IORegArea> for RandomDevice {
+    fn read(&self, _addr: Addr<IORegArea>) -> Result<u8, Error> {
         Ok(self.gen.borrow_mut().gen::<u8>())
     }
 
-    fn write(&mut self, _v: u8, addr: Box<dyn Address<IORegArea>>) -> Result<(), Error> {
-        Err(Error::new_segfault(addr))
+    fn write(&mut self, _v: u8, addr: Addr<IORegArea>) -> Result<(), Error> {
+        Err(Error::new_segfault(addr.into()))
     }
 }

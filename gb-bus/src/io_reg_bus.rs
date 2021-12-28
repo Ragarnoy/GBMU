@@ -1,14 +1,13 @@
 #[cfg(feature = "cgb")]
 use crate::io_reg_constant::{VRAM_BANK_START, VRAM_DMA_END, VRAM_DMA_START, WRAM_BANK_START};
 use crate::{
-    address::Address,
     io_reg_constant::{
         BG_OBJ_PALETTES_END, BG_OBJ_PALETTES_START, BOOT_ROM_START, COMMUNICATION_END,
         COMMUNICATION_START, CONTROLLER_START, DIV_TIMER_START, INTERRUPT_FLAG, LCD_END, LCD_START,
         OAM_DMA_START, SOUND_END, SOUND_START, TIMER_CONTROL_START, TIMER_COUNTER_START,
         TIMER_MODULO_START, WAVEFORM_RAM_END, WAVEFORM_RAM_START,
     },
-    Address as PseudoAddress, Area, Error, FileOperation, IORegArea,
+    Addr, Area, Error, FileOperation, IORegArea,
 };
 use std::{cell::RefCell, rc::Rc};
 
@@ -64,7 +63,7 @@ macro_rules! write_area {
         );
         $field.borrow_mut().write(
             $value,
-            Box::new(Address::from_offset(IORegArea::$area_type, $addr, $start)),
+            Addr::from_offset(IORegArea::$area_type, $addr, $start),
         )
     }};
 }
@@ -77,43 +76,41 @@ macro_rules! read_area {
             $addr,
             IORegArea::$area_type
         );
-        $field.borrow().read(Box::new(Address::from_offset(
-            IORegArea::$area_type,
-            $addr,
-            $start,
-        )))
+        $field
+            .borrow()
+            .read(Addr::from_offset(IORegArea::$area_type, $addr, $start))
     }};
 }
 
 pub struct IORegBus {
-    pub controller: Rc<RefCell<dyn FileOperation<IORegArea>>>,
-    pub communication: Rc<RefCell<dyn FileOperation<IORegArea>>>,
-    pub div_timer: Rc<RefCell<dyn FileOperation<IORegArea>>>,
-    pub interrupt_flag: Rc<RefCell<dyn FileOperation<IORegArea>>>,
-    pub tima: Rc<RefCell<dyn FileOperation<IORegArea>>>,
-    pub tma: Rc<RefCell<dyn FileOperation<IORegArea>>>,
-    pub tac: Rc<RefCell<dyn FileOperation<IORegArea>>>,
-    pub sound: Rc<RefCell<dyn FileOperation<IORegArea>>>,
-    pub waveform_ram: Rc<RefCell<dyn FileOperation<IORegArea>>>,
-    pub lcd: Rc<RefCell<dyn FileOperation<IORegArea>>>,
-    pub oam_dma: Rc<RefCell<dyn FileOperation<IORegArea>>>,
+    pub controller: Rc<RefCell<dyn FileOperation<Addr<IORegArea>, IORegArea>>>,
+    pub communication: Rc<RefCell<dyn FileOperation<Addr<IORegArea>, IORegArea>>>,
+    pub div_timer: Rc<RefCell<dyn FileOperation<Addr<IORegArea>, IORegArea>>>,
+    pub interrupt_flag: Rc<RefCell<dyn FileOperation<Addr<IORegArea>, IORegArea>>>,
+    pub tima: Rc<RefCell<dyn FileOperation<Addr<IORegArea>, IORegArea>>>,
+    pub tma: Rc<RefCell<dyn FileOperation<Addr<IORegArea>, IORegArea>>>,
+    pub tac: Rc<RefCell<dyn FileOperation<Addr<IORegArea>, IORegArea>>>,
+    pub sound: Rc<RefCell<dyn FileOperation<Addr<IORegArea>, IORegArea>>>,
+    pub waveform_ram: Rc<RefCell<dyn FileOperation<Addr<IORegArea>, IORegArea>>>,
+    pub lcd: Rc<RefCell<dyn FileOperation<Addr<IORegArea>, IORegArea>>>,
+    pub oam_dma: Rc<RefCell<dyn FileOperation<Addr<IORegArea>, IORegArea>>>,
     #[cfg(feature = "cgb")]
-    pub vram_bank: Rc<RefCell<dyn FileOperation<IORegArea>>>,
-    pub boot_rom: Rc<RefCell<dyn FileOperation<IORegArea>>>,
+    pub vram_bank: Rc<RefCell<dyn FileOperation<Addr<IORegArea>, IORegArea>>>,
+    pub boot_rom: Rc<RefCell<dyn FileOperation<Addr<IORegArea>, IORegArea>>>,
     #[cfg(feature = "cgb")]
-    pub vram_dma: Rc<RefCell<dyn FileOperation<IORegArea>>>,
-    pub bg_obj_palettes: Rc<RefCell<dyn FileOperation<IORegArea>>>,
+    pub vram_dma: Rc<RefCell<dyn FileOperation<Addr<IORegArea>, IORegArea>>>,
+    pub bg_obj_palettes: Rc<RefCell<dyn FileOperation<Addr<IORegArea>, IORegArea>>>,
     #[cfg(feature = "cgb")]
-    pub wram_bank: Rc<RefCell<dyn FileOperation<IORegArea>>>,
+    pub wram_bank: Rc<RefCell<dyn FileOperation<Addr<IORegArea>, IORegArea>>>,
 }
 
-impl FileOperation<Area> for IORegBus {
-    fn read(&self, address: Box<dyn PseudoAddress<Area>>) -> Result<u8, Error> {
+impl FileOperation<Addr<Area>, Area> for IORegBus {
+    fn read(&self, address: Addr<Area>) -> Result<u8, Error> {
         let addr: u16 = address.into();
         match_area!(read_area, self, addr)
     }
 
-    fn write(&mut self, v: u8, address: Box<dyn PseudoAddress<Area>>) -> Result<(), Error> {
+    fn write(&mut self, v: u8, address: Addr<Area>) -> Result<(), Error> {
         let addr: u16 = address.into();
         match_area!(write_area, self, addr, v)
     }

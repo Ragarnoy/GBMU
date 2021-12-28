@@ -1,6 +1,6 @@
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 /// Address contain the relative and absolute address
-pub struct Address<A> {
+pub struct Addr<A> {
     /// relative address into the current area of the address bus
     pub relative: u16,
 
@@ -10,7 +10,7 @@ pub struct Address<A> {
     pub area: A,
 }
 
-impl<A> Address<A> {
+impl<A> Addr<A> {
     pub fn new(area: A, relative_addr: u16, absolute_addr: u16) -> Self {
         Self {
             relative: relative_addr,
@@ -42,18 +42,18 @@ impl<A> Address<A> {
     }
 }
 
-impl<A: Copy + Clone> From<Address<A>> for u16 {
-    fn from(addr: Address<A>) -> Self {
-        addr.absolute
-    }
-}
-
-impl<A: Copy + Clone> crate::file_operation::Address<A> for Address<A> {
+impl<A: Copy + Clone> crate::file_operation::Address<A> for Addr<A> {
     fn get_address(&self) -> usize {
         self.relative as usize
     }
 
     fn area_type(&self) -> A {
         self.area
+    }
+}
+
+impl<T> From<Addr<T>> for u16 {
+    fn from(a: Addr<T>) -> Self {
+        a.absolute
     }
 }

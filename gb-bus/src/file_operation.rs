@@ -1,14 +1,18 @@
 use crate::Error;
-use std::convert::From;
 
 /// FileOperation basic trait to implement for a RAM Emulator or other area.
-pub trait FileOperation<A: Into<u16>> {
-    fn write(&mut self, v: u8, addr: Box<dyn Address<A>>) -> Result<(), Error> {
+pub trait FileOperation<A, T>
+where
+    T: Into<u16>,
+    A: Address<T>,
+{
+    fn write(&mut self, v: u8, addr: A) -> Result<(), Error> {
         let _v = v;
-        Err(Error::new_segfault(addr))
+        // Err(Error::new_segfault(addr))
+        Ok(())
     }
 
-    fn read(&self, addr: Box<dyn Address<A>>) -> Result<u8, Error>;
+    fn read(&self, addr: A) -> Result<u8, Error>;
 }
 
 pub trait Address<A> {
@@ -22,11 +26,5 @@ pub trait Address<A> {
 impl<A: PartialEq + Eq> PartialEq for dyn Address<A> {
     fn eq(&self, other: &Self) -> bool {
         self.get_address() == other.get_address() && self.area_type() == other.area_type()
-    }
-}
-
-impl<A: Into<u16>> From<Box<dyn Address<A>>> for u16 {
-    fn from(addr: Box<dyn Address<A>>) -> Self {
-        (addr.get_address() as u16) + addr.area_type().into()
     }
 }

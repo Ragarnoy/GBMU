@@ -1,4 +1,4 @@
-use crate::{Area, FileOperation};
+use crate::{file_operation::Address, Area, FileOperation};
 
 #[derive(Eq, PartialEq, Debug, Clone, Copy, PartialOrd, Ord)]
 pub enum Lock {
@@ -16,7 +16,7 @@ pub trait MemoryLock {
     fn is_available(&self, area: Area, lock_key: Option<Lock>) -> bool;
 }
 
-pub trait InternalLock<A: Into<u16>>: MemoryLock + FileOperation<A> {}
+pub trait InternalLock<A: Address<T>, T: Into<u16>>: MemoryLock + FileOperation<A, T> {}
 
 #[test]
 fn test_comparing_lock_order() {
