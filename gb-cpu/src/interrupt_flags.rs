@@ -1,4 +1,4 @@
-use gb_bus::{Area, FileOperation, IORegArea};
+use gb_bus::{Addr, Area, FileOperation, IORegArea};
 
 #[derive(Default, Debug, Clone, Copy)]
 pub struct InterruptFlags {
@@ -21,27 +21,23 @@ impl InterruptFlags {
     }
 }
 
-impl FileOperation<Area> for InterruptFlags {
-    fn read(&self, _addr: Box<dyn gb_bus::Address<Area>>) -> Result<u8, gb_bus::Error> {
+impl FileOperation<Addr<Area>, Area> for InterruptFlags {
+    fn read(&self, _addr: Addr<Area>) -> Result<u8, gb_bus::Error> {
         Ok(self.enable_mask)
     }
 
-    fn write(&mut self, v: u8, _addr: Box<dyn gb_bus::Address<Area>>) -> Result<(), gb_bus::Error> {
+    fn write(&mut self, v: u8, _addr: Addr<Area>) -> Result<(), gb_bus::Error> {
         self.enable_mask = v;
         Ok(())
     }
 }
 
-impl FileOperation<IORegArea> for InterruptFlags {
-    fn read(&self, _addr: Box<dyn gb_bus::Address<IORegArea>>) -> Result<u8, gb_bus::Error> {
+impl FileOperation<Addr<IORegArea>, IORegArea> for InterruptFlags {
+    fn read(&self, _addr: Addr<IORegArea>) -> Result<u8, gb_bus::Error> {
         Ok(self.flag)
     }
 
-    fn write(
-        &mut self,
-        v: u8,
-        _addr: Box<dyn gb_bus::Address<IORegArea>>,
-    ) -> Result<(), gb_bus::Error> {
+    fn write(&mut self, v: u8, _addr: Addr<IORegArea>) -> Result<(), gb_bus::Error> {
         self.flag = v;
         Ok(())
     }
