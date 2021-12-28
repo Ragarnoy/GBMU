@@ -106,7 +106,7 @@ mod test {
         };
 
         assert_eq!(
-            wrapper.read(Box::new(Addr::from_offset(Area::Rom, 0x42, 0))),
+            wrapper.read(Addr::from_offset(Area::Rom, 0x42, 0)),
             Ok(234),
             "ensure we're able to read the bios"
         );
@@ -117,14 +117,14 @@ mod test {
             "ensure mbc is correctly initialised"
         );
         assert_eq!(
-            wrapper.read(Box::new(Addr::from_offset(Area::Rom, 0x1000, 0))),
+            wrapper.read(Addr::from_offset(Area::Rom, 0x1000, 0)),
             Ok(mbc_value),
             "ensure when we read outside of the bios size, we fallback to reading the rom"
         );
 
         let mbc_value = 69;
         assert_eq!(
-            wrapper.write(mbc_value, Box::new(Addr::from_offset(Area::Rom, 0x1000, 0))),
+            wrapper.write(mbc_value, Addr::from_offset(Area::Rom, 0x1000, 0)),
             Ok(()),
             "ensure when we write outside of the bios size, we fallback to writing to the rom"
         );
