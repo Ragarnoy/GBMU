@@ -9,7 +9,7 @@ pub mod rom_only;
 use crate::Header;
 pub use bios::Bios;
 pub use bios_wrapper::BiosWrapper;
-use gb_bus::{Address, Area, Error, FileOperation};
+use gb_bus::{Addr, Area, Error, FileOperation};
 pub use mbc1::MBC1;
 pub use mbc2::MBC2;
 pub use mbc3::MBC3;
@@ -163,8 +163,8 @@ impl Serialize for MbcController {
     }
 }
 
-impl FileOperation<Area> for MbcController {
-    fn read(&self, address: Box<dyn Address<Area>>) -> Result<u8, Error> {
+impl FileOperation<Addr<Area>, Area> for MbcController {
+    fn read(&self, address: Addr<Area>) -> Result<u8, Error> {
         match self {
             Self::RomOnly(rom) => rom.read(address),
             Self::Mbc1(mbc1) => mbc1.read(address),
@@ -174,7 +174,7 @@ impl FileOperation<Area> for MbcController {
         }
     }
 
-    fn write(&mut self, v: u8, address: Box<dyn Address<Area>>) -> Result<(), Error> {
+    fn write(&mut self, v: u8, address: Addr<Area>) -> Result<(), Error> {
         match self {
             Self::RomOnly(rom) => rom.write(v, address),
             Self::Mbc1(mbc1) => mbc1.write(v, address),

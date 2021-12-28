@@ -3,7 +3,7 @@ use crate::header::{
     size::{RamSize, RomSize},
     Header,
 };
-use gb_bus::{Address, Area, Error, FileOperation};
+use gb_bus::{Addr, Address, Area, Error, FileOperation};
 use std::io::{self, Read};
 
 pub struct MBC1 {
@@ -59,7 +59,7 @@ impl MBC1 {
         MbcState::from(self.ram_banks.clone())
     }
 
-    fn write_rom(&mut self, v: u8, addr: Box<dyn Address<Area>>) -> Result<(), Error> {
+    fn write_rom(&mut self, v: u8, addr: Addr<Area>) -> Result<(), Error> {
         match addr.get_address() {
             0x0000..=0x1fff => self.regs.ram_enabled = (v & 0xf) == 0xa,
             0x2000..=0x3fff => {
@@ -76,12 +76,12 @@ impl MBC1 {
                     BankingMode::Simple
                 }
             }
-            _ => return Err(Error::new_segfault(addr)),
+            _ => return Err(Error::new_segfault(addr.into())),
         }
         Ok(())
     }
 
-    fn read_rom(&self, addr: Box<dyn Address<Area>>) -> Result<u8, Error> {
+    fn read_rom(&self, addr: Addr<Area>) -> Result<u8, Error> {
         let address = addr.get_address();
         let is_root_bank = address < 0x4000;
         let rom = self.get_selected_rom(is_root_bank);
@@ -131,9 +131,9 @@ impl MBC1 {
         }
     }
 
-    fn write_ram(&mut self, v: u8, addr: Box<dyn Address<Area>>) -> Result<(), Error> {
+    fn write_ram(&mut self, v: u8, addr: Addr<Area>) -> Result<(), Error> {
         if !self.regs.ram_enabled {
-            return Err(Error::new_segfault(addr));
+            return Err(Error::new_segfault(addr.into()));
         }
         let ram = self.get_selected_ram_mut();
         let address = addr.get_address();
@@ -141,9 +141,9 @@ impl MBC1 {
         Ok(())
     }
 
-    fn read_ram(&self, addr: Box<dyn Address<Area>>) -> Result<u8, Error> {
+    fn read_ram(&self, addr: Addr<Area>) -> Result<u8, Error> {
         if !self.regs.ram_enabled {
-            return Err(Error::new_segfault(addr));
+            return Err(Error::new_segfault(addr.into()));
         }
         let ram = self.get_selected_ram();
         let address = addr.get_address();
@@ -171,20 +171,20 @@ impl MBC1 {
     }
 }
 
-impl FileOperation<Area> for MBC1 {
-    fn write(&mut self, v: u8, addr: Box<dyn Address<Area>>) -> Result<(), Error> {
+impl FileOperation<Addr<Area>, Area> for MBC1 {
+    fn write(&mut self, v: u8, addr: Addr<Area>) -> Result<(), Error> {
         match addr.area_type() {
             Area::Rom => self.write_rom(v, addr),
             Area::Ram => self.write_ram(v, addr),
-            _ => Err(Error::bus_error(addr)),
+            _ => Err(Error::bus_error(addr.into())),
         }
     }
 
-    fn read(&self, addr: Box<dyn Address<Area>>) -> Result<u8, Error> {
+    fn read(&self, addr: Addr<Area>) -> Result<u8, Error> {
         match addr.area_type() {
             Area::Rom => self.read_rom(addr),
             Area::Ram => self.read_ram(addr),
-            _ => Err(Error::bus_error(addr)),
+            _ => Err(Error::bus_error(addr.into())),
         }
     }
 }
@@ -215,7 +215,7 @@ mod test_mbc1 {
         size::{RamSize, RomSize},
         Header,
     };
-    use gb_bus::{address::Address, Area};
+    use gb_bus::{address::Addr, Area};
 
     #[test]
     fn test_extra_rom_default_selection() {
@@ -268,11 +268,11 @@ mod test_mbc1 {
         ctl.rom_banks[0][0x3fff] = 51;
         ctl.rom_banks[1][0] = 42;
         let b = ctl
-            .read_rom(Box::new(Address::from_offset(Area::Rom, 0x3fff, 0)))
+            .read_rom(Addr::from_offset(Area::Rom, 0x3fff, 0))
             .expect("failed to read");
         assert_eq!(b, 51);
         let b = ctl
-            .read_rom(Box::new(Address::from_offset(Area::Rom, 0x4000, 0)))
+            .read_rom(Addr::from_offset(Area::Rom, 0x4000, 0))
             .expect("failed to read");
         assert_eq!(b, 42);
     }

@@ -1,5 +1,5 @@
 use super::ROM_AREA_SIZE;
-use gb_bus::{Address, Area, Error, FileOperation};
+use gb_bus::{Addr, Address, Area, Error, FileOperation};
 use std::io::{self, ErrorKind, Read};
 
 pub struct RomOnlyController {
@@ -27,27 +27,24 @@ impl RomOnlyController {
     }
 }
 
-impl FileOperation<Area> for RomOnlyController {
-    fn read(&self, addr: Box<dyn Address<Area>>) -> Result<u8, Error> {
+impl FileOperation<Addr<Area>, Area> for RomOnlyController {
+    fn read(&self, addr: Addr<Area>) -> Result<u8, Error> {
         let address = addr.get_address();
         if address < self.rom.len() {
             Ok(self.rom[address])
         } else {
-            Err(Error::bus_error(addr))
+            Err(Error::bus_error(addr.into()))
         }
     }
 }
 
 #[test]
 fn test_romonly_impl() {
-    use gb_bus::{address::Address, area::Area};
+    use gb_bus::{address::Addr, area::Area};
 
     let rom = RomOnlyController {
         rom: [42; ROM_AREA_SIZE],
     };
 
-    assert_eq!(
-        rom.read(Box::new(Address::from_offset(Area::Rom, 0x7fff, 0))),
-        Ok(42)
-    );
+    assert_eq!(rom.read(Addr::from_offset(Area::Rom, 0x7fff, 0)), Ok(42));
 }

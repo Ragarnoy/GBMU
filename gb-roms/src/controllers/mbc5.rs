@@ -1,6 +1,6 @@
 use super::{Controller, MbcStates, RAM_BANK_SIZE, ROM_BANK_SIZE};
 use crate::header::Header;
-use gb_bus::{Address, Area, Error, FileOperation};
+use gb_bus::{Addr, Address, Area, Error, FileOperation};
 use serde::{Deserialize, Serialize};
 use std::io::{self, Read};
 
@@ -36,13 +36,13 @@ impl MBC5 {
         Ok(ctl)
     }
 
-    fn write_rom(&mut self, v: u8, addr: Box<dyn Address<Area>>) -> Result<(), Error> {
+    fn write_rom(&mut self, v: u8, addr: Addr<Area>) -> Result<(), Error> {
         match addr.get_address() {
             0x0000..=0x1FFF => self.regs.set_ram_enabling_state(v),
             0x2000..=0x2FFF => self.regs.set_lower_rom_number(v),
             0x3000..=0x3FFF => self.regs.set_upper_rom_number(v),
             0x4000..=0x5FFF => self.regs.set_ram_number(v),
-            _ => return Err(Error::new_segfault(addr)),
+            _ => return Err(Error::new_segfault(addr.into())),
         }
         Ok(())
     }
@@ -75,12 +75,12 @@ impl MBC5 {
         }
     }
 
-    fn read_rom(&self, addr: Box<dyn Address<Area>>) -> Result<u8, Error> {
+    fn read_rom(&self, addr: Addr<Area>) -> Result<u8, Error> {
         let address = addr.get_address();
         match address {
             0x0000..=0x3FFF => Ok(self.rom_banks[0][address]),
             0x4000..=0x7FFF => Ok(self.get_selected_rom()[address - 0x4000]),
-            _ => Err(Error::new_segfault(addr)),
+            _ => Err(Error::new_segfault(addr.into())),
         }
     }
 
@@ -88,9 +88,9 @@ impl MBC5 {
         &self.rom_banks[self.regs.rom_number as usize]
     }
 
-    fn write_ram(&mut self, v: u8, addr: Box<dyn Address<Area>>) -> Result<(), Error> {
+    fn write_ram(&mut self, v: u8, addr: Addr<Area>) -> Result<(), Error> {
         if !self.regs.ram_enabled {
-            return Err(Error::new_segfault(addr));
+            return Err(Error::new_segfault(addr.into()));
         }
         let ram = self.get_selected_ram_mut();
         let address = addr.get_address();
@@ -98,9 +98,9 @@ impl MBC5 {
         Ok(())
     }
 
-    fn read_ram(&self, addr: Box<dyn Address<Area>>) -> Result<u8, Error> {
+    fn read_ram(&self, addr: Addr<Area>) -> Result<u8, Error> {
         if !self.regs.ram_enabled {
-            return Err(Error::new_segfault(addr));
+            return Err(Error::new_segfault(addr.into()));
         }
         let ram = self.get_selected_ram();
         let address = addr.get_address();
@@ -116,20 +116,20 @@ impl MBC5 {
     }
 }
 
-impl FileOperation<Area> for MBC5 {
-    fn read(&self, addr: Box<dyn Address<Area>>) -> Result<u8, Error> {
+impl FileOperation<Addr<Area>, Area> for MBC5 {
+    fn read(&self, addr: Addr<Area>) -> Result<u8, Error> {
         match addr.area_type() {
             Area::Rom => self.read_rom(addr),
             Area::ExtRam => self.read_ram(addr),
-            _ => Err(Error::bus_error(addr)),
+            _ => Err(Error::bus_error(addr.into())),
         }
     }
 
-    fn write(&mut self, v: u8, addr: Box<dyn Address<Area>>) -> Result<(), Error> {
+    fn write(&mut self, v: u8, addr: Addr<Area>) -> Result<(), Error> {
         match addr.area_type() {
             Area::Rom => self.write_rom(v, addr),
             Area::ExtRam => self.write_ram(v, addr),
-            _ => Err(Error::bus_error(addr)),
+            _ => Err(Error::bus_error(addr.into())),
         }
     }
 }
@@ -141,7 +141,7 @@ mod test_mbc5 {
         size::{RamSize, RomSize},
         Header,
     };
-    use gb_bus::{address::Address, Area};
+    use gb_bus::{address::Addr, Area};
 
     #[test]
     fn basic() {
@@ -158,13 +158,13 @@ mod test_mbc5 {
 
         ctl.regs.set_lower_rom_number(4);
         assert_eq!(
-            ctl.read_rom(Box::new(Address::from_offset(Area::Rom, 0x4042, 0))),
+            ctl.read_rom(Addr::from_offset(Area::Rom, 0x4042, 0)),
             Ok(42)
         );
         ctl.regs.set_ram_number(2);
         ctl.regs.set_ram_enabling_state(0xa);
 
-        let addr = Box::new(Address::from_offset(Area::ExtRam, 0x42, 0));
+        let addr = Addr::from_offset(Area::ExtRam, 0x42, 0);
         assert_eq!(ctl.write_ram(42, addr.clone()), Ok(()));
         assert_eq!(ctl.read_ram(addr), Ok(42));
     }

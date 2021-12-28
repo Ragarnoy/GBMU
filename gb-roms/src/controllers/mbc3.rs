@@ -1,6 +1,6 @@
 use super::{Controller, MbcStates, RAM_BANK_SIZE, ROM_BANK_SIZE};
 use crate::header::Header;
-use gb_bus::{Address, Area, Error, FileOperation};
+use gb_bus::{Addr, Address, Area, Error, FileOperation};
 use gb_rtc::{Naive, ReadRtcRegisters};
 use serde::{Deserialize, Serialize};
 use std::io::{self, Read};
@@ -66,12 +66,12 @@ impl MBC3 {
         Ok(self)
     }
 
-    fn read_rom(&self, addr: Box<dyn Address<Area>>) -> Result<u8, Error> {
+    fn read_rom(&self, addr: Addr<Area>) -> Result<u8, Error> {
         let address = addr.get_address();
         match address {
             0x0000..=0x3FFF => Ok(self.rom_banks[0][address]),
             0x4000..=0x7FFF => Ok(self.get_selected_rom_bank()[address]),
-            _ => Err(Error::new_segfault(addr)),
+            _ => Err(Error::new_segfault(addr.into())),
         }
     }
 
@@ -79,7 +79,7 @@ impl MBC3 {
         &self.rom_banks[self.regs.rom_bank as usize]
     }
 
-    fn write_rom(&mut self, v: u8, addr: Box<dyn Address<Area>>) -> Result<(), Error> {
+    fn write_rom(&mut self, v: u8, addr: Addr<Area>) -> Result<(), Error> {
         let address = addr.get_address();
         match address {
             0x0000..=0x1FFF => self.regs.ram_enabled = (v & 0xF) == 0xA,
@@ -92,23 +92,23 @@ impl MBC3 {
                     self.regs.last_writed_byte = Some(v);
                 }
             }
-            _ => return Err(Error::new_segfault(addr)),
+            _ => return Err(Error::new_segfault(addr.into())),
         }
         Ok(())
     }
 
-    fn latch_clock_data(&mut self, addr: Box<dyn Address<Area>>) -> Result<(), Error> {
+    fn latch_clock_data(&mut self, addr: Addr<Area>) -> Result<(), Error> {
         if let Some(clock) = self.clock.as_ref() {
             self.regs.rtc = clock.into();
         } else {
-            return Err(Error::new_segfault(addr));
+            return Err(Error::new_segfault(addr.into()));
         }
         Ok(())
     }
 
-    fn read_ram(&self, addr: Box<dyn Address<Area>>) -> Result<u8, Error> {
+    fn read_ram(&self, addr: Addr<Area>) -> Result<u8, Error> {
         if !self.regs.ram_enabled {
-            return Err(Error::new_segfault(addr));
+            return Err(Error::new_segfault(addr.into()));
         }
         let address = addr.get_address();
         let ram_bank = self.regs.ram_bank;
@@ -119,13 +119,13 @@ impl MBC3 {
             0xA => Ok(self.regs.rtc.hours),
             0xB => Ok(self.regs.rtc.lower_day_counter),
             0xC => Ok(self.regs.rtc.upper_day_counter),
-            _ => Err(Error::new_segfault(addr)),
+            _ => Err(Error::new_segfault(addr.into())),
         }
     }
 
-    fn write_ram(&mut self, v: u8, addr: Box<dyn Address<Area>>) -> Result<(), Error> {
+    fn write_ram(&mut self, v: u8, addr: Addr<Area>) -> Result<(), Error> {
         if !self.regs.ram_enabled {
-            return Err(Error::new_segfault(addr));
+            return Err(Error::new_segfault(addr.into()));
         }
         let address = addr.get_address();
         let ram_bank = self.regs.ram_bank;
@@ -136,25 +136,25 @@ impl MBC3 {
             0xA => self.regs.rtc.hours = v,
             0xB => self.regs.rtc.lower_day_counter = v,
             0xC => self.regs.rtc.upper_day_counter = v,
-            _ => return Err(Error::new_segfault(addr)),
+            _ => return Err(Error::new_segfault(addr.into())),
         }
         Ok(())
     }
 }
 
-impl FileOperation<Area> for MBC3 {
-    fn read(&self, addr: Box<dyn Address<Area>>) -> Result<u8, Error> {
+impl FileOperation<Addr<Area>, Area> for MBC3 {
+    fn read(&self, addr: Addr<Area>) -> Result<u8, Error> {
         match addr.area_type() {
             Area::Rom => self.read_rom(addr),
             Area::Ram => self.read_ram(addr),
-            _ => Err(Error::bus_error(addr)),
+            _ => Err(Error::bus_error(addr.into())),
         }
     }
-    fn write(&mut self, v: u8, addr: Box<dyn Address<Area>>) -> Result<(), Error> {
+    fn write(&mut self, v: u8, addr: Addr<Area>) -> Result<(), Error> {
         match addr.area_type() {
             Area::Rom => self.write_rom(v, addr),
             Area::Ram => self.write_ram(v, addr),
-            _ => Err(Error::bus_error(addr)),
+            _ => Err(Error::bus_error(addr.into())),
         }
     }
 }
