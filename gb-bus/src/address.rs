@@ -31,8 +31,8 @@ impl<A> Addr<A> {
     /// Create an Address from an absolute adress and an offset
     ///
     /// ```
-    /// # use gb_bus::{address::Address, Area};
-    /// let pos = Address::from_offset(Area::Rom, 0x42, 0x10);
+    /// # use gb_bus::{address::Addr, Area};
+    /// let pos = Addr::from_offset(Area::Rom, 0x42, 0x10);
     ///
     /// assert_eq!(pos.absolute, 0x42);
     /// assert_eq!(pos.relative, 0x32);
