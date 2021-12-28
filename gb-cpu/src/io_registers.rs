@@ -1,4 +1,4 @@
-use gb_bus::{Area, FileOperation, IORegArea};
+use gb_bus::{Address, Area, FileOperation, IORegArea};
 
 #[derive(Default, Debug, Clone, Copy)]
 pub struct IORegisters {
@@ -71,9 +71,19 @@ impl FileOperation<IORegArea> for IORegisters {
     fn write(
         &mut self,
         v: u8,
-        _addr: Box<dyn gb_bus::Address<IORegArea>>,
+        addr: Box<dyn gb_bus::Address<IORegArea>>,
     ) -> Result<(), gb_bus::Error> {
-        self.flag = v;
+        match addr.area_type() {
+            IORegArea::InterruptFlag => self.flag = v,
+            IORegArea::DoubleSpeed => {
+                self.desired_speed = if v & 1 == 1 {
+                    Speed::Double
+                } else {
+                    Speed::Normal
+                }
+            }
+            _ => return Err(gb_bus::Error::bus_error(addr)),
+        }
         Ok(())
     }
 }
