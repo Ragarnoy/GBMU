@@ -1,7 +1,5 @@
 use crate::{
-    microcode::controller::MicrocodeController,
-    io_registers::IORegisters,
-    registers::Registers,
+    io_registers::IORegisters, microcode::controller::MicrocodeController, registers::Registers,
 };
 use gb_bus::Bus;
 use gb_clock::Ticker;
