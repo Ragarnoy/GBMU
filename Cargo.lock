@@ -2116,7 +2116,7 @@ checksum = "d29ab0c6d3fc0ee92fe66e2d99f700eab17a8d57d1c1d3b748380fb20baa78cd"
 [[package]]
 name = "sdl2"
 version = "0.35.1"
-source = "git+https://github.com/Rust-SDL2/rust-sdl2#496368d72202b65d365ef64a86c293d20d22ece0"
+source = "git+https://github.com/Rust-SDL2/rust-sdl2?rev=496368d72202b65d365ef64a86c293d20d22ece0#496368d72202b65d365ef64a86c293d20d22ece0"
 dependencies = [
  "bitflags",
  "lazy_static",
@@ -2127,7 +2127,7 @@ dependencies = [
 [[package]]
 name = "sdl2-sys"
 version = "0.35.1"
-source = "git+https://github.com/Rust-SDL2/rust-sdl2#496368d72202b65d365ef64a86c293d20d22ece0"
+source = "git+https://github.com/Rust-SDL2/rust-sdl2?rev=496368d72202b65d365ef64a86c293d20d22ece0#496368d72202b65d365ef64a86c293d20d22ece0"
 dependencies = [
  "cfg-if 1.0.0",
  "cmake",
