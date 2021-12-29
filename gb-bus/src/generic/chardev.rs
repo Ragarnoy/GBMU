@@ -1,27 +1,35 @@
-use crate::{Addr, Area, Error, FileOperation, IORegArea, InternalLock, Lock, MemoryLock};
+use crate::{Address, Area, Error, FileOperation, IORegArea, InternalLock, Lock, MemoryLock};
 
 /// A Char Device yield current setted byte
 #[derive(Default)]
 pub struct CharDevice(pub u8);
 
-impl FileOperation<Addr<Area>, Area> for CharDevice {
-    fn write(&mut self, v: u8, _addr: Addr<Area>) -> Result<(), Error> {
+impl<A> FileOperation<A, Area> for CharDevice
+where
+    u16: From<A>,
+    A: Address<Area>,
+{
+    fn write(&mut self, v: u8, _addr: A) -> Result<(), Error> {
         self.0 = v;
         Ok(())
     }
 
-    fn read(&self, _addr: Addr<Area>) -> Result<u8, Error> {
+    fn read(&self, _addr: A) -> Result<u8, Error> {
         Ok(self.0)
     }
 }
 
-impl FileOperation<Addr<IORegArea>, IORegArea> for CharDevice {
-    fn write(&mut self, v: u8, _addr: Addr<IORegArea>) -> Result<(), Error> {
+impl<A> FileOperation<A, IORegArea> for CharDevice
+where
+    u16: From<A>,
+    A: Address<IORegArea>,
+{
+    fn write(&mut self, v: u8, _addr: A) -> Result<(), Error> {
         self.0 = v;
         Ok(())
     }
 
-    fn read(&self, _addr: Addr<IORegArea>) -> Result<u8, Error> {
+    fn read(&self, _addr: A) -> Result<u8, Error> {
         Ok(self.0)
     }
 }
@@ -36,7 +44,12 @@ impl MemoryLock for CharDevice {
     }
 }
 
-impl InternalLock<Addr<Area>, Area> for CharDevice {}
+impl<A> InternalLock<A, Area> for CharDevice
+where
+    u16: From<A>,
+    A: Address<Area>,
+{
+}
 
 #[test]
 fn test_chardev_fileop() {

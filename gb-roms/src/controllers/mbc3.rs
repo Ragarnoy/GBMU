@@ -1,6 +1,6 @@
 use super::{Controller, MbcStates, RAM_BANK_SIZE, ROM_BANK_SIZE};
 use crate::header::Header;
-use gb_bus::{Addr, Address, Area, Error, FileOperation};
+use gb_bus::{Address, Area, Error, FileOperation};
 use gb_rtc::{Naive, ReadRtcRegisters};
 use serde::{Deserialize, Serialize};
 use std::io::{self, Read};
@@ -66,7 +66,11 @@ impl MBC3 {
         Ok(self)
     }
 
-    fn read_rom(&self, addr: Addr<Area>) -> Result<u8, Error> {
+    fn read_rom<A>(&self, addr: A) -> Result<u8, Error>
+    where
+        u16: From<A>,
+        A: Address<Area>,
+    {
         let address = addr.get_address();
         match address {
             0x0000..=0x3FFF => Ok(self.rom_banks[0][address]),
@@ -79,7 +83,11 @@ impl MBC3 {
         &self.rom_banks[self.regs.rom_bank as usize]
     }
 
-    fn write_rom(&mut self, v: u8, addr: Addr<Area>) -> Result<(), Error> {
+    fn write_rom<A>(&mut self, v: u8, addr: A) -> Result<(), Error>
+    where
+        u16: From<A>,
+        A: Address<Area>,
+    {
         let address = addr.get_address();
         match address {
             0x0000..=0x1FFF => self.regs.ram_enabled = (v & 0xF) == 0xA,
@@ -97,7 +105,11 @@ impl MBC3 {
         Ok(())
     }
 
-    fn latch_clock_data(&mut self, addr: Addr<Area>) -> Result<(), Error> {
+    fn latch_clock_data<A>(&mut self, addr: A) -> Result<(), Error>
+    where
+        u16: From<A>,
+        A: Address<Area>,
+    {
         if let Some(clock) = self.clock.as_ref() {
             self.regs.rtc = clock.into();
         } else {
@@ -106,7 +118,11 @@ impl MBC3 {
         Ok(())
     }
 
-    fn read_ram(&self, addr: Addr<Area>) -> Result<u8, Error> {
+    fn read_ram<A>(&self, addr: A) -> Result<u8, Error>
+    where
+        u16: From<A>,
+        A: Address<Area>,
+    {
         if !self.regs.ram_enabled {
             return Err(Error::new_segfault(addr.into()));
         }
@@ -123,7 +139,11 @@ impl MBC3 {
         }
     }
 
-    fn write_ram(&mut self, v: u8, addr: Addr<Area>) -> Result<(), Error> {
+    fn write_ram<A>(&mut self, v: u8, addr: A) -> Result<(), Error>
+    where
+        u16: From<A>,
+        A: Address<Area>,
+    {
         if !self.regs.ram_enabled {
             return Err(Error::new_segfault(addr.into()));
         }
@@ -142,15 +162,19 @@ impl MBC3 {
     }
 }
 
-impl FileOperation<Addr<Area>, Area> for MBC3 {
-    fn read(&self, addr: Addr<Area>) -> Result<u8, Error> {
+impl<A> FileOperation<A, Area> for MBC3
+where
+    u16: From<A>,
+    A: Address<Area>,
+{
+    fn read(&self, addr: A) -> Result<u8, Error> {
         match addr.area_type() {
             Area::Rom => self.read_rom(addr),
             Area::Ram => self.read_ram(addr),
             _ => Err(Error::bus_error(addr.into())),
         }
     }
-    fn write(&mut self, v: u8, addr: Addr<Area>) -> Result<(), Error> {
+    fn write(&mut self, v: u8, addr: A) -> Result<(), Error> {
         match addr.area_type() {
             Area::Rom => self.write_rom(v, addr),
             Area::Ram => self.write_ram(v, addr),

@@ -1,11 +1,15 @@
-use crate::{Addr, Area, Error, FileOperation, IORegArea, InternalLock, Lock, MemoryLock};
+use crate::{Address, Area, Error, FileOperation, IORegArea, InternalLock, Lock, MemoryLock};
 
 /// A device that always panic when interracting with it
 #[derive(Default)]
 pub struct PanicDevice;
 
-impl FileOperation<Addr<Area>, Area> for PanicDevice {
-    fn write(&mut self, v: u8, addr: Addr<Area>) -> Result<(), Error> {
+impl<A> FileOperation<A, Area> for PanicDevice
+where
+    u16: From<A>,
+    A: Address<Area>,
+{
+    fn write(&mut self, v: u8, addr: A) -> Result<(), Error> {
         panic!(
             "writing to a panic device, v={:x}, addr={:?}",
             v,
@@ -13,13 +17,17 @@ impl FileOperation<Addr<Area>, Area> for PanicDevice {
         );
     }
 
-    fn read(&self, addr: Addr<Area>) -> Result<u8, Error> {
+    fn read(&self, addr: A) -> Result<u8, Error> {
         panic!("reading to a panic device, addr={:?}", u16::from(addr));
     }
 }
 
-impl FileOperation<Addr<IORegArea>, IORegArea> for PanicDevice {
-    fn write(&mut self, v: u8, addr: Addr<IORegArea>) -> Result<(), Error> {
+impl<A> FileOperation<A, IORegArea> for PanicDevice
+where
+    u16: From<A>,
+    A: Address<IORegArea>,
+{
+    fn write(&mut self, v: u8, addr: A) -> Result<(), Error> {
         panic!(
             "writing to a panic device, v={:x}, addr={:?}",
             v,
@@ -27,7 +35,7 @@ impl FileOperation<Addr<IORegArea>, IORegArea> for PanicDevice {
         );
     }
 
-    fn read(&self, addr: Addr<IORegArea>) -> Result<u8, Error> {
+    fn read(&self, addr: A) -> Result<u8, Error> {
         panic!("reading to a panic device, addr={:?}", u16::from(addr));
     }
 }
@@ -42,7 +50,12 @@ impl MemoryLock for PanicDevice {
     }
 }
 
-impl InternalLock<Addr<Area>, Area> for PanicDevice {}
+impl<A> InternalLock<A, Area> for PanicDevice
+where
+    u16: From<A>,
+    A: Address<Area>,
+{
+}
 
 #[test]
 #[should_panic]

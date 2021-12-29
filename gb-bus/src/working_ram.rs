@@ -1,4 +1,4 @@
-use crate::{generic::DynBankableStorage, Addr, Address, Area, Error, FileOperation, IORegArea};
+use crate::{generic::DynBankableStorage, Address, Area, Error, FileOperation, IORegArea};
 
 pub const RAM_BANK_SIZE: usize = 0x1000;
 pub const CGB_MAX_BANKS: usize = 8;
@@ -24,8 +24,12 @@ impl WorkingRam {
     }
 }
 
-impl FileOperation<Addr<Area>, Area> for WorkingRam {
-    fn write(&mut self, value: u8, addr: Addr<Area>) -> Result<(), Error> {
+impl<A> FileOperation<A, Area> for WorkingRam
+where
+    u16: From<A>,
+    A: Address<Area>,
+{
+    fn write(&mut self, value: u8, addr: A) -> Result<(), Error> {
         let address = addr.get_address();
         match address {
             0..=0xfff => self.storage.root_bank_mut()[address] = value,
@@ -38,7 +42,7 @@ impl FileOperation<Addr<Area>, Area> for WorkingRam {
         Ok(())
     }
 
-    fn read(&self, addr: Addr<Area>) -> Result<u8, Error> {
+    fn read(&self, addr: A) -> Result<u8, Error> {
         let address = addr.get_address();
         match address {
             0..=0xfff => Ok(self.storage.root_bank()[address]),
@@ -51,8 +55,12 @@ impl FileOperation<Addr<Area>, Area> for WorkingRam {
     }
 }
 
-impl FileOperation<Addr<IORegArea>, IORegArea> for WorkingRam {
-    fn write(&mut self, value: u8, addr: Addr<IORegArea>) -> Result<(), Error> {
+impl<A> FileOperation<A, IORegArea> for WorkingRam
+where
+    u16: From<A>,
+    A: Address<IORegArea>,
+{
+    fn write(&mut self, value: u8, addr: A) -> Result<(), Error> {
         if self.enable_cgb_feature {
             self.storage.set_bank_index((value & 0x7).min(1) as usize);
             Ok(())
@@ -61,7 +69,7 @@ impl FileOperation<Addr<IORegArea>, IORegArea> for WorkingRam {
         }
     }
 
-    fn read(&self, addr: Addr<IORegArea>) -> Result<u8, Error> {
+    fn read(&self, addr: A) -> Result<u8, Error> {
         if self.enable_cgb_feature {
             Ok(self.storage.current_bank_index as u8)
         } else {

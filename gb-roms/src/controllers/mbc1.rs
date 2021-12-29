@@ -3,7 +3,7 @@ use crate::header::{
     size::{RamSize, RomSize},
     Header,
 };
-use gb_bus::{Addr, Address, Area, Error, FileOperation};
+use gb_bus::{Address, Area, Error, FileOperation};
 use std::io::{self, Read};
 
 pub struct MBC1 {
@@ -59,7 +59,11 @@ impl MBC1 {
         MbcState::from(self.ram_banks.clone())
     }
 
-    fn write_rom(&mut self, v: u8, addr: Addr<Area>) -> Result<(), Error> {
+    fn write_rom<A>(&mut self, v: u8, addr: A) -> Result<(), Error>
+    where
+        u16: From<A>,
+        A: Address<Area>,
+    {
         match addr.get_address() {
             0x0000..=0x1fff => self.regs.ram_enabled = (v & 0xf) == 0xa,
             0x2000..=0x3fff => {
@@ -81,7 +85,11 @@ impl MBC1 {
         Ok(())
     }
 
-    fn read_rom(&self, addr: Addr<Area>) -> Result<u8, Error> {
+    fn read_rom<A>(&self, addr: A) -> Result<u8, Error>
+    where
+        u16: From<A>,
+        A: Address<Area>,
+    {
         let address = addr.get_address();
         let is_root_bank = address < 0x4000;
         let rom = self.get_selected_rom(is_root_bank);
@@ -131,7 +139,11 @@ impl MBC1 {
         }
     }
 
-    fn write_ram(&mut self, v: u8, addr: Addr<Area>) -> Result<(), Error> {
+    fn write_ram<A>(&mut self, v: u8, addr: A) -> Result<(), Error>
+    where
+        u16: From<A>,
+        A: Address<Area>,
+    {
         if !self.regs.ram_enabled {
             return Err(Error::new_segfault(addr.into()));
         }
@@ -141,7 +153,11 @@ impl MBC1 {
         Ok(())
     }
 
-    fn read_ram(&self, addr: Addr<Area>) -> Result<u8, Error> {
+    fn read_ram<A>(&self, addr: A) -> Result<u8, Error>
+    where
+        u16: From<A>,
+        A: Address<Area>,
+    {
         if !self.regs.ram_enabled {
             return Err(Error::new_segfault(addr.into()));
         }
@@ -171,8 +187,12 @@ impl MBC1 {
     }
 }
 
-impl FileOperation<Addr<Area>, Area> for MBC1 {
-    fn write(&mut self, v: u8, addr: Addr<Area>) -> Result<(), Error> {
+impl<A> FileOperation<A, Area> for MBC1
+where
+    u16: From<A>,
+    A: Address<Area>,
+{
+    fn write(&mut self, v: u8, addr: A) -> Result<(), Error> {
         match addr.area_type() {
             Area::Rom => self.write_rom(v, addr),
             Area::Ram => self.write_ram(v, addr),
@@ -180,7 +200,7 @@ impl FileOperation<Addr<Area>, Area> for MBC1 {
         }
     }
 
-    fn read(&self, addr: Addr<Area>) -> Result<u8, Error> {
+    fn read(&self, addr: A) -> Result<u8, Error> {
         match addr.area_type() {
             Area::Rom => self.read_rom(addr),
             Area::Ram => self.read_ram(addr),

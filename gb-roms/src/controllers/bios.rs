@@ -1,4 +1,4 @@
-use gb_bus::{Addr, Address, Area, Error, FileOperation};
+use gb_bus::{Address, Area, Error, FileOperation};
 
 pub enum BiosType {
     Dmg,
@@ -33,8 +33,12 @@ pub fn cgb() -> Bios {
     )
 }
 
-impl FileOperation<Addr<Area>, Area> for Bios {
-    fn read(&self, addr: Addr<Area>) -> Result<u8, Error> {
+impl<A> FileOperation<A, Area> for Bios
+where
+    u16: From<A>,
+    A: Address<Area>,
+{
+    fn read(&self, addr: A) -> Result<u8, Error> {
         self.container
             .get(addr.get_address())
             .map_or_else(|| Err(Error::new_segfault(addr.into())), |v| Ok(*v))

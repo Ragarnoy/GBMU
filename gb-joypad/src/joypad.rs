@@ -3,7 +3,7 @@ use crate::{
     Config, InputType,
 };
 use egui::{CtxRef, Direction, Layout, Separator, Ui};
-use gb_bus::{Addr, Address, Bus, Error, FileOperation, IORegArea};
+use gb_bus::{Address, Bus, Error, FileOperation, IORegArea};
 use gb_clock::{Tick, Ticker};
 use sdl2::event::Event;
 use sdl2::keyboard::Scancode;
@@ -226,8 +226,12 @@ impl Joypad {
     }
 }
 
-impl FileOperation<Addr<IORegArea>, IORegArea> for Joypad {
-    fn write(&mut self, v: u8, addr: Addr<IORegArea>) -> Result<(), Error> {
+impl<A> FileOperation<A, IORegArea> for Joypad
+where
+    u16: From<A>,
+    A: Address<IORegArea>,
+{
+    fn write(&mut self, v: u8, addr: A) -> Result<(), Error> {
         match (addr.area_type(), addr.get_address()) {
             (IORegArea::Controller, 0x00) => {
                 let v = !v & 0b0011_0000;
@@ -238,7 +242,7 @@ impl FileOperation<Addr<IORegArea>, IORegArea> for Joypad {
         }
     }
 
-    fn read(&self, addr: Addr<IORegArea>) -> Result<u8, Error> {
+    fn read(&self, addr: A) -> Result<u8, Error> {
         match (addr.area_type(), addr.get_address()) {
             (IORegArea::Controller, 0x00) => Ok(self.reg_val),
             _ => Err(Error::SegmentationFault(addr.into())),

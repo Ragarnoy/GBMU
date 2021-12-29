@@ -1,5 +1,5 @@
 use super::ROM_AREA_SIZE;
-use gb_bus::{Addr, Address, Area, Error, FileOperation};
+use gb_bus::{Address, Area, Error, FileOperation};
 use std::io::{self, ErrorKind, Read};
 
 pub struct RomOnlyController {
@@ -27,8 +27,12 @@ impl RomOnlyController {
     }
 }
 
-impl FileOperation<Addr<Area>, Area> for RomOnlyController {
-    fn read(&self, addr: Addr<Area>) -> Result<u8, Error> {
+impl<A> FileOperation<A, Area> for RomOnlyController
+where
+    u16: From<A>,
+    A: Address<Area>,
+{
+    fn read(&self, addr: A) -> Result<u8, Error> {
         let address = addr.get_address();
         if address < self.rom.len() {
             Ok(self.rom[address])

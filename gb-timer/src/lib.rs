@@ -1,4 +1,4 @@
-use gb_bus::{Addr, Address, Bus, Error, FileOperation, IORegArea};
+use gb_bus::{Address, Bus, Error, FileOperation, IORegArea};
 use gb_clock::Ticker;
 #[cfg(test)]
 mod test_timer;
@@ -68,8 +68,12 @@ impl Ticker for Timer {
     }
 }
 
-impl FileOperation<Addr<IORegArea>, IORegArea> for Timer {
-    fn read(&self, addr: Addr<IORegArea>) -> Result<u8, Error> {
+impl<A> FileOperation<A, IORegArea> for Timer
+where
+    u16: From<A>,
+    A: Address<IORegArea>,
+{
+    fn read(&self, addr: A) -> Result<u8, Error> {
         match addr.area_type() {
             IORegArea::DivTimer => Ok(self.div()),
             IORegArea::TimerCounter => Ok(self.tima),
@@ -79,7 +83,7 @@ impl FileOperation<Addr<IORegArea>, IORegArea> for Timer {
         }
     }
 
-    fn write(&mut self, v: u8, addr: Addr<IORegArea>) -> Result<(), Error> {
+    fn write(&mut self, v: u8, addr: A) -> Result<(), Error> {
         match addr.area_type() {
             IORegArea::DivTimer => self.system_clock = 0,
             IORegArea::TimerCounter => self.tima = v,

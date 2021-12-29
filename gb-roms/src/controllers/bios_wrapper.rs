@@ -1,18 +1,23 @@
 use super::Bios;
-use gb_bus::{Addr, Address, Area, Error, FileOperation, IORegArea};
+use gb_bus::{Address, Area, Error, FileOperation, IORegArea};
 use std::{cell::RefCell, rc::Rc};
 
-pub struct BiosWrapper {
+pub struct BiosWrapper<A>
+where
+    u16: From<A>,
+    A: Address<Area>,
+{
     bios: Rc<RefCell<Bios>>,
-    mbc: Rc<RefCell<dyn FileOperation<Addr<Area>, Area>>>,
+    mbc: Rc<RefCell<dyn FileOperation<A, Area>>>,
     pub bios_enabling_reg: u8,
 }
 
-impl BiosWrapper {
-    pub fn new(
-        bios: Rc<RefCell<Bios>>,
-        mbc: Rc<RefCell<dyn FileOperation<Addr<Area>, Area>>>,
-    ) -> Self {
+impl<A> BiosWrapper<A>
+where
+    u16: From<A>,
+    A: Address<Area>,
+{
+    pub fn new(bios: Rc<RefCell<Bios>>, mbc: Rc<RefCell<dyn FileOperation<A, Area>>>) -> Self {
         Self {
             bios,
             mbc,
@@ -24,25 +29,29 @@ impl BiosWrapper {
         self.bios_enabling_reg == 0
     }
 
-    fn read_bios(&self, address: Addr<Area>) -> Result<u8, Error> {
+    fn read_bios(&self, address: A) -> Result<u8, Error> {
         self.bios.borrow().read(address)
     }
 
-    fn read_mbc(&self, address: Addr<Area>) -> Result<u8, Error> {
+    fn read_mbc(&self, address: A) -> Result<u8, Error> {
         self.mbc.borrow().read(address)
     }
 
-    fn write_bios(&self, v: u8, address: Addr<Area>) -> Result<(), Error> {
+    fn write_bios(&self, v: u8, address: A) -> Result<(), Error> {
         self.bios.borrow_mut().write(v, address)
     }
 
-    fn write_mbc(&self, v: u8, address: Addr<Area>) -> Result<(), Error> {
+    fn write_mbc(&self, v: u8, address: A) -> Result<(), Error> {
         self.mbc.borrow_mut().write(v, address)
     }
 }
 
-impl FileOperation<Addr<Area>, Area> for BiosWrapper {
-    fn read(&self, address: Addr<Area>) -> Result<u8, Error> {
+impl<A> FileOperation<A, Area> for BiosWrapper<A>
+where
+    u16: From<A>,
+    A: Address<Area>,
+{
+    fn read(&self, address: A) -> Result<u8, Error> {
         let addr = address.get_address();
         if self.bios_enabled() && addr < self.bios.borrow().container.len() {
             self.read_bios(address)
@@ -51,7 +60,7 @@ impl FileOperation<Addr<Area>, Area> for BiosWrapper {
         }
     }
 
-    fn write(&mut self, v: u8, address: Addr<Area>) -> Result<(), Error> {
+    fn write(&mut self, v: u8, address: A) -> Result<(), Error> {
         let addr = address.get_address();
         if self.bios_enabled() && addr < self.bios.borrow().container.len() {
             self.write_bios(v, address)
@@ -61,8 +70,14 @@ impl FileOperation<Addr<Area>, Area> for BiosWrapper {
     }
 }
 
-impl FileOperation<Addr<IORegArea>, IORegArea> for BiosWrapper {
-    fn read(&self, address: Addr<IORegArea>) -> Result<u8, Error> {
+impl<A, B> FileOperation<B, IORegArea> for BiosWrapper<A>
+where
+    u16: From<A>,
+    A: Address<Area>,
+    u16: From<B>,
+    B: Address<IORegArea>,
+{
+    fn read(&self, address: B) -> Result<u8, Error> {
         let addr = address.get_address();
         if addr == 0 {
             Ok(self.bios_enabling_reg)
@@ -71,7 +86,7 @@ impl FileOperation<Addr<IORegArea>, IORegArea> for BiosWrapper {
         }
     }
 
-    fn write(&mut self, v: u8, address: Addr<IORegArea>) -> Result<(), Error> {
+    fn write(&mut self, v: u8, address: B) -> Result<(), Error> {
         let addr = address.get_address();
         if addr == 0 {
             self.bios_enabling_reg = v;

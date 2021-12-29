@@ -7,7 +7,7 @@ use crate::{
         OAM_DMA_START, SOUND_END, SOUND_START, TIMER_CONTROL_START, TIMER_COUNTER_START,
         TIMER_MODULO_START, WAVEFORM_RAM_END, WAVEFORM_RAM_START,
     },
-    Addr, Area, Error, FileOperation, IORegArea,
+    Addr, Address, Area, Error, FileOperation, IORegArea,
 };
 use std::{cell::RefCell, rc::Rc};
 
@@ -104,13 +104,17 @@ pub struct IORegBus {
     pub wram_bank: Rc<RefCell<dyn FileOperation<Addr<IORegArea>, IORegArea>>>,
 }
 
-impl FileOperation<Addr<Area>, Area> for IORegBus {
-    fn read(&self, address: Addr<Area>) -> Result<u8, Error> {
+impl<A> FileOperation<A, Area> for IORegBus
+where
+    u16: From<A>,
+    A: Address<Area>,
+{
+    fn read(&self, address: A) -> Result<u8, Error> {
         let addr: u16 = address.into();
         match_area!(read_area, self, addr)
     }
 
-    fn write(&mut self, v: u8, address: Addr<Area>) -> Result<(), Error> {
+    fn write(&mut self, v: u8, address: A) -> Result<(), Error> {
         let addr: u16 = address.into();
         match_area!(write_area, self, addr, v)
     }
