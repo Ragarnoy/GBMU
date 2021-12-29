@@ -54,7 +54,7 @@ jobs:
         run: cargo fmt --verbose -- --check
 
       - name: check lint
-        run: cargo clippy --workspace --verbose -- -D warnings
+        run: cargo clippy --workspace --verbose --lib --bins --tests -- -D warnings
 
   test_and_build:
     runs-on: ubuntu-latest
