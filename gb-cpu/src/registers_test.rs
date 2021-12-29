@@ -148,10 +148,10 @@ mod write_flag {
         assert!(!regs.zero());
 
         regs.set_zero(true);
-        assert_eq!(regs.zero(), true);
+        assert!(regs.zero());
 
         regs.set_zero(false);
-        assert_eq!(regs.zero(), false);
+        assert!(!regs.zero());
     }
 
     #[test]
@@ -161,10 +161,10 @@ mod write_flag {
         assert!(!regs.subtraction());
 
         regs.set_subtraction(true);
-        assert_eq!(regs.subtraction(), true);
+        assert!(regs.subtraction());
 
         regs.set_subtraction(false);
-        assert_eq!(regs.subtraction(), false);
+        assert!(!regs.subtraction());
     }
 
     #[test]
@@ -174,10 +174,10 @@ mod write_flag {
         assert!(!regs.half_carry());
 
         regs.set_half_carry(true);
-        assert_eq!(regs.half_carry(), true);
+        assert!(regs.half_carry());
 
         regs.set_half_carry(false);
-        assert_eq!(regs.half_carry(), false);
+        assert!(!regs.half_carry());
     }
 
     #[test]
@@ -187,9 +187,9 @@ mod write_flag {
         assert!(!regs.carry());
 
         regs.set_carry(true);
-        assert_eq!(regs.carry(), true);
+        assert!(regs.carry());
 
         regs.set_carry(false);
-        assert_eq!(regs.carry(), false);
+        assert!(!regs.carry());
     }
 }
