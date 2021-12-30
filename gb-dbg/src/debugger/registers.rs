@@ -1,6 +1,5 @@
 use crate::dbg_interfaces::{RegisterDebugOperations, RegisterMap, RegisterValue};
 
-use egui::Label;
 use egui::{Color32, Ui, Vec2};
 
 pub struct RegisterEditor;
@@ -8,7 +7,7 @@ pub struct RegisterEditor;
 impl RegisterEditor {
     pub fn draw<REG: RegisterDebugOperations>(&mut self, ui: &mut Ui, register: &REG) {
         ui.vertical(|ui| {
-            ui.label(Label::new("Registers").text_color(Color32::LIGHT_BLUE));
+            ui.colored_label(Color32::LIGHT_BLUE, "Registers");
             ui.separator();
             ui.add_space(8.0);
             ui.horizontal_top(|ui| {
@@ -40,7 +39,8 @@ impl RegisterEditor {
         ui.allocate_ui_with_layout(Vec2::new(125.0, 300.0), layout, |ui| {
             ui.colored_label(Color32::GOLD, name);
             ui.separator();
-            egui::ScrollArea::from_max_height(240.0)
+            egui::ScrollArea::vertical()
+                .max_height(240.0)
                 .id_source("ScrollArea_".to_owned() + name)
                 .show(ui, |ui| {
                     egui::Grid::new("Grid_".to_owned() + name)
@@ -56,18 +56,12 @@ impl RegisterEditor {
                                 if format!("{}", &row.0).to_lowercase()
                                     != format!("{:?}", &row.0).to_lowercase()
                                 {
-                                    ui.colored_label(
-                                        Color32::WHITE,
-                                        egui::Label::new(format!("{:?}", &row.0)),
-                                    )
-                                    .on_hover_text(&row.0);
+                                    ui.colored_label(Color32::WHITE, format!("{:?}", &row.0))
+                                        .on_hover_text(&row.0);
                                 } else {
-                                    ui.colored_label(
-                                        Color32::WHITE,
-                                        egui::Label::new(format!("{}", &row.0)),
-                                    );
+                                    ui.colored_label(Color32::WHITE, format!("{}", &row.0));
                                 }
-                                ui.colored_label(Color32::WHITE, egui::Label::new(format));
+                                ui.colored_label(Color32::WHITE, format);
                                 ui.end_row();
                             }
                         });
