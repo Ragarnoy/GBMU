@@ -100,8 +100,18 @@ pub fn halt(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow 
 /// \_ STOP: 2 byte, mode: STOP, DIV: reset
 ///
 pub fn stop(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
-    ctl.mode = Mode::Stop;
-    // skip the next byte
-    state.read();
+    use crate::constant::JOYPAD_INT;
+
+    let int_flags = state.int_flags.borrow();
+
+    if int_flags.flag & JOYPAD_INT == JOYPAD_INT {
+        if !int_flags.is_interrupt_ready() {
+            drop(int_flags);
+            state.read();
+            ctl.mode = Mode::Halt;
+        }
+    } else if cfg!(feature = "cgb") {
+        unimplemented!("speed swicth");
+    }
     CONTINUE
 }
