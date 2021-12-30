@@ -46,6 +46,7 @@ pub struct Ppu {
     pixel_fetcher: PixelFetcher,
     state: State,
     scanline_sprites: Vec<Sprite>,
+    offset: u8,
 }
 
 impl Ppu {
@@ -60,6 +61,7 @@ impl Ppu {
             pixel_fetcher: PixelFetcher::new(),
             state: State::new(),
             scanline_sprites: Vec::with_capacity(10),
+            offset: 0,
         }
     }
 
@@ -388,21 +390,27 @@ impl Ppu {
                     &mut self.scanline_sprites,
                     (x, y),
                 );
+                self.offset = 0;
             }
             if let Some(Lock::Ppu) = lock {
                 let vram = self.vram.borrow();
                 if self.pixel_fifo.enabled && x < SCREEN_WIDTH as u8 {
                     if let Some(pixel) = self.pixel_fifo.pop() {
-                        self.next_pixels[y as usize][x as usize] = Color::from(pixel).into();
-                        self.state.draw_pixel();
-                        x += 1;
-                        Self::check_next_pixel_mode(
-                            &lcd_reg,
-                            &mut self.pixel_fetcher,
-                            &mut self.pixel_fifo,
-                            &mut self.scanline_sprites,
-                            (x, y),
-                        );
+                        let offset = lcd_reg.scrolling.scx % 8;
+                        if self.state.pixel_drawn() > 0 || self.offset >= offset {
+                            self.next_pixels[y as usize][x as usize] = Color::from(pixel).into();
+                            self.state.draw_pixel();
+                            x += 1;
+                            Self::check_next_pixel_mode(
+                                &lcd_reg,
+                                &mut self.pixel_fetcher,
+                                &mut self.pixel_fifo,
+                                &mut self.scanline_sprites,
+                                (x, y),
+                            );
+                        } else {
+                            self.offset += 1;
+                        }
                     };
                 }
                 self.pixel_fetcher.fetch(
@@ -410,7 +418,7 @@ impl Ppu {
                     &lcd_reg,
                     y as usize,
                     x as usize,
-                    self.pixel_fifo.count(),
+                    self.pixel_fifo.count() + self.offset as usize,
                 );
                 if self.pixel_fetcher.push_to_fifo(&mut self.pixel_fifo) {
                     Self::check_next_pixel_mode(
@@ -478,7 +486,7 @@ impl Ppu {
         let (x, _) = cursor;
 
         if let Some(sprite) = sprites.pop() {
-            if sprite.x_pos() - 8 == x {
+            if sprite.x_pos() == x + Sprite::HORIZONTAL_OFFSET {
                 pixel_fetcher.set_mode(FetchMode::Sprite(sprite));
                 pixel_fifo.enabled = false;
             } else {
