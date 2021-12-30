@@ -93,3 +93,4 @@ You can customize the build by activating certain feature by using the `--featur
 | gb-bus/trace_simple_rw_full  | enable read/write trace for simple container          | `gb-bus/trace_simple_rw_read`, `gb-bus/trace_simple_rw_write` |
 | gb-bus/trace_simple_rw_read  | enable read trace for the simple container            |                                                               |
 | gb-bus/trace_simple_rw_write | enable write trace for the simple container           |                                                               |
+| cgb                          | enabled gameboy color mode for main Crate             | `gb-bus/cgb`, `gb-cpu/cgb`, `gb-ppu/cgb`                      |

@@ -3,7 +3,7 @@ use super::{
     MicrocodeFlow, State,
 };
 use crate::{
-    interrupt_flags::InterruptFlags, registers::Registers, CACHE_LEN, NB_MAX_ACTIONS, NB_MAX_CYCLES,
+    io_registers::IORegisters, registers::Registers, CACHE_LEN, NB_MAX_ACTIONS, NB_MAX_CYCLES,
 };
 use gb_bus::Bus;
 use std::fmt::{self, Debug, Display};
@@ -101,7 +101,7 @@ impl Default for MicrocodeController {
 impl MicrocodeController {
     pub fn step(
         &mut self,
-        int_flags: Rc<RefCell<InterruptFlags>>,
+        int_flags: Rc<RefCell<IORegisters>>,
         regs: &mut Registers,
         bus: &mut dyn Bus<u8>,
     ) {
@@ -118,7 +118,7 @@ impl MicrocodeController {
     }
 
     /// Pull the next task the cpu will do according to it's current mode
-    fn pull_next_task(&mut self, state: &mut State, int_flags: Rc<RefCell<InterruptFlags>>) {
+    fn pull_next_task(&mut self, state: &mut State, int_flags: Rc<RefCell<IORegisters>>) {
         match self.mode {
             Mode::Normal => self.normal_mode(state, int_flags),
             Mode::Halt => self.halt_mode(state, int_flags),
@@ -128,7 +128,7 @@ impl MicrocodeController {
 
     /// When the cpu is in it's normal execution mode.
     /// Will execute interrupt before fetching for new opcode.
-    fn normal_mode(&mut self, state: &mut State, int_flags: Rc<RefCell<InterruptFlags>>) {
+    fn normal_mode(&mut self, state: &mut State, int_flags: Rc<RefCell<IORegisters>>) {
         let previous_opcode = match self.opcode {
             Some(OpcodeType::Unprefixed(opcode)) => opcode,
             _ => Opcode::Nop,
@@ -146,7 +146,7 @@ impl MicrocodeController {
     /// When the cpu is halted.
     /// Wait for any interrupt to be triggered to return to the normal execution mode.
     /// Directly service the triggered interrupt if IME is enabled.
-    fn halt_mode(&mut self, state: &mut State, int_flags: Rc<RefCell<InterruptFlags>>) {
+    fn halt_mode(&mut self, state: &mut State, int_flags: Rc<RefCell<IORegisters>>) {
         let borrow_int_flags = int_flags.borrow();
 
         if borrow_int_flags.is_interrupt_ready() {
@@ -159,7 +159,7 @@ impl MicrocodeController {
 
     /// When the cpu is stopped.
     /// Wait for the joypad to be pressed
-    fn stop_mode(&mut self, _state: &mut State, int_flags: Rc<RefCell<InterruptFlags>>) {
+    fn stop_mode(&mut self, _state: &mut State, int_flags: Rc<RefCell<IORegisters>>) {
         use crate::constant::JOYPAD_INT;
 
         if int_flags.borrow().flag & JOYPAD_INT == JOYPAD_INT {
