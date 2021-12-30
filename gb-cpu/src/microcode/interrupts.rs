@@ -1,4 +1,7 @@
-use super::{dec, jump::jump, read, write, MicrocodeController, MicrocodeFlow, State, CONTINUE};
+use super::{
+    controller::Mode, dec, jump::jump, read, write, MicrocodeController, MicrocodeFlow, State,
+    CONTINUE,
+};
 
 pub fn handle_interrupts(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     let mut int_flags = state.int_flags.borrow_mut();
@@ -49,5 +52,17 @@ pub fn disable_ime(_ctl: &mut MicrocodeController, state: &mut State) -> Microco
 
 pub fn enable_ime(_ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     state.int_flags.borrow_mut().master_enable = true;
+    CONTINUE
+}
+
+pub fn halt(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow {
+    ctl.mode = Mode::Halt;
+    CONTINUE
+}
+
+pub fn stop(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
+    ctl.mode = Mode::Stop;
+    // skip the next byte
+    state.read();
     CONTINUE
 }
