@@ -2,7 +2,7 @@ mod builder;
 pub mod bus;
 pub mod cpu;
 pub mod interfaces;
-mod interrupt_flags;
+mod io_registers;
 pub mod microcode;
 pub mod registers;
 #[cfg(test)]

@@ -1,5 +1,5 @@
 use crate::dbg_interfaces::MemoryDebugOperations;
-use egui::{Color32, Label, Ui, Vec2};
+use egui::{Color32, Ui, Vec2};
 use gb_roms::opcode::{error::Error, list::Opcode, OpcodeGenerator};
 
 #[derive(Default)]
@@ -32,7 +32,7 @@ impl DisassemblyViewer {
 
     pub fn draw(&self, ui: &mut Ui) {
         ui.vertical(|ui| {
-            ui.label(Label::new("Disassembler").text_color(Color32::LIGHT_BLUE));
+            ui.colored_label(Color32::LIGHT_BLUE, "Disassembler");
             ui.separator();
             ui.vertical(|ui| {
                 egui::Grid::new("dissas_".to_owned())
@@ -51,9 +51,9 @@ impl DisassemblyViewer {
     }
 
     fn draw_labels(ui: &mut Ui) {
-        ui.label(egui::Label::new("Address").text_color(Color32::GOLD));
-        ui.label(egui::Label::new("Instruction").text_color(Color32::GOLD));
-        ui.label(egui::Label::new("Data").text_color(Color32::GOLD));
+        ui.colored_label(Color32::GOLD, "Address");
+        ui.colored_label(Color32::GOLD, "Instruction");
+        ui.colored_label(Color32::GOLD, "Data");
         ui.end_row();
     }
 
@@ -62,7 +62,7 @@ impl DisassemblyViewer {
         if index == 0 {
             text_color = Color32::WHITE;
         }
-        ui.colored_label(text_color, egui::Label::new(format!("0x{:04X}", pc)));
+        ui.colored_label(text_color, format!("0x{:04X}", pc));
         *pc += opcode_len(row);
         let opcode = row
             .as_ref()
@@ -81,8 +81,8 @@ impl DisassemblyViewer {
                     .join(" ")
             },
         );
-        ui.colored_label(text_color, egui::Label::new(opcode));
-        ui.colored_label(text_color, egui::Label::new(bytes));
+        ui.colored_label(text_color, opcode);
+        ui.colored_label(text_color, bytes);
         ui.end_row();
     }
 }
