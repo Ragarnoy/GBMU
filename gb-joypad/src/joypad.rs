@@ -106,18 +106,20 @@ impl Joypad {
     pub fn settings(&mut self, ctx: &CtxRef) {
         egui::CentralPanel::default().show(ctx, |ui| {
             let height = ui.available_size().y;
-            egui::ScrollArea::from_max_height(height - 50.0).show(ui, |ui| {
-                ui.set_height(height - 60.0);
-                for i_type in Self::INPUT_LIST.iter() {
-                    ui.horizontal(|ui| {
-                        if let Some(listened) = self.listening {
-                            self.input_row(ui, i_type, &listened == i_type);
-                        } else {
-                            self.input_row(ui, i_type, false);
-                        }
-                    });
-                }
-            });
+            egui::ScrollArea::vertical()
+                .max_height(height - 50.0)
+                .show(ui, |ui| {
+                    ui.set_height(height - 60.0);
+                    for i_type in Self::INPUT_LIST.iter() {
+                        ui.horizontal(|ui| {
+                            if let Some(listened) = self.listening {
+                                self.input_row(ui, i_type, &listened == i_type);
+                            } else {
+                                self.input_row(ui, i_type, false);
+                            }
+                        });
+                    }
+                });
             ui.vertical(|ui| {
                 ui.vertical_centered(|ui| {
                     ui.add(Separator::default().horizontal().spacing(30.0));

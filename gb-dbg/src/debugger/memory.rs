@@ -1,5 +1,5 @@
 use crate::dbg_interfaces::MemoryDebugOperations;
-use egui::{Color32, Label, Ui};
+use egui::{Color32, Ui};
 use egui_memory_editor::option_data::MemoryEditorOptions;
 use egui_memory_editor::MemoryEditor;
 use std::ops::Range;
@@ -29,7 +29,7 @@ impl<MEM: MemoryDebugOperations> MemoryViewer<MEM> {
     }
 
     pub fn draw(&mut self, ui: &mut Ui, memory: &mut MEM) {
-        ui.label(Label::new("Memory Editor").text_color(Color32::LIGHT_BLUE));
+        ui.colored_label(Color32::LIGHT_BLUE, "Memory Editor");
         self.memory_editor.draw_editor_contents(ui, memory);
     }
 }

@@ -1,5 +1,7 @@
 #[cfg(feature = "cgb")]
-use crate::io_reg_constant::{VRAM_BANK_START, VRAM_DMA_END, VRAM_DMA_START, WRAM_BANK_START};
+use crate::io_reg_constant::{
+    KEY1, VRAM_BANK_START, VRAM_DMA_END, VRAM_DMA_START, WRAM_BANK_START,
+};
 use crate::{
     io_reg_constant::{
         BG_OBJ_PALETTES_END, BG_OBJ_PALETTES_START, BOOT_ROM_START, COMMUNICATION_END,
@@ -47,6 +49,8 @@ macro_rules! match_area {
             }
             #[cfg(feature = "cgb")]
             WRAM_BANK_START => $sub_macro!(WRAM_BANK_START, $self.wram_bank, WRamBank, $addr $(,$args)*),
+            #[cfg(feature = "cgb")]
+            KEY1 => $sub_macro!(KEY1, $self.double_speed, DoubleSpeed, $addr $(,$args)*),
             _ => Err(Error::BusError($addr)),
         }
     };
@@ -102,6 +106,8 @@ pub struct IORegBus {
     pub bg_obj_palettes: Rc<RefCell<dyn FileOperation<Addr<IORegArea>, IORegArea>>>,
     #[cfg(feature = "cgb")]
     pub wram_bank: Rc<RefCell<dyn FileOperation<Addr<IORegArea>, IORegArea>>>,
+    #[cfg(feature = "cgb")]
+    pub double_speed: Rc<RefCell<dyn FileOperation<Addr<IORegArea>, IORegArea>>>,
 }
 
 impl<A> FileOperation<A, Area> for IORegBus
