@@ -60,6 +60,45 @@ pub fn halt(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow 
     CONTINUE
 }
 
+/// ## How the stop opcode work
+///
+/// **STOP** Reached
+/// |
+/// IS joypad pressed ?
+/// |   |
+/// NO YES
+/// |    \_ IS an interrupt pending ? (`IE & IF != 0`)
+/// |       |   |
+/// |       NO YES
+/// |       |    \_ STOP: 1 byte, mode: unchanged, DIV: unchanged
+/// |       |
+/// |        \_ STOP: 2 byte, mode: HALT, DIV: unchanged
+/// |
+/// The Step below is only for CGB mode
+/// |
+/// Was a speed switch requested ?
+/// |   |
+/// NO YES
+/// |    \_ IS an interrupt pending ? (`IE & IF != 0`)
+/// |       |   |
+/// |       NO YES
+/// |       |    \_ IS **IME** enabled ?
+/// |       |       |   |
+/// |       |       NO YES
+/// |       |       |    \_ The CPU *glitches*
+/// |       |       |
+/// |       |       \_ STOP: 1 byte, mode: unchanged, DIV: reset, SPEED: change
+/// |       |
+/// |       \_ STOP: 2 byte, mode: HALT, DIV: reset, SPEED: change
+/// |          Note: HALT mode exit automatically after ~0x20_000) Tcycle
+/// |
+/// IS an interrupt pending ? (`IE & IF != 0`)
+/// |   |
+/// NO YES
+/// |    \_ STOP: 1 byte, mode: STOP, DIV: reset
+/// |
+/// \_ STOP: 2 byte, mode: STOP, DIV: reset
+///
 pub fn stop(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     ctl.mode = Mode::Stop;
     // skip the next byte
