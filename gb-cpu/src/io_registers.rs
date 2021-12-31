@@ -60,7 +60,7 @@ where
                 self.current_speed,
                 self.desired_speed,
             )),
-            _ => Err(gb_bus::Error::bus_error(addr)),
+            _ => Err(gb_bus::Error::bus_error(addr.into())),
         }
     }
 
