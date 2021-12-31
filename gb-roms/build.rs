@@ -51,13 +51,13 @@ fn extract_file(output_dir: PathBuf, mut file: ZipFile) {
 }
 
 /// Create the output path for the file that is contain is the archive
-fn archive_file_output_path(output_dir: &PathBuf, file: &ZipFile) -> Result<PathBuf, String> {
+fn archive_file_output_path(output_dir: &Path, file: &ZipFile) -> Result<PathBuf, String> {
     file.enclosed_name()
         .ok_or_else(|| format!("cannot get enclosed for {}", file.name()))
-        .map(|name| output_dir.clone().join(name))
+        .map(|name| output_dir.join(name))
 }
 
-fn may_create_parent_subdir(path: &PathBuf) {
+fn may_create_parent_subdir(path: &Path) {
     if let Some(p) = path.parent() {
         if !p.exists() {
             fs::create_dir_all(&p).unwrap();
@@ -65,7 +65,7 @@ fn may_create_parent_subdir(path: &PathBuf) {
     }
 }
 
-fn create_destination_file(path: &PathBuf, mode: Option<u32>) -> File {
+fn create_destination_file(path: &Path, mode: Option<u32>) -> File {
     let file = File::create(path).unwrap();
     #[cfg(unix)]
     {
