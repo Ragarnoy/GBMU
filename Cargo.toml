@@ -16,12 +16,12 @@ default = ["bios"]
 debug_render = ["gb-lcd/debug_render"]
 registers_logs = ["gb-cpu/registers_logs"]
 time_frame = []
-cgb = ["gb-bus/cgb", "gb-ppu/cgb"]
+cgb = ["gb-bus/cgb", "gb-ppu/cgb", "gb-cpu/cgb", "gb-dbg/cgb"]
 bios = []
 
 [dependencies]
-sdl2 = { version = "0.34", features = ["bundled", "static-link"] }
-egui = "0.14"
+sdl2 = { version = "0.35", features = ["bundled", "static-link"] }
+egui = "0.15"
 native-dialog = { version ="0.5" }
 log = { version = "0.4", features = ["std"] }
 simplelog = "0.10"
@@ -55,3 +55,6 @@ members = [
   "gb-timer",
   "gb-test"
 ]
+
+[patch.crates-io]
+sdl2 = { git = "https://github.com/Rust-SDL2/rust-sdl2", rev = "496368d72202b65d365ef64a86c293d20d22ece0" }
