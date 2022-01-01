@@ -46,9 +46,9 @@ impl FileOperation<Area> for IORegisters {
 impl FileOperation<IORegArea> for IORegisters {
     fn read(&self, addr: Box<dyn gb_bus::Address<IORegArea>>) -> Result<u8, gb_bus::Error> {
         match addr.area_type() {
-            IORegArea::InterruptFlag => Ok(self.flag),
+            IORegArea::IF => Ok(self.flag),
             #[cfg(feature = "cgb")]
-            IORegArea::DoubleSpeed => Ok(double_speed_register(
+            IORegArea::Key1 => Ok(double_speed_register(
                 self.current_speed,
                 self.desired_speed,
             )),

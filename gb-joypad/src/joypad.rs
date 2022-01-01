@@ -230,8 +230,8 @@ impl Joypad {
 
 impl FileOperation<IORegArea> for Joypad {
     fn write(&mut self, v: u8, addr: Box<dyn Address<IORegArea>>) -> Result<(), Error> {
-        match (addr.area_type(), addr.get_address()) {
-            (IORegArea::Controller, 0x00) => {
+        match addr.area_type() {
+            IORegArea::Joy => {
                 let v = !v & 0b0011_0000;
                 self.mode = Mode::from(v);
                 Ok(())
@@ -241,8 +241,8 @@ impl FileOperation<IORegArea> for Joypad {
     }
 
     fn read(&self, addr: Box<dyn Address<IORegArea>>) -> Result<u8, Error> {
-        match (addr.area_type(), addr.get_address()) {
-            (IORegArea::Controller, 0x00) => Ok(self.reg_val),
+        match addr.area_type() {
+            IORegArea::Joy => Ok(self.reg_val),
             _ => Err(Error::SegmentationFault(addr.into())),
         }
     }

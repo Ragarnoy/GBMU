@@ -71,20 +71,20 @@ impl Ticker for Timer {
 impl FileOperation<IORegArea> for Timer {
     fn read(&self, addr: Box<dyn Address<IORegArea>>) -> Result<u8, Error> {
         match addr.area_type() {
-            IORegArea::DivTimer => Ok(self.div()),
-            IORegArea::TimerCounter => Ok(self.tima),
-            IORegArea::TimerModulo => Ok(self.tma),
-            IORegArea::TimerControl => Ok(!Self::TAC_MASK | self.tac),
+            IORegArea::Div => Ok(self.div()),
+            IORegArea::Tima => Ok(self.tima),
+            IORegArea::Tma => Ok(self.tma),
+            IORegArea::Tac => Ok(!Self::TAC_MASK | self.tac),
             _ => Err(Error::bus_error(addr)),
         }
     }
 
     fn write(&mut self, v: u8, addr: Box<dyn Address<IORegArea>>) -> Result<(), Error> {
         match addr.area_type() {
-            IORegArea::DivTimer => self.system_clock = 0,
-            IORegArea::TimerCounter => self.tima = v,
-            IORegArea::TimerModulo => self.tma = v,
-            IORegArea::TimerControl => self.tac = v & Self::TAC_MASK,
+            IORegArea::Div => self.system_clock = 0,
+            IORegArea::Tima => self.tima = v,
+            IORegArea::Tma => self.tma = v,
+            IORegArea::Tac => self.tac = v & Self::TAC_MASK,
             _ => return Err(Error::bus_error(addr)),
         }
         Ok(())
