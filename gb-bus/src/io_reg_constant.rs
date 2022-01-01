@@ -1,75 +1,154 @@
-pub const CONTROLLER_START: u16 = 0xFF00;
-pub const COMMUNICATION_START: u16 = 0xFF01;
-pub const COMMUNICATION_END: u16 = 0xFF02;
-pub const DIV_TIMER_START: u16 = 0xFF04;
-pub const TIMER_COUNTER_START: u16 = 0xFF05;
-pub const TIMER_MODULO_START: u16 = 0xFF06;
-pub const TIMER_CONTROL_START: u16 = 0xFF07;
-pub const INTERRUPT_FLAG: u16 = 0xFF0F;
-pub const SOUND_START: u16 = 0xFF10;
-pub const SOUND_END: u16 = 0xFF26;
-pub const WAVEFORM_RAM_START: u16 = 0xFF30;
-pub const WAVEFORM_RAM_END: u16 = 0xFF3F;
-pub const OAM_DMA_START: u16 = 0xFF46;
-pub const LCD_START: u16 = 0xFF40;
-pub const LCD_END: u16 = 0xFF4B;
-pub const VRAM_BANK_START: u16 = 0xFF4F;
-pub const BOOT_ROM_START: u16 = 0xFF50;
-pub const BG_OBJ_PALETTES_START: u16 = 0xFF68;
-pub const BG_OBJ_PALETTES_END: u16 = 0xFF69;
-pub const WRAM_BANK_START: u16 = 0xFF70;
+/// Joypad
+pub const JOY: u16 = 0xff00;
+/// Serial Byte
+pub const SB: u16 = 0xff01;
+/// Serial Control
+pub const SC: u16 = 0xff02;
 
-pub const PPU_CONTROL: u16 = 0xFF40;
-pub const PPU_STATUS: u16 = 0xFF41;
-pub const PPU_SCY: u16 = 0xFF42;
-pub const PPU_SCX: u16 = 0xFF43;
-pub const PPU_LY: u16 = 0xFF44;
-pub const PPU_LYC: u16 = 0xFF45;
-pub const PPU_DMA: u16 = 0xFF46;
-pub const PPU_BGP: u16 = 0xFF47;
-pub const PPU_OBP0: u16 = 0xFF48;
-pub const PPU_OBP1: u16 = 0xFF49;
-pub const PPU_WY: u16 = 0xFF4A;
-pub const PPU_WX: u16 = 0xFF4B;
+/// Clock divider
+pub const DIV: u16 = 0xff04;
+/// Timer Value
+pub const TIMA: u16 = 0xff05;
+/// Timer Reload
+pub const TMA: u16 = 0xff06;
+/// Timer Control
+pub const TAC: u16 = 0xff07;
 
-// joypad regs
-pub const IO_JOY: u16 = 0xFF00;
-// serial regs
-pub const IO_SERIALBYTE: u16 = 0xFF01;
-pub const IO_SERIALCTL: u16 = 0xFF02;
-// Timer regs
-pub const IO_DIV: u16 = 0xFF04;
-pub const IO_TIMA: u16 = 0xFF05;
-pub const IO_TMA: u16 = 0xFF06;
-pub const IO_TAC: u16 = 0xFF07;
-// cpu int regs
-pub const IO_IF: u16 = 0xFF0F;
-pub const IO_IE: u16 = 0xFFFF;
-// Boot ROM
-pub const IO_BOOTROM: u16 = 0xFF50;
+/// Interrupt flag
+pub const IF: u16 = 0xff0f;
 
-pub const AUD_FS1: u16 = 0xFF10;
-pub const AUD_PWM1: u16 = 0xFF11;
-pub const AUD_ENV1: u16 = 0xFF12;
-pub const AUD_AF1: u16 = 0xFF13;
-pub const AUD_CTL1: u16 = 0xFF14;
-pub const AUD_PWM2: u16 = 0xFF16;
-pub const AUD_ENV2: u16 = 0xFF17;
-pub const AUD_AF2: u16 = 0xFF18;
-pub const AUD_CTL2: u16 = 0xFF19;
-pub const AUD_A3TOGGLE: u16 = 0xFF1A;
-pub const AUD_PWM3: u16 = 0xFF1B;
-pub const AUD_VOL3: u16 = 0xFF1C;
-pub const AUD_AF3: u16 = 0xFF1D;
-pub const AUD_CTL3: u16 = 0xFF1E;
-pub const AUD_PWM4: u16 = 0xFF20;
-pub const AUD_VOL4: u16 = 0xFF21;
-pub const AUD_AF4: u16 = 0xFF22;
-pub const AUD_CTL4: u16 = 0xFF23;
-pub const AUD_OUTPUT_MAP: u16 = 0xFF24;
-pub const AUD_MAP: u16 = 0xFF25;
-pub const AUD_CHANNEL_CTL: u16 = 0xFF26;
-pub const AUD_WAVE: u16 = 0xFF30;
+/// Audio channel 1 sweep
+pub const NR10: u16 = 0xff10;
+/// Audio channel 1 sound length/wave duty
+pub const NR11: u16 = 0xff11;
+/// Audio channel 1 envelope
+pub const NR12: u16 = 0xff12;
+/// Audio channel 1 frequency
+pub const NR13: u16 = 0xff13;
+/// Audio channel 1 control
+pub const NR14: u16 = 0xff14;
+
+/// Audio channel 2 sound length/wave duty
+pub const NR21: u16 = 0xff16;
+/// Audio channel 2 envelope
+pub const NR22: u16 = 0xff17;
+/// Audio channel 2 frequency
+pub const NR23: u16 = 0xff18;
+/// Audio channel 2 control
+pub const NR24: u16 = 0xff19;
+
+/// Audio channel 3 enable
+pub const NR30: u16 = 0xff1a;
+/// Audio channel 3 sound length
+pub const NR31: u16 = 0xff1b;
+/// Audio channel 3 volume
+pub const NR32: u16 = 0xff1c;
+/// Audio channel 3 frequency
+pub const NR33: u16 = 0xff1d;
+/// Audio channel 3 control
+pub const NR34: u16 = 0xff1e;
+
+/// Audio channel 4 sound length
+pub const NR41: u16 = 0xff20;
+/// Audio channel 4 volume
+pub const NR42: u16 = 0xff21;
+/// Audio channel 4 frequency
+pub const NR43: u16 = 0xff22;
+/// Audio channel 4 control
+pub const NR44: u16 = 0xff23;
+
+/// Audio output mapping
+pub const NR50: u16 = 0xff24;
+/// Audio channel mapping
+pub const NR51: u16 = 0xff25;
+/// Audio channel control
+pub const NR52: u16 = 0xff26;
+
+/// Wave pattern RAM byte 0
+pub const WAVE_RAM_0: u16 = 0xff30;
+/// Wave pattern RAM byte 1
+pub const WAVE_RAM_1: u16 = 0xff31;
+/// Wave pattern RAM byte 2
+pub const WAVE_RAM_2: u16 = 0xff32;
+/// Wave pattern RAM byte 3
+pub const WAVE_RAM_3: u16 = 0xff33;
+/// Wave pattern RAM byte 4
+pub const WAVE_RAM_4: u16 = 0xff34;
+/// Wave pattern RAM byte 5
+pub const WAVE_RAM_5: u16 = 0xff35;
+/// Wave pattern RAM byte 6
+pub const WAVE_RAM_6: u16 = 0xff36;
+/// Wave pattern RAM byte 7
+pub const WAVE_RAM_7: u16 = 0xff37;
+/// Wave pattern RAM byte 8
+pub const WAVE_RAM_8: u16 = 0xff38;
+/// Wave pattern RAM byte 9
+pub const WAVE_RAM_9: u16 = 0xff39;
+/// Wave pattern RAM byte A
+pub const WAVE_RAM_A: u16 = 0xff3a;
+/// Wave pattern RAM byte B
+pub const WAVE_RAM_B: u16 = 0xff3b;
+/// Wave pattern RAM byte C
+pub const WAVE_RAM_C: u16 = 0xff3c;
+/// Wave pattern RAM byte D
+pub const WAVE_RAM_D: u16 = 0xff3d;
+/// Wave pattern RAM byte E
+pub const WAVE_RAM_E: u16 = 0xff3e;
+/// Wave pattern RAM byte F
+pub const WAVE_RAM_F: u16 = 0xff3f;
+
+/// LCD control
+pub const LCD_CONTROL: u16 = 0xff40;
+/// LCD status
+pub const LCD_STAT: u16 = 0xff41;
+/// Background vertical scroll
+pub const SCY: u16 = 0xff42;
+/// Background horizontal scrool
+pub const SCX: u16 = 0xff43;
+/// LCD Y coordinate
+pub const LY: u16 = 0xff44;
+/// LCD Y compare
+pub const LYC: u16 = 0xff45;
+/// OAM DMA source address
+pub const DMA: u16 = 0xff46;
+/// Background palette
+pub const BGP: u16 = 0xff47;
+/// OBJ palette 0
+pub const OBP0: u16 = 0xff48;
+/// OBJ palette 1
+pub const OBP1: u16 = 0xff49;
+pub const WY: u16 = 0xff4a;
+pub const WX: u16 = 0xff4b;
+#[cfg(feature = "cgb")]
+/// Prepare speed switch
+pub const KEY1: u16 = 0xff4d;
+#[cfg(feature = "cgb")]
+/// Vram Bank
+pub const VBK: u16 = 0xff4f;
+
+pub const BOOTROM: u16 = 0xff50;
 
 #[cfg(feature = "cgb")]
-pub use crate::io_reg_constant_color::*;
+/// New DMA source high
+pub const HDMA1: u16 = 0xff51;
+#[cfg(feature = "cgb")]
+/// New DMA source low
+pub const HDMA2: u16 = 0xff52;
+#[cfg(feature = "cgb")]
+/// New DMA destination high
+pub const HDMA3: u16 = 0xff53;
+#[cfg(feature = "cgb")]
+/// New DMA destination low
+pub const HDMA4: u16 = 0xff54;
+#[cfg(feature = "cgb")]
+/// New DMA Length/Mode/Start
+pub const HDMA5: u16 = 0xff55;
+#[cfg(feature = "cgb")]
+/// Infrared communication port
+pub const RP: u16 = 0xff56;
+#[cfg(feature = "cgb")]
+/// Object priority mode
+pub const OPRI: u16 = 0xff6c;
+#[cfg(feature = "cgb")]
+/// Wram Bank
+pub const SVBK: u16 = 0xff70;
