@@ -13,8 +13,7 @@ impl FileOperation<Area> for IORegBus {
         if let Some(area) = self.areas.get(&reg) {
             #[cfg(feature = "trace_bus_rea")]
             log::trace!("reading at {:4x} in area {:?}", addr, reg);
-            area.borrow()
-                .read(Box::new(Address::from_offset(reg, addr, 0)))
+            area.borrow().read(Box::new(Address::byte_reg(reg, addr)))
         } else {
             Err(Error::BusError(addr))
         }
@@ -33,9 +32,29 @@ impl FileOperation<Area> for IORegBus {
                 reg
             );
             area.borrow_mut()
-                .write(v, Box::new(Address::from_offset(reg, addr, 0)))
+                .write(v, Box::new(Address::byte_reg(reg, addr)))
         } else {
             Err(Error::BusError(addr))
         }
+    }
+}
+
+#[derive(Default)]
+pub struct IORegBusBuilder {
+    areas: BTreeMap<IORegArea, Rc<RefCell<dyn FileOperation<IORegArea>>>>,
+}
+
+impl IORegBusBuilder {
+    pub fn with_area(
+        &mut self,
+        area: IORegArea,
+        handler: Rc<RefCell<dyn FileOperation<IORegArea>>>,
+    ) -> &mut Self {
+        self.areas.insert(area, handler);
+        self
+    }
+
+    pub fn build(self) -> IORegBus {
+        IORegBus { areas: self.areas }
     }
 }
