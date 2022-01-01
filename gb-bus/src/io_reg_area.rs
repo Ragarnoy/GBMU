@@ -1,160 +1,162 @@
+use crate::io_reg_constant::*;
+
 #[derive(Debug, PartialEq, Eq, Clone, Copy, PartialOrd, Ord)]
 #[repr(u16)]
 pub enum IORegArea {
     /// Joypad
-    Joy = 0xff00,
+    Joy = JOY,
     /// Serial Byte
-    SB = 0xff01,
+    SB = SB,
     /// Serial Control
-    SC = 0xff02,
+    SC = SC,
 
     /// Clock divider
-    Div = 0xff04,
+    Div = DIV,
     /// Timer Value
-    Tima = 0xff05,
+    Tima = TIMA,
     /// Timer Reload
-    Tma = 0xff06,
+    Tma = TMA,
     /// Timer Control
-    Tac = 0xff07,
+    Tac = TAC,
 
     /// Interrupt flag
-    IF = 0xff0f,
+    IF = IF,
 
     /// Audio channel 1 sweep
-    Nr10 = 0xff10,
+    Nr10 = NR10,
     /// Audio channel 1 sound length/wave duty
-    Nr11 = 0xff11,
+    Nr11 = NR11,
     /// Audio channel 1 envelope
-    Nr12 = 0xff12,
+    Nr12 = NR12,
     /// Audio channel 1 frequency
-    Nr13 = 0xff13,
+    Nr13 = NR13,
     /// Audio channel 1 control
-    Nr14 = 0xff14,
+    Nr14 = NR14,
 
     /// Audio channel 2 sound length/wave duty
-    Nr21 = 0xff16,
+    Nr21 = NR21,
     /// Audio channel 2 envelope
-    Nr22 = 0xff17,
+    Nr22 = NR22,
     /// Audio channel 2 frequency
-    Nr23 = 0xff18,
+    Nr23 = NR23,
     /// Audio channel 2 control
-    Nr24 = 0xff19,
+    Nr24 = NR24,
 
     /// Audio channel 3 enable
-    Nr30 = 0xff1a,
+    Nr30 = NR30,
     /// Audio channel 3 sound length
-    Nr31 = 0xff1b,
+    Nr31 = NR31,
     /// Audio channel 3 volume
-    Nr32 = 0xff1c,
+    Nr32 = NR32,
     /// Audio channel 3 frequency
-    Nr33 = 0xff1d,
+    Nr33 = NR33,
     /// Audio channel 3 control
-    Nr34 = 0xff1e,
+    Nr34 = NR34,
 
     /// Audio channel 4 sound length
-    Nr41 = 0xff20,
+    Nr41 = NR41,
     /// Audio channel 4 volume
-    Nr42 = 0xff21,
+    Nr42 = NR42,
     /// Audio channel 4 frequency
-    Nr43 = 0xff22,
+    Nr43 = NR43,
     /// Audio channel 4 control
-    Nr44 = 0xff23,
+    Nr44 = NR44,
 
     /// Audio output mapping
-    Nr50 = 0xff24,
+    Nr50 = NR50,
     /// Audio channel mapping
-    Nr51 = 0xff25,
+    Nr51 = NR51,
     /// Audio channel control
-    Nr52 = 0xff26,
+    Nr52 = NR52,
 
     /// Wave pattern RAM byte 0
-    WaveRam0 = 0xff30,
+    WaveRam0 = WAVE_RAM_0,
     /// Wave pattern RAM byte 1
-    WaveRam1 = 0xff31,
+    WaveRam1 = WAVE_RAM_1,
     /// Wave pattern RAM byte 2
-    WaveRam2 = 0xff32,
+    WaveRam2 = WAVE_RAM_2,
     /// Wave pattern RAM byte 3
-    WaveRam3 = 0xff33,
+    WaveRam3 = WAVE_RAM_3,
     /// Wave pattern RAM byte 4
-    WaveRam4 = 0xff34,
+    WaveRam4 = WAVE_RAM_4,
     /// Wave pattern RAM byte 5
-    WaveRam5 = 0xff35,
+    WaveRam5 = WAVE_RAM_5,
     /// Wave pattern RAM byte 6
-    WaveRam6 = 0xff36,
+    WaveRam6 = WAVE_RAM_6,
     /// Wave pattern RAM byte 7
-    WaveRam7 = 0xff37,
+    WaveRam7 = WAVE_RAM_7,
     /// Wave pattern RAM byte 8
-    WaveRam8 = 0xff38,
+    WaveRam8 = WAVE_RAM_8,
     /// Wave pattern RAM byte 9
-    WaveRam9 = 0xff39,
+    WaveRam9 = WAVE_RAM_9,
     /// Wave pattern RAM byte A
-    WaveRamA = 0xff3a,
+    WaveRamA = WAVE_RAM_A,
     /// Wave pattern RAM byte B
-    WaveRamB = 0xff3b,
+    WaveRamB = WAVE_RAM_B,
     /// Wave pattern RAM byte C
-    WaveRamC = 0xff3c,
+    WaveRamC = WAVE_RAM_C,
     /// Wave pattern RAM byte D
-    WaveRamD = 0xff3d,
+    WaveRamD = WAVE_RAM_D,
     /// Wave pattern RAM byte E
-    WaveRamE = 0xff3e,
+    WaveRamE = WAVE_RAM_E,
     /// Wave pattern RAM byte F
-    WaveRamF = 0xff3f,
+    WaveRamF = WAVE_RAM_F,
 
     /// LCD control
-    LcdControl = 0xff40,
+    LcdControl = LCD_CONTROL,
     /// LCD status
-    LcdStat = 0xff41,
+    LcdStat = LCD_STAT,
     /// Background vertical scroll
-    Scy = 0xff42,
+    Scy = SCY,
     /// Background horizontal scrool
-    Scx = 0xff43,
+    Scx = SCX,
     /// LCD Y coordinate
-    Ly = 0xff44,
+    Ly = LY,
     /// LCD Y compare
-    Lyc = 0xff45,
+    Lyc = LYC,
     /// OAM DMA source address
-    Dma = 0xff46,
+    Dma = DMA,
     /// Background palette
-    Bgp = 0xff47,
+    Bgp = BGP,
     /// OBJ palette 0
-    Obp0 = 0xff48,
+    Obp0 = OBP0,
     /// OBJ palette 1
-    Obp1 = 0xff49,
-    Wy = 0xff4a,
-    Wx = 0xff4b,
+    Obp1 = OBP1,
+    Wy = WY,
+    Wx = WX,
     #[cfg(feature = "cgb")]
     /// Prepare speed switch
-    Key1 = 0xff4d,
+    Key1 = KEY1,
     #[cfg(feature = "cgb")]
     /// Vram Bank
-    Vbk = 0xff4f,
+    Vbk = VBK,
 
-    BootRom = 0xff50,
+    BootRom = BOOTROM,
 
     #[cfg(feature = "cgb")]
     /// New DMA source high
-    Hdma1 = 0xff51,
+    Hdma1 = HDMA1,
     #[cfg(feature = "cgb")]
     /// New DMA source low
-    Hdma2 = 0xff52,
+    Hdma2 = HDMA2,
     #[cfg(feature = "cgb")]
     /// New DMA destination high
-    Hdma3 = 0xff53,
+    Hdma3 = HDMA3,
     #[cfg(feature = "cgb")]
     /// New DMA destination low
-    Hdma4 = 0xff54,
+    Hdma4 = HDMA4,
     #[cfg(feature = "cgb")]
     /// New DMA Length/Mode/Start
-    Hdma5 = 0xff55,
+    Hdma5 = HDMA5,
     #[cfg(feature = "cgb")]
     /// Infrared communication port
-    RP = 0xff56,
+    RP = RP,
     #[cfg(feature = "cgb")]
     /// Object priority mode
-    Opri = 0xff6c,
+    Opri = OPRI,
     #[cfg(feature = "cgb")]
     /// Wram Bank
-    Svbk = 0xff70,
+    Svbk = SVBK,
 }
 
 impl From<IORegArea> for u16 {
@@ -167,8 +169,6 @@ impl TryFrom<u16> for IORegArea {
     type Error = String;
 
     fn try_from(value: u16) -> Result<Self, Self::Error> {
-        use crate::io_reg_constant::*;
-
         let result = match value {
             JOY => Self::Joy,
             SB => Self::SB,
