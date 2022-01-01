@@ -2,7 +2,7 @@
 #[repr(u16)]
 pub enum IORegArea {
     /// Joypad
-    JOY = 0xff00,
+    Joy = 0xff00,
     /// Serial Byte
     SB = 0xff01,
     /// Serial Control
@@ -11,11 +11,11 @@ pub enum IORegArea {
     /// Clock divider
     Div = 0xff04,
     /// Timer Value
-    TIMA = 0xff05,
+    Tima = 0xff05,
     /// Timer Reload
-    TMA = 0xff06,
+    Tma = 0xff06,
     /// Timer Control
-    TAC = 0xff07,
+    Tac = 0xff07,
 
     /// Interrupt flag
     IF = 0xff0f,
@@ -105,29 +105,29 @@ pub enum IORegArea {
     /// LCD status
     LcdStat = 0xff41,
     /// Background vertical scroll
-    SCY = 0xff42,
+    Scy = 0xff42,
     /// Background horizontal scrool
-    SCX = 0xff43,
+    Scx = 0xff43,
     /// LCD Y coordinate
-    LY = 0xff44,
+    Ly = 0xff44,
     /// LCD Y compare
-    LYC = 0xff45,
+    Lyc = 0xff45,
     /// OAM DMA source address
-    DMA = 0xff46,
+    Dma = 0xff46,
     /// Background palette
-    BGP = 0xff47,
+    Bgp = 0xff47,
     /// OBJ palette 0
-    OBP0 = 0xff48,
+    Obp0 = 0xff48,
     /// OBJ palette 1
-    OBP1 = 0xff49,
-    WY = 0xff4a,
-    WX = 0xff4b,
+    Obp1 = 0xff49,
+    Wy = 0xff4a,
+    Wx = 0xff4b,
     #[cfg(feature = "cgb")]
     /// Prepare speed switch
-    KEY1 = 0xff4d,
+    Key1 = 0xff4d,
     #[cfg(feature = "cgb")]
     /// Vram Bank
-    VBK = 0xff4f,
+    Vbk = 0xff4f,
 
     BootRom = 0xff50,
 
@@ -151,8 +151,101 @@ pub enum IORegArea {
     RP = 0xff56,
     #[cfg(feature = "cgb")]
     /// Object priority mode
-    OPRI = 0xff6c,
+    Opri = 0xff6c,
     #[cfg(feature = "cgb")]
     /// Wram Bank
-    SVBK = 0xff70,
+    Svbk = 0xff70,
+}
+
+impl From<IORegArea> for u16 {
+    fn from(r: IORegArea) -> Self {
+        r.into()
+    }
+}
+
+impl TryFrom<u16> for IORegArea {
+    type Error = String;
+
+    fn try_from(value: u16) -> Result<Self, Self::Error> {
+        use crate::io_reg_constant::*;
+
+        let result = match value {
+            JOY => Self::Joy,
+            SB => Self::SB,
+            SC => Self::SC,
+            DIV => Self::Div,
+            TIMA => Self::Tima,
+            TMA => Self::Tma,
+            TAC => Self::Tac,
+            IF => Self::IF,
+            NR11 => Self::Nr11,
+            NR12 => Self::Nr12,
+            NR13 => Self::Nr13,
+            NR14 => Self::Nr14,
+            NR22 => Self::Nr22,
+            NR23 => Self::Nr23,
+            NR24 => Self::Nr24,
+            NR31 => Self::Nr31,
+            NR32 => Self::Nr32,
+            NR33 => Self::Nr33,
+            NR34 => Self::Nr34,
+            NR42 => Self::Nr42,
+            NR43 => Self::Nr43,
+            NR44 => Self::Nr44,
+            NR51 => Self::Nr51,
+            NR52 => Self::Nr52,
+            WAVE_RAM_1 => Self::WaveRam1,
+            WAVE_RAM_2 => Self::WaveRam2,
+            WAVE_RAM_3 => Self::WaveRam3,
+            WAVE_RAM_4 => Self::WaveRam4,
+            WAVE_RAM_5 => Self::WaveRam5,
+            WAVE_RAM_6 => Self::WaveRam6,
+            WAVE_RAM_7 => Self::WaveRam7,
+            WAVE_RAM_8 => Self::WaveRam8,
+            WAVE_RAM_9 => Self::WaveRam9,
+            WAVE_RAM_A => Self::WaveRamA,
+            WAVE_RAM_B => Self::WaveRamB,
+            WAVE_RAM_C => Self::WaveRamC,
+            WAVE_RAM_D => Self::WaveRamD,
+            WAVE_RAM_E => Self::WaveRamE,
+            WAVE_RAM_F => Self::WaveRamF,
+            LCD_CONTROL => Self::LcdControl,
+            LCD_STAT => Self::LcdStat,
+            SCY => Self::Scy,
+            SCX => Self::Scx,
+            LY => Self::Ly,
+            LYC => Self::Lyc,
+            DMA => Self::Dma,
+            BGP => Self::Bgp,
+            OBP0 => Self::Obp0,
+            OBP1 => Self::Obp1,
+            WY => Self::Wy,
+            WX => Self::Wx,
+            #[cfg(feature = "cgb")]
+            KEY1 => Self::Key1,
+            #[cfg(feature = "cgb")]
+            VBK => Self::Vbk,
+            BOOTROM => Self::BootRom,
+            #[cfg(feature = "cgb")]
+            HDMA1 => Self::Hdma1,
+            #[cfg(feature = "cgb")]
+            HDMA2 => Self::Hdma2,
+            #[cfg(feature = "cgb")]
+            HDMA3 => Self::Hdma3,
+            #[cfg(feature = "cgb")]
+            HDMA4 => Self::Hdma4,
+            #[cfg(feature = "cgb")]
+            HDMA5 => Self::Hdma5,
+            #[cfg(feature = "cgb")]
+            RP => Self::RP,
+            #[cfg(feature = "cgb")]
+            OPRI => Self::Opri,
+            #[cfg(feature = "cgb")]
+            SVBK => Self::Svbk,
+            _ => {
+                return Err(format!("no register for {:x}", value));
+            }
+        };
+        Ok(result)
+    }
 }
