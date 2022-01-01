@@ -1,4 +1,8 @@
-use gb_bus::{generic::SimpleRW, AddressBus, Bus, IORegBus, Lock, WorkingRam};
+#[cfg(feature = "cgb")]
+use gb_bus::generic::CharDevice;
+use gb_bus::{
+    generic::SimpleRW, AddressBus, Bus, IORegArea, IORegBus, IORegBusBuilder, Lock, WorkingRam,
+};
 use gb_clock::{cycles, Clock};
 use gb_cpu::{cpu::Cpu, new_cpu, registers::Registers};
 use gb_dbg::{
@@ -130,29 +134,43 @@ impl Game {
         };
         let dma = Rc::new(RefCell::new(Dma::new()));
 
-        let io_bus = Rc::new(RefCell::new(IORegBus {
-            controller: joypad.clone(),
-            communication: Rc::new(RefCell::new(SimpleRW::<2>::default())), // We don't handle communication
-            div_timer: timer.clone(),
-            tima: timer.clone(),
-            tma: timer.clone(),
-            tac: timer.clone(),
-            sound: Rc::new(RefCell::new(SimpleRW::<0x17>::default())), // We don't handle sound
-            waveform_ram: Rc::new(RefCell::new(SimpleRW::<0x10>::default())), // We don't handle sound
-            lcd: ppu_reg.clone(),
-            oam_dma: dma.clone(),
+        let io_bus = {
+            let mut bus_builder = IORegBusBuilder::default();
+            bus_builder
+                .with_area(IORegArea::Joy, joypad.clone())
+                .with_area(IORegArea::Div, timer.clone())
+                .with_area(IORegArea::Tima, timer.clone())
+                .with_area(IORegArea::Tma, timer.clone())
+                .with_area(IORegArea::Tac, timer.clone())
+                .with_area(IORegArea::IF, cpu_io_reg.clone())
+                .with_area(IORegArea::LcdControl, ppu_reg.clone())
+                .with_area(IORegArea::LcdStat, ppu_reg.clone())
+                .with_area(IORegArea::Scy, ppu_reg.clone())
+                .with_area(IORegArea::Scx, ppu_reg.clone())
+                .with_area(IORegArea::Ly, ppu_reg.clone())
+                .with_area(IORegArea::Lyc, ppu_reg.clone())
+                .with_area(IORegArea::Dma, dma.clone())
+                .with_area(IORegArea::Bgp, ppu_reg.clone())
+                .with_area(IORegArea::Obp0, ppu_reg.clone())
+                .with_area(IORegArea::Obp1, ppu_reg.clone())
+                .with_area(IORegArea::Wy, ppu_reg.clone())
+                .with_area(IORegArea::Wx, ppu_reg.clone())
+                .with_area(IORegArea::BootRom, bios_wrapper.clone());
             #[cfg(feature = "cgb")]
-            vram_bank: ppu_reg.clone(),
-            boot_rom: bios_wrapper.clone(),
-            #[cfg(feature = "cgb")]
-            vram_dma: Rc::new(RefCell::new(SimpleRW::<6>::default())), // TODO: link the part that handle the DMA
-            bg_obj_palettes: ppu_reg,
-            #[cfg(feature = "cgb")]
-            wram_bank: wram.clone(),
-            interrupt_flag: cpu_io_reg.clone(),
-            #[cfg(feature = "cgb")]
-            double_speed: cpu_io_reg.clone(),
-        }));
+            {
+                bus_builder
+                    .with_area(IORegArea::Vbk, ppu_reg.clone())
+                    .with_area(IORegArea::Hdma1, Rc::new(RefCell::new(CharDevice(0))))
+                    .with_area(IORegArea::Hdma2, Rc::new(RefCell::new(CharDevice(0))))
+                    .with_area(IORegArea::Hdma3, Rc::new(RefCell::new(CharDevice(0))))
+                    .with_area(IORegArea::Hdma4, Rc::new(RefCell::new(CharDevice(0))))
+                    .with_area(IORegArea::Hdma5, Rc::new(RefCell::new(CharDevice(0))))
+                    .with_area(IORegArea::Key1, cpu_io_reg.clone())
+                    .with_area(IORegArea::Svbk, wram.clone());
+            }
+            bus_builder.build()
+        };
+        let io_bus = Rc::new(RefCell::new(io_bus));
 
         let bus = AddressBus {
             rom: bios_wrapper,
@@ -381,11 +399,11 @@ impl MemoryDebugOperations for Game {
 
 macro_rules! read_bus_reg {
     ($type:expr, $bus:expr, $addr:expr) => {
-        RegisterMap($type, read_bus_reg!($bus, $addr))
+        RegisterMap($type, read_bus_reg!($bus, u16::from($addr)))
     };
 
     ($bus:expr, $addr:expr) => {
-        $bus.read($addr, Some(Lock::Debugger))
+        $bus.read(u16::from($addr), Some(Lock::Debugger))
             .unwrap_or(0xffu8)
             .into()
     };
@@ -404,92 +422,96 @@ impl RegisterDebugOperations for Game {
     }
 
     fn ppu_get(&self, key: PpuRegs) -> RegisterValue {
-        use gb_bus::io_reg_constant::{
-            PPU_BGP, PPU_CONTROL, PPU_DMA, PPU_LY, PPU_LYC, PPU_OBP0, PPU_OBP1, PPU_SCX, PPU_SCY,
-            PPU_STATUS, PPU_WX, PPU_WY,
+        use gb_bus::io_reg_area::IORegArea::{
+            Bgp, Dma, LcdControl, LcdStat, Ly, Lyc, Obp0, Obp1, Scx, Scy, Wx, Wy,
         };
 
         match key {
-            PpuRegs::Control => read_bus_reg!(self.addr_bus, PPU_CONTROL),
-            PpuRegs::Status => read_bus_reg!(self.addr_bus, PPU_STATUS),
-            PpuRegs::Scy => read_bus_reg!(self.addr_bus, PPU_SCY),
-            PpuRegs::Scx => read_bus_reg!(self.addr_bus, PPU_SCX),
-            PpuRegs::Ly => read_bus_reg!(self.addr_bus, PPU_LY),
-            PpuRegs::Lyc => read_bus_reg!(self.addr_bus, PPU_LYC),
-            PpuRegs::Dma => read_bus_reg!(self.addr_bus, PPU_DMA),
-            PpuRegs::Bgp => read_bus_reg!(self.addr_bus, PPU_BGP),
-            PpuRegs::Obp0 => read_bus_reg!(self.addr_bus, PPU_OBP0),
-            PpuRegs::Obp1 => read_bus_reg!(self.addr_bus, PPU_OBP1),
-            PpuRegs::Wy => read_bus_reg!(self.addr_bus, PPU_WY),
-            PpuRegs::Wx => read_bus_reg!(self.addr_bus, PPU_WX),
+            PpuRegs::Control => read_bus_reg!(self.addr_bus, LcdControl),
+            PpuRegs::Status => read_bus_reg!(self.addr_bus, LcdStat),
+            PpuRegs::Scy => read_bus_reg!(self.addr_bus, Scy),
+            PpuRegs::Scx => read_bus_reg!(self.addr_bus, Scx),
+            PpuRegs::Ly => read_bus_reg!(self.addr_bus, Ly),
+            PpuRegs::Lyc => read_bus_reg!(self.addr_bus, Lyc),
+            PpuRegs::Dma => read_bus_reg!(self.addr_bus, Dma),
+            PpuRegs::Bgp => read_bus_reg!(self.addr_bus, Bgp),
+            PpuRegs::Obp0 => read_bus_reg!(self.addr_bus, Obp0),
+            PpuRegs::Obp1 => read_bus_reg!(self.addr_bus, Obp1),
+            PpuRegs::Wy => read_bus_reg!(self.addr_bus, Wy),
+            PpuRegs::Wx => read_bus_reg!(self.addr_bus, Wx),
         }
     }
 
     fn io_get(&self, key: IORegs) -> RegisterValue {
-        use gb_bus::io_reg_constant::{
-            IO_BOOTROM, IO_DIV, IO_IE, IO_IF, IO_JOY, IO_SERIALBYTE, IO_SERIALCTL, IO_TAC, IO_TIMA,
-            IO_TMA,
-        };
+        use gb_bus::constant::IE_REG;
+        use gb_bus::io_reg_area::IORegArea::{BootRom, Div, Joy, Tac, Tima, Tma, IF, SB, SC};
         #[cfg(feature = "cgb")]
-        use gb_bus::io_reg_constant::{KEY1, VRAM_BANK, VRAM_DMA_START, WRAM_BANK};
+        use gb_bus::io_reg_area::IORegArea::{Hdma1, Hdma2, Hdma3, Hdma4, Hdma5, Key1, Svbk, Vbk};
 
         match key {
             // joypad regs
-            IORegs::Joy => read_bus_reg!(self.addr_bus, IO_JOY),
+            IORegs::Joy => read_bus_reg!(self.addr_bus, Joy),
             // serial regs
-            IORegs::SerialByte => read_bus_reg!(self.addr_bus, IO_SERIALBYTE),
-            IORegs::SerialCtl => read_bus_reg!(self.addr_bus, IO_SERIALCTL),
+            IORegs::SerialByte => read_bus_reg!(self.addr_bus, SB),
+            IORegs::SerialCtl => read_bus_reg!(self.addr_bus, SC),
             // Timer regs
-            IORegs::Div => read_bus_reg!(self.addr_bus, IO_DIV),
-            IORegs::Tima => read_bus_reg!(self.addr_bus, IO_TIMA),
-            IORegs::Tma => read_bus_reg!(self.addr_bus, IO_TMA),
-            IORegs::Tac => read_bus_reg!(self.addr_bus, IO_TAC),
+            IORegs::Div => read_bus_reg!(self.addr_bus, Div),
+            IORegs::Tima => read_bus_reg!(self.addr_bus, Tima),
+            IORegs::Tma => read_bus_reg!(self.addr_bus, Tma),
+            IORegs::Tac => read_bus_reg!(self.addr_bus, Tac),
             // cpu int regs
-            IORegs::If => read_bus_reg!(self.addr_bus, IO_IF),
-            IORegs::Ie => read_bus_reg!(self.addr_bus, IO_IE),
+            IORegs::If => read_bus_reg!(self.addr_bus, IF),
+            IORegs::Ie => read_bus_reg!(self.addr_bus, IE_REG),
             // Boot ROM
-            IORegs::BootRom => read_bus_reg!(self.addr_bus, IO_BOOTROM),
+            IORegs::BootRom => read_bus_reg!(self.addr_bus, BootRom),
             #[cfg(feature = "cgb")]
-            IORegs::Key1 => read_bus_reg!(self.addr_bus, KEY1),
+            IORegs::Key1 => read_bus_reg!(self.addr_bus, Key1),
             #[cfg(feature = "cgb")]
-            IORegs::VramBank => read_bus_reg!(self.addr_bus, VRAM_BANK),
+            IORegs::VramBank => read_bus_reg!(self.addr_bus, Vbk),
             #[cfg(feature = "cgb")]
-            IORegs::WRamBank => read_bus_reg!(self.addr_bus, WRAM_BANK),
+            IORegs::WRamBank => read_bus_reg!(self.addr_bus, Svbk),
             #[cfg(feature = "cgb")]
-            IORegs::VramDma => read_bus_reg!(self.addr_bus, VRAM_DMA_START),
+            IORegs::VramDma => read_bus_reg!(self.addr_bus, Hdma1),
+            #[cfg(feature = "cgb")]
+            IORegs::VramDma => read_bus_reg!(self.addr_bus, Hdma2),
+            #[cfg(feature = "cgb")]
+            IORegs::VramDma => read_bus_reg!(self.addr_bus, Hdma3),
+            #[cfg(feature = "cgb")]
+            IORegs::VramDma => read_bus_reg!(self.addr_bus, Hdma4),
+            #[cfg(feature = "cgb")]
+            IORegs::VramDma => read_bus_reg!(self.addr_bus, Hdma5),
         }
     }
 
     fn audio_get(&self, key: AudioRegs) -> RegisterValue {
-        use gb_bus::io_reg_constant::{
-            AUD_A3TOGGLE, AUD_AF1, AUD_AF2, AUD_AF3, AUD_AF4, AUD_CHANNEL_CTL, AUD_CTL1, AUD_CTL2,
-            AUD_CTL3, AUD_CTL4, AUD_ENV1, AUD_ENV2, AUD_FS1, AUD_MAP, AUD_OUTPUT_MAP, AUD_PWM1,
-            AUD_PWM2, AUD_PWM3, AUD_PWM4, AUD_VOL3, AUD_VOL4, AUD_WAVE,
+        use gb_bus::io_reg_area::IORegArea::{
+            Nr10, Nr11, Nr12, Nr13, Nr14, Nr21, Nr22, Nr23, Nr24, Nr30, Nr31, Nr32, Nr33, Nr34,
+            Nr41, Nr42, Nr43, Nr44, Nr50, Nr51, Nr52,
         };
 
         match key {
-            AudioRegs::Fs1 => read_bus_reg!(self.addr_bus, AUD_FS1),
-            AudioRegs::Pwm1 => read_bus_reg!(self.addr_bus, AUD_PWM1),
-            AudioRegs::Env1 => read_bus_reg!(self.addr_bus, AUD_ENV1),
-            AudioRegs::Af1 => read_bus_reg!(self.addr_bus, AUD_AF1),
-            AudioRegs::Ctl1 => read_bus_reg!(self.addr_bus, AUD_CTL1),
-            AudioRegs::Pwm2 => read_bus_reg!(self.addr_bus, AUD_PWM2),
-            AudioRegs::Env2 => read_bus_reg!(self.addr_bus, AUD_ENV2),
-            AudioRegs::Af2 => read_bus_reg!(self.addr_bus, AUD_AF2),
-            AudioRegs::Ctl2 => read_bus_reg!(self.addr_bus, AUD_CTL2),
-            AudioRegs::A3Toggle => read_bus_reg!(self.addr_bus, AUD_A3TOGGLE),
-            AudioRegs::Pwm3 => read_bus_reg!(self.addr_bus, AUD_PWM3),
-            AudioRegs::Vol3 => read_bus_reg!(self.addr_bus, AUD_VOL3),
-            AudioRegs::Af3 => read_bus_reg!(self.addr_bus, AUD_AF3),
-            AudioRegs::Ctl3 => read_bus_reg!(self.addr_bus, AUD_CTL3),
-            AudioRegs::Pwm4 => read_bus_reg!(self.addr_bus, AUD_PWM4),
-            AudioRegs::Vol4 => read_bus_reg!(self.addr_bus, AUD_VOL4),
-            AudioRegs::Af4 => read_bus_reg!(self.addr_bus, AUD_AF4),
-            AudioRegs::Ctl4 => read_bus_reg!(self.addr_bus, AUD_CTL4),
-            AudioRegs::AudOutMap => read_bus_reg!(self.addr_bus, AUD_OUTPUT_MAP),
-            AudioRegs::AudMap => read_bus_reg!(self.addr_bus, AUD_MAP),
-            AudioRegs::AudChanCtl => read_bus_reg!(self.addr_bus, AUD_CHANNEL_CTL),
-            AudioRegs::AudWave => read_bus_reg!(self.addr_bus, AUD_WAVE),
+            AudioRegs::Fs1 => read_bus_reg!(self.addr_bus, Nr10),
+            AudioRegs::Pwm1 => read_bus_reg!(self.addr_bus, Nr11),
+            AudioRegs::Env1 => read_bus_reg!(self.addr_bus, Nr12),
+            AudioRegs::Af1 => read_bus_reg!(self.addr_bus, Nr13),
+            AudioRegs::Ctl1 => read_bus_reg!(self.addr_bus, Nr14),
+            AudioRegs::Pwm2 => read_bus_reg!(self.addr_bus, Nr21),
+            AudioRegs::Env2 => read_bus_reg!(self.addr_bus, Nr22),
+            AudioRegs::Af2 => read_bus_reg!(self.addr_bus, Nr23),
+            AudioRegs::Ctl2 => read_bus_reg!(self.addr_bus, Nr24),
+            AudioRegs::A3Toggle => read_bus_reg!(self.addr_bus, Nr30),
+            AudioRegs::Pwm3 => read_bus_reg!(self.addr_bus, Nr31),
+            AudioRegs::Vol3 => read_bus_reg!(self.addr_bus, Nr32),
+            AudioRegs::Af3 => read_bus_reg!(self.addr_bus, Nr33),
+            AudioRegs::Ctl3 => read_bus_reg!(self.addr_bus, Nr34),
+            AudioRegs::Pwm4 => read_bus_reg!(self.addr_bus, Nr41),
+            AudioRegs::Vol4 => read_bus_reg!(self.addr_bus, Nr42),
+            AudioRegs::Af4 => read_bus_reg!(self.addr_bus, Nr43),
+            AudioRegs::Ctl4 => read_bus_reg!(self.addr_bus, Nr44),
+            AudioRegs::AudOutMap => read_bus_reg!(self.addr_bus, Nr44),
+            AudioRegs::AudMap => read_bus_reg!(self.addr_bus, Nr50),
+            AudioRegs::AudChanCtl => read_bus_reg!(self.addr_bus, Nr51),
+            AudioRegs::AudWave => read_bus_reg!(self.addr_bus, Nr52),
         }
     }
 
@@ -505,93 +527,96 @@ impl RegisterDebugOperations for Game {
     }
 
     fn ppu_registers(&self) -> Vec<RegisterMap<PpuRegs>> {
-        use gb_bus::io_reg_constant::{
-            PPU_BGP, PPU_CONTROL, PPU_DMA, PPU_LY, PPU_LYC, PPU_OBP0, PPU_OBP1, PPU_SCX, PPU_SCY,
-            PPU_STATUS, PPU_WX, PPU_WY,
+        use gb_bus::io_reg_area::IORegArea::{
+            Bgp, Dma, LcdControl, LcdStat, Ly, Lyc, Obp0, Obp1, Scx, Scy, Wx, Wy,
         };
 
         vec![
-            // lcd regs
-            read_bus_reg!(PpuRegs::Control, self.addr_bus, PPU_CONTROL),
-            read_bus_reg!(PpuRegs::Status, self.addr_bus, PPU_STATUS),
-            read_bus_reg!(PpuRegs::Scy, self.addr_bus, PPU_SCY),
-            read_bus_reg!(PpuRegs::Scx, self.addr_bus, PPU_SCX),
-            read_bus_reg!(PpuRegs::Ly, self.addr_bus, PPU_LY),
-            read_bus_reg!(PpuRegs::Lyc, self.addr_bus, PPU_LYC),
-            read_bus_reg!(PpuRegs::Dma, self.addr_bus, PPU_DMA),
-            read_bus_reg!(PpuRegs::Bgp, self.addr_bus, PPU_BGP),
-            read_bus_reg!(PpuRegs::Obp0, self.addr_bus, PPU_OBP0),
-            read_bus_reg!(PpuRegs::Obp1, self.addr_bus, PPU_OBP1),
-            read_bus_reg!(PpuRegs::Wy, self.addr_bus, PPU_WY),
-            read_bus_reg!(PpuRegs::Wx, self.addr_bus, PPU_WX),
+            read_bus_reg!(PpuRegs::Control, self.addr_bus, LcdControl),
+            read_bus_reg!(PpuRegs::Status, self.addr_bus, LcdStat),
+            read_bus_reg!(PpuRegs::Scy, self.addr_bus, Scy),
+            read_bus_reg!(PpuRegs::Scx, self.addr_bus, Scx),
+            read_bus_reg!(PpuRegs::Ly, self.addr_bus, Ly),
+            read_bus_reg!(PpuRegs::Lyc, self.addr_bus, Lyc),
+            read_bus_reg!(PpuRegs::Dma, self.addr_bus, Dma),
+            read_bus_reg!(PpuRegs::Bgp, self.addr_bus, Bgp),
+            read_bus_reg!(PpuRegs::Obp0, self.addr_bus, Obp0),
+            read_bus_reg!(PpuRegs::Obp1, self.addr_bus, Obp1),
+            read_bus_reg!(PpuRegs::Wy, self.addr_bus, Wy),
+            read_bus_reg!(PpuRegs::Wx, self.addr_bus, Wx),
         ]
     }
 
     fn io_registers(&self) -> Vec<RegisterMap<IORegs>> {
-        use gb_bus::io_reg_constant::{
-            IO_BOOTROM, IO_DIV, IO_IE, IO_IF, IO_JOY, IO_SERIALBYTE, IO_SERIALCTL, IO_TAC, IO_TIMA,
-            IO_TMA,
-        };
+        use gb_bus::constant::IE_REG;
+        use gb_bus::io_reg_area::IORegArea::{BootRom, Div, Joy, Tac, Tima, Tma, IF, SB, SC};
         #[cfg(feature = "cgb")]
-        use gb_bus::io_reg_constant::{KEY1, VRAM_BANK, VRAM_DMA_START, WRAM_BANK};
+        use gb_bus::io_reg_area::IORegArea::{Hdma1, Hdma2, Hdma3, Hdma4, Hdma5, Key1, Svbk, Vbk};
 
         vec![
             // joypad regs
-            read_bus_reg!(IORegs::Joy, self.addr_bus, IO_JOY),
+            read_bus_reg!(IORegs::Joy, self.addr_bus, Joy),
             // serial regs
-            read_bus_reg!(IORegs::SerialByte, self.addr_bus, IO_SERIALBYTE),
-            read_bus_reg!(IORegs::SerialCtl, self.addr_bus, IO_SERIALCTL),
+            read_bus_reg!(IORegs::SerialByte, self.addr_bus, SB),
+            read_bus_reg!(IORegs::SerialCtl, self.addr_bus, SC),
             // Timer regs
-            read_bus_reg!(IORegs::Div, self.addr_bus, IO_DIV),
-            read_bus_reg!(IORegs::Tima, self.addr_bus, IO_TIMA),
-            read_bus_reg!(IORegs::Tma, self.addr_bus, IO_TMA),
-            read_bus_reg!(IORegs::Tac, self.addr_bus, IO_TAC),
+            read_bus_reg!(IORegs::Div, self.addr_bus, Div),
+            read_bus_reg!(IORegs::Tima, self.addr_bus, Tima),
+            read_bus_reg!(IORegs::Tma, self.addr_bus, Tma),
+            read_bus_reg!(IORegs::Tac, self.addr_bus, Tac),
             // cpu int regs
-            read_bus_reg!(IORegs::If, self.addr_bus, IO_IF),
-            read_bus_reg!(IORegs::Ie, self.addr_bus, IO_IE),
+            read_bus_reg!(IORegs::If, self.addr_bus, IF),
+            read_bus_reg!(IORegs::Ie, self.addr_bus, IE_REG),
             // Boot ROM
-            read_bus_reg!(IORegs::BootRom, self.addr_bus, IO_BOOTROM),
+            read_bus_reg!(IORegs::BootRom, self.addr_bus, BootRom),
             #[cfg(feature = "cgb")]
-            read_bus_reg!(IORegs::VramBank, self.addr_bus, VRAM_BANK),
+            read_bus_reg!(IORegs::VramBank, self.addr_bus, Vbk),
             #[cfg(feature = "cgb")]
-            read_bus_reg!(IORegs::Key1, self.addr_bus, KEY1),
+            read_bus_reg!(IORegs::Key1, self.addr_bus, Key1),
             #[cfg(feature = "cgb")]
-            read_bus_reg!(IORegs::WRamBank, self.addr_bus, WRAM_BANK),
+            read_bus_reg!(IORegs::WRamBank, self.addr_bus, Svbk),
             #[cfg(feature = "cgb")]
-            read_bus_reg!(IORegs::VramDma, self.addr_bus, VRAM_DMA_START),
+            read_bus_reg!(IORegs::VramDma, self.addr_bus, Hdma1),
+            #[cfg(feature = "cgb")]
+            read_bus_reg!(IORegs::VramDma, self.addr_bus, Hdma2),
+            #[cfg(feature = "cgb")]
+            read_bus_reg!(IORegs::VramDma, self.addr_bus, Hdma3),
+            #[cfg(feature = "cgb")]
+            read_bus_reg!(IORegs::VramDma, self.addr_bus, Hdma4),
+            #[cfg(feature = "cgb")]
+            read_bus_reg!(IORegs::VramDma, self.addr_bus, Hdma5),
         ]
     }
 
     fn audio_registers(&self) -> Vec<RegisterMap<AudioRegs>> {
-        use gb_bus::io_reg_constant::{
-            AUD_A3TOGGLE, AUD_AF1, AUD_AF2, AUD_AF3, AUD_AF4, AUD_CHANNEL_CTL, AUD_CTL1, AUD_CTL2,
-            AUD_CTL3, AUD_CTL4, AUD_ENV1, AUD_ENV2, AUD_FS1, AUD_MAP, AUD_OUTPUT_MAP, AUD_PWM1,
-            AUD_PWM2, AUD_PWM3, AUD_PWM4, AUD_VOL3, AUD_VOL4, AUD_WAVE,
+        use gb_bus::io_reg_area::IORegArea::{
+            Nr10, Nr11, Nr12, Nr13, Nr14, Nr21, Nr22, Nr23, Nr24, Nr30, Nr31, Nr32, Nr33, Nr34,
+            Nr41, Nr42, Nr43, Nr44, Nr50, Nr51, Nr52,
         };
 
         vec![
-            read_bus_reg!(AudioRegs::Fs1, self.addr_bus, AUD_FS1),
-            read_bus_reg!(AudioRegs::Pwm1, self.addr_bus, AUD_PWM1),
-            read_bus_reg!(AudioRegs::Env1, self.addr_bus, AUD_ENV1),
-            read_bus_reg!(AudioRegs::Af1, self.addr_bus, AUD_AF1),
-            read_bus_reg!(AudioRegs::Ctl1, self.addr_bus, AUD_CTL1),
-            read_bus_reg!(AudioRegs::Pwm2, self.addr_bus, AUD_PWM2),
-            read_bus_reg!(AudioRegs::Env2, self.addr_bus, AUD_ENV2),
-            read_bus_reg!(AudioRegs::Af2, self.addr_bus, AUD_AF2),
-            read_bus_reg!(AudioRegs::Ctl2, self.addr_bus, AUD_CTL2),
-            read_bus_reg!(AudioRegs::A3Toggle, self.addr_bus, AUD_A3TOGGLE),
-            read_bus_reg!(AudioRegs::Pwm3, self.addr_bus, AUD_PWM3),
-            read_bus_reg!(AudioRegs::Vol3, self.addr_bus, AUD_VOL3),
-            read_bus_reg!(AudioRegs::Af3, self.addr_bus, AUD_AF3),
-            read_bus_reg!(AudioRegs::Ctl3, self.addr_bus, AUD_CTL3),
-            read_bus_reg!(AudioRegs::Pwm4, self.addr_bus, AUD_PWM4),
-            read_bus_reg!(AudioRegs::Vol4, self.addr_bus, AUD_VOL4),
-            read_bus_reg!(AudioRegs::Af4, self.addr_bus, AUD_AF4),
-            read_bus_reg!(AudioRegs::Ctl4, self.addr_bus, AUD_CTL4),
-            read_bus_reg!(AudioRegs::AudOutMap, self.addr_bus, AUD_OUTPUT_MAP),
-            read_bus_reg!(AudioRegs::AudMap, self.addr_bus, AUD_MAP),
-            read_bus_reg!(AudioRegs::AudChanCtl, self.addr_bus, AUD_CHANNEL_CTL),
-            read_bus_reg!(AudioRegs::AudWave, self.addr_bus, AUD_WAVE),
+            read_bus_reg!(AudioRegs::Fs1, self.addr_bus, Nr10),
+            read_bus_reg!(AudioRegs::Pwm1, self.addr_bus, Nr11),
+            read_bus_reg!(AudioRegs::Env1, self.addr_bus, Nr12),
+            read_bus_reg!(AudioRegs::Af1, self.addr_bus, Nr13),
+            read_bus_reg!(AudioRegs::Ctl1, self.addr_bus, Nr14),
+            read_bus_reg!(AudioRegs::Pwm2, self.addr_bus, Nr21),
+            read_bus_reg!(AudioRegs::Env2, self.addr_bus, Nr22),
+            read_bus_reg!(AudioRegs::Af2, self.addr_bus, Nr23),
+            read_bus_reg!(AudioRegs::Ctl2, self.addr_bus, Nr24),
+            read_bus_reg!(AudioRegs::A3Toggle, self.addr_bus, Nr30),
+            read_bus_reg!(AudioRegs::Pwm3, self.addr_bus, Nr31),
+            read_bus_reg!(AudioRegs::Vol3, self.addr_bus, Nr32),
+            read_bus_reg!(AudioRegs::Af3, self.addr_bus, Nr33),
+            read_bus_reg!(AudioRegs::Ctl3, self.addr_bus, Nr34),
+            read_bus_reg!(AudioRegs::Pwm4, self.addr_bus, Nr41),
+            read_bus_reg!(AudioRegs::Vol4, self.addr_bus, Nr42),
+            read_bus_reg!(AudioRegs::Af4, self.addr_bus, Nr43),
+            read_bus_reg!(AudioRegs::Ctl4, self.addr_bus, Nr44),
+            read_bus_reg!(AudioRegs::AudOutMap, self.addr_bus, Nr44),
+            read_bus_reg!(AudioRegs::AudMap, self.addr_bus, Nr50),
+            read_bus_reg!(AudioRegs::AudChanCtl, self.addr_bus, Nr51),
+            read_bus_reg!(AudioRegs::AudWave, self.addr_bus, Nr52),
         ]
     }
 }
