@@ -43,43 +43,54 @@ pub struct TestIORegAddress {
 }
 
 impl TestIORegAddress {
-    pub fn control() -> Self {
-        TestIORegAddress {
-            relative: 0x0000,
-            absolute: 0xFF40,
-            area: IORegArea::Lcd,
+    pub fn new(area: IORegArea, abs: u16, rel: u16) -> Self {
+        Self {
+            relative: rel,
+            absolute: abs,
+            area,
         }
+    }
+
+    pub fn reg(area: IORegArea, abs: u16) -> Self {
+        Self::new(area, abs, 0)
+    }
+
+    pub fn from_area(area: IORegArea) -> Self {
+        Self::reg(area, u16::from(area))
+    }
+
+    pub fn control() -> Self {
+        Self::from_area(IORegArea::LcdControl)
     }
 
     pub fn stat() -> Self {
-        TestIORegAddress {
-            relative: 0x0001,
-            absolute: 0xFF41,
-            area: IORegArea::Lcd,
-        }
+        Self::from_area(IORegArea::LcdStat)
     }
 
     pub fn scrolling(pos: u16) -> Self {
-        TestIORegAddress {
-            relative: 0x0002 + pos.min(3),
-            absolute: 0xFF42 + pos.min(3),
-            area: IORegArea::Lcd,
+        match pos {
+            0 => Self::from_area(IORegArea::Scy),
+            1 => Self::from_area(IORegArea::Scx),
+            2 => Self::from_area(IORegArea::Ly),
+            3 => Self::from_area(IORegArea::Lyc),
+            _ => panic!("unexpected scroll position {}", pos),
         }
     }
 
     pub fn palette(pos: u16) -> Self {
-        TestIORegAddress {
-            relative: 0x0007 + pos.min(2),
-            absolute: 0xFF47 + pos.min(2),
-            area: IORegArea::Lcd,
+        match pos {
+            0 => Self::from_area(IORegArea::Bgp),
+            1 => Self::from_area(IORegArea::Obp0),
+            2 => Self::from_area(IORegArea::Obp1),
+            _ => panic!("unexpected palette position {}", pos),
         }
     }
 
     pub fn window_pos(pos: u16) -> Self {
-        TestIORegAddress {
-            relative: 0x000A + pos.min(1),
-            absolute: 0xFF4A + pos.min(1),
-            area: IORegArea::Lcd,
+        match pos {
+            0 => Self::from_area(IORegArea::Wy),
+            1 => Self::from_area(IORegArea::Wx),
+            _ => panic!("unexpected windows position {}", pos),
         }
     }
 }
