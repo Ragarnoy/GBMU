@@ -8,14 +8,13 @@ pub struct IORegBus {
 impl FileOperation<Area> for IORegBus {
     fn read(&self, address: Box<dyn PseudoAddress<Area>>) -> Result<u8, Error> {
         let addr: u16 = address.into();
-        let reg = IORegArea::from(addr);
+        let reg = IORegArea::try_from(addr).map_err(|_e| Error::BusError(addr))?;
 
         if let Some(area) = self.areas.get(&reg) {
-            let offset = u16::from(reg) - addr;
             #[cfg(feature = "trace_bus_rea")]
             log::trace!("reading at {:4x} in area {:?}", addr, reg);
             area.borrow()
-                .read(Box::new(Address::from_offset(reg, addr, offset)))
+                .read(Box::new(Address::from_offset(reg, addr, 0)))
         } else {
             Err(Error::BusError(addr))
         }
@@ -23,10 +22,9 @@ impl FileOperation<Area> for IORegBus {
 
     fn write(&mut self, v: u8, address: Box<dyn PseudoAddress<Area>>) -> Result<(), Error> {
         let addr: u16 = address.into();
-        let reg = IORegArea::from(addr);
+        let reg = IORegArea::try_from(addr).map_err(|_e| Error::BusError(addr))?;
 
         if let Some(area) = self.areas.get_mut(&reg) {
-            let offset = u16::from(reg) - addr;
             #[cfg(feature = "trace_bus_write")]
             log::trace!(
                 "writing at {:4x} the value {:2x} in area {:?}",
@@ -35,7 +33,7 @@ impl FileOperation<Area> for IORegBus {
                 reg
             );
             area.borrow_mut()
-                .write(v, Box::new(Address::from_offset(reg, addr, offset)))
+                .write(v, Box::new(Address::from_offset(reg, addr, 0)))
         } else {
             Err(Error::BusError(addr))
         }
