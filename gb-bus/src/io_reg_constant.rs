@@ -147,6 +147,18 @@ pub const HDMA5: u16 = 0xff55;
 /// Infrared communication port
 pub const RP: u16 = 0xff56;
 #[cfg(feature = "cgb")]
+/// Background Color Palette Specification
+pub const BCPS: u16 = 0xff68;
+#[cfg(feature = "cgb")]
+/// Background Color Palette Data
+pub const BCPD: u16 = 0xff69;
+#[cfg(feature = "cgb")]
+/// Object Color Palette Specification
+pub const OCPS: u16 = 0xff6a;
+#[cfg(feature = "cgb")]
+/// Object Color Palette Data
+pub const OCPD: u16 = 0xff6b;
+#[cfg(feature = "cgb")]
 /// Object priority mode
 pub const OPRI: u16 = 0xff6c;
 #[cfg(feature = "cgb")]

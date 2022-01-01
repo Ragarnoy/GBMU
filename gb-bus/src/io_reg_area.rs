@@ -152,6 +152,19 @@ pub enum IORegArea {
     /// Infrared communication port
     RP = RP,
     #[cfg(feature = "cgb")]
+    /// Background Color Palette Specification
+    Bcps = BCPS,
+    #[cfg(feature = "cgb")]
+    /// Background Color Palette Data
+    Bcpd = BCPD,
+    #[cfg(feature = "cgb")]
+    /// Object Color Palette Specification
+    Ocps = OCPS,
+    #[cfg(feature = "cgb")]
+    /// Object Color Palette Data
+    Ocpd = OCPD,
+
+    #[cfg(feature = "cgb")]
     /// Object priority mode
     Opri = OPRI,
     #[cfg(feature = "cgb")]
@@ -161,7 +174,7 @@ pub enum IORegArea {
 
 impl From<IORegArea> for u16 {
     fn from(r: IORegArea) -> Self {
-        r.into()
+        r as u16
     }
 }
 
