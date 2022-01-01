@@ -8,8 +8,6 @@ pub mod generic;
 pub mod io_reg_area;
 mod io_reg_bus;
 pub mod io_reg_constant;
-#[cfg(feature = "cgb")]
-mod io_reg_constant_color;
 mod lock;
 mod working_ram;
 
