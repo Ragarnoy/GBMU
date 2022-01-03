@@ -198,7 +198,7 @@ impl State {
     }
 
     fn update_registers(
-        &self,
+        &mut self,
         mut lcd_reg: RefMut<LcdReg>,
         adr_bus: &mut dyn Bus<u8>,
         state_updated: bool,

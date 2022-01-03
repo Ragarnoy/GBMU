@@ -13,6 +13,7 @@ mod io_reg_constant_color;
 mod lock;
 mod working_ram;
 
+pub use address::Addr;
 pub use address_bus::AddressBus;
 pub use area::Area;
 pub use error::Error;

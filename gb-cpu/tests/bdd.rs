@@ -99,10 +99,10 @@ async fn check_reg16_value(world: &mut CpuWorld, reg: Reg16, value: String) {
 async fn check_composite_reg_value(world: &mut CpuWorld, reg: String, value: String) {
     use std::str::FromStr;
 
-    let reg = reg.split(" ").collect::<Vec<&str>>().join("");
+    let reg = reg.split(' ').collect::<Vec<&str>>().join("");
     let reg = Reg16::from_str(&reg).expect("cannot decode composite register");
 
-    let value = value.split(" ").collect::<Vec<&str>>().join("");
+    let value = value.split(' ').collect::<Vec<&str>>().join("");
     let value = u16::from_str_radix(&value, 16).expect("valid hexa value");
 
     let reg_value = reg.read_corresponding_regs(&world.cpu.registers);
@@ -125,11 +125,11 @@ async fn check_u16_in_bus(world: &mut CpuWorld, address: String, values: String)
         .collect::<Result<Vec<u8>, _>>()
         .expect("valid hexa values");
 
-    for index in 0..values.len() {
+    for (index, value) in values.iter().enumerate() {
         let addr = address + index as u16;
         let res = world.bus.read(addr, None);
         assert_eq!(
-            Ok(values[index]),
+            Ok(*value),
             res,
             "invalid value for index {} (address: {:x})",
             index,
