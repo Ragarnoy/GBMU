@@ -13,6 +13,8 @@ pub struct IORegisters {
 }
 
 impl IORegisters {
+    const FLAG_MASK: u8 = 0b1110_0000;
+
     pub fn is_interrupt_ready(&self) -> bool {
         self.flag & self.enable_mask != 0
     }
@@ -34,11 +36,11 @@ impl IORegisters {
 
 impl FileOperation<Area> for IORegisters {
     fn read(&self, _addr: Box<dyn gb_bus::Address<Area>>) -> Result<u8, gb_bus::Error> {
-        Ok(self.enable_mask)
+        Ok(IORegisters::FLAG_MASK | self.enable_mask)
     }
 
     fn write(&mut self, v: u8, _addr: Box<dyn gb_bus::Address<Area>>) -> Result<(), gb_bus::Error> {
-        self.enable_mask = v;
+        self.enable_mask = v & (!IORegisters::FLAG_MASK);
         Ok(())
     }
 }
@@ -46,7 +48,7 @@ impl FileOperation<Area> for IORegisters {
 impl FileOperation<IORegArea> for IORegisters {
     fn read(&self, addr: Box<dyn gb_bus::Address<IORegArea>>) -> Result<u8, gb_bus::Error> {
         match addr.area_type() {
-            IORegArea::InterruptFlag => Ok(self.flag),
+            IORegArea::InterruptFlag => Ok(IORegisters::FLAG_MASK | self.flag),
             #[cfg(feature = "cgb")]
             IORegArea::DoubleSpeed => Ok(double_speed_register(
                 self.current_speed,
@@ -61,7 +63,7 @@ impl FileOperation<IORegArea> for IORegisters {
         v: u8,
         _addr: Box<dyn gb_bus::Address<IORegArea>>,
     ) -> Result<(), gb_bus::Error> {
-        self.flag = v;
+        self.flag = v & !(IORegisters::FLAG_MASK);
         Ok(())
     }
 }
