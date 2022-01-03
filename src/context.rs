@@ -253,6 +253,33 @@ impl Game {
             }
         }
     }
+
+    /// Save the current game state to a file
+    pub fn save_state(&self, filename: &Path) {
+        use anyhow::Error;
+        use rmp_serde::encode::write_named;
+        use std::fs::OpenOptions;
+
+        let minimal_state = MinimalState::from(self);
+        if let Err(e) = OpenOptions::new()
+            .create(true)
+            .write(true)
+            .open(filename)
+            .map_err(Error::from)
+            .and_then(|mut writer| Ok(write_named(&mut writer, &minimal_state)?))
+        {
+            log::error!(
+                "failed to save the game context to {}: {}",
+                filename.to_string_lossy(),
+                e
+            );
+        } else {
+            log::info!(
+                "successfuly save the current game state of {}",
+                self.romname
+            );
+        }
+    }
 }
 
 /// Return an initalised MBCs with it auto game save if possible
@@ -572,5 +599,18 @@ impl RegisterDebugOperations for Game {
             read_bus_reg!(AudioRegs::AudChanCtl, self.addr_bus, AUD_CHANNEL_CTL),
             read_bus_reg!(AudioRegs::AudWave, self.addr_bus, AUD_WAVE),
         ]
+    }
+}
+
+#[derive(serde::Serialize, serde::Deserialize)]
+struct MinimalState {
+    pub romname: String,
+}
+
+impl From<&Game> for MinimalState {
+    fn from(context: &Game) -> Self {
+        Self {
+            romname: context.romname.clone(),
+        }
     }
 }
