@@ -100,7 +100,7 @@ pub fn draw_egui<const WIDTH: usize, const HEIGHT: usize>(
                         )
                         .expect("Failed to configure oam window");
                     context.windows.oam =
-                        Some(windows::OAMConfig {
+                        Some(crate::windows::OAMConfig {
                             window: oam,
                             viewport: render::RenderImage::<
                                 SPRITE_RENDER_WIDTH,
