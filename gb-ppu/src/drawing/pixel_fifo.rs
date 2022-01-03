@@ -77,7 +77,7 @@ mod tests {
             Pixel::new(1, pal_0.clone(), false),
             Pixel::new(1, pal_0.clone(), false),
             Pixel::new(1, pal_0.clone(), false),
-            Pixel::new(1, pal_0.clone(), false),
+            Pixel::new(1, pal_0, false),
         ]);
         let pal_1 = Rc::new(Cell::new(Palette::new_sprite()));
         let pixels_1 = VecDeque::from_iter([
@@ -88,7 +88,7 @@ mod tests {
             Pixel::new(2, pal_1.clone(), false),
             Pixel::new(0, pal_1.clone(), false),
             Pixel::new(2, pal_1.clone(), false),
-            Pixel::new(0, pal_1.clone(), false),
+            Pixel::new(0, pal_1, false),
         ]);
         let mut fifo = PixelFIFO::new();
 
@@ -115,7 +115,7 @@ mod tests {
             Pixel::new(0, palette.clone(), false),
             Pixel::new(1, palette.clone(), false),
             Pixel::new(2, palette.clone(), false),
-            Pixel::new(3, palette.clone(), false),
+            Pixel::new(3, palette, false),
         ]);
         let mut fifo = PixelFIFO::new();
 
@@ -147,7 +147,7 @@ mod tests {
             Pixel::new(2, palette.clone(), false),
             Pixel::new(3, palette.clone(), false),
             Pixel::new(2, palette.clone(), false),
-            Pixel::new(3, palette.clone(), false),
+            Pixel::new(3, palette, false),
         ]);
         let mut fifo = PixelFIFO::new();
 

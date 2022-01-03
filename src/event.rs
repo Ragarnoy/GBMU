@@ -84,15 +84,13 @@ pub fn process_event<const WIDTH: usize, const HEIGHT: usize>(
                         }
                     }
                     #[cfg(feature = "debug_render")]
-                    if let Some((ref mut oam_wind, ref mut display_view, ref mut display_list, _)) =
-                        context.windows.oam
-                    {
-                        if oam_wind.sdl_window().id() == window_id {
-                            oam_wind
+                    if let Some(ref mut cfg) = context.windows.oam {
+                        if cfg.window.sdl_window().id() == window_id {
+                            cfg.window
                                 .resize(&context.video)
                                 .expect("Fail to resize oam window");
-                            display_view.resize(oam_wind.sdl_window().size());
-                            display_list.resize(oam_wind.sdl_window().size());
+                            cfg.viewport.resize(cfg.window.sdl_window().size());
+                            cfg.list.resize(cfg.window.sdl_window().size());
                         }
                     }
                 }
@@ -124,8 +122,8 @@ pub fn process_event<const WIDTH: usize, const HEIGHT: usize>(
                         }
                     }
                     #[cfg(feature = "debug_render")]
-                    if let Some((ref mut oam_wind, _, _, _)) = context.windows.oam {
-                        if oam_wind.sdl_window().id() == window_id {
+                    if let Some(ref mut cfg) = context.windows.oam {
+                        if cfg.window.sdl_window().id() == window_id {
                             context.windows.oam = None;
                         }
                     }
@@ -149,8 +147,8 @@ pub fn process_event<const WIDTH: usize, const HEIGHT: usize>(
                         tilesheet_wind.send_event(&event, &context.sdl);
                     }
                     #[cfg(feature = "debug_render")]
-                    if let Some((ref mut oam_wind, _, _, _)) = context.windows.oam {
-                        oam_wind.send_event(&event, &context.sdl);
+                    if let Some(ref mut cfg) = context.windows.oam {
+                        cfg.window.send_event(&event, &context.sdl);
                     }
                 }
             }

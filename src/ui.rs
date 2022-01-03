@@ -85,24 +85,38 @@ pub fn draw_egui<const WIDTH: usize, const HEIGHT: usize>(
                             .expect("Error while computing bar size");
                     let mut oam = GBWindow::new(
                         "ppu oam",
-                        (SPRITE_RENDER_WIDTH as u32, SPRITE_RENDER_HEIGHT as u32 + bar_pixels_size),
+                        (
+                            SPRITE_RENDER_WIDTH as u32,
+                            SPRITE_RENDER_HEIGHT as u32 + bar_pixels_size,
+                        ),
                         true,
                         &context.video,
                     )
                     .expect("Error while building oam window");
                     oam.sdl_window_mut()
-                        .set_minimum_size(SPRITE_RENDER_WIDTH as u32, SPRITE_RENDER_HEIGHT as u32 + bar_pixels_size)
+                        .set_minimum_size(
+                            SPRITE_RENDER_WIDTH as u32,
+                            SPRITE_RENDER_HEIGHT as u32 + bar_pixels_size,
+                        )
                         .expect("Failed to configure oam window");
-                    context.windows.oam = Some((
-                        oam,
-                        render::RenderImage::<SPRITE_RENDER_WIDTH, SPRITE_RENDER_HEIGHT>::with_bar_size(
-                            bar_pixels_size as f32,
-                        ),
-                        render::RenderImage::<SPRITE_LIST_RENDER_WIDTH, SPRITE_LIST_RENDER_HEIGHT>::with_bar_size(
-                            bar_pixels_size as f32,
-                        ),
-                        false
-                    ))
+                    context.windows.oam =
+                        Some(crate::windows::OAMConfig {
+                            window: oam,
+                            viewport: render::RenderImage::<
+                                SPRITE_RENDER_WIDTH,
+                                SPRITE_RENDER_HEIGHT,
+                            >::with_bar_size(
+                                bar_pixels_size as f32
+                            ),
+                            list: render::RenderImage::<
+                                SPRITE_LIST_RENDER_WIDTH,
+                                SPRITE_LIST_RENDER_HEIGHT,
+                            >::with_bar_size(
+                                bar_pixels_size as f32
+                            ),
+                            display_list: false,
+                            invert_color: false,
+                        })
                 }
             });
             if ui.button("Input").clicked() && context.windows.input.is_none() {
@@ -175,39 +189,36 @@ pub fn draw_ppu_debug_ui<const WIDTH: usize, const HEIGHT: usize>(
             .expect("Fail at the end for the tilesheet window");
     }
 
-    if let Some((
-        ref mut oam_window,
-        ref mut display_view,
-        ref mut display_list,
-        ref mut display_mode,
-    )) = context.windows.oam
-    {
-        oam_window
+    if let Some(ref mut cfg) = context.windows.oam {
+        cfg.window
             .start_frame()
             .expect("Fail at the start for the oam window");
         if let Some(ref mut game) = game {
-            egui::containers::TopBottomPanel::top("Top menu").show(oam_window.egui_ctx(), |ui| {
+            egui::containers::TopBottomPanel::top("Top menu").show(cfg.window.egui_ctx(), |ui| {
                 egui::menu::bar(ui, |ui| {
                     ui.set_height(render::MENU_BAR_SIZE);
                     egui::menu::menu(ui, "mode", |ui| {
                         if ui.button("viewport").clicked() {
-                            *display_mode = false;
+                            cfg.display_list = false;
                         }
                         if ui.button("list").clicked() {
-                            *display_mode = true;
+                            cfg.display_list = true;
                         }
                     });
+                    ui.checkbox(&mut cfg.invert_color, "invert")
                 })
             });
-            if !*display_mode {
-                display_view.update_render(&game.ppu.sprites_image());
-                display_view.draw();
+            if !cfg.display_list {
+                cfg.viewport
+                    .update_render(&game.ppu.sprites_image(cfg.invert_color));
+                cfg.viewport.draw();
             } else {
-                display_list.update_render(&game.ppu.sprites_list_image());
-                display_list.draw();
+                cfg.list
+                    .update_render(&game.ppu.sprites_list_image(cfg.invert_color));
+                cfg.list.draw();
             }
         }
-        oam_window
+        cfg.window
             .end_frame()
             .expect("Fail at the end for the oam window");
     }

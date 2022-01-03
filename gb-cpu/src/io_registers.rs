@@ -13,6 +13,8 @@ pub struct IORegisters {
 }
 
 impl IORegisters {
+    const FLAG_MASK: u8 = 0b1110_0000;
+
     pub fn is_interrupt_ready(&self) -> bool {
         self.flag & self.enable_mask != 0
     }
@@ -37,12 +39,12 @@ where
     u16: From<A>,
     A: Address<Area>,
 {
-    fn read(&self, _addr: A) -> Result<u8, Error> {
-        Ok(self.enable_mask)
+    fn read(&self, _addr: A) -> Result<u8, gb_bus::Error> {
+        Ok(IORegisters::FLAG_MASK | self.enable_mask)
     }
 
-    fn write(&mut self, v: u8, _addr: A) -> Result<(), Error> {
-        self.enable_mask = v;
+    fn write(&mut self, v: u8, _addr: A) -> Result<(), gb_bus::Error> {
+        self.enable_mask = v & (!IORegisters::FLAG_MASK);
         Ok(())
     }
 }
@@ -54,7 +56,7 @@ where
 {
     fn read(&self, addr: A) -> Result<u8, Error> {
         match addr.area_type() {
-            IORegArea::InterruptFlag => Ok(self.flag),
+            IORegArea::InterruptFlag => Ok(IORegisters::FLAG_MASK | self.flag),
             #[cfg(feature = "cgb")]
             IORegArea::DoubleSpeed => Ok(double_speed_register(
                 self.current_speed,
@@ -64,8 +66,8 @@ where
         }
     }
 
-    fn write(&mut self, v: u8, _addr: A) -> Result<(), Error> {
-        self.flag = v;
+    fn write(&mut self, v: u8, _addr: A) -> Result<(), gb_bus::Error> {
+        self.flag = v & !(IORegisters::FLAG_MASK);
         Ok(())
     }
 }
