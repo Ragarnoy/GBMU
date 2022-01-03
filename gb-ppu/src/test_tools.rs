@@ -7,6 +7,12 @@ pub struct TestAddress {
     pub area: Area,
 }
 
+impl From<TestAddress> for u16 {
+    fn from(a: TestAddress) -> Self {
+        a.absolute
+    }
+}
+
 impl TestAddress {
     pub fn root_vram() -> Self {
         TestAddress {
@@ -102,5 +108,11 @@ impl Address<IORegArea> for TestIORegAddress {
 
     fn area_type(&self) -> IORegArea {
         self.area
+    }
+}
+
+impl From<TestIORegAddress> for u16 {
+    fn from(a: TestIORegAddress) -> Self {
+        a.absolute
     }
 }

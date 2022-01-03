@@ -27,27 +27,28 @@ impl RomOnlyController {
     }
 }
 
-impl FileOperation<Area> for RomOnlyController {
-    fn read(&self, addr: Box<dyn Address<Area>>) -> Result<u8, Error> {
+impl<A> FileOperation<A, Area> for RomOnlyController
+where
+    u16: From<A>,
+    A: Address<Area>,
+{
+    fn read(&self, addr: A) -> Result<u8, Error> {
         let address = addr.get_address();
         if address < self.rom.len() {
             Ok(self.rom[address])
         } else {
-            Err(Error::bus_error(addr))
+            Err(Error::bus_error(addr.into()))
         }
     }
 }
 
 #[test]
 fn test_romonly_impl() {
-    use gb_bus::{address::Address, area::Area};
+    use gb_bus::{address::Addr, area::Area};
 
     let rom = RomOnlyController {
         rom: [42; ROM_AREA_SIZE],
     };
 
-    assert_eq!(
-        rom.read(Box::new(Address::from_offset(Area::Rom, 0x7fff, 0))),
-        Ok(42)
-    );
+    assert_eq!(rom.read(Addr::from_offset(Area::Rom, 0x7fff, 0)), Ok(42));
 }

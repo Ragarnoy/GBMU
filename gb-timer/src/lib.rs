@@ -68,24 +68,28 @@ impl Ticker for Timer {
     }
 }
 
-impl FileOperation<IORegArea> for Timer {
-    fn read(&self, addr: Box<dyn Address<IORegArea>>) -> Result<u8, Error> {
+impl<A> FileOperation<A, IORegArea> for Timer
+where
+    u16: From<A>,
+    A: Address<IORegArea>,
+{
+    fn read(&self, addr: A) -> Result<u8, Error> {
         match addr.area_type() {
             IORegArea::Div => Ok(self.div()),
             IORegArea::Tima => Ok(self.tima),
             IORegArea::Tma => Ok(self.tma),
             IORegArea::Tac => Ok(!Self::TAC_MASK | self.tac),
-            _ => Err(Error::bus_error(addr)),
+            _ => Err(Error::bus_error(addr.into())),
         }
     }
 
-    fn write(&mut self, v: u8, addr: Box<dyn Address<IORegArea>>) -> Result<(), Error> {
+    fn write(&mut self, v: u8, addr: A) -> Result<(), Error> {
         match addr.area_type() {
             IORegArea::Div => self.system_clock = 0,
             IORegArea::Tima => self.tima = v,
             IORegArea::Tma => self.tma = v,
             IORegArea::Tac => self.tac = v & Self::TAC_MASK,
-            _ => return Err(Error::bus_error(addr)),
+            _ => return Err(Error::bus_error(addr.into())),
         }
         Ok(())
     }

@@ -36,11 +36,15 @@ impl PPURegisters {
     }
 }
 
-impl FileOperation<IORegArea> for PPURegisters {
-    fn read(&self, addr: Box<dyn Address<IORegArea>>) -> Result<u8, Error> {
-        use IORegArea::{Bgp, Dma, LcdControl, LcdStat, Ly, Lyc, Obp0, Obp1, Scx, Scy, Wx, Wy};
+impl<A> FileOperation<A, IORegArea> for PPURegisters
+where
+    A: Address<IORegArea>,
+    u16: From<A>,
+{
+    fn read(&self, addr: A) -> Result<u8, Error> {
         #[cfg(feature = "cgb")]
-        use IORegArea::{Hdma1, Hdma2, Hdma3, Hdma4, Hdma5, Vbk};
+        use IORegArea::{Bcpd, Bcps, Hdma1, Hdma2, Hdma3, Hdma4, Hdma5, Ocpd, Ocps, Vbk};
+        use IORegArea::{Bgp, Dma, LcdControl, LcdStat, Ly, Lyc, Obp0, Obp1, Scx, Scy, Wx, Wy};
 
         match addr.area_type() {
             Bgp | Dma | LcdControl | LcdStat | Ly | Lyc | Obp0 | Obp1 | Scx | Scy | Wx | Wy => {
@@ -62,15 +66,16 @@ impl FileOperation<IORegArea> for PPURegisters {
                 log::warn!("missing ppu VramDma register");
                 Ok(UNDEFINED_VALUE)
             }
-            // Bgp => {
-            //     log::warn!("missing ppu BgObjPalette register");
-            //     Ok(UNDEFINED_VALUE)
-            // }
+            #[cfg(feature = "cgb")]
+            Bcpd | Bcps | Ocpd | Ocps => {
+                log::warn!("missing ppu BgObjPalettes registers write");
+                Ok(UNDEFINED_VALUE)
+            }
             _ => Err(Error::SegmentationFault(addr.into())),
         }
     }
 
-    fn write(&mut self, v: u8, addr: Box<dyn Address<IORegArea>>) -> Result<(), Error> {
+    fn write(&mut self, v: u8, addr: A) -> Result<(), Error> {
         #[cfg(feature = "cgb")]
         use IORegArea::{Bcpd, Bcps, Hdma1, Hdma2, Hdma3, Hdma4, Hdma5, Ocpd, Ocps, Vbk};
         use IORegArea::{Bgp, Dma, LcdControl, LcdStat, Ly, Lyc, Obp0, Obp1, Scx, Scy, Wx, Wy};
@@ -120,7 +125,7 @@ mod read {
         let ppu_reg = PPURegisters::new(lcd);
 
         let res = ppu_reg
-            .read(Box::new(TestIORegAddress::control()))
+            .read(TestIORegAddress::control())
             .expect("Try reading value from lcd control");
         assert_eq!(res, 0x42, "invalid value from lcd control");
     }
@@ -132,7 +137,7 @@ mod read {
         let ppu_reg = PPURegisters::new(lcd);
 
         let res = ppu_reg
-            .read(Box::new(TestIORegAddress::stat()))
+            .read(TestIORegAddress::stat())
             .expect("Try reading value from lcd dma");
         assert_eq!(res, 0x42, "invalid value from lcd dma");
     }
@@ -144,7 +149,7 @@ mod read {
         let ppu_reg = PPURegisters::new(lcd);
 
         let res = ppu_reg
-            .read(Box::new(TestIORegAddress::window_pos(1)))
+            .read(TestIORegAddress::window_pos(1))
             .expect("Try reading value from lcd window_pos");
         assert_eq!(res, 0x42, "invalid value from lcd window_pos");
     }
@@ -165,10 +170,10 @@ mod write {
         let mut ppu_reg = PPURegisters::new(lcd);
 
         ppu_reg
-            .write(0b1111_1111, Box::new(TestIORegAddress::stat()))
+            .write(0b1111_1111, TestIORegAddress::stat())
             .expect("Try write value into lcd stat");
         let res = ppu_reg
-            .read(Box::new(TestIORegAddress::stat()))
+            .read(TestIORegAddress::stat())
             .expect("Try reading value from lcd stat");
         assert_eq!(res, 0b0111_1000, "invalid value from lcd stat");
     }
@@ -180,10 +185,10 @@ mod write {
         let mut ppu_reg = PPURegisters::new(lcd);
 
         ppu_reg
-            .write(0x42, Box::new(TestIORegAddress::palette(2)))
+            .write(0x42, TestIORegAddress::palette(2))
             .expect("Try write value into lcd palette");
         let res = ppu_reg
-            .read(Box::new(TestIORegAddress::palette(2)))
+            .read(TestIORegAddress::palette(2))
             .expect("Try reading value from lcd palette");
         assert_eq!(res, 0x42, "invalid value from lcd palette");
     }
@@ -196,23 +201,23 @@ mod write {
 
         for pos in 0..4 {
             ppu_reg
-                .write(0x42, Box::new(TestIORegAddress::scrolling(pos)))
+                .write(0x42, TestIORegAddress::scrolling(pos))
                 .expect("Try write value into lcd scrolling");
         }
         let res = ppu_reg
-            .read(Box::new(TestIORegAddress::scrolling(0)))
+            .read(TestIORegAddress::scrolling(0))
             .expect("Try reading value from lcd scrolling");
         assert_eq!(res, 0x42, "invalid value from lcd scrolling");
         let res = ppu_reg
-            .read(Box::new(TestIORegAddress::scrolling(1)))
+            .read(TestIORegAddress::scrolling(1))
             .expect("Try reading value from lcd scrolling");
         assert_eq!(res, 0x42, "invalid value from lcd scrolling");
         let res = ppu_reg
-            .read(Box::new(TestIORegAddress::scrolling(2)))
+            .read(TestIORegAddress::scrolling(2))
             .expect("Try reading value from lcd scrolling");
         assert_eq!(res, 0x00, "invalid value from lcd scrolling");
         let res = ppu_reg
-            .read(Box::new(TestIORegAddress::scrolling(3)))
+            .read(TestIORegAddress::scrolling(3))
             .expect("Try reading value from lcd scrolling");
         assert_eq!(res, 0x42, "invalid value from lcd scrolling");
     }

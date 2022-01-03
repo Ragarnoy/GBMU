@@ -1,4 +1,7 @@
-use super::{dec, jump::jump, read, write, MicrocodeController, MicrocodeFlow, State, CONTINUE};
+use super::{
+    controller::Mode, dec, jump::jump, read, write, MicrocodeController, MicrocodeFlow, State,
+    CONTINUE,
+};
 
 pub fn handle_interrupts(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     let mut int_flags = state.int_flags.borrow_mut();
@@ -49,5 +52,66 @@ pub fn disable_ime(_ctl: &mut MicrocodeController, state: &mut State) -> Microco
 
 pub fn enable_ime(_ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     state.int_flags.borrow_mut().master_enable = true;
+    CONTINUE
+}
+
+pub fn halt(ctl: &mut MicrocodeController, _state: &mut State) -> MicrocodeFlow {
+    ctl.mode = Mode::Halt;
+    CONTINUE
+}
+
+/// ## How the stop opcode work
+///
+/// **STOP** Reached
+/// |
+/// IS joypad pressed ?
+/// |   |
+/// NO YES
+/// |    \_ IS an interrupt pending ? (`IE & IF != 0`)
+/// |       |   |
+/// |       NO YES
+/// |       |    \_ STOP: 1 byte, mode: unchanged, DIV: unchanged
+/// |       |
+/// |        \_ STOP: 2 byte, mode: HALT, DIV: unchanged
+/// |
+/// The Step below is only for CGB mode
+/// |
+/// Was a speed switch requested ?
+/// |   |
+/// NO YES
+/// |    \_ IS an interrupt pending ? (`IE & IF != 0`)
+/// |       |   |
+/// |       NO YES
+/// |       |    \_ IS **IME** enabled ?
+/// |       |       |   |
+/// |       |       NO YES
+/// |       |       |    \_ The CPU *glitches*
+/// |       |       |
+/// |       |       \_ STOP: 1 byte, mode: unchanged, DIV: reset, SPEED: change
+/// |       |
+/// |       \_ STOP: 2 byte, mode: HALT, DIV: reset, SPEED: change
+/// |          Note: HALT mode exit automatically after ~0x20_000) Tcycle
+/// |
+/// IS an interrupt pending ? (`IE & IF != 0`)
+/// |   |
+/// NO YES
+/// |    \_ STOP: 1 byte, mode: STOP, DIV: reset
+/// |
+/// \_ STOP: 2 byte, mode: STOP, DIV: reset
+///
+pub fn stop(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
+    use crate::constant::JOYPAD_INT;
+
+    let int_flags = state.int_flags.borrow();
+
+    if int_flags.flag & JOYPAD_INT == JOYPAD_INT {
+        if !int_flags.is_interrupt_ready() {
+            drop(int_flags);
+            state.read();
+            ctl.mode = Mode::Halt;
+        }
+    } else if cfg!(feature = "cgb") {
+        unimplemented!("speed swicth");
+    }
     CONTINUE
 }

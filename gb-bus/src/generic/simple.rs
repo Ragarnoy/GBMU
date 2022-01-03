@@ -1,16 +1,11 @@
-use crate::{
-    area::Area,
-    error::Error,
-    file_operation::{Address, FileOperation},
-    io_reg_area::IORegArea,
-};
+use crate::{area::Area, error::Error, io_reg_area::IORegArea, Addr, Address, FileOperation};
 
 pub struct SimpleRW<const SIZE: usize> {
     store: [u8; SIZE],
 }
 
-impl<const SIZE: usize> FileOperation<Area> for SimpleRW<SIZE> {
-    fn write(&mut self, v: u8, addr: Box<dyn Address<Area>>) -> Result<(), Error> {
+impl<const SIZE: usize> FileOperation<Addr<Area>, Area> for SimpleRW<SIZE> {
+    fn write(&mut self, v: u8, addr: Addr<Area>) -> Result<(), Error> {
         let address = addr.get_address();
         #[cfg(feature = "trace_simple_rw_write")]
         log::trace!(
@@ -23,7 +18,7 @@ impl<const SIZE: usize> FileOperation<Area> for SimpleRW<SIZE> {
         Ok(())
     }
 
-    fn read(&self, addr: Box<dyn Address<Area>>) -> Result<u8, Error> {
+    fn read(&self, addr: Addr<Area>) -> Result<u8, Error> {
         let address = addr.get_address();
         #[cfg(feature = "trace_simple_rw_read")]
         log::trace!("reading value abs={:x}, rel={:x}", u16::from(addr), address);
@@ -31,8 +26,8 @@ impl<const SIZE: usize> FileOperation<Area> for SimpleRW<SIZE> {
     }
 }
 
-impl<const SIZE: usize> FileOperation<IORegArea> for SimpleRW<SIZE> {
-    fn write(&mut self, v: u8, addr: Box<dyn Address<IORegArea>>) -> Result<(), Error> {
+impl<const SIZE: usize> FileOperation<Addr<IORegArea>, IORegArea> for SimpleRW<SIZE> {
+    fn write(&mut self, v: u8, addr: Addr<IORegArea>) -> Result<(), Error> {
         let address = addr.get_address();
         #[cfg(feature = "trace_simple_rw_write")]
         log::trace!(
@@ -45,7 +40,7 @@ impl<const SIZE: usize> FileOperation<IORegArea> for SimpleRW<SIZE> {
         Ok(())
     }
 
-    fn read(&self, addr: Box<dyn Address<IORegArea>>) -> Result<u8, Error> {
+    fn read(&self, addr: Addr<IORegArea>) -> Result<u8, Error> {
         let address = addr.get_address();
         #[cfg(feature = "trace_simple_rw_read")]
         log::trace!("reading value abs={:x}, rel={:x}", u16::from(addr), address);

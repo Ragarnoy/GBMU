@@ -32,7 +32,11 @@ impl LcdReg {
         LcdReg::default()
     }
 
-    pub fn read(&self, addr: Box<dyn Address<IORegArea>>) -> Result<u8, Error> {
+    pub fn read<A>(&self, addr: A) -> Result<u8, Error>
+    where
+        u16: From<A>,
+        A: Address<IORegArea>,
+    {
         use gb_bus::io_reg_area::IORegArea::{
             Bgp, LcdControl, LcdStat, Ly, Lyc, Obp0, Obp1, Scx, Scy, Wx, Wy,
         };
@@ -56,7 +60,11 @@ impl LcdReg {
         }
     }
 
-    pub fn write(&mut self, addr: Box<dyn Address<IORegArea>>, v: u8) -> Result<(), Error> {
+    pub fn write<A>(&mut self, addr: A, v: u8) -> Result<(), Error>
+    where
+        u16: From<A>,
+        A: Address<IORegArea>,
+    {
         use gb_bus::io_reg_area::IORegArea::{
             Bgp, LcdControl, LcdStat, Ly, Lyc, Obp0, Obp1, Scx, Scy, Wx, Wy,
         };
@@ -76,7 +84,6 @@ impl LcdReg {
 
             Wy => self.window_pos.wy = v,
             Wx => self.window_pos.wx = v,
-
             _ => return Err(Error::SegmentationFault(addr.into())),
         };
         Ok(())
