@@ -137,6 +137,13 @@ fn main() {
                 CustomEvent::LoadFile(file) => {
                     game = load_game(file, context.joypad.clone(), opts.debug)
                 }
+                CustomEvent::SaveState(file) => {
+                    if let Some(ref game) = game {
+                        game.save_state(&file);
+                    } else {
+                        log::warn!("no game context present, retry after loading a ROM");
+                    }
+                }
                 _ => todo!("handle event {:?}", event),
             }
         }
