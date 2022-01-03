@@ -178,7 +178,7 @@ fn ui_file(ui: &mut Ui, events: &mut Vec<CustomEvent>) {
         if ui.button("Save State").clicked() {
             let file = FileDialog::new()
                 .set_location(&game_root_config_path())
-                .add_filter("load state", &crate::constant::PREFERED_SAVE_STATE_EXT)
+                .add_filter("save state", &crate::constant::PREFERED_SAVE_STATE_EXT)
                 .show_save_single_file();
             log::debug!("picked name for 'save state' file: {:?}", file);
             if let Ok(Some(path)) = file {
