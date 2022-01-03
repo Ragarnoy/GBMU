@@ -1,0 +1,58 @@
+[package]
+name = "gbmu"
+version = "0.1.0"
+authors = [
+  "Guilhem Smith <gsmith@student.42.fr>",
+  "Florian Bennetot <fbenneto@student.42.fr>",
+  "Tiago Lernould <tlernoul@student.42.fr>",
+  "Cedric M'Passi <cedricmpassi@gmail.com>"
+]
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+default = ["bios"]
+debug_render = ["gb-lcd/debug_render"]
+registers_logs = ["gb-cpu/registers_logs"]
+time_frame = []
+cgb = ["gb-bus/cgb", "gb-ppu/cgb", "gb-cpu/cgb", "gb-dbg/cgb"]
+bios = []
+
+[dependencies]
+sdl2 = { version = "0.35", features = ["bundled", "static-link"] }
+egui = "0.15"
+native-dialog = { version ="0.5" }
+log = "0.4"
+simplelog = "0.10"
+serde_yaml = { version = "0.8" }
+rmp-serde = "1.0.0-beta.2"
+clap = "3.0.0-beta.4"
+anyhow = "1.0"
+gb-lcd = { path= "./gb-lcd" }
+gb-ppu = { path = "./gb-ppu" }
+gb-dbg = { path = "./gb-dbg" }
+gb-joypad = { path = "./gb-joypad" }
+gb-bus = { path = "./gb-bus" }
+gb-cpu = { path = "./gb-cpu" }
+gb-roms = { path = "./gb-roms" }
+gb-clock = { path = "./gb-clock" }
+gb-timer = { path = "./gb-timer" }
+gb-dma = { path = "./gb-dma" }
+
+[workspace]
+members = [
+  "gb-dma",
+  "gb-clock",
+  "gb-roms",
+  "gb-ppu",
+  "gb-lcd",
+  "gb-cpu",
+  "gb-dbg",
+  "gb-bus",
+  "gb-rtc",
+  "gb-joypad",
+  "gb-timer",
+  "gb-test"
+]
+
