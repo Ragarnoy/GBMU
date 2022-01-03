@@ -4,6 +4,8 @@ mod custom_event;
 mod event;
 mod logger;
 mod settings;
+#[cfg(feature = "time_frame")]
+mod time_frame;
 mod ui;
 mod windows;
 
@@ -52,6 +54,8 @@ struct Opts {
 
 fn main() {
     let opts: Opts = Opts::parse();
+    #[cfg(feature = "time_frame")]
+    let mut time_frame_stat = time_frame::TimeStat::default();
     init_logger(opts.log_level);
 
     let (mut context, mut game, mut debugger, mut event_pump) = init_gbmu(&opts);
@@ -75,8 +79,13 @@ fn main() {
             }
             #[cfg(feature = "time_frame")]
             {
-                let elapsed = now.elapsed();
-                log::info!("frame ready in {}ms", elapsed.as_millis());
+                let time = now.elapsed();
+                time_frame_stat.add_sample(time);
+                log::info!(
+                    "frame ready: current={}ms stat={}",
+                    time.as_millis(),
+                    time_frame_stat
+                );
             }
             game.draw(&mut context);
         }
