@@ -15,14 +15,18 @@ pub struct IORegisters {
 impl IORegisters {
     const FLAG_MASK: u8 = 0b1110_0000;
 
+    /// Some interrupts are pending (`IE & IF != 0`)
     pub fn is_interrupt_ready(&self) -> bool {
         self.flag & self.enable_mask != 0
     }
 
+    /// Check if `IME` is enabled
     pub fn should_handle_interrupt(&self) -> bool {
         self.master_enable
     }
 
+    /// Check if you have to handle interrupts.
+    /// It will check the `IME` and `IE & IF != 0`
     pub fn interrupt_to_handle(&self) -> bool {
         self.should_handle_interrupt() && self.is_interrupt_ready()
     }
