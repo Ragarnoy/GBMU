@@ -32,7 +32,11 @@ impl LcdReg {
         LcdReg::default()
     }
 
-    pub fn read(&self, addr: Box<dyn Address<IORegArea>>) -> Result<u8, Error> {
+    pub fn read<A>(&self, addr: A) -> Result<u8, Error>
+    where
+        u16: From<A>,
+        A: Address<IORegArea>,
+    {
         match addr.get_address() {
             0x00 => Ok(self.control.read()),
             0x01 => Ok(self.stat.read()),
@@ -43,7 +47,11 @@ impl LcdReg {
         }
     }
 
-    pub fn write(&mut self, addr: Box<dyn Address<IORegArea>>, v: u8) -> Result<(), Error> {
+    pub fn write<A>(&mut self, addr: A, v: u8) -> Result<(), Error>
+    where
+        u16: From<A>,
+        A: Address<IORegArea>,
+    {
         match addr.get_address() {
             0x00 => self.control.write(v),
             0x01 => self.stat.write(v),

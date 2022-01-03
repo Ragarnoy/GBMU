@@ -1,4 +1,4 @@
-use gb_bus::{Area, FileOperation, IORegArea};
+use gb_bus::{Address, Area, Error, FileOperation, IORegArea};
 
 #[derive(Default, Debug, Clone, Copy)]
 pub struct IORegisters {
@@ -34,19 +34,27 @@ impl IORegisters {
     }
 }
 
-impl FileOperation<Area> for IORegisters {
-    fn read(&self, _addr: Box<dyn gb_bus::Address<Area>>) -> Result<u8, gb_bus::Error> {
+impl<A> FileOperation<A, Area> for IORegisters
+where
+    u16: From<A>,
+    A: Address<Area>,
+{
+    fn read(&self, _addr: A) -> Result<u8, gb_bus::Error> {
         Ok(IORegisters::FLAG_MASK | self.enable_mask)
     }
 
-    fn write(&mut self, v: u8, _addr: Box<dyn gb_bus::Address<Area>>) -> Result<(), gb_bus::Error> {
+    fn write(&mut self, v: u8, _addr: A) -> Result<(), gb_bus::Error> {
         self.enable_mask = v & (!IORegisters::FLAG_MASK);
         Ok(())
     }
 }
 
-impl FileOperation<IORegArea> for IORegisters {
-    fn read(&self, addr: Box<dyn gb_bus::Address<IORegArea>>) -> Result<u8, gb_bus::Error> {
+impl<A> FileOperation<A, IORegArea> for IORegisters
+where
+    u16: From<A>,
+    A: Address<IORegArea>,
+{
+    fn read(&self, addr: A) -> Result<u8, Error> {
         match addr.area_type() {
             IORegArea::InterruptFlag => Ok(IORegisters::FLAG_MASK | self.flag),
             #[cfg(feature = "cgb")]
@@ -54,15 +62,11 @@ impl FileOperation<IORegArea> for IORegisters {
                 self.current_speed,
                 self.desired_speed,
             )),
-            _ => Err(gb_bus::Error::bus_error(addr)),
+            _ => Err(gb_bus::Error::bus_error(addr.into())),
         }
     }
 
-    fn write(
-        &mut self,
-        v: u8,
-        _addr: Box<dyn gb_bus::Address<IORegArea>>,
-    ) -> Result<(), gb_bus::Error> {
+    fn write(&mut self, v: u8, _addr: A) -> Result<(), gb_bus::Error> {
         self.flag = v & !(IORegisters::FLAG_MASK);
         Ok(())
     }

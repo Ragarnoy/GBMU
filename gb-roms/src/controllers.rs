@@ -163,8 +163,12 @@ impl Serialize for MbcController {
     }
 }
 
-impl FileOperation<Area> for MbcController {
-    fn read(&self, address: Box<dyn Address<Area>>) -> Result<u8, Error> {
+impl<A> FileOperation<A, Area> for MbcController
+where
+    u16: From<A>,
+    A: Address<Area>,
+{
+    fn read(&self, address: A) -> Result<u8, Error> {
         match self {
             Self::RomOnly(rom) => rom.read(address),
             Self::Mbc1(mbc1) => mbc1.read(address),
@@ -174,7 +178,7 @@ impl FileOperation<Area> for MbcController {
         }
     }
 
-    fn write(&mut self, v: u8, address: Box<dyn Address<Area>>) -> Result<(), Error> {
+    fn write(&mut self, v: u8, address: A) -> Result<(), Error> {
         match self {
             Self::RomOnly(rom) => rom.write(v, address),
             Self::Mbc1(mbc1) => mbc1.write(v, address),
