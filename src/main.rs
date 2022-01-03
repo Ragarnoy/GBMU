@@ -5,16 +5,18 @@ mod event;
 mod logger;
 mod settings;
 mod ui;
+mod windows;
 
 use clap::{AppSettings, Clap};
 
-use context::{Context, Game, Windows};
+use context::{Context, Game};
 use gb_dbg::debugger::options::DebuggerOptions;
 use gb_dbg::debugger::{Debugger, DebuggerBuilder};
 use gb_lcd::{render, window::GBWindow};
 use logger::init_logger;
 use std::cell::RefCell;
 use std::rc::Rc;
+use windows::Windows;
 
 #[derive(Clap, Debug)]
 #[clap(version = "0.1")]

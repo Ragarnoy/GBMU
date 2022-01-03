@@ -183,19 +183,37 @@ impl Joypad {
     fn update_state(&mut self, scancode: &Option<Scancode>, state: bool) {
         if let Some(scancode) = scancode {
             if let Some(input_type) = self.input_map.get(scancode) {
+                #[cfg(feature = "debug_state")]
+                let mut changed = false;
+                #[cfg(feature = "toggle_joypad")]
+                if state {
+                    self.input_states.insert(
+                        *input_type,
+                        !self.input_states.get(input_type).unwrap_or(&false),
+                    );
+                    #[cfg(feature = "debug_state")]
+                    {
+                        changed = true;
+                    }
+                }
+                #[cfg(not(feature = "toggle_joypad"))]
                 if self.input_states[input_type] != state {
                     self.input_states.insert(*input_type, state);
                     #[cfg(feature = "debug_state")]
                     {
-                        let reg = register_from_state(self.mode, self.input_states.iter());
-                        log::debug!(
-                            "change state: state={:08b}, mode={:9?}, key={:5?}, pressed={}",
-                            reg,
-                            self.mode,
-                            input_type,
-                            state,
-                        )
+                        changed = true;
                     }
+                }
+                #[cfg(feature = "debug_state")]
+                if changed {
+                    let reg = register_from_state(self.mode, self.input_states.iter());
+                    log::debug!(
+                        "change state: state={:08b}, mode={:9?}, key={:5?}, pressed={}",
+                        reg,
+                        self.mode,
+                        input_type,
+                        state,
+                    )
                 }
             }
         }
