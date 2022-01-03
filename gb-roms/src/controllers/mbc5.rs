@@ -249,11 +249,11 @@ mod test_mbc5_regs {
     fn ram_enabling() {
         let mut regs = MBC5Reg::default();
 
-        assert_eq!(regs.ram_enabled, false);
+        assert!(!regs.ram_enabled);
         regs.set_ram_enabling_state(0xa);
-        assert_eq!(regs.ram_enabled, true);
+        assert!(regs.ram_enabled);
         regs.set_ram_enabling_state(0);
-        assert_eq!(regs.ram_enabled, false);
+        assert!(!regs.ram_enabled);
     }
 
     #[test]
