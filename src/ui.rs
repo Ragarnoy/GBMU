@@ -160,18 +160,27 @@ pub fn draw_ppu_debug_ui<const WIDTH: usize, const HEIGHT: usize>(
 }
 
 fn ui_file(ui: &mut Ui, events: &mut Vec<CustomEvent>) {
-    if ui.button("Load").clicked() {
-        let file = FileDialog::new()
-            .set_location(
-                &std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("/")),
-            )
-            .add_filter("rom", &["gb", "gbc", "rom"])
-            .show_open_single_file();
-        log::debug!("picked file: {:?}", file);
-        if let Ok(Some(path)) = file {
-            events.push(CustomEvent::LoadFile(path));
+    egui::menu::menu(ui, "File", |ui| {
+        if ui.button("Load").clicked() {
+            let file = FileDialog::new()
+                .set_location(
+                    &std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("/")),
+                )
+                .add_filter("rom", &["gb", "gbc", "rom"])
+                .show_open_single_file();
+            log::debug!("picked file: {:?}", file);
+            if let Ok(Some(path)) = file {
+                events.push(CustomEvent::LoadFile(path));
+            }
         }
-    }
+        ui.separator();
+        if ui.button("Save State").clicked() {
+            todo!("implement save state");
+        }
+        if ui.button("Load State").clicked() {
+            todo!("implement load state");
+        }
+    });
 }
 
 pub fn new_debug_window(video: &sdl2::VideoSubsystem) -> GBWindow {
