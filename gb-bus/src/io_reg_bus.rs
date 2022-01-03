@@ -1,8 +1,10 @@
 use crate::{Addr, Address, Area, Error, FileOperation, IORegArea};
 use std::{cell::RefCell, collections::BTreeMap, rc::Rc};
 
+type IORegElement = dyn FileOperation<Addr<IORegArea>, IORegArea>;
+
 pub struct IORegBus {
-    areas: BTreeMap<IORegArea, Rc<RefCell<dyn FileOperation<Addr<IORegArea>, IORegArea>>>>,
+    areas: BTreeMap<IORegArea, Rc<RefCell<IORegElement>>>,
 }
 
 impl<A> FileOperation<A, Area> for IORegBus
@@ -44,7 +46,7 @@ where
 
 #[derive(Default)]
 pub struct IORegBusBuilder {
-    areas: BTreeMap<IORegArea, Rc<RefCell<dyn FileOperation<Addr<IORegArea>, IORegArea>>>>,
+    areas: BTreeMap<IORegArea, Rc<RefCell<IORegElement>>>,
 }
 
 impl IORegBusBuilder {
