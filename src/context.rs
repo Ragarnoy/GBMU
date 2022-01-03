@@ -312,16 +312,20 @@ impl Drop for Game {
 }
 
 /// Return the path where the game save file will be located
-fn game_save_path(rom_filename: &str) -> String {
-    use sdl2::filesystem::pref_path;
-
+pub fn game_save_path(rom_filename: &str) -> String {
     let rom_id = game_id(rom_filename);
-    let root =
-        pref_path(crate::constant::ORG_NAME, crate::constant::APP_NAME).expect("a prefered config");
+    let root = game_root_config_path();
+
     std::path::Path::new(&root)
-        .join(format!("{}-game-save.msgpack", rom_id))
+        .join(format!("{}.{}", rom_id, crate::constant::GAME_SAVE_EXT))
         .to_string_lossy()
         .to_string()
+}
+
+/// Return the root path of the config folder
+pub fn game_root_config_path() -> String {
+    sdl2::filesystem::pref_path(crate::constant::ORG_NAME, crate::constant::APP_NAME)
+        .expect("a prefered config")
 }
 
 /// Create a standardize rom name id
