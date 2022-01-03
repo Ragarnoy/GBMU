@@ -131,8 +131,14 @@ fn main() {
         ui::draw_ppu_debug_ui(&mut context, &mut game);
 
         for event in events.into_iter() {
-            let custom_event::CustomEvent::LoadFile(file) = event;
-            game = load_game(file, context.joypad.clone(), opts.debug);
+            use custom_event::CustomEvent;
+
+            match event {
+                CustomEvent::LoadFile(file) => {
+                    game = load_game(file, context.joypad.clone(), opts.debug)
+                }
+                _ => todo!("handle event {:?}", event),
+            }
         }
 
         if std::ops::ControlFlow::Break(()) == event::process_event(&mut context, &mut event_pump) {
