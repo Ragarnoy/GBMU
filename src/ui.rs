@@ -183,8 +183,11 @@ pub fn new_debug_window(video: &sdl2::VideoSubsystem) -> GBWindow {
     )
     .expect("Error while building debug window")
 }
+
 #[cfg(feature = "debug_render")]
 fn new_objects_window(video: &sdl2::VideoSubsystem) -> crate::windows::OAMConfig {
+    use crate::windows::OAMConfig;
+
     let bar_pixels_size = GBWindow::dots_to_pixels(video, render::MENU_BAR_SIZE)
         .expect("Error while computing bar size");
     let mut oam = GBWindow::new(
@@ -203,20 +206,16 @@ fn new_objects_window(video: &sdl2::VideoSubsystem) -> crate::windows::OAMConfig
             SPRITE_RENDER_HEIGHT as u32 + bar_pixels_size,
         )
         .expect("Failed to configure oam window");
-    crate::windows::OAMConfig {
-                                                    window: oam,
-                                                    viewport: render::RenderImage::<
-                                                            SPRITE_RENDER_WIDTH,
-                                                            SPRITE_RENDER_HEIGHT,
-                                                        >::with_bar_size(
-                                                    bar_pixels_size as f32
-                                                    ),
-                                                    list: render::RenderImage::<
-                                                        SPRITE_LIST_RENDER_WIDTH,
-                                                        SPRITE_LIST_RENDER_HEIGHT,
-                                                        >::with_bar_size(bar_pixels_size as f32),
-                                                    display_list: false,
-                                                    invert_color: false,
+    OAMConfig {
+        window: oam,
+        viewport: render::RenderImage::<
+            SPRITE_RENDER_WIDTH, SPRITE_RENDER_HEIGHT
+            >::with_bar_size(bar_pixels_size as f32),
+        list: render::RenderImage::<
+            SPRITE_LIST_RENDER_WIDTH,SPRITE_LIST_RENDER_HEIGHT
+            >::with_bar_size(bar_pixels_size as f32),
+        display_list: false,
+        invert_color: false,
     }
 }
 
