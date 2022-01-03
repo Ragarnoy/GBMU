@@ -280,6 +280,29 @@ impl Game {
             );
         }
     }
+
+    /// Load a game state from a file
+    pub fn load_state(&mut self, filename: &Path) {
+        use anyhow::Error;
+        use rmp_serde::decode::from_read;
+        use std::fs::File;
+
+        match File::open(&filename)
+            .map_err(Error::from)
+            .and_then(|file| Ok(from_read::<File, MinimalState>(file)?))
+        {
+            Ok(minimal_state) => {
+                todo!("load minimal state {:?}", minimal_state);
+            }
+            Err(e) => {
+                log::error!(
+                    "failed to load game state from {}: {}",
+                    filename.to_string_lossy(),
+                    e
+                );
+            }
+        }
+    }
 }
 
 /// Return an initalised MBCs with it auto game save if possible
@@ -602,7 +625,7 @@ impl RegisterDebugOperations for Game {
     }
 }
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
 struct MinimalState {
     pub romname: String,
 }

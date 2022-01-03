@@ -144,7 +144,13 @@ fn main() {
                         log::warn!("no game context present, retry after loading a ROM");
                     }
                 }
-                _ => todo!("handle event {:?}", event),
+                CustomEvent::LoadState(file) => {
+                    if let Some(ref mut game) = game {
+                        game.load_state(&file);
+                    } else {
+                        log::warn!("no game context to load the state into");
+                    }
+                }
             }
         }
 
