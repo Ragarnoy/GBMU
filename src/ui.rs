@@ -1,3 +1,4 @@
+use crate::context::game_root_config_path;
 #[cfg(feature = "debug_render")]
 use crate::Game;
 use crate::{custom_event::CustomEvent, Context};
@@ -166,7 +167,7 @@ fn ui_file(ui: &mut Ui, events: &mut Vec<CustomEvent>) {
                 .set_location(
                     &std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("/")),
                 )
-                .add_filter("rom", &["gb", "gbc", "rom"])
+                .add_filter("rom", &crate::constant::PREFERED_ROM_EXTS)
                 .show_open_single_file();
             log::debug!("picked file: {:?}", file);
             if let Ok(Some(path)) = file {
@@ -175,10 +176,18 @@ fn ui_file(ui: &mut Ui, events: &mut Vec<CustomEvent>) {
         }
         ui.separator();
         if ui.button("Save State").clicked() {
-            todo!("implement save state");
+            let file = FileDialog::new()
+                .set_location(&game_root_config_path())
+                .add_filter("load state", &crate::constant::PREFERED_SAVE_STATE_EXT)
+                .show_save_single_file();
+            todo!("implement save state (file={:?})", file);
         }
         if ui.button("Load State").clicked() {
-            todo!("implement load state");
+            let file = FileDialog::new()
+                .set_location(&game_root_config_path())
+                .add_filter("save state", &crate::constant::PREFERED_SAVE_STATE_EXT)
+                .show_open_single_file();
+            todo!("implement load save (file={:?})", file);
         }
     });
 }
