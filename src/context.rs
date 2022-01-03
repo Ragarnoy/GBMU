@@ -14,16 +14,8 @@ use gb_dbg::{
 };
 use gb_dma::Dma;
 use gb_joypad::Joypad;
-use gb_lcd::{
-    render::{RenderImage, SCREEN_HEIGHT, SCREEN_WIDTH},
-    window::GBWindow,
-};
+use gb_lcd::render::{RenderImage, SCREEN_HEIGHT, SCREEN_WIDTH};
 use gb_ppu::Ppu;
-#[cfg(feature = "debug_render")]
-use gb_ppu::{
-    SPRITE_LIST_RENDER_HEIGHT, SPRITE_LIST_RENDER_WIDTH, SPRITE_RENDER_HEIGHT, SPRITE_RENDER_WIDTH,
-    TILEMAP_DIM, TILESHEET_HEIGHT, TILESHEET_WIDTH,
-};
 use gb_roms::{
     controllers::{bios, generate_rom_controller, BiosWrapper, MbcController},
     header::AutoSave,
@@ -35,28 +27,11 @@ use std::{cell::RefCell, collections::BTreeMap, ops::DerefMut, path::Path, rc::R
 pub struct Context<const WIDTH: usize, const HEIGHT: usize> {
     pub sdl: sdl2::Sdl,
     pub video: sdl2::VideoSubsystem,
-    pub windows: Windows,
+    pub windows: crate::windows::Windows,
     pub display: RenderImage<WIDTH, HEIGHT>,
     pub joypad: Rc<RefCell<Joypad>>,
     #[cfg(feature = "debug_render")]
     pub debug_render: bool,
-}
-
-pub struct Windows {
-    pub main: GBWindow,
-    pub debug: Option<GBWindow>,
-    pub input: Option<GBWindow>,
-    #[cfg(feature = "debug_render")]
-    pub tilemap: Option<(GBWindow, RenderImage<TILEMAP_DIM, TILEMAP_DIM>, bool)>,
-    #[cfg(feature = "debug_render")]
-    pub tilesheet: Option<(GBWindow, RenderImage<TILESHEET_WIDTH, TILESHEET_HEIGHT>)>,
-    #[cfg(feature = "debug_render")]
-    pub oam: Option<(
-        GBWindow,
-        RenderImage<SPRITE_RENDER_WIDTH, SPRITE_RENDER_HEIGHT>,
-        RenderImage<SPRITE_LIST_RENDER_WIDTH, SPRITE_LIST_RENDER_HEIGHT>,
-        bool,
-    )>,
 }
 
 pub struct Game {
