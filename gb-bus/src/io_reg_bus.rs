@@ -11,7 +11,7 @@ impl FileOperation<Area> for IORegBus {
         let reg = IORegArea::try_from(addr).map_err(|_e| Error::BusError(addr))?;
 
         if let Some(area) = self.areas.get(&reg) {
-            #[cfg(feature = "trace_bus_rea")]
+            #[cfg(feature = "trace_bus_read")]
             log::trace!("reading at {:4x} in area {:?}", addr, reg);
             area.borrow().read(Box::new(Address::byte_reg(reg, addr)))
         } else {
