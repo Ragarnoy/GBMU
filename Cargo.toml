@@ -23,7 +23,7 @@ bios = []
 sdl2 = { version = "0.35", features = ["bundled", "static-link"] }
 egui = "0.15"
 native-dialog = { version ="0.5" }
-log = "0.4"
+log = { version = "0.4", features = ["std"] }
 simplelog = "0.10"
 serde_yaml = { version = "0.8" }
 rmp-serde = "1.0.0-beta.2"
