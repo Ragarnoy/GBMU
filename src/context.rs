@@ -254,6 +254,7 @@ impl Game {
         }
     }
 
+    #[cfg(feature = "save_state")]
     /// Save the current game state to a file
     pub fn save_state(&self, filename: &Path) {
         use anyhow::Error;
@@ -281,6 +282,7 @@ impl Game {
         }
     }
 
+    #[cfg(feature = "save_state")]
     /// Load a game state from a file
     pub fn load_state(&mut self, filename: &Path) {
         use anyhow::Error;
@@ -625,11 +627,13 @@ impl RegisterDebugOperations for Game {
     }
 }
 
+#[cfg(feature = "save_state")]
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 struct MinimalState {
     pub romname: String,
 }
 
+#[cfg(feature = "save_state")]
 impl From<&Game> for MinimalState {
     fn from(context: &Game) -> Self {
         Self {

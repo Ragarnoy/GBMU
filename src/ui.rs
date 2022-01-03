@@ -1,4 +1,3 @@
-use crate::context::game_root_config_path;
 #[cfg(feature = "debug_render")]
 use crate::Game;
 use crate::{custom_event::CustomEvent, Context};
@@ -174,25 +173,30 @@ fn ui_file(ui: &mut Ui, events: &mut Vec<CustomEvent>) {
                 events.push(CustomEvent::LoadFile(path));
             }
         }
-        ui.separator();
-        if ui.button("save as").clicked() {
-            let file = FileDialog::new()
-                .set_location(&game_root_config_path())
-                .add_filter("save state", &crate::constant::PREFERED_SAVE_STATE_EXT)
-                .show_save_single_file();
-            log::debug!("picked name for 'save state' file: {:?}", file);
-            if let Ok(Some(path)) = file {
-                events.push(CustomEvent::SaveState(path));
+        #[cfg(feature = "save_state")]
+        {
+            use crate::context::game_root_config_path;
+
+            ui.separator();
+            if ui.button("save as").clicked() {
+                let file = FileDialog::new()
+                    .set_location(&game_root_config_path())
+                    .add_filter("save state", &crate::constant::PREFERED_SAVE_STATE_EXT)
+                    .show_save_single_file();
+                log::debug!("picked name for 'save state' file: {:?}", file);
+                if let Ok(Some(path)) = file {
+                    events.push(CustomEvent::SaveState(path));
+                }
             }
-        }
-        if ui.button("load save").clicked() {
-            let file = FileDialog::new()
-                .set_location(&game_root_config_path())
-                .add_filter("save state", &crate::constant::PREFERED_SAVE_STATE_EXT)
-                .show_open_single_file();
-            log::debug!("picked a file to load the state from: {:?}", file);
-            if let Ok(Some(path)) = file {
-                events.push(CustomEvent::LoadState(path));
+            if ui.button("load save").clicked() {
+                let file = FileDialog::new()
+                    .set_location(&game_root_config_path())
+                    .add_filter("save state", &crate::constant::PREFERED_SAVE_STATE_EXT)
+                    .show_open_single_file();
+                log::debug!("picked a file to load the state from: {:?}", file);
+                if let Ok(Some(path)) = file {
+                    events.push(CustomEvent::LoadState(path));
+                }
             }
         }
     });
