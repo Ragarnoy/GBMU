@@ -169,7 +169,7 @@ fn ui_file(ui: &mut Ui, events: &mut Vec<CustomEvent>) {
                 )
                 .add_filter("rom", &crate::constant::PREFERED_ROM_EXTS)
                 .show_open_single_file();
-            log::debug!("picked file: {:?}", file);
+            log::debug!("picked romfile: {:?}", file);
             if let Ok(Some(path)) = file {
                 events.push(CustomEvent::LoadFile(path));
             }
@@ -180,14 +180,20 @@ fn ui_file(ui: &mut Ui, events: &mut Vec<CustomEvent>) {
                 .set_location(&game_root_config_path())
                 .add_filter("load state", &crate::constant::PREFERED_SAVE_STATE_EXT)
                 .show_save_single_file();
-            todo!("implement save state (file={:?})", file);
+            log::debug!("picked name for 'save state' file: {:?}", file);
+            if let Ok(Some(path)) = file {
+                events.push(CustomEvent::SaveState(path));
+            }
         }
         if ui.button("Load State").clicked() {
             let file = FileDialog::new()
                 .set_location(&game_root_config_path())
                 .add_filter("save state", &crate::constant::PREFERED_SAVE_STATE_EXT)
                 .show_open_single_file();
-            todo!("implement load save (file={:?})", file);
+            log::debug!("picked a file to load the state from: {:?}", file);
+            if let Ok(Some(path)) = file {
+                events.push(CustomEvent::LoadState(path));
+            }
         }
     });
 }
