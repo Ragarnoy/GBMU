@@ -4,11 +4,6 @@ use crate::{custom_event::CustomEvent, Context};
 use egui::Ui;
 use gb_dbg::{DEBUGGER_HEIGHT, DEBUGGER_WIDTH};
 use gb_lcd::{render, window::GBWindow};
-#[cfg(feature = "debug_render")]
-use gb_ppu::{
-    SPRITE_LIST_RENDER_HEIGHT, SPRITE_LIST_RENDER_WIDTH, SPRITE_RENDER_HEIGHT, SPRITE_RENDER_WIDTH,
-    TILEMAP_DIM, TILESHEET_HEIGHT, TILESHEET_WIDTH,
-};
 use native_dialog::FileDialog;
 
 macro_rules! replace_windows {
