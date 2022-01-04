@@ -103,15 +103,52 @@ pub fn stop(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     use crate::constant::JOYPAD_INT;
 
     let int_flags = state.int_flags.borrow();
-
     if int_flags.flag & JOYPAD_INT == JOYPAD_INT {
-        if !int_flags.is_interrupt_ready() {
-            drop(int_flags);
-            state.read();
-            ctl.mode = Mode::Halt;
-        }
+        drop(int_flags);
+        stop_with_joypad(ctl, state);
     } else if cfg!(feature = "cgb") {
-        unimplemented!("speed swicth");
+        drop(int_flags);
+        stop_color_mode(ctl, state);
+        state.write_bus(gb_bus::io_reg_constant::DIV, 0);
     }
     CONTINUE
+}
+
+fn stop_with_joypad(ctl: &mut MicrocodeController, state: &mut State) {
+    if !state.int_flags.borrow().is_interrupt_ready() {
+        state.read();
+        ctl.mode = Mode::Halt;
+    }
+}
+
+#[cfg(feature = "cgb")]
+fn stop_color_mode(ctl: &mut MicrocodeController, state: &mut State) {
+    let mut int_flags = state.int_flags.borrow_mut();
+    let interrup_pendind = int_flags.is_interrupt_ready();
+    let need_to_change_speed = int_flags.need_to_change_speed();
+
+    if need_to_change_speed {
+        update_speed(&mut int_flags);
+        drop(int_flags);
+        if !interrup_pendind {
+            ctl.mode = Mode::Halt;
+            state.read();
+        }
+    } else {
+        drop(int_flags);
+        ctl.mode = Mode::Stop;
+        if !interrup_pendind {
+            state.read();
+        }
+    }
+}
+
+#[cfg(feature = "cgb")]
+fn update_speed(int_flags: &mut crate::io_registers::IORegisters) {
+    log::trace!(
+        "change cpu speed from {:?} to {:?}",
+        int_flags.current_speed,
+        int_flags.desired_speed
+    );
+    int_flags.current_speed = int_flags.desired_speed
 }
