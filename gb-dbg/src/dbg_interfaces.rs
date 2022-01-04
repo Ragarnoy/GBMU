@@ -134,6 +134,15 @@ pub enum IORegs {
     Ie,
 
     BootRom,
+
+    #[cfg(feature = "cgb")]
+    Key1,
+    #[cfg(feature = "cgb")]
+    VramBank,
+    #[cfg(feature = "cgb")]
+    VramDma,
+    #[cfg(feature = "cgb")]
+    WRamBank,
 }
 
 impl Display for IORegs {
@@ -149,6 +158,14 @@ impl Display for IORegs {
             IORegs::If => "Interrupt Flag",
             IORegs::Ie => "Interrupt Enable",
             IORegs::BootRom => "BootRom",
+            #[cfg(feature = "cgb")]
+            IORegs::Key1 => "DSpeed",
+            #[cfg(feature = "cgb")]
+            IORegs::VramBank => "VBank",
+            #[cfg(feature = "cgb")]
+            IORegs::VramDma => "VDMA",
+            #[cfg(feature = "cgb")]
+            IORegs::WRamBank => "WBank",
         };
         write!(f, "{}", name)
     }

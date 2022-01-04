@@ -11,6 +11,9 @@ pub struct PalettesMono {
 
 impl PalettesMono {
     pub const SIZE: usize = 3;
+    pub const BACKGROUND: usize = 0;
+    pub const OBJ_O: usize = 1;
+    pub const OBJ_1: usize = 2;
 
     pub fn new() -> Self {
         PalettesMono {
@@ -30,18 +33,18 @@ impl PalettesMono {
 
     pub fn read(&self, pos: usize) -> u8 {
         match pos {
-            0 => self.bg.get().into(),
-            1 => self.obj_0.get().into(),
-            2 => self.obj_1.get().into(),
+            Self::BACKGROUND => self.bg.get().into(),
+            Self::OBJ_O => self.obj_0.get().into(),
+            Self::OBJ_1 => self.obj_1.get().into(),
             _ => 0xFF,
         }
     }
 
     pub fn write(&mut self, pos: usize, val: u8) {
         match pos {
-            0 => self.bg.set(Palette::new(val, false)),
-            1 => self.obj_0.set(Palette::new(val, true)),
-            2 => self.obj_1.set(Palette::new(val, true)),
+            Self::BACKGROUND => self.bg.set(Palette::new(val, false)),
+            Self::OBJ_O => self.obj_0.set(Palette::new(val, true)),
+            Self::OBJ_1 => self.obj_1.set(Palette::new(val, true)),
             _ => {}
         }
     }
@@ -50,9 +53,9 @@ impl PalettesMono {
 impl From<[u8; 3]> for PalettesMono {
     fn from(bytes: [u8; 3]) -> PalettesMono {
         PalettesMono {
-            bg: Rc::new(Cell::new(Palette::new(bytes[0], false))),
-            obj_0: Rc::new(Cell::new(Palette::new(bytes[1], true))),
-            obj_1: Rc::new(Cell::new(Palette::new(bytes[2], true))),
+            bg: Rc::new(Cell::new(Palette::new(bytes[Self::BACKGROUND], false))),
+            obj_0: Rc::new(Cell::new(Palette::new(bytes[Self::OBJ_O], true))),
+            obj_1: Rc::new(Cell::new(Palette::new(bytes[Self::OBJ_1], true))),
         }
     }
 }

@@ -16,17 +16,21 @@ impl Dma {
     }
 }
 
-impl FileOperation<IORegArea> for Dma {
-    fn read(&self, addr: Box<dyn Address<IORegArea>>) -> Result<u8, Error> {
-        if let IORegArea::OamDma = addr.area_type() {
+impl<A> FileOperation<A, IORegArea> for Dma
+where
+    u16: From<A>,
+    A: Address<IORegArea>,
+{
+    fn read(&self, addr: A) -> Result<u8, Error> {
+        if IORegArea::Dma == addr.area_type() {
             Ok(self.oam_register)
         } else {
             Err(Error::SegmentationFault(addr.into()))
         }
     }
 
-    fn write(&mut self, v: u8, addr: Box<dyn Address<IORegArea>>) -> Result<(), Error> {
-        if let IORegArea::OamDma = addr.area_type() {
+    fn write(&mut self, v: u8, addr: A) -> Result<(), Error> {
+        if IORegArea::Dma == addr.area_type() {
             self.oam_register = v;
             self.oam_transfer = Some(0);
             Ok(())

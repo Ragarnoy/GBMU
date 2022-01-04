@@ -5,13 +5,12 @@ use iter::Iter;
 use std::collections::BTreeMap;
 
 use crate::{
-    address::Address,
     constant::{
-        ERAM_START, ERAM_STOP, EXT_RAM_START, EXT_RAM_STOP, HRAM_START, HRAM_STOP, IE_REG_START,
+        ERAM_START, ERAM_STOP, EXT_RAM_START, EXT_RAM_STOP, HRAM_START, HRAM_STOP, IE_REG,
         IO_REG_START, IO_REG_STOP, OAM_START, OAM_STOP, RAM_START, RAM_STOP, ROM_START, ROM_STOP,
         UNDEFINED_VALUE, VRAM_START, VRAM_STOP,
     },
-    Area, Error, FileOperation, InternalLock, Lock, MemoryLock,
+    Addr, Area, Error, FileOperation, InternalLock, Lock, MemoryLock,
 };
 
 use std::{cell::RefCell, rc::Rc};
@@ -29,7 +28,7 @@ macro_rules! match_area {
             OAM_START..=OAM_STOP => $sub_macro!(OAM_START, $self.oam, Oam, $addr $(,$args)*),
             IO_REG_START..=IO_REG_STOP => $sub_macro!(IO_REG_START, $self.io_reg, IoReg, $addr $(,$args)*),
             HRAM_START..=HRAM_STOP => $sub_macro!(HRAM_START, $self.hram, HighRam, $addr $(,$args)*),
-            IE_REG_START => $sub_macro!(IE_REG_START, $self.ie_reg, IEReg, $addr $(,$args)*),
+            IE_REG => $sub_macro!(IE_REG, $self.ie_reg, IEReg, $addr $(,$args)*),
             _ => Err(Error::BusError($addr)),
         }
     };
@@ -44,10 +43,9 @@ macro_rules! write_area {
             $value,
             Area::$area_type
         );
-        $field.borrow_mut().write(
-            $value,
-            Box::new(Address::from_offset(Area::$area_type, $addr, $start)),
-        )
+        $field
+            .borrow_mut()
+            .write($value, Addr::from_offset(Area::$area_type, $addr, $start))
     }};
 }
 
@@ -55,11 +53,9 @@ macro_rules! read_area {
     ($start:expr, $field:expr, $area_type:ident, $addr: expr) => {{
         #[cfg(feature = "trace_bus_read")]
         log::trace!("reading at {:4x} in area {:?}", $addr, Area::$area_type);
-        $field.borrow().read(Box::new(Address::from_offset(
-            Area::$area_type,
-            $addr,
-            $start,
-        )))
+        $field
+            .borrow()
+            .read(Addr::from_offset(Area::$area_type, $addr, $start))
     }};
 }
 
@@ -67,24 +63,24 @@ macro_rules! read_area {
 /// This Implementation of an AddressBus will be limited to 16-bit address
 pub struct AddressBus {
     /// Rom from the cartridge
-    pub rom: Rc<RefCell<dyn FileOperation<Area>>>,
+    pub rom: Rc<RefCell<dyn FileOperation<Addr<Area>, Area>>>,
     /// Video Ram
-    pub vram: Rc<RefCell<dyn InternalLock<Area>>>,
+    pub vram: Rc<RefCell<dyn InternalLock<Addr<Area>, Area>>>,
     /// Ram from the cartridge
-    pub ext_ram: Rc<RefCell<dyn FileOperation<Area>>>,
+    pub ext_ram: Rc<RefCell<dyn FileOperation<Addr<Area>, Area>>>,
     /// Internal gameboy ram
-    pub ram: Rc<RefCell<dyn FileOperation<Area>>>,
+    pub ram: Rc<RefCell<dyn FileOperation<Addr<Area>, Area>>>,
     /// Echo Ram area, usually a mirror of ram
-    pub eram: Rc<RefCell<dyn FileOperation<Area>>>,
+    pub eram: Rc<RefCell<dyn FileOperation<Addr<Area>, Area>>>,
     /// Sprite attribute table
-    pub oam: Rc<RefCell<dyn InternalLock<Area>>>,
+    pub oam: Rc<RefCell<dyn InternalLock<Addr<Area>, Area>>>,
     /// io registers table
-    pub io_reg: Rc<RefCell<dyn FileOperation<Area>>>,
+    pub io_reg: Rc<RefCell<dyn FileOperation<Addr<Area>, Area>>>,
     /// high ram
     /// allow for faster access in gameboy
-    pub hram: Rc<RefCell<dyn FileOperation<Area>>>,
+    pub hram: Rc<RefCell<dyn FileOperation<Addr<Area>, Area>>>,
     /// register to enable/disable all interrupts
-    pub ie_reg: Rc<RefCell<dyn FileOperation<Area>>>,
+    pub ie_reg: Rc<RefCell<dyn FileOperation<Addr<Area>, Area>>>,
     /// map a memory area to its current lock status
     pub area_locks: BTreeMap<Area, Lock>,
 }

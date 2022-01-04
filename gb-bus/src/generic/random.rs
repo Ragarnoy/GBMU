@@ -15,22 +15,30 @@ impl Default for RandomDevice {
     }
 }
 
-impl FileOperation<Area> for RandomDevice {
-    fn read(&self, _addr: Box<dyn Address<Area>>) -> Result<u8, Error> {
+impl<A> FileOperation<A, Area> for RandomDevice
+where
+    u16: From<A>,
+    A: Address<Area>,
+{
+    fn read(&self, _addr: A) -> Result<u8, Error> {
         Ok(self.gen.borrow_mut().gen::<u8>())
     }
 
-    fn write(&mut self, _v: u8, addr: Box<dyn Address<Area>>) -> Result<(), Error> {
-        Err(Error::new_segfault(addr))
+    fn write(&mut self, _v: u8, addr: A) -> Result<(), Error> {
+        Err(Error::new_segfault(addr.into()))
     }
 }
 
-impl FileOperation<IORegArea> for RandomDevice {
-    fn read(&self, _addr: Box<dyn Address<IORegArea>>) -> Result<u8, Error> {
+impl<A> FileOperation<A, IORegArea> for RandomDevice
+where
+    u16: From<A>,
+    A: Address<IORegArea>,
+{
+    fn read(&self, _addr: A) -> Result<u8, Error> {
         Ok(self.gen.borrow_mut().gen::<u8>())
     }
 
-    fn write(&mut self, _v: u8, addr: Box<dyn Address<IORegArea>>) -> Result<(), Error> {
-        Err(Error::new_segfault(addr))
+    fn write(&mut self, _v: u8, addr: A) -> Result<(), Error> {
+        Err(Error::new_segfault(addr.into()))
     }
 }

@@ -3,13 +3,26 @@ use super::{
     MicrocodeFlow, State,
 };
 use crate::{
-    interrupt_flags::InterruptFlags, registers::Registers, CACHE_LEN, NB_MAX_ACTIONS, NB_MAX_CYCLES,
+    io_registers::IORegisters, registers::Registers, CACHE_LEN, NB_MAX_ACTIONS, NB_MAX_CYCLES,
 };
 use gb_bus::Bus;
 use std::fmt::{self, Debug, Display};
 use std::{cell::RefCell, rc::Rc};
 #[cfg(feature = "registers_logs")]
 use std::{fs::File, io::BufWriter};
+
+#[derive(Debug, Clone, Copy)]
+pub enum Mode {
+    Normal,
+    Halt,
+    Stop,
+}
+
+impl Default for Mode {
+    fn default() -> Self {
+        Self::Normal
+    }
+}
 
 #[derive(Clone, Debug)]
 pub enum OpcodeType {
@@ -46,6 +59,8 @@ pub struct MicrocodeController {
     pub cycles: Vec<Vec<ActionFn>>,
     /// Stores the next microcode actions to execute
     pub current_cycle: Vec<ActionFn>,
+    /// Current mode of the controller
+    pub mode: Mode,
     /// Cache use for microcode action
     cache: Vec<u8>,
 
@@ -76,6 +91,7 @@ impl Default for MicrocodeController {
             cycles: Vec::with_capacity(NB_MAX_CYCLES),
             current_cycle: Vec::with_capacity(NB_MAX_ACTIONS),
             cache: Vec::with_capacity(CACHE_LEN),
+            mode: Mode::default(),
             #[cfg(feature = "registers_logs")]
             file: Rc::new(RefCell::new(file)),
         }
@@ -85,7 +101,7 @@ impl Default for MicrocodeController {
 impl MicrocodeController {
     pub fn step(
         &mut self,
-        int_flags: Rc<RefCell<InterruptFlags>>,
+        int_flags: Rc<RefCell<IORegisters>>,
         regs: &mut Registers,
         bus: &mut dyn Bus<u8>,
     ) {
@@ -101,20 +117,55 @@ impl MicrocodeController {
         self.execute_actions(&mut state);
     }
 
-    fn pull_next_task(&mut self, state: &mut State, int_flags: Rc<RefCell<InterruptFlags>>) {
+    /// Pull the next task the cpu will do according to it's current mode
+    fn pull_next_task(&mut self, state: &mut State, int_flags: Rc<RefCell<IORegisters>>) {
+        match self.mode {
+            Mode::Normal => self.normal_mode(state, int_flags),
+            Mode::Halt => self.halt_mode(state, int_flags),
+            Mode::Stop => self.stop_mode(state, int_flags),
+        }
+    }
+
+    /// When the cpu is in it's normal execution mode.
+    /// Will execute interrupt before fetching for new opcode.
+    fn normal_mode(&mut self, state: &mut State, int_flags: Rc<RefCell<IORegisters>>) {
         let previous_opcode = match self.opcode {
             Some(OpcodeType::Unprefixed(opcode)) => opcode,
             _ => Opcode::Nop,
         };
+
         if previous_opcode != Opcode::Ei && int_flags.borrow().interrupt_to_handle() {
             handle_interrupts(self, state);
-        } else if previous_opcode != Opcode::Halt || int_flags.borrow().is_interrupt_ready() {
+        } else {
             #[cfg(feature = "registers_logs")]
             self.log_registers_to_file(&state).unwrap_or_default();
             fetch(self, state);
-        } else {
-            self.halt()
         }
+    }
+
+    /// When the cpu is halted.
+    /// Wait for any interrupt to be triggered to return to the normal execution mode.
+    /// Directly service the triggered interrupt if IME is enabled.
+    fn halt_mode(&mut self, state: &mut State, int_flags: Rc<RefCell<IORegisters>>) {
+        let borrow_int_flags = int_flags.borrow();
+
+        if borrow_int_flags.is_interrupt_ready() {
+            self.mode = Mode::Normal;
+            if borrow_int_flags.should_handle_interrupt() {
+                handle_interrupts(self, state);
+            }
+        }
+    }
+
+    /// When the cpu is stopped.
+    /// Wait for the joypad to be pressed
+    fn stop_mode(&mut self, _state: &mut State, int_flags: Rc<RefCell<IORegisters>>) {
+        use crate::constant::JOYPAD_INT;
+
+        if int_flags.borrow().flag & JOYPAD_INT == JOYPAD_INT {
+            self.mode = Mode::Normal;
+        }
+        unimplemented!("stop waiting");
     }
 
     fn execute_actions(&mut self, state: &mut State) {
@@ -128,10 +179,6 @@ impl MicrocodeController {
                 }
             }
         }
-    }
-
-    fn halt(&mut self) {
-        self.push_cycles(&[&[]]);
     }
 
     /// Clear volatile date saved in controller.

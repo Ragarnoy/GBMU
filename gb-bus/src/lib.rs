@@ -8,17 +8,16 @@ pub mod generic;
 pub mod io_reg_area;
 mod io_reg_bus;
 pub mod io_reg_constant;
-#[cfg(feature = "cgb")]
-mod io_reg_constant_color;
 mod lock;
 mod working_ram;
 
+pub use address::Addr;
 pub use address_bus::AddressBus;
 pub use area::Area;
 pub use error::Error;
 pub use file_operation::{Address, FileOperation};
 pub use io_reg_area::IORegArea;
-pub use io_reg_bus::IORegBus;
+pub use io_reg_bus::{IORegBus, IORegBusBuilder};
 pub use lock::{InternalLock, Lock, MemoryLock};
 pub use working_ram::WorkingRam;
 
