@@ -185,7 +185,7 @@ mod test_mbc5 {
         ctl.regs.set_ram_enabling_state(0xa);
 
         let addr = Addr::from_offset(Area::ExtRam, 0x42, 0);
-        assert_eq!(ctl.write_ram(42, addr.clone()), Ok(()));
+        assert_eq!(ctl.write_ram(42, addr), Ok(()));
         assert_eq!(ctl.read_ram(addr), Ok(42));
     }
 }
