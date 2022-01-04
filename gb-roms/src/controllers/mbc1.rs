@@ -109,7 +109,7 @@ impl MBC1 {
             self.get_extra_rom_index()
         };
 
-        &self.rom_banks[index]
+        &self.rom_banks[index % self.rom_banks.len()]
     }
 
     /// Return the rom index for the area 0x0000-0x3fff
@@ -129,7 +129,11 @@ impl MBC1 {
 
     /// Return the rom index for the area 0x4000-0x7fff
     fn get_extra_rom_index(&self) -> usize {
-        let upper_index = self.get_rom_index_special();
+        let upper_index = if self.configuration == Configuration::LargeRom {
+            self.get_rom_index_special()
+        } else {
+            0
+        };
         let index = self.regs.rom_number & 0x1f;
 
         if index == 0 {
@@ -382,7 +386,7 @@ impl Default for MBC1Reg {
     }
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 enum BankingMode {
     Simple,
     Advanced,
