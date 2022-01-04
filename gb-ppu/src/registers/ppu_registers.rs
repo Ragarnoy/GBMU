@@ -42,26 +42,33 @@ where
     u16: From<A>,
 {
     fn read(&self, addr: A) -> Result<u8, Error> {
+        #[cfg(feature = "cgb")]
+        use IORegArea::{Bcpd, Bcps, Hdma1, Hdma2, Hdma3, Hdma4, Hdma5, Ocpd, Ocps, Vbk};
+        use IORegArea::{Bgp, Dma, LcdControl, LcdStat, Ly, Lyc, Obp0, Obp1, Scx, Scy, Wx, Wy};
+
         match addr.area_type() {
-            IORegArea::Lcd => match self.lcd.try_borrow() {
-                Ok(lcd) => lcd.read(addr),
-                Err(_) => {
-                    log::warn!("failed ppu Lcd register read");
-                    Ok(UNDEFINED_VALUE)
+            Bgp | Dma | LcdControl | LcdStat | Ly | Lyc | Obp0 | Obp1 | Scx | Scy | Wx | Wy => {
+                match self.lcd.try_borrow() {
+                    Ok(lcd) => lcd.read(addr),
+                    Err(_) => {
+                        log::warn!("failed ppu Lcd register read");
+                        Ok(UNDEFINED_VALUE)
+                    }
                 }
-            },
+            }
             #[cfg(feature = "cgb")]
-            IORegArea::VRamBank => {
+            Vbk => {
                 log::warn!("missing ppu VramBank register");
                 Ok(UNDEFINED_VALUE)
             }
             #[cfg(feature = "cgb")]
-            IORegArea::VramDma => {
+            Hdma1 | Hdma2 | Hdma3 | Hdma4 | Hdma5 => {
                 log::warn!("missing ppu VramDma register");
                 Ok(UNDEFINED_VALUE)
             }
-            IORegArea::BgObjPalettes => {
-                log::warn!("missing ppu BgObjPalette register");
+            #[cfg(feature = "cgb")]
+            Bcpd | Bcps | Ocpd | Ocps => {
+                log::warn!("missing ppu BgObjPalettes registers write");
                 Ok(UNDEFINED_VALUE)
             }
             _ => Err(Error::SegmentationFault(addr.into())),
@@ -69,25 +76,32 @@ where
     }
 
     fn write(&mut self, v: u8, addr: A) -> Result<(), Error> {
+        #[cfg(feature = "cgb")]
+        use IORegArea::{Bcpd, Bcps, Hdma1, Hdma2, Hdma3, Hdma4, Hdma5, Ocpd, Ocps, Vbk};
+        use IORegArea::{Bgp, Dma, LcdControl, LcdStat, Ly, Lyc, Obp0, Obp1, Scx, Scy, Wx, Wy};
+
         match addr.area_type() {
-            IORegArea::Lcd => match self.lcd.try_borrow_mut() {
-                Ok(mut lcd) => lcd.write(addr, v),
-                Err(_) => {
-                    log::warn!("failed ppu register write");
-                    Ok(())
+            Bgp | Dma | LcdControl | LcdStat | Ly | Lyc | Obp0 | Obp1 | Scx | Scy | Wx | Wy => {
+                match self.lcd.try_borrow_mut() {
+                    Ok(mut lcd) => lcd.write(addr, v),
+                    Err(_) => {
+                        log::warn!("failed ppu register write");
+                        Ok(())
+                    }
                 }
-            },
+            }
             #[cfg(feature = "cgb")]
-            IORegArea::VRamBank => {
+            Vbk => {
                 log::warn!("missing ppu VRamBank registers write");
                 Ok(())
             }
             #[cfg(feature = "cgb")]
-            IORegArea::VramDma => {
+            Hdma1 | Hdma2 | Hdma3 | Hdma4 | Hdma5 => {
                 log::warn!("missing ppu VRamDma registers write");
                 Ok(())
             }
-            IORegArea::BgObjPalettes => {
+            #[cfg(feature = "cgb")]
+            Bcpd | Bcps | Ocpd | Ocps => {
                 log::warn!("missing ppu BgObjPalettes registers write");
                 Ok(())
             }

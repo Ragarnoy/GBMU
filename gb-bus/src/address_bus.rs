@@ -6,7 +6,7 @@ use std::collections::BTreeMap;
 
 use crate::{
     constant::{
-        ERAM_START, ERAM_STOP, EXT_RAM_START, EXT_RAM_STOP, HRAM_START, HRAM_STOP, IE_REG_START,
+        ERAM_START, ERAM_STOP, EXT_RAM_START, EXT_RAM_STOP, HRAM_START, HRAM_STOP, IE_REG,
         IO_REG_START, IO_REG_STOP, OAM_START, OAM_STOP, RAM_START, RAM_STOP, ROM_START, ROM_STOP,
         UNDEFINED_VALUE, VRAM_START, VRAM_STOP,
     },
@@ -28,7 +28,7 @@ macro_rules! match_area {
             OAM_START..=OAM_STOP => $sub_macro!(OAM_START, $self.oam, Oam, $addr $(,$args)*),
             IO_REG_START..=IO_REG_STOP => $sub_macro!(IO_REG_START, $self.io_reg, IoReg, $addr $(,$args)*),
             HRAM_START..=HRAM_STOP => $sub_macro!(HRAM_START, $self.hram, HighRam, $addr $(,$args)*),
-            IE_REG_START => $sub_macro!(IE_REG_START, $self.ie_reg, IEReg, $addr $(,$args)*),
+            IE_REG => $sub_macro!(IE_REG, $self.ie_reg, IEReg, $addr $(,$args)*),
             _ => Err(Error::BusError($addr)),
         }
     };

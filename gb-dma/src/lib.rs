@@ -22,7 +22,7 @@ where
     A: Address<IORegArea>,
 {
     fn read(&self, addr: A) -> Result<u8, Error> {
-        if let IORegArea::OamDma = addr.area_type() {
+        if IORegArea::Dma == addr.area_type() {
             Ok(self.oam_register)
         } else {
             Err(Error::SegmentationFault(addr.into()))
@@ -30,7 +30,7 @@ where
     }
 
     fn write(&mut self, v: u8, addr: A) -> Result<(), Error> {
-        if let IORegArea::OamDma = addr.area_type() {
+        if IORegArea::Dma == addr.area_type() {
             self.oam_register = v;
             self.oam_transfer = Some(0);
             Ok(())

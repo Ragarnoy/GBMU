@@ -60,9 +60,9 @@ where
 {
     fn read(&self, addr: A) -> Result<u8, Error> {
         match addr.area_type() {
-            IORegArea::InterruptFlag => Ok(IORegisters::FLAG_MASK | self.flag),
+            IORegArea::IF => Ok(IORegisters::FLAG_MASK | self.flag),
             #[cfg(feature = "cgb")]
-            IORegArea::DoubleSpeed => Ok(double_speed_register(
+            IORegArea::Key1 => Ok(double_speed_register(
                 self.current_speed,
                 self.desired_speed,
             )),
