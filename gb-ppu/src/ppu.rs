@@ -37,6 +37,7 @@ macro_rules! view_border {
 ///
 /// It owns the VRAM and the OAM, as well as a few registers.
 pub struct Ppu {
+    enabled: bool,
     vram: Rc<RefCell<Vram>>,
     oam: Rc<RefCell<Oam>>,
     lcd_reg: Rc<RefCell<LcdReg>>,
@@ -46,11 +47,13 @@ pub struct Ppu {
     pixel_fetcher: PixelFetcher,
     state: State,
     scanline_sprites: Vec<Sprite>,
+    offset: u8,
 }
 
 impl Ppu {
     pub fn new() -> Self {
         Ppu {
+            enabled: false,
             vram: Rc::new(RefCell::new(Vram::new())),
             oam: Rc::new(RefCell::new(Oam::new())),
             lcd_reg: Rc::new(RefCell::new(LcdReg::new())),
@@ -60,6 +63,7 @@ impl Ppu {
             pixel_fetcher: PixelFetcher::new(),
             state: State::new(),
             scanline_sprites: Vec::with_capacity(10),
+            offset: 0,
         }
     }
 
@@ -188,7 +192,10 @@ impl Ppu {
     /// Create an image of the currents sprites placed relatively to the viewport.
     ///
     /// This function is used for debugging purpose.
-    pub fn sprites_image(&self) -> RenderData<SPRITE_RENDER_WIDTH, SPRITE_RENDER_HEIGHT> {
+    pub fn sprites_image(
+        &self,
+        invert_pixel: bool,
+    ) -> RenderData<SPRITE_RENDER_WIDTH, SPRITE_RENDER_HEIGHT> {
         let mut image = [[[255; 3]; SPRITE_RENDER_WIDTH]; SPRITE_RENDER_HEIGHT];
         let sprites = self
             .oam
@@ -209,7 +216,13 @@ impl Ppu {
                 for (i, (pixel_value, pixel_color)) in pixels_values.iter().rev().enumerate() {
                     if *pixel_value != 0 {
                         let x_img = x + i;
-                        image[y_img][x_img] = (*pixel_color).into();
+                        let mut rgb: [u8; 3] = (*pixel_color).into();
+                        if invert_pixel {
+                            rgb[0] = 255 - rgb[0];
+                            rgb[1] = 255 - rgb[1];
+                            rgb[2] = 255 - rgb[2];
+                        }
+                        image[y_img][x_img] = rgb;
                     }
                 }
             }
@@ -236,6 +249,7 @@ impl Ppu {
     /// This function is used for debugging purpose.
     pub fn sprites_list_image(
         &self,
+        invert_pixel: bool,
     ) -> RenderData<SPRITE_LIST_RENDER_WIDTH, SPRITE_LIST_RENDER_HEIGHT> {
         let mut image = [[[255; 3]; SPRITE_LIST_RENDER_WIDTH]; SPRITE_LIST_RENDER_HEIGHT];
         let sprites = self
@@ -257,7 +271,13 @@ impl Ppu {
                 for (i, (pixel_value, pixel_color)) in pixels_values.iter().rev().enumerate() {
                     if *pixel_value != 0 {
                         let x_img = x + i;
-                        image[y_img][x_img] = (*pixel_color).into();
+                        let mut rgb: [u8; 3] = (*pixel_color).into();
+                        if invert_pixel {
+                            rgb[0] = 255 - rgb[0];
+                            rgb[1] = 255 - rgb[1];
+                            rgb[2] = 255 - rgb[2];
+                        }
+                        image[y_img][x_img] = rgb;
                     }
                 }
             }
@@ -268,10 +288,15 @@ impl Ppu {
     fn vblank(&mut self, _adr_bus: &mut dyn Bus<u8>) {
         if self.state.line() == State::LAST_LINE && self.state.step() == State::LAST_STEP {
             std::mem::swap(&mut self.pixels, &mut self.next_pixels);
+            self.next_pixels = [[[255; 3]; SCREEN_WIDTH]; SCREEN_HEIGHT];
         }
     }
 
     fn hblank(&mut self, adr_bus: &mut dyn Bus<u8>) {
+        self.unlock_mem(adr_bus);
+    }
+
+    fn unlock_mem(&mut self, adr_bus: &mut dyn Bus<u8>) {
         let unlock_oam: bool;
         if let Ok(oam) = self.oam.try_borrow() {
             if let Some(Lock::Ppu) = oam.get_lock() {
@@ -280,7 +305,7 @@ impl Ppu {
                 unlock_oam = false;
             }
         } else {
-            log::error!("Oam borrow failed for ppu in mode 0");
+            log::error!("Oam borrow failed for ppu to unlock");
             unlock_oam = false;
         }
         if unlock_oam {
@@ -295,7 +320,7 @@ impl Ppu {
                 unlock_vram = false;
             }
         } else {
-            log::error!("Vram borrow failed for ppu in mode 0");
+            log::error!("Vram borrow failed for ppu to unlock");
             unlock_vram = false;
         }
         if unlock_vram {
@@ -388,21 +413,27 @@ impl Ppu {
                     &mut self.scanline_sprites,
                     (x, y),
                 );
+                self.offset = 0;
             }
             if let Some(Lock::Ppu) = lock {
                 let vram = self.vram.borrow();
                 if self.pixel_fifo.enabled && x < SCREEN_WIDTH as u8 {
                     if let Some(pixel) = self.pixel_fifo.pop() {
-                        self.next_pixels[y as usize][x as usize] = Color::from(pixel).into();
-                        self.state.draw_pixel();
-                        x += 1;
-                        Self::check_next_pixel_mode(
-                            &lcd_reg,
-                            &mut self.pixel_fetcher,
-                            &mut self.pixel_fifo,
-                            &mut self.scanline_sprites,
-                            (x, y),
-                        );
+                        let offset = lcd_reg.scrolling.scx % 8;
+                        if self.state.pixel_drawn() > 0 || self.offset >= offset {
+                            self.next_pixels[y as usize][x as usize] = Color::from(pixel).into();
+                            self.state.draw_pixel();
+                            x += 1;
+                            Self::check_next_pixel_mode(
+                                &lcd_reg,
+                                &mut self.pixel_fetcher,
+                                &mut self.pixel_fifo,
+                                &mut self.scanline_sprites,
+                                (x, y),
+                            );
+                        } else {
+                            self.offset += 1;
+                        }
                     };
                 }
                 self.pixel_fetcher.fetch(
@@ -410,7 +441,7 @@ impl Ppu {
                     &lcd_reg,
                     y as usize,
                     x as usize,
-                    self.pixel_fifo.count(),
+                    self.pixel_fifo.count() + self.offset as usize,
                 );
                 if self.pixel_fetcher.push_to_fifo(&mut self.pixel_fifo) {
                     Self::check_next_pixel_mode(
@@ -478,7 +509,7 @@ impl Ppu {
         let (x, _) = cursor;
 
         if let Some(sprite) = sprites.pop() {
-            if sprite.x_pos() - 8 == x {
+            if sprite.x_pos() == x + Sprite::HORIZONTAL_OFFSET {
                 pixel_fetcher.set_mode(FetchMode::Sprite(sprite));
                 pixel_fifo.enabled = false;
             } else {
@@ -487,6 +518,12 @@ impl Ppu {
             }
         } else {
             Self::check_for_bg_win_mode(lcd_reg, pixel_fetcher, pixel_fifo, cursor);
+        }
+    }
+
+    fn pixel_drawing_disabled(&mut self) {
+        if self.state.pixel_drawn() < 160 {
+            self.state.draw_pixel();
         }
     }
 }
@@ -503,15 +540,35 @@ impl Ticker for Ppu {
     }
 
     fn tick(&mut self, adr_bus: &mut dyn Bus<u8>) {
-        if let Ok(lcd_reg) = self.lcd_reg.try_borrow() {
-            if !lcd_reg.control.ppu_enable() {
-                return;
-            }
+        let enable = self.lcd_reg.borrow().control.ppu_enable();
+        if self.enabled && !enable {
+            log::info!("disabling lcd");
+            self.unlock_mem(adr_bus);
+            self.enabled = false;
         }
+        if !self.enabled && enable && self.state.mode() == Mode::VBlank {
+            log::info!("enabling lcd");
+            self.enabled = true;
+        }
+
         match self.state.mode() {
-            Mode::OAMFetch => self.oam_fetch(adr_bus),
-            Mode::PixelDrawing => self.pixel_drawing(adr_bus),
-            Mode::HBlank => self.hblank(adr_bus),
+            Mode::OAMFetch => {
+                if self.enabled {
+                    self.oam_fetch(adr_bus)
+                }
+            }
+            Mode::PixelDrawing => {
+                if self.enabled {
+                    self.pixel_drawing(adr_bus)
+                } else {
+                    self.pixel_drawing_disabled()
+                }
+            }
+            Mode::HBlank => {
+                if self.enabled {
+                    self.hblank(adr_bus)
+                }
+            }
             Mode::VBlank => self.vblank(adr_bus),
         }
         // update state after executing tick

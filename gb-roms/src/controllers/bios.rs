@@ -33,10 +33,14 @@ pub fn cgb() -> Bios {
     )
 }
 
-impl FileOperation<Area> for Bios {
-    fn read(&self, addr: Box<dyn Address<Area>>) -> Result<u8, Error> {
+impl<A> FileOperation<A, Area> for Bios
+where
+    u16: From<A>,
+    A: Address<Area>,
+{
+    fn read(&self, addr: A) -> Result<u8, Error> {
         self.container
             .get(addr.get_address())
-            .map_or_else(|| Err(Error::new_segfault(addr)), |v| Ok(*v))
+            .map_or_else(|| Err(Error::new_segfault(addr.into())), |v| Ok(*v))
     }
 }

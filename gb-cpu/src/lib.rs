@@ -1,5 +1,6 @@
 mod builder;
 pub mod bus;
+pub mod constant;
 pub mod cpu;
 pub mod interfaces;
 mod io_registers;

@@ -24,8 +24,12 @@ impl WorkingRam {
     }
 }
 
-impl FileOperation<Area> for WorkingRam {
-    fn write(&mut self, value: u8, addr: Box<dyn Address<Area>>) -> Result<(), Error> {
+impl<A> FileOperation<A, Area> for WorkingRam
+where
+    u16: From<A>,
+    A: Address<Area>,
+{
+    fn write(&mut self, value: u8, addr: A) -> Result<(), Error> {
         let address = addr.get_address();
         match address {
             0..=0xfff => self.storage.root_bank_mut()[address] = value,
@@ -33,12 +37,12 @@ impl FileOperation<Area> for WorkingRam {
                 let address = address - 0x1000;
                 self.storage[address] = value;
             }
-            _ => return Err(Error::bus_error(addr)),
+            _ => return Err(Error::bus_error(addr.into())),
         }
         Ok(())
     }
 
-    fn read(&self, addr: Box<dyn Address<Area>>) -> Result<u8, Error> {
+    fn read(&self, addr: A) -> Result<u8, Error> {
         let address = addr.get_address();
         match address {
             0..=0xfff => Ok(self.storage.root_bank()[address]),
@@ -46,26 +50,30 @@ impl FileOperation<Area> for WorkingRam {
                 let address = address - 0x1000;
                 Ok(self.storage[address])
             }
-            _ => Err(Error::bus_error(addr)),
+            _ => Err(Error::bus_error(addr.into())),
         }
     }
 }
 
-impl FileOperation<IORegArea> for WorkingRam {
-    fn write(&mut self, value: u8, addr: Box<dyn Address<IORegArea>>) -> Result<(), Error> {
+impl<A> FileOperation<A, IORegArea> for WorkingRam
+where
+    u16: From<A>,
+    A: Address<IORegArea>,
+{
+    fn write(&mut self, value: u8, addr: A) -> Result<(), Error> {
         if self.enable_cgb_feature {
             self.storage.set_bank_index((value & 0x7).min(1) as usize);
             Ok(())
         } else {
-            Err(Error::new_segfault(addr))
+            Err(Error::new_segfault(addr.into()))
         }
     }
 
-    fn read(&self, addr: Box<dyn Address<IORegArea>>) -> Result<u8, Error> {
+    fn read(&self, addr: A) -> Result<u8, Error> {
         if self.enable_cgb_feature {
             Ok(self.storage.current_bank_index as u8)
         } else {
-            Err(Error::new_segfault(addr))
+            Err(Error::new_segfault(addr.into()))
         }
     }
 }

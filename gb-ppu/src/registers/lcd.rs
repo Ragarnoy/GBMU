@@ -32,24 +32,58 @@ impl LcdReg {
         LcdReg::default()
     }
 
-    pub fn read(&self, addr: Box<dyn Address<IORegArea>>) -> Result<u8, Error> {
-        match addr.get_address() {
-            0x00 => Ok(self.control.read()),
-            0x01 => Ok(self.stat.read()),
-            pos @ 0x02..=0x05 => Ok(self.scrolling.read(pos - 0x02)),
-            pos @ 0x07..=0x09 => Ok(self.pal_mono.read(pos - 0x07)),
-            pos @ 0x0A..=0x0B => Ok(self.window_pos.read(pos - 0x0A)),
+    pub fn read<A>(&self, addr: A) -> Result<u8, Error>
+    where
+        u16: From<A>,
+        A: Address<IORegArea>,
+    {
+        use gb_bus::io_reg_area::IORegArea::{
+            Bgp, LcdControl, LcdStat, Ly, Lyc, Obp0, Obp1, Scx, Scy, Wx, Wy,
+        };
+
+        match addr.area_type() {
+            LcdControl => Ok(self.control.bits),
+            LcdStat => Ok(self.stat.read()),
+
+            Scy => Ok(self.scrolling.scy),
+            Scx => Ok(self.scrolling.scx),
+            Ly => Ok(self.scrolling.ly),
+            Lyc => Ok(self.scrolling.lyc),
+
+            Bgp => Ok(self.pal_mono.read(PalettesMono::BACKGROUND)),
+            Obp0 => Ok(self.pal_mono.read(PalettesMono::OBJ_O)),
+            Obp1 => Ok(self.pal_mono.read(PalettesMono::OBJ_1)),
+
+            Wy => Ok(self.window_pos.wy),
+            Wx => Ok(self.window_pos.wx),
             _ => Err(Error::SegmentationFault(addr.into())),
         }
     }
 
-    pub fn write(&mut self, addr: Box<dyn Address<IORegArea>>, v: u8) -> Result<(), Error> {
-        match addr.get_address() {
-            0x00 => self.control.write(v),
-            0x01 => self.stat.write(v),
-            pos @ 0x02..=0x05 => self.scrolling.write(pos - 0x02, v),
-            pos @ 0x07..=0x09 => self.pal_mono.write(pos - 0x07, v),
-            pos @ 0x0A..=0x0B => self.window_pos.write(pos - 0x0A, v),
+    pub fn write<A>(&mut self, addr: A, v: u8) -> Result<(), Error>
+    where
+        u16: From<A>,
+        A: Address<IORegArea>,
+    {
+        use gb_bus::io_reg_area::IORegArea::{
+            Bgp, LcdControl, LcdStat, Ly, Lyc, Obp0, Obp1, Scx, Scy, Wx, Wy,
+        };
+
+        match addr.area_type() {
+            LcdControl => self.control.write(v),
+            LcdStat => self.stat.write(v),
+
+            Scy => self.scrolling.scy = v,
+            Scx => self.scrolling.scx = v,
+            Ly => (),
+            Lyc => self.scrolling.lyc = v,
+
+            Bgp => self.pal_mono.write(PalettesMono::BACKGROUND, v),
+            Obp0 => self.pal_mono.write(PalettesMono::OBJ_O, v),
+            Obp1 => self.pal_mono.write(PalettesMono::OBJ_1, v),
+
+            Wy => self.window_pos.wy = v,
+            Wx => self.window_pos.wx = v,
             _ => return Err(Error::SegmentationFault(addr.into())),
         };
         Ok(())

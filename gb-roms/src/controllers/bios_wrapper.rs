@@ -2,14 +2,22 @@ use super::Bios;
 use gb_bus::{Address, Area, Error, FileOperation, IORegArea};
 use std::{cell::RefCell, rc::Rc};
 
-pub struct BiosWrapper {
+pub struct BiosWrapper<A>
+where
+    u16: From<A>,
+    A: Address<Area>,
+{
     bios: Rc<RefCell<Bios>>,
-    mbc: Rc<RefCell<dyn FileOperation<Area>>>,
+    mbc: Rc<RefCell<dyn FileOperation<A, Area>>>,
     pub bios_enabling_reg: u8,
 }
 
-impl BiosWrapper {
-    pub fn new(bios: Rc<RefCell<Bios>>, mbc: Rc<RefCell<dyn FileOperation<Area>>>) -> Self {
+impl<A> BiosWrapper<A>
+where
+    u16: From<A>,
+    A: Address<Area>,
+{
+    pub fn new(bios: Rc<RefCell<Bios>>, mbc: Rc<RefCell<dyn FileOperation<A, Area>>>) -> Self {
         Self {
             bios,
             mbc,
@@ -21,25 +29,29 @@ impl BiosWrapper {
         self.bios_enabling_reg == 0
     }
 
-    fn read_bios(&self, address: Box<dyn Address<Area>>) -> Result<u8, Error> {
+    fn read_bios(&self, address: A) -> Result<u8, Error> {
         self.bios.borrow().read(address)
     }
 
-    fn read_mbc(&self, address: Box<dyn Address<Area>>) -> Result<u8, Error> {
+    fn read_mbc(&self, address: A) -> Result<u8, Error> {
         self.mbc.borrow().read(address)
     }
 
-    fn write_bios(&self, v: u8, address: Box<dyn Address<Area>>) -> Result<(), Error> {
+    fn write_bios(&self, v: u8, address: A) -> Result<(), Error> {
         self.bios.borrow_mut().write(v, address)
     }
 
-    fn write_mbc(&self, v: u8, address: Box<dyn Address<Area>>) -> Result<(), Error> {
+    fn write_mbc(&self, v: u8, address: A) -> Result<(), Error> {
         self.mbc.borrow_mut().write(v, address)
     }
 }
 
-impl FileOperation<Area> for BiosWrapper {
-    fn read(&self, address: Box<dyn Address<Area>>) -> Result<u8, Error> {
+impl<A> FileOperation<A, Area> for BiosWrapper<A>
+where
+    u16: From<A>,
+    A: Address<Area>,
+{
+    fn read(&self, address: A) -> Result<u8, Error> {
         let addr = address.get_address();
         if self.bios_enabled() && addr < self.bios.borrow().container.len() {
             self.read_bios(address)
@@ -48,7 +60,7 @@ impl FileOperation<Area> for BiosWrapper {
         }
     }
 
-    fn write(&mut self, v: u8, address: Box<dyn Address<Area>>) -> Result<(), Error> {
+    fn write(&mut self, v: u8, address: A) -> Result<(), Error> {
         let addr = address.get_address();
         if self.bios_enabled() && addr < self.bios.borrow().container.len() {
             self.write_bios(v, address)
@@ -58,23 +70,29 @@ impl FileOperation<Area> for BiosWrapper {
     }
 }
 
-impl FileOperation<IORegArea> for BiosWrapper {
-    fn read(&self, address: Box<dyn Address<IORegArea>>) -> Result<u8, Error> {
+impl<A, B> FileOperation<B, IORegArea> for BiosWrapper<A>
+where
+    u16: From<A>,
+    A: Address<Area>,
+    u16: From<B>,
+    B: Address<IORegArea>,
+{
+    fn read(&self, address: B) -> Result<u8, Error> {
         let addr = address.get_address();
         if addr == 0 {
             Ok(self.bios_enabling_reg)
         } else {
-            Err(Error::bus_error(address))
+            Err(Error::bus_error(address.into()))
         }
     }
 
-    fn write(&mut self, v: u8, address: Box<dyn Address<IORegArea>>) -> Result<(), Error> {
+    fn write(&mut self, v: u8, address: B) -> Result<(), Error> {
         let addr = address.get_address();
         if addr == 0 {
             self.bios_enabling_reg = v;
             Ok(())
         } else {
-            Err(Error::bus_error(address))
+            Err(Error::bus_error(address.into()))
         }
     }
 }
@@ -86,7 +104,7 @@ mod test {
     #[test]
     fn overlap() {
         use crate::controllers::bios;
-        use gb_bus::{address::Address, generic::CharDevice};
+        use gb_bus::{address::Addr, generic::CharDevice};
         use std::{cell::RefCell, rc::Rc};
 
         let mbc_value = 42;
@@ -103,7 +121,7 @@ mod test {
         };
 
         assert_eq!(
-            wrapper.read(Box::new(Address::from_offset(Area::Rom, 0x42, 0))),
+            wrapper.read(Addr::from_offset(Area::Rom, 0x42, 0)),
             Ok(234),
             "ensure we're able to read the bios"
         );
@@ -114,17 +132,14 @@ mod test {
             "ensure mbc is correctly initialised"
         );
         assert_eq!(
-            wrapper.read(Box::new(Address::from_offset(Area::Rom, 0x1000, 0))),
+            wrapper.read(Addr::from_offset(Area::Rom, 0x1000, 0)),
             Ok(mbc_value),
             "ensure when we read outside of the bios size, we fallback to reading the rom"
         );
 
         let mbc_value = 69;
         assert_eq!(
-            wrapper.write(
-                mbc_value,
-                Box::new(Address::from_offset(Area::Rom, 0x1000, 0))
-            ),
+            wrapper.write(mbc_value, Addr::from_offset(Area::Rom, 0x1000, 0)),
             Ok(()),
             "ensure when we write outside of the bios size, we fallback to writing to the rom"
         );

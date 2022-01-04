@@ -1,4 +1,4 @@
-use gb_bus::{Address, Area, FileOperation, IORegArea};
+use gb_bus::{Address, Area, Error, FileOperation, IORegArea};
 
 #[derive(Default, Debug, Clone, Copy)]
 pub struct IORegisters {
@@ -25,14 +25,20 @@ impl Default for Speed {
 }
 
 impl IORegisters {
+    const FLAG_MASK: u8 = 0b1110_0000;
+
+    /// Some interrupts are pending (`IE & IF != 0`)
     pub fn is_interrupt_ready(&self) -> bool {
         self.flag & self.enable_mask != 0
     }
 
+    /// Check if `IME` is enabled
     pub fn should_handle_interrupt(&self) -> bool {
         self.master_enable
     }
 
+    /// Check if you have to handle interrupts.
+    /// It will check the `IME` and `IE & IF != 0`
     pub fn interrupt_to_handle(&self) -> bool {
         self.should_handle_interrupt() && self.is_interrupt_ready()
     }
@@ -44,45 +50,50 @@ impl IORegisters {
     }
 }
 
-impl FileOperation<Area> for IORegisters {
-    fn read(&self, _addr: Box<dyn gb_bus::Address<Area>>) -> Result<u8, gb_bus::Error> {
-        Ok(self.enable_mask)
+impl<A> FileOperation<A, Area> for IORegisters
+where
+    u16: From<A>,
+    A: Address<Area>,
+{
+    fn read(&self, _addr: A) -> Result<u8, gb_bus::Error> {
+        Ok(IORegisters::FLAG_MASK | self.enable_mask)
     }
 
-    fn write(&mut self, v: u8, _addr: Box<dyn gb_bus::Address<Area>>) -> Result<(), gb_bus::Error> {
-        self.enable_mask = v;
+    fn write(&mut self, v: u8, _addr: A) -> Result<(), gb_bus::Error> {
+        self.enable_mask = v & (!IORegisters::FLAG_MASK);
         Ok(())
     }
 }
 
-impl FileOperation<IORegArea> for IORegisters {
-    fn read(&self, addr: Box<dyn gb_bus::Address<IORegArea>>) -> Result<u8, gb_bus::Error> {
+impl<A> FileOperation<A, IORegArea> for IORegisters
+where
+    u16: From<A>,
+    A: Address<IORegArea>,
+{
+    fn read(&self, addr: A) -> Result<u8, Error> {
         match addr.area_type() {
-            IORegArea::InterruptFlag => Ok(self.flag),
+            IORegArea::IF => Ok(IORegisters::FLAG_MASK | self.flag),
             #[cfg(feature = "cgb")]
-            IORegArea::DoubleSpeed => Ok(double_speed_register(
+            IORegArea::Key1 => Ok(double_speed_register(
                 self.current_speed,
                 self.desired_speed,
             )),
-            _ => Err(gb_bus::Error::bus_error(addr)),
+            _ => Err(gb_bus::Error::bus_error(addr.into())),
         }
     }
 
-    fn write(
-        &mut self,
-        v: u8,
-        addr: Box<dyn gb_bus::Address<IORegArea>>,
-    ) -> Result<(), gb_bus::Error> {
+    fn write(&mut self, v: u8, addr: A) -> Result<(), gb_bus::Error> {
         match addr.area_type() {
-            IORegArea::InterruptFlag => self.flag = v,
-            IORegArea::DoubleSpeed => {
+            IORegArea::IF => self.flag = v & !(IORegisters::FLAG_MASK),
+            #[cfg(feature = "cgb")]
+            IORegArea::Key1 => {
                 self.desired_speed = if v & 1 == 1 {
                     Speed::Double
                 } else {
                     Speed::Normal
                 }
             }
-            _ => return Err(gb_bus::Error::bus_error(addr)),
+            _ => return Err(gb_bus::Error::bus_error(addr.into())),
         }
         Ok(())
     }

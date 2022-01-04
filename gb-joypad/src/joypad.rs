@@ -106,18 +106,20 @@ impl Joypad {
     pub fn settings(&mut self, ctx: &CtxRef) {
         egui::CentralPanel::default().show(ctx, |ui| {
             let height = ui.available_size().y;
-            egui::ScrollArea::from_max_height(height - 50.0).show(ui, |ui| {
-                ui.set_height(height - 60.0);
-                for i_type in Self::INPUT_LIST.iter() {
-                    ui.horizontal(|ui| {
-                        if let Some(listened) = self.listening {
-                            self.input_row(ui, i_type, &listened == i_type);
-                        } else {
-                            self.input_row(ui, i_type, false);
-                        }
-                    });
-                }
-            });
+            egui::ScrollArea::vertical()
+                .max_height(height - 50.0)
+                .show(ui, |ui| {
+                    ui.set_height(height - 60.0);
+                    for i_type in Self::INPUT_LIST.iter() {
+                        ui.horizontal(|ui| {
+                            if let Some(listened) = self.listening {
+                                self.input_row(ui, i_type, &listened == i_type);
+                            } else {
+                                self.input_row(ui, i_type, false);
+                            }
+                        });
+                    }
+                });
             ui.vertical(|ui| {
                 ui.vertical_centered(|ui| {
                     ui.add(Separator::default().horizontal().spacing(30.0));
@@ -181,19 +183,37 @@ impl Joypad {
     fn update_state(&mut self, scancode: &Option<Scancode>, state: bool) {
         if let Some(scancode) = scancode {
             if let Some(input_type) = self.input_map.get(scancode) {
+                #[cfg(feature = "debug_state")]
+                let mut changed = false;
+                #[cfg(feature = "toggle_joypad")]
+                if state {
+                    self.input_states.insert(
+                        *input_type,
+                        !self.input_states.get(input_type).unwrap_or(&false),
+                    );
+                    #[cfg(feature = "debug_state")]
+                    {
+                        changed = true;
+                    }
+                }
+                #[cfg(not(feature = "toggle_joypad"))]
                 if self.input_states[input_type] != state {
                     self.input_states.insert(*input_type, state);
                     #[cfg(feature = "debug_state")]
                     {
-                        let reg = register_from_state(self.mode, self.input_states.iter());
-                        log::debug!(
-                            "change state: state={:08b}, mode={:9?}, key={:5?}, pressed={}",
-                            reg,
-                            self.mode,
-                            input_type,
-                            state,
-                        )
+                        changed = true;
                     }
+                }
+                #[cfg(feature = "debug_state")]
+                if changed {
+                    let reg = register_from_state(self.mode, self.input_states.iter());
+                    log::debug!(
+                        "change state: state={:08b}, mode={:9?}, key={:5?}, pressed={}",
+                        reg,
+                        self.mode,
+                        input_type,
+                        state,
+                    )
                 }
             }
         }
@@ -226,10 +246,14 @@ impl Joypad {
     }
 }
 
-impl FileOperation<IORegArea> for Joypad {
-    fn write(&mut self, v: u8, addr: Box<dyn Address<IORegArea>>) -> Result<(), Error> {
-        match (addr.area_type(), addr.get_address()) {
-            (IORegArea::Controller, 0x00) => {
+impl<A> FileOperation<A, IORegArea> for Joypad
+where
+    u16: From<A>,
+    A: Address<IORegArea>,
+{
+    fn write(&mut self, v: u8, addr: A) -> Result<(), Error> {
+        match addr.area_type() {
+            IORegArea::Joy => {
                 let v = !v & 0b0011_0000;
                 self.mode = Mode::from(v);
                 Ok(())
@@ -238,9 +262,9 @@ impl FileOperation<IORegArea> for Joypad {
         }
     }
 
-    fn read(&self, addr: Box<dyn Address<IORegArea>>) -> Result<u8, Error> {
-        match (addr.area_type(), addr.get_address()) {
-            (IORegArea::Controller, 0x00) => Ok(self.reg_val),
+    fn read(&self, addr: A) -> Result<u8, Error> {
+        match addr.area_type() {
+            IORegArea::Joy => Ok(self.reg_val),
             _ => Err(Error::SegmentationFault(addr.into())),
         }
     }

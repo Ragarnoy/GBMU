@@ -11,6 +11,10 @@ pub struct Scrolling {
 
 impl Scrolling {
     pub const SIZE: usize = 4;
+    pub const SCY: usize = 0;
+    pub const SCX: usize = 1;
+    pub const LY: usize = 2;
+    pub const LYC: usize = 3;
 
     pub fn new() -> Self {
         Scrolling {
@@ -25,10 +29,10 @@ impl Scrolling {
 impl From<[u8; 4]> for Scrolling {
     fn from(bytes: [u8; 4]) -> Scrolling {
         Scrolling {
-            scy: bytes[0],
-            scx: bytes[1],
-            ly: bytes[2],
-            lyc: bytes[3],
+            scy: bytes[Self::SCY],
+            scx: bytes[Self::SCX],
+            ly: bytes[Self::LY],
+            lyc: bytes[Self::LYC],
         }
     }
 }
@@ -44,10 +48,10 @@ impl Index<usize> for Scrolling {
 
     fn index(&self, id: usize) -> &Self::Output {
         match id {
-            0 => &self.scy,
-            1 => &self.scx,
-            2 => &self.ly,
-            3 => &self.lyc,
+            Self::SCY => &self.scy,
+            Self::SCX => &self.scx,
+            Self::LY => &self.ly,
+            Self::LYC => &self.lyc,
             _ => panic!("Out of bound index for scrolling register"),
         }
     }
@@ -56,10 +60,10 @@ impl Index<usize> for Scrolling {
 impl IndexMut<usize> for Scrolling {
     fn index_mut(&mut self, id: usize) -> &mut Self::Output {
         match id {
-            0 => &mut self.scy,
-            1 => &mut self.scx,
-            2 => &mut self.ly,
-            3 => &mut self.lyc,
+            Self::SCY => &mut self.scy,
+            Self::SCX => &mut self.scx,
+            Self::LY => &mut self.ly,
+            Self::LYC => &mut self.lyc,
             _ => panic!("Out of bound index for scrolling register"),
         }
     }

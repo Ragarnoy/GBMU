@@ -1,7 +1,7 @@
 use super::{Lock, Lockable, Oam, Vram};
 use crate::error::{PPUError, PPUResult};
 use crate::UNDEFINED_VALUE;
-use gb_bus::{Address, Area, Error, FileOperation, InternalLock, MemoryLock};
+use gb_bus::{Addr, Address, Area, Error, FileOperation, InternalLock, MemoryLock};
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -54,7 +54,7 @@ impl PPUMem {
     }
 }
 
-impl InternalLock<Area> for PPUMem {}
+impl InternalLock<Addr<Area>, Area> for PPUMem {}
 
 impl MemoryLock for PPUMem {
     fn lock(&mut self, area: Area, lock: Lock) {
@@ -90,9 +90,13 @@ impl MemoryLock for PPUMem {
     }
 }
 
-impl FileOperation<Area> for PPUMem {
+impl<A> FileOperation<A, Area> for PPUMem
+where
+    u16: From<A>,
+    A: Address<Area>,
+{
     /// Read a value from memory. If the concerned memory area is currently locked an undefined value is returned.
-    fn read(&self, addr: Box<dyn Address<Area>>) -> Result<u8, Error> {
+    fn read(&self, addr: A) -> Result<u8, Error> {
         match addr.area_type() {
             Area::Vram => match self.vram.try_borrow() {
                 Ok(vram) => vram
@@ -117,7 +121,7 @@ impl FileOperation<Area> for PPUMem {
     }
 
     /// Write value into memory. If the concerned memory area is currently locked, nothing is done.
-    fn write(&mut self, v: u8, addr: Box<dyn Address<Area>>) -> Result<(), Error> {
+    fn write(&mut self, v: u8, addr: A) -> Result<(), Error> {
         match addr.area_type() {
             Area::Vram => match self.vram.try_borrow_mut() {
                 Ok(mut vram) => vram
@@ -158,7 +162,7 @@ mod read {
         let ppu_mem = PPUMem::new(vram, oam);
 
         let res = ppu_mem
-            .read(Box::new(TestAddress::root_vram()))
+            .read(TestAddress::root_vram())
             .expect("Try reading value from vram");
         assert_eq!(res, 0x42, "invalid value from vram");
     }
@@ -170,7 +174,7 @@ mod read {
         let ppu_mem = PPUMem::new(vram, oam);
 
         let res = ppu_mem
-            .read(Box::new(TestAddress::root_oam()))
+            .read(TestAddress::root_oam())
             .expect("Try reading value from vram");
         assert_eq!(res, 0x42, "invalid value from vram");
     }
@@ -192,10 +196,10 @@ mod write {
         let mut ppu_mem = PPUMem::new(vram, oam);
 
         ppu_mem
-            .write(0x42, Box::new(TestAddress::root_vram()))
+            .write(0x42, TestAddress::root_vram())
             .expect("Try write value into vram");
         let res = ppu_mem
-            .read(Box::new(TestAddress::root_vram()))
+            .read(TestAddress::root_vram())
             .expect("Try reading value from vram");
         assert_eq!(res, 0x42, "invalid value from vram");
     }
@@ -207,10 +211,10 @@ mod write {
         let mut ppu_mem = PPUMem::new(vram, oam);
 
         ppu_mem
-            .write(0x42, Box::new(TestAddress::root_oam()))
+            .write(0x42, TestAddress::root_oam())
             .expect("Try write value into oam");
         let res = ppu_mem
-            .read(Box::new(TestAddress::root_oam()))
+            .read(TestAddress::root_oam())
             .expect("Try reading value from oam");
         assert_eq!(res, 0x42, "invalid value from oam");
     }

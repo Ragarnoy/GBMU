@@ -1,6 +1,6 @@
 use crate::error::Error;
 use egui::CtxRef;
-use egui_sdl2_gl::{painter::Painter, DpiScaling, EguiStateHandler};
+use egui_sdl2_gl::{painter::Painter, DpiScaling, EguiStateHandler, ShaderVersion};
 use sdl2::{
     event::Event,
     video::{GLContext, Window as SdlWindow},
@@ -9,6 +9,7 @@ use sdl2::{
 use std::time::Instant;
 
 const RESOLUTION_DOT: f32 = 96.0;
+const SHADER_VERSION: ShaderVersion = ShaderVersion::Default;
 
 pub struct GBWindow {
     sdl_window: SdlWindow,
@@ -44,6 +45,7 @@ impl GBWindow {
 
         let (egui_painter, egui_state) = egui_sdl2_gl::with_sdl2(
             &sdl_window,
+            SHADER_VERSION,
             DpiScaling::Custom(
                 video_sys.display_dpi(0).map_err(Error::GBWindowInit)?.0 / RESOLUTION_DOT,
             ),
@@ -123,6 +125,7 @@ impl GBWindow {
             .map_err(Error::GBWindowFrame)?;
         let (egui_painter, egui_state) = egui_sdl2_gl::with_sdl2(
             &self.sdl_window,
+            SHADER_VERSION,
             DpiScaling::Custom(
                 video_sys.display_dpi(0).map_err(Error::GBWindowInit)?.0 / RESOLUTION_DOT,
             ),

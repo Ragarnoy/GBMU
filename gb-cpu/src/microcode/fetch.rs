@@ -645,7 +645,7 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                     &[read::sp, read::ind, inc::sp],
                     &[jump::jump, interrupts::enable_ime],
                 ]),
-                Opcode::Halt => &mut ctl,
+                Opcode::Halt => ctl.push_to_current_cycle(&[interrupts::halt]),
 
                 Opcode::Nop => &mut ctl,
 
@@ -659,7 +659,7 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
                 Opcode::LdhlSp8 => {
                     ctl.push_cycles(&[&[read::sp, read::byte, arithmetic::add_sp_i8], &[write::hl]])
                 }
-                _ => todo!("unimplemented opcode {:?}", opcode),
+                Opcode::Stop => ctl.push_to_current_cycle(&[interrupts::stop]),
             };
             CONTINUE
         },

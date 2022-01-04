@@ -406,36 +406,36 @@ mod test_write_regs {
 
         assert_eq!(date.days(), 0);
         assert_eq!(date.lower_days(), 0);
-        assert_eq!(date.upper_days(), false);
+        assert!(!date.upper_days());
 
         date.set_lower_days(0x2f);
 
         assert_eq!(date.days(), 0x2f);
         assert_eq!(date.lower_days(), 0x2f);
-        assert_eq!(date.upper_days(), false);
+        assert!(!date.upper_days());
 
         date.set_upper_days(true);
 
         assert_eq!(date.days(), 0x12f);
         assert_eq!(date.lower_days(), 0x2f);
-        assert_eq!(date.upper_days(), true);
+        assert!(date.upper_days());
 
         date.set_upper_days(false);
 
         assert_eq!(date.days(), 0x2f);
         assert_eq!(date.lower_days(), 0x2f);
-        assert_eq!(date.upper_days(), false);
+        assert!(!date.upper_days());
     }
 
     #[test]
     fn halted() {
         let mut date = Naive::default();
 
-        assert_eq!(date.halted(), true);
+        assert!(date.halted());
         date.set_halted(false);
-        assert_eq!(date.halted(), false);
+        assert!(!date.halted());
         date.set_halted(true);
-        assert_eq!(date.halted(), true);
+        assert!(date.halted());
     }
 
     #[test]
@@ -443,16 +443,16 @@ mod test_write_regs {
         let mut date = Naive::from_days(0x1FF);
 
         assert_eq!(date.days(), 0x1FF);
-        assert_eq!(date.day_counter_carry(), false);
+        assert!(!date.day_counter_carry());
 
         date.set_day_counter_carry(true);
-        assert_eq!(date.day_counter_carry(), true);
+        assert!(date.day_counter_carry());
 
         date.set_day_counter_carry(false);
-        assert_eq!(date.day_counter_carry(), false);
+        assert!(!date.day_counter_carry());
 
-        let date = date + 1 * DAY;
-        assert_eq!(date.day_counter_carry(), true);
+        let date = date + DAY;
+        assert!(date.day_counter_carry());
         assert_eq!(date.days(), 0);
     }
 }

@@ -7,7 +7,7 @@ mod test_parser;
 use crate::dbg_interfaces::DebugOperations;
 use crate::debugger::breakpoints::breakpoint::Breakpoint;
 
-use egui::{Color32, Label, Ui, Vec2};
+use egui::{Color32, Ui, Vec2};
 
 const VALID_CHARS: &[char] = &['&', '|', '!', '=', '<', '>', '*', '%', '^', '(', ')'];
 
@@ -51,7 +51,7 @@ impl BreakpointEditor {
 
     pub fn draw<DBG: DebugOperations>(&mut self, ui: &mut Ui, regs: &DBG) {
         ui.vertical(|ui| {
-            ui.label(Label::new("Breakpoints").text_color(Color32::LIGHT_BLUE));
+            ui.colored_label(Color32::LIGHT_BLUE, "Breakpoints");
             self.draw_breakpoint_options(ui);
 
             ui.separator();
@@ -66,9 +66,9 @@ impl BreakpointEditor {
                 .striped(true)
                 .spacing(Vec2::new(47.0, 7.0))
                 .show(ui, |ui| {
-                    ui.label(egui::Label::new("Delete"));
-                    ui.label(egui::Label::new("Enabled"));
-                    ui.label(egui::Label::new("Condition"));
+                    ui.label("Delete");
+                    ui.label("Enabled");
+                    ui.label("Condition");
                     ui.end_row();
 
                     for (i, breakpoint) in &mut self.breakpoints.iter_mut().enumerate() {
@@ -127,8 +127,10 @@ impl BreakpointEditor {
 
     fn draw_advanced_breakpoint_widget<DBG: DebugOperations>(&mut self, ui: &mut Ui, regs: &DBG) {
         ui.horizontal(|ui| {
-            let add_button_response =
-                ui.add(egui::Button::new("+").enabled(is_valid_expression(&self.breakpoint_field)));
+            let add_button_response = ui.add_enabled(
+                is_valid_expression(&self.breakpoint_field),
+                egui::Button::new("+"),
+            );
             let text_field_response = ui.add(
                 egui::TextEdit::multiline(&mut self.breakpoint_field)
                     .desired_width(150.0)
@@ -155,8 +157,10 @@ impl BreakpointEditor {
             self.breakpoint_field.truncate(4)
         }
         ui.horizontal(|ui| {
-            let add_button_response =
-                ui.add(egui::Button::new("+").enabled(is_valid_address(&self.breakpoint_field)));
+            let add_button_response = ui.add_enabled(
+                is_valid_address(&self.breakpoint_field),
+                egui::Button::new("+"),
+            );
             ui.add(
                 egui::Label::new("0x")
                     .text_color(Color32::from_gray(90))

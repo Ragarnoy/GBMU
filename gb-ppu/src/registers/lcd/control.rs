@@ -11,7 +11,7 @@ const PPU_ENABLE: u8 = 0b1000_0000;
 
 #[derive(Default, Clone, Copy, Debug)]
 pub struct Control {
-    bits: u8,
+    pub bits: u8,
 }
 
 impl Control {

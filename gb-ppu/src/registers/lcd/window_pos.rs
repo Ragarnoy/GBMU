@@ -9,6 +9,8 @@ pub struct WindowPos {
 
 impl WindowPos {
     pub const SIZE: usize = 2;
+    pub const WY: usize = 0;
+    pub const WX: usize = 1;
 
     pub fn new() -> Self {
         WindowPos { wy: 0, wx: 0 }
@@ -18,8 +20,8 @@ impl WindowPos {
 impl From<[u8; 2]> for WindowPos {
     fn from(bytes: [u8; 2]) -> WindowPos {
         WindowPos {
-            wy: bytes[0],
-            wx: bytes[1],
+            wy: bytes[Self::WY],
+            wx: bytes[Self::WX],
         }
     }
 }
@@ -35,8 +37,8 @@ impl Index<usize> for WindowPos {
 
     fn index(&self, id: usize) -> &Self::Output {
         match id {
-            0 => &self.wy,
-            1 => &self.wx,
+            Self::WY => &self.wy,
+            Self::WX => &self.wx,
             _ => panic!("Out of bound index for WindowPos register"),
         }
     }
@@ -45,8 +47,8 @@ impl Index<usize> for WindowPos {
 impl IndexMut<usize> for WindowPos {
     fn index_mut(&mut self, id: usize) -> &mut Self::Output {
         match id {
-            0 => &mut self.wy,
-            1 => &mut self.wx,
+            Self::WY => &mut self.wy,
+            Self::WX => &mut self.wx,
             _ => panic!("Out of bound index for WindowPos register"),
         }
     }
