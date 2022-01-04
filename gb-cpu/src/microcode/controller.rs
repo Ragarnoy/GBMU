@@ -133,8 +133,10 @@ impl MicrocodeController {
             Some(OpcodeType::Unprefixed(opcode)) => opcode,
             _ => Opcode::Nop,
         };
+        let borrow_int_flags = int_flags.borrow();
 
-        if previous_opcode != Opcode::Ei && int_flags.borrow().interrupt_to_handle() {
+        if previous_opcode != Opcode::Ei && borrow_int_flags.interrupt_to_handle() {
+            drop(borrow_int_flags);
             handle_interrupts(self, state);
         } else {
             #[cfg(feature = "registers_logs")]
@@ -152,6 +154,7 @@ impl MicrocodeController {
         if borrow_int_flags.is_interrupt_ready() {
             self.mode = Mode::Normal;
             if borrow_int_flags.should_handle_interrupt() {
+                drop(borrow_int_flags);
                 handle_interrupts(self, state);
             }
         }
