@@ -47,6 +47,7 @@ pub struct Game {
     pub dma: Rc<RefCell<Dma>>,
     pub joypad: Rc<RefCell<Joypad>>,
     pub addr_bus: AddressBus,
+    pub cpu_reg: Rc<RefCell<gb_cpu::IORegisters>>,
     scheduled_stop: Option<ScheduledStop>,
     emulation_stopped: bool,
     cycle_count: usize,
@@ -157,7 +158,7 @@ impl Game {
             io_reg: io_bus.clone(),
             hram: Rc::new(RefCell::new(SimpleRW::<0x80>::default())),
 
-            ie_reg: cpu_io_reg,
+            ie_reg: cpu_io_reg.clone(),
             area_locks: BTreeMap::new(),
         };
 
@@ -177,6 +178,7 @@ impl Game {
             scheduled_stop: None,
             emulation_stopped: stopped,
             cycle_count: 0,
+            cpu_reg: cpu_io_reg,
         })
     }
 
@@ -191,8 +193,19 @@ impl Game {
                 self.joypad.borrow_mut().deref_mut(),
                 self.dma.borrow_mut().deref_mut()
             );
-            self.cycle_count += 1;
             self.check_scheduled_stop(!frame_not_finished);
+            #[cfg(feature = "cgb")]
+            if self.cpu_reg.borrow().current_speed == cpu::Speed::Double {
+                cycles!(
+                    tick_only
+                    self.addr_bus,
+                    &mut self.cpu,
+                    self.timer.borrow_mut().deref_mut(),
+                    self.dma.borrow_mut().deref_mut()
+                );
+                self.check_scheduled_stop(!frame_not_finished);
+            }
+            self.cycle_count += 1;
             frame_not_finished
         } else {
             false
