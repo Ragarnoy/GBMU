@@ -114,7 +114,6 @@ impl IORegBusBuilder {
     }
 
     pub fn build(self) -> IORegBus {
-        dbg!(self.areas.keys());
         IORegBus { areas: self.areas }
     }
 }
