@@ -347,31 +347,33 @@ impl Ppu {
                 self.scanline_sprites.clear();
             }
             if let Some(Lock::Ppu) = lock {
-                let oam = self.oam.borrow();
-                if step % 2 == 1 {
-                    let sprite_pos = step as usize / 2;
+                if lcd_reg.control.obj_enable() {
+                    let oam = self.oam.borrow();
+                    if step % 2 == 1 {
+                        let sprite_pos = step as usize / 2;
 
-                    match oam.read_sprite(sprite_pos) {
-                        Err(err) => log::error!("Error while reading sprite: {}", err),
-                        Ok(sprite) => {
-                            let scanline = self.state.line() + 16;
-                            let top = sprite.y_pos().min(160);
-                            let bot = top + if lcd_reg.control.obj_size() { 16 } else { 8 };
+                        match oam.read_sprite(sprite_pos) {
+                            Err(err) => log::error!("Error while reading sprite: {}", err),
+                            Ok(sprite) => {
+                                let scanline = self.state.line() + 16;
+                                let top = sprite.y_pos().min(160);
+                                let bot = top + if lcd_reg.control.obj_size() { 16 } else { 8 };
 
-                            if scanline >= top && scanline < bot {
-                                for i in 0..self.scanline_sprites.len() {
-                                    let scan_sprite = self.scanline_sprites[i];
+                                if scanline >= top && scanline < bot {
+                                    for i in 0..self.scanline_sprites.len() {
+                                        let scan_sprite = self.scanline_sprites[i];
 
-                                    if sprite.x_pos() < scan_sprite.x_pos() {
-                                        self.scanline_sprites.insert(i, sprite);
-                                        if self.scanline_sprites.len() > 10 {
-                                            self.scanline_sprites.pop();
+                                        if sprite.x_pos() < scan_sprite.x_pos() {
+                                            self.scanline_sprites.insert(i, sprite);
+                                            if self.scanline_sprites.len() > 10 {
+                                                self.scanline_sprites.pop();
+                                            }
+                                            return;
                                         }
-                                        return;
                                     }
-                                }
-                                if self.scanline_sprites.len() < 10 {
-                                    self.scanline_sprites.push(sprite);
+                                    if self.scanline_sprites.len() < 10 {
+                                        self.scanline_sprites.push(sprite);
+                                    }
                                 }
                             }
                         }
