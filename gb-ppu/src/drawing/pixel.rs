@@ -24,8 +24,8 @@ impl Pixel {
     pub fn mix(&mut self, other: &Pixel) {
         if !self.palette.get().is_sprite()
             && other.palette.get().is_sprite()
-            && ((!other.background_priority && other.color != 0)
-                || (other.background_priority && self.color != 0))
+            && other.color != 0
+            && !(other.background_priority && self.color != 0)
         {
             *self = other.clone();
         }

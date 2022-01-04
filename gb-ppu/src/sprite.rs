@@ -20,7 +20,6 @@ struct Attributes {
     pub palette_nb: B1,
     pub x_flip: B1,
     pub y_flip: B1,
-    #[skip]
     pub bg_win_priority: B1,
 }
 
@@ -76,6 +75,10 @@ impl<'r> Sprite {
         } else {
             palettes.1
         }
+    }
+
+    pub fn bg_win_priority(&self) -> bool {
+        self.attributes.bg_win_priority() != 0
     }
 
     /// Read the row of 8 pixels values for this sprite.
