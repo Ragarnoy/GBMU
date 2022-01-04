@@ -1,8 +1,8 @@
-use clap::Clap;
+use clap::Parser;
 
 use gb_roms::opcode::OpcodeBits;
 
-#[derive(Clap, Debug)]
+#[derive(Parser, Debug)]
 #[clap(version = "1.0", author = "fbenneto")]
 struct DecomposeOpts {
     #[clap(required = true, validator=parse_value)]

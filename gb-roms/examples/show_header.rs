@@ -1,9 +1,9 @@
-use clap::Clap;
+use clap::Parser;
 use std::fs::File;
 
 use gb_roms::Header;
 
-#[derive(Clap, Debug)]
+#[derive(Parser, Debug)]
 #[clap(version = "1.0", author = "fbenneto")]
 struct CliOpts {
     #[clap(required = true)]
