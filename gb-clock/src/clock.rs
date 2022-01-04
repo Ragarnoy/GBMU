@@ -9,10 +9,14 @@ pub struct Clock {
 /// Its return value indicate if the current frame is incomplete.
 #[macro_export]
 macro_rules! cycles {
-    ($clock:expr, $addr_bus:expr, $($tickers:expr),+) => {{
-       $(
+    (tick_only $addr_bus:expr, $($tickers:expr),+) => {
+        $(
             gb_clock::cycle($tickers, $addr_bus);
         )+
+    };
+
+    ($clock:expr, $addr_bus:expr, $($tickers:expr),+) => {{
+        cycles!(tick_only $addr_bus, $($tickers),+);
         $clock.inc_frame()
     }};
 }
