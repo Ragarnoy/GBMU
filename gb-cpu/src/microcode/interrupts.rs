@@ -108,6 +108,7 @@ pub fn stop(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
         stop_with_joypad(ctl, state);
     } else if cfg!(feature = "cgb") {
         drop(int_flags);
+        #[cfg(feature = "cgb")]
         stop_color_mode(ctl, state);
         state.write_bus(gb_bus::io_reg_constant::DIV, 0);
     }
