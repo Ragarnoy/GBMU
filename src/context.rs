@@ -131,6 +131,7 @@ impl Game {
                 .with_area(IORegArea::Wy, ppu_reg.clone())
                 .with_area(IORegArea::Wx, ppu_reg)
                 .with_area(IORegArea::BootRom, bios_wrapper.clone())
+                .with_default_serial()
                 .with_default_sound()
                 .with_default_waveform_ram();
 
