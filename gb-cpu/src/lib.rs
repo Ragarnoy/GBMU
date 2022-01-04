@@ -10,6 +10,9 @@ pub mod registers;
 mod registers_test;
 
 pub use builder::new_cpu;
+pub use cpu::Cpu;
+pub use io_registers::IORegisters;
+pub use io_registers::Speed;
 
 pub const NB_MAX_CYCLES: usize = 6;
 pub const NB_MAX_ACTIONS: usize = 8;
