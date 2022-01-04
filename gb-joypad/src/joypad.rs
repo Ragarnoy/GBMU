@@ -254,20 +254,20 @@ where
     A: Address<IORegArea>,
 {
     fn write(&mut self, v: u8, addr: A) -> Result<(), Error> {
-        match addr.area_type() {
-            IORegArea::Joy => {
-                let v = !v & Self::WRITABLE_BITS;
-                self.mode = Mode::from(v);
-                Ok(())
-            }
-            _ => Err(Error::SegmentationFault(addr.into())),
+        if IORegArea::Joy == addr.area_type() {
+            let v = !v & Self::WRITABLE_BITS;
+            self.mode = Mode::from(v);
+            Ok(())
+        } else {
+            Err(Error::SegmentationFault(addr.into()))
         }
     }
 
     fn read(&self, addr: A) -> Result<u8, Error> {
-        match addr.area_type() {
-            IORegArea::Joy => Ok(Self::READ_MASK | self.reg_val),
-            _ => Err(Error::SegmentationFault(addr.into())),
+        if IORegArea::Joy == addr.area_type() {
+            Ok(Self::READ_MASK | self.reg_val)
+        } else {
+            Err(Error::SegmentationFault(addr.into()))
         }
     }
 }
