@@ -59,6 +59,53 @@ impl IORegBusBuilder {
         self
     }
 
+    pub fn with_default_sound(&mut self) -> &mut Self {
+        use crate::generic::CharDevice;
+
+        self.with_area(IORegArea::Nr10, Rc::new(RefCell::new(CharDevice(0))))
+            .with_area(IORegArea::Nr11, Rc::new(RefCell::new(CharDevice(0))))
+            .with_area(IORegArea::Nr12, Rc::new(RefCell::new(CharDevice(0))))
+            .with_area(IORegArea::Nr13, Rc::new(RefCell::new(CharDevice(0))))
+            .with_area(IORegArea::Nr14, Rc::new(RefCell::new(CharDevice(0))))
+            .with_area(IORegArea::Nr21, Rc::new(RefCell::new(CharDevice(0))))
+            .with_area(IORegArea::Nr22, Rc::new(RefCell::new(CharDevice(0))))
+            .with_area(IORegArea::Nr23, Rc::new(RefCell::new(CharDevice(0))))
+            .with_area(IORegArea::Nr24, Rc::new(RefCell::new(CharDevice(0))))
+            .with_area(IORegArea::Nr30, Rc::new(RefCell::new(CharDevice(0))))
+            .with_area(IORegArea::Nr31, Rc::new(RefCell::new(CharDevice(0))))
+            .with_area(IORegArea::Nr32, Rc::new(RefCell::new(CharDevice(0))))
+            .with_area(IORegArea::Nr33, Rc::new(RefCell::new(CharDevice(0))))
+            .with_area(IORegArea::Nr34, Rc::new(RefCell::new(CharDevice(0))))
+            .with_area(IORegArea::Nr41, Rc::new(RefCell::new(CharDevice(0))))
+            .with_area(IORegArea::Nr42, Rc::new(RefCell::new(CharDevice(0))))
+            .with_area(IORegArea::Nr43, Rc::new(RefCell::new(CharDevice(0))))
+            .with_area(IORegArea::Nr44, Rc::new(RefCell::new(CharDevice(0))))
+            .with_area(IORegArea::Nr50, Rc::new(RefCell::new(CharDevice(0))))
+            .with_area(IORegArea::Nr51, Rc::new(RefCell::new(CharDevice(0))))
+            .with_area(IORegArea::Nr52, Rc::new(RefCell::new(CharDevice(0))))
+    }
+
+    pub fn with_default_waveform_ram(&mut self) -> &mut Self {
+        use crate::generic::CharDevice;
+
+        self.with_area(IORegArea::WaveRam0, Rc::new(RefCell::new(CharDevice(0))))
+            .with_area(IORegArea::WaveRam1, Rc::new(RefCell::new(CharDevice(0))))
+            .with_area(IORegArea::WaveRam2, Rc::new(RefCell::new(CharDevice(0))))
+            .with_area(IORegArea::WaveRam3, Rc::new(RefCell::new(CharDevice(0))))
+            .with_area(IORegArea::WaveRam4, Rc::new(RefCell::new(CharDevice(0))))
+            .with_area(IORegArea::WaveRam5, Rc::new(RefCell::new(CharDevice(0))))
+            .with_area(IORegArea::WaveRam6, Rc::new(RefCell::new(CharDevice(0))))
+            .with_area(IORegArea::WaveRam7, Rc::new(RefCell::new(CharDevice(0))))
+            .with_area(IORegArea::WaveRam8, Rc::new(RefCell::new(CharDevice(0))))
+            .with_area(IORegArea::WaveRam9, Rc::new(RefCell::new(CharDevice(0))))
+            .with_area(IORegArea::WaveRamA, Rc::new(RefCell::new(CharDevice(0))))
+            .with_area(IORegArea::WaveRamB, Rc::new(RefCell::new(CharDevice(0))))
+            .with_area(IORegArea::WaveRamC, Rc::new(RefCell::new(CharDevice(0))))
+            .with_area(IORegArea::WaveRamD, Rc::new(RefCell::new(CharDevice(0))))
+            .with_area(IORegArea::WaveRamE, Rc::new(RefCell::new(CharDevice(0))))
+            .with_area(IORegArea::WaveRamF, Rc::new(RefCell::new(CharDevice(0))))
+    }
+
     pub fn build(self) -> IORegBus {
         IORegBus { areas: self.areas }
     }
