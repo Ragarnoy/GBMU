@@ -1,9 +1,9 @@
-use clap::Clap;
+use clap::Parser;
 use std::{fs::File, io::Read, iter::Peekable};
 
 use gb_roms::OpcodeGenerator;
 
-#[derive(Clap, Debug)]
+#[derive(Parser, Debug)]
 #[clap(version = "1.0", author = "fbenneto")]
 struct DisasOpt {
     #[clap(required = true)]
