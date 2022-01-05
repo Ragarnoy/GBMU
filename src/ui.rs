@@ -160,18 +160,46 @@ pub fn draw_ppu_debug_ui<const WIDTH: usize, const HEIGHT: usize>(
 }
 
 fn ui_file(ui: &mut Ui, events: &mut Vec<CustomEvent>) {
-    if ui.button("Load").clicked() {
-        let file = FileDialog::new()
-            .set_location(
-                &std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("/")),
-            )
-            .add_filter("rom", &["gb", "gbc", "rom"])
-            .show_open_single_file();
-        log::debug!("picked file: {:?}", file);
-        if let Ok(Some(path)) = file {
-            events.push(CustomEvent::LoadFile(path));
+    egui::menu::menu(ui, "File", |ui| {
+        if ui.button("Load").clicked() {
+            let file = FileDialog::new()
+                .set_location(
+                    &std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("/")),
+                )
+                .add_filter("rom", &crate::constant::PREFERED_ROM_EXTS)
+                .show_open_single_file();
+            log::debug!("picked romfile: {:?}", file);
+            if let Ok(Some(path)) = file {
+                events.push(CustomEvent::LoadFile(path));
+            }
         }
-    }
+        #[cfg(feature = "save_state")]
+        {
+            use crate::context::game_root_config_path;
+
+            ui.separator();
+            if ui.button("save as").clicked() {
+                let file = FileDialog::new()
+                    .set_location(&game_root_config_path())
+                    .add_filter("save state", &crate::constant::PREFERED_SAVE_STATE_EXT)
+                    .show_save_single_file();
+                log::debug!("picked name for 'save state' file: {:?}", file);
+                if let Ok(Some(path)) = file {
+                    events.push(CustomEvent::SaveState(path));
+                }
+            }
+            if ui.button("load save").clicked() {
+                let file = FileDialog::new()
+                    .set_location(&game_root_config_path())
+                    .add_filter("save state", &crate::constant::PREFERED_SAVE_STATE_EXT)
+                    .show_open_single_file();
+                log::debug!("picked a file to load the state from: {:?}", file);
+                if let Ok(Some(path)) = file {
+                    events.push(CustomEvent::LoadState(path));
+                }
+            }
+        }
+    });
 }
 
 pub fn new_debug_window(video: &sdl2::VideoSubsystem) -> GBWindow {

@@ -18,6 +18,7 @@ registers_logs = ["gb-cpu/registers_logs"]
 time_frame = []
 cgb = ["gb-bus/cgb", "gb-ppu/cgb", "gb-cpu/cgb", "gb-dbg/cgb"]
 bios = []
+save_state = []
 
 [dependencies]
 sdl2 = { version = "0.35", features = ["bundled", "static-link"] }
@@ -26,6 +27,7 @@ native-dialog = { version = "0.5" }
 log = { version = "0.4", features = ["std"] }
 simplelog = "0.10"
 serde_yaml = { version = "0.8" }
+serde = "1.0.133"
 rmp-serde = "1.0.0-beta.2"
 clap = { version = "3.0.1", features = [ "derive" ] }
 anyhow = "1.0"

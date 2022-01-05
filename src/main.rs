@@ -130,8 +130,29 @@ fn main() {
         ui::draw_ppu_debug_ui(&mut context, &mut game);
 
         for event in events.into_iter() {
-            let custom_event::CustomEvent::LoadFile(file) = event;
-            game = load_game(file, context.joypad.clone(), opts.debug);
+            use custom_event::CustomEvent;
+
+            match event {
+                CustomEvent::LoadFile(file) => {
+                    game = load_game(file, context.joypad.clone(), opts.debug)
+                }
+                #[cfg(feature = "save_state")]
+                CustomEvent::SaveState(file) => {
+                    if let Some(ref game) = game {
+                        game.save_state(&file);
+                    } else {
+                        log::warn!("no game context present, retry after loading a ROM");
+                    }
+                }
+                #[cfg(feature = "save_state")]
+                CustomEvent::LoadState(file) => {
+                    if let Some(ref mut game) = game {
+                        game.load_state(&file);
+                    } else {
+                        log::warn!("no game context to load the state into");
+                    }
+                }
+            }
         }
 
         if std::ops::ControlFlow::Break(()) == event::process_event(&mut context, &mut event_pump) {

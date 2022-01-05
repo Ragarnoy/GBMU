@@ -271,6 +271,58 @@ impl Game {
             }
         }
     }
+
+    #[cfg(feature = "save_state")]
+    /// Save the current game state to a file
+    pub fn save_state(&self, filename: &Path) {
+        use anyhow::Error;
+        use rmp_serde::encode::write_named;
+        use std::fs::OpenOptions;
+
+        let minimal_state = MinimalState::from(self);
+        if let Err(e) = OpenOptions::new()
+            .create(true)
+            .write(true)
+            .open(filename)
+            .map_err(Error::from)
+            .and_then(|mut writer| Ok(write_named(&mut writer, &minimal_state)?))
+        {
+            log::error!(
+                "failed to save the game context to {}: {}",
+                filename.to_string_lossy(),
+                e
+            );
+        } else {
+            log::info!(
+                "successfuly save the current game state of {}",
+                self.romname
+            );
+        }
+    }
+
+    #[cfg(feature = "save_state")]
+    /// Load a game state from a file
+    pub fn load_state(&mut self, filename: &Path) {
+        use anyhow::Error;
+        use rmp_serde::decode::from_read;
+        use std::fs::File;
+
+        match File::open(&filename)
+            .map_err(Error::from)
+            .and_then(|file| Ok(from_read::<File, MinimalState>(file)?))
+        {
+            Ok(minimal_state) => {
+                todo!("load minimal state {:?}", minimal_state);
+            }
+            Err(e) => {
+                log::error!(
+                    "failed to load game state from {}: {}",
+                    filename.to_string_lossy(),
+                    e
+                );
+            }
+        }
+    }
 }
 
 /// Return an initalised MBCs with it auto game save if possible
@@ -330,16 +382,20 @@ impl Drop for Game {
 }
 
 /// Return the path where the game save file will be located
-fn game_save_path(rom_filename: &str) -> String {
-    use sdl2::filesystem::pref_path;
-
+pub fn game_save_path(rom_filename: &str) -> String {
     let rom_id = game_id(rom_filename);
-    let root =
-        pref_path(crate::constant::ORG_NAME, crate::constant::APP_NAME).expect("a prefered config");
+    let root = game_root_config_path();
+
     std::path::Path::new(&root)
-        .join(format!("{}-game-save.msgpack", rom_id))
+        .join(format!("{}.{}", rom_id, crate::constant::GAME_SAVE_EXT))
         .to_string_lossy()
         .to_string()
+}
+
+/// Return the root path of the config folder
+pub fn game_root_config_path() -> String {
+    sdl2::filesystem::pref_path(crate::constant::ORG_NAME, crate::constant::APP_NAME)
+        .expect("a prefered config")
 }
 
 /// Create a standardize rom name id
@@ -593,5 +649,20 @@ impl RegisterDebugOperations for Game {
             read_bus_reg!(AudioRegs::AudChanCtl, self.addr_bus, Nr51),
             read_bus_reg!(AudioRegs::AudWave, self.addr_bus, Nr52),
         ]
+    }
+}
+
+#[cfg(feature = "save_state")]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+struct MinimalState {
+    pub romname: String,
+}
+
+#[cfg(feature = "save_state")]
+impl From<&Game> for MinimalState {
+    fn from(context: &Game) -> Self {
+        Self {
+            romname: context.romname.clone(),
+        }
     }
 }
