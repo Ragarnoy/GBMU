@@ -1,21 +1,13 @@
 use gb_bus::{Address, Area, Error, FileOperation};
-use std::io::{self, Read};
-use std::{cell::RefCell, rc::Rc};
+use serde::{Deserialize, Serialize};
+use std::{
+    io::{self, Read},
+    rc::Rc,
+};
 
-use crate::header::CartridgeType;
-use crate::{header, Header};
+use crate::Header;
 
-pub trait Controller {
-    /// Return the size of the rom and optionnaly the size of the external ram
-    fn sizes(&self) -> (usize, Option<usize>);
-}
-
-fn new_controller_from_header(header: Header) -> Rc<dyn Controller> {
-    match header.cartridge_type {
-        CartridgeType::Mbc1 => new_mbc1_controller(header),
-        _ => panic!("unsupported cartridge type: {:?}", header.cartridge_type),
-    }
-}
+use super::{new_controller_from_header, Controller};
 
 pub struct Generic {
     controller: Rc<dyn Controller>,
@@ -24,22 +16,52 @@ pub struct Generic {
 }
 
 impl Generic {
+    /// Create an empty Generic MBC from an header
     fn new(header: Header) -> Self {
         let ctl = new_controller_from_header(header);
         let (rom_size, ram_size) = ctl.sizes();
 
         Self {
             controller: ctl,
-            rom: vec![0; rom_size],
-            ram: ram_size.map(|size| vec![0; size]),
+            rom: ctl.create_rom(),
+            ram: ctl.create_ram(),
         }
     }
 
+    /// Create a Generic MBC from an header with is corresponding ROM data
     fn from_reader(header: Header, mut reader: impl Read) -> Result<Self, io::Error> {
         let mut mbc = Self::new(header);
 
         reader.read_exact(&mut mbc.rom)?;
         Ok(mbc)
+    }
+
+    fn save_state(&self) -> GenericState {
+        GenericState {
+            controller: self.controller.save_to_slice(),
+            ram: self.ram.clone(),
+        }
+    }
+
+    fn load_state(&mut self, state: GenericState) {
+        self.ram = state.ram;
+        self.controller.load_from_slice(&state.controller);
+    }
+
+    fn read_rom(&self, addr: u16) -> Result<u8, Error> {
+        todo!()
+    }
+
+    fn write_rom(&self, addr: u16) -> Result<(), Error> {
+        todo!()
+    }
+
+    fn read_ram(&self, addr: u16) -> Result<u8, Error> {
+        todo!()
+    }
+
+    fn write_ram(&self, addr: u16) -> Result<(), Error> {
+        todo!()
     }
 }
 
@@ -49,10 +71,24 @@ where
     A: Address<Area>,
 {
     fn read(&self, addr: A) -> Result<u8, Error> {
-        Ok(0xff)
+        match addr.area_type() {
+            Area::Rom => self.read_rom(u16::from(addr)),
+            Area::Ram => self.read_ram(u16::from(addr)),
+            _ => Err(Error::bus_error(u16::from(addr))),
+        }
     }
 
     fn write(&mut self, v: u8, addr: A) -> Result<(), Error> {
-        Ok(())
+        match addr.area_type() {
+            Area::Rom => self.write_rom(u16::from(addr)),
+            Area::Ram => self.write_ram(u16::from(addr)),
+            _ => Err(Error::bus_error(u16::from(addr))),
+        }
     }
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct GenericState {
+    pub controller: Vec<u8>,
+    pub ram: Option<Vec<u8>>,
 }
