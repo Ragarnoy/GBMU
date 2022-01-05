@@ -87,6 +87,10 @@ impl PixelFetcher {
         self.default_mode
     }
 
+    pub fn mode(&self) -> FetchMode {
+        self.mode
+    }
+
     pub fn fetch(
         &mut self,
         vram: &dyn Deref<Target = Vram>,
