@@ -48,6 +48,7 @@ pub struct Ppu {
     state: State,
     scanline_sprites: Vec<Sprite>,
     offset: u8,
+    scx: u8,
 }
 
 impl Ppu {
@@ -64,6 +65,7 @@ impl Ppu {
             state: State::new(),
             scanline_sprites: Vec::with_capacity(10),
             offset: 0,
+            scx: 0,
         }
     }
 
@@ -403,7 +405,7 @@ impl Ppu {
                 // init mode 3
                 adr_bus.lock(Area::Vram, Lock::Ppu);
                 lock = Some(Lock::Ppu);
-                self.pixel_fetcher.clear();
+                self.pixel_fetcher.reset();
                 self.pixel_fifo.clear();
                 self.state.clear_pixel_count();
                 // reverse the sprites order so the ones on the left of the viewport are the first to pop
@@ -416,12 +418,13 @@ impl Ppu {
                     (x, y),
                 );
                 self.offset = 0;
+                self.scx = lcd_reg.scrolling.scx;
             }
             if let Some(Lock::Ppu) = lock {
                 let vram = self.vram.borrow();
                 if self.pixel_fifo.enabled && x < SCREEN_WIDTH as u8 {
                     if let Some(pixel) = self.pixel_fifo.pop() {
-                        let offset = lcd_reg.scrolling.scx % 8;
+                        let offset = self.scx % 8;
                         if self.state.pixel_drawn() > 0 || self.offset >= offset {
                             self.next_pixels[y as usize][x as usize] = Color::from(pixel).into();
                             self.state.draw_pixel();
@@ -444,6 +447,7 @@ impl Ppu {
                     y as usize,
                     x as usize,
                     self.pixel_fifo.count() + self.offset as usize,
+                    self.scx as usize,
                 );
                 if self.pixel_fetcher.push_to_fifo(&mut self.pixel_fifo) {
                     Self::check_next_pixel_mode(
@@ -467,59 +471,33 @@ impl Ppu {
         sprites: &mut Vec<Sprite>,
         cursor: (u8, u8),
     ) {
-        pixel_fifo.enabled = true;
-        if pixel_fifo.count() < 8 {
-            Self::check_for_bg_win_mode(lcd_reg, pixel_fetcher, pixel_fifo, cursor);
-        } else {
-            Self::check_for_sprite_mode(lcd_reg, pixel_fetcher, pixel_fifo, sprites, cursor);
-        }
-    }
-
-    fn check_for_bg_win_mode(
-        lcd_reg: &dyn Deref<Target = LcdReg>,
-        pixel_fetcher: &mut PixelFetcher,
-        pixel_fifo: &mut PixelFIFO,
-        cursor: (u8, u8),
-    ) {
         let (x, y) = cursor;
+        pixel_fifo.enabled = true;
 
-        if lcd_reg.control.win_enable()
-            && lcd_reg.window_pos.wy <= y
-            && lcd_reg.window_pos.wx <= x + PixelFetcher::WINDOW_BASE_OFFSET as u8
-        {
-            if pixel_fetcher.mode() != FetchMode::Window {
-                if pixel_fetcher.mode() == FetchMode::Background {
-                    pixel_fifo.clear();
-                }
-                pixel_fetcher.set_mode(FetchMode::Window);
-            }
-        } else if pixel_fetcher.mode() != FetchMode::Background {
-            if pixel_fetcher.mode() == FetchMode::Window {
+        // check if w switch to window mode
+        if let FetchMode::Background = pixel_fetcher.default_mode() {
+            if lcd_reg.control.win_enable()
+                && lcd_reg.window_pos.wy <= y
+                && lcd_reg.window_pos.wx <= x + PixelFetcher::WINDOW_BASE_OFFSET as u8
+            {
+                pixel_fetcher.clear();
+                pixel_fetcher.set_default_mode(FetchMode::Window);
+                pixel_fetcher.set_mode_to_default();
                 pixel_fifo.clear();
+                return;
             }
-            pixel_fetcher.set_mode(FetchMode::Background);
         }
-    }
 
-    fn check_for_sprite_mode(
-        lcd_reg: &dyn Deref<Target = LcdReg>,
-        pixel_fetcher: &mut PixelFetcher,
-        pixel_fifo: &mut PixelFIFO,
-        sprites: &mut Vec<Sprite>,
-        cursor: (u8, u8),
-    ) {
-        let (x, _) = cursor;
-
-        if let Some(sprite) = sprites.pop() {
-            if sprite.x_pos() == x + Sprite::HORIZONTAL_OFFSET {
-                pixel_fetcher.set_mode(FetchMode::Sprite(sprite));
-                pixel_fifo.enabled = false;
-            } else {
-                sprites.push(sprite);
-                Self::check_for_bg_win_mode(lcd_reg, pixel_fetcher, pixel_fifo, cursor);
+        // check for sprite eventually
+        if pixel_fifo.count() >= 8 {
+            if let Some(sprite) = sprites.pop() {
+                if sprite.x_pos() == x + Sprite::HORIZONTAL_OFFSET {
+                    pixel_fetcher.set_mode_to_sprite(sprite);
+                    pixel_fifo.enabled = false;
+                } else {
+                    sprites.push(sprite);
+                }
             }
-        } else {
-            Self::check_for_bg_win_mode(lcd_reg, pixel_fetcher, pixel_fifo, cursor);
         }
     }
 

@@ -22,8 +22,8 @@ impl State {
 
     const PIXEL_DRAWING_START: u16 = 80;
     const LAST_OAM_FETCH_STEP: u16 = Self::PIXEL_DRAWING_START - 1;
-    const HBLANK_MIN_START: u16 = 252;
-    const HBLANK_MAX_START: u16 = 369;
+    const HBLANK_MIN_START: u16 = 248;
+    const HBLANK_MAX_START: u16 = 371;
     const STEP_COUNT: u16 = 456;
     pub const LAST_STEP: u16 = Self::STEP_COUNT - 1;
 
