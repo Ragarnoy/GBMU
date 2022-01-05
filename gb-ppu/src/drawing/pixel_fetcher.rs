@@ -23,11 +23,11 @@ impl Default for FetchMode {
 
 pub struct PixelFetcher {
     pixels: VecDeque<Pixel>,
-    pixels_alt: VecDeque<Pixel>,
+    pixels_sprite: VecDeque<Pixel>,
     mode: FetchMode,
     default_mode: FetchMode,
     internal_tick: u8,
-    internal_tick_alt: u8,
+    internal_tick_sprite: u8,
     tile: usize,
 }
 
@@ -37,11 +37,11 @@ impl PixelFetcher {
     pub fn new() -> Self {
         PixelFetcher {
             pixels: VecDeque::with_capacity(8),
-            pixels_alt: VecDeque::with_capacity(8),
+            pixels_sprite: VecDeque::with_capacity(8),
             mode: FetchMode::default(),
             default_mode: FetchMode::default(),
             internal_tick: 0,
-            internal_tick_alt: 0,
+            internal_tick_sprite: 0,
             tile: 0,
         }
     }
@@ -58,9 +58,9 @@ impl PixelFetcher {
         self.pixels.clear();
     }
 
-    pub fn clear_alt(&mut self) {
-        self.internal_tick_alt = 0;
-        self.pixels_alt.clear();
+    pub fn clear_sprite(&mut self) {
+        self.internal_tick_sprite = 0;
+        self.pixels_sprite.clear();
     }
 
     pub fn set_mode_to_sprite(&mut self, sprite: Sprite) {
@@ -89,7 +89,7 @@ impl PixelFetcher {
         scx: usize,
     ) {
         let tick = if let FetchMode::Sprite(_) = self.mode {
-            self.internal_tick_alt
+            self.internal_tick_sprite
         } else {
             self.internal_tick
         };
@@ -104,7 +104,7 @@ impl PixelFetcher {
             }
         }
         if let FetchMode::Sprite(_) = self.mode {
-            self.internal_tick_alt = (self.internal_tick_alt + 1) % 8
+            self.internal_tick_sprite = (self.internal_tick_sprite + 1) % 8
         } else {
             self.internal_tick = (self.internal_tick + 1) % 8
         };
@@ -213,7 +213,7 @@ impl PixelFetcher {
         ) {
             Ok(row) => {
                 for (color_id, _) in row {
-                    self.pixels_alt.push_front(Pixel::new(
+                    self.pixels_sprite.push_front(Pixel::new(
                         color_id,
                         sprite.get_palette(lcd_reg.pal_mono.obj()).clone(),
                         sprite.bg_win_priority(),
@@ -227,7 +227,7 @@ impl PixelFetcher {
     pub fn push_to_fifo(&mut self, fifo: &mut PixelFIFO) -> bool {
         match self.mode {
             FetchMode::Sprite(_) => {
-                if self.pixels_alt.len() >= 8 && self.internal_tick_alt % 2 == 1 {
+                if self.pixels_sprite.len() >= 8 && self.internal_tick_sprite % 2 == 1 {
                     self.mix_to_fifo(fifo)
                 } else {
                     false
@@ -253,8 +253,8 @@ impl PixelFetcher {
     }
 
     fn mix_to_fifo(&mut self, fifo: &mut PixelFIFO) -> bool {
-        if fifo.mix(&self.pixels_alt) {
-            self.clear_alt();
+        if fifo.mix(&self.pixels_sprite) {
+            self.clear_sprite();
             self.set_mode_to_default();
             true
         } else {
