@@ -15,7 +15,7 @@ impl Default for PixelFIFO {
 impl PixelFIFO {
     pub fn new() -> Self {
         PixelFIFO {
-            pixels: VecDeque::with_capacity(24),
+            pixels: VecDeque::with_capacity(16),
             enabled: true,
         }
     }
@@ -37,7 +37,7 @@ impl PixelFIFO {
     }
 
     pub fn append(&mut self, new_pixels: &mut VecDeque<Pixel>) -> bool {
-        if new_pixels.len() == 8 {
+        if self.pixels.len() <= 8 && new_pixels.len() == 8 {
             self.pixels.append(new_pixels);
             true
         } else {
