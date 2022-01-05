@@ -35,6 +35,8 @@ impl<'r> Sprite {
     pub const VERTICAL_OFFSET: u8 = 16;
     pub const HORIZONTAL_OFFSET: u8 = 8;
 
+    pub const TILE_INDEX_MASK: u8 = 0b1111_1110;
+
     pub fn new() -> Self {
         Sprite {
             y_pos: 0,
@@ -152,9 +154,9 @@ impl<'r> Sprite {
             });
         }
         let index = if line > 7 && !self.y_flip() || line < 8 && self.y_flip() {
-            self.tile_index as usize + 1
+            (self.tile_index & Self::TILE_INDEX_MASK) as usize + 1
         } else {
-            self.tile_index as usize
+            (self.tile_index & Self::TILE_INDEX_MASK) as usize
         };
         if line > 7 {
             line -= 8
