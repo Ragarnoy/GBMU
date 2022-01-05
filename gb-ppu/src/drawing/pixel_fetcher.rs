@@ -24,6 +24,7 @@ impl Default for FetchMode {
 pub struct PixelFetcher {
     pixels: VecDeque<Pixel>,
     mode: FetchMode,
+    default_mode: FetchMode,
     internal_tick: u8,
     tile: usize,
 }
@@ -35,27 +36,38 @@ impl PixelFetcher {
         PixelFetcher {
             pixels: VecDeque::with_capacity(8),
             mode: FetchMode::default(),
+            default_mode: FetchMode::default(),
             internal_tick: 0,
             tile: 0,
         }
     }
 
-    pub fn clear(&mut self) {
+    pub fn reset(&mut self) {
         self.internal_tick = 0;
         self.pixels.clear();
         self.mode = FetchMode::Background;
+        self.default_mode = FetchMode::Background;
     }
 
-    pub fn set_mode(&mut self, mode: FetchMode) {
-        if self.mode != mode {
-            self.internal_tick = 0;
-            self.pixels.clear();
+    pub fn clear(&mut self) {
+        self.internal_tick = 0;
+        self.pixels.clear();
+    }
+
+    pub fn set_mode(&mut self, mode: Option<FetchMode>) {
+        if let Some(mode) = mode {
+            self.mode = mode;
+        } else {
+            self.mode = self.default_mode;
         }
-        self.mode = mode;
     }
 
-    pub fn mode(&self) -> FetchMode {
-        self.mode
+    pub fn set_default_mode(&mut self, mode: FetchMode) {
+        self.default_mode = mode;
+    }
+
+    pub fn default_mode(&self) -> FetchMode {
+        self.default_mode
     }
 
     pub fn fetch(
@@ -204,14 +216,17 @@ impl PixelFetcher {
 
     fn append_to_fifo(&mut self, fifo: &mut PixelFIFO) -> bool {
         if fifo.append(&mut self.pixels) {
-            self.pixels.clear();
+            self.clear();
+            true
+        } else {
+            false
         }
-        false
     }
 
     fn mix_to_fifo(&mut self, fifo: &mut PixelFIFO) -> bool {
         if fifo.mix(&self.pixels) {
-            self.pixels.clear();
+            self.clear();
+            self.set_mode(None);
             true
         } else {
             false
