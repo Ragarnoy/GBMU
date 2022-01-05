@@ -291,6 +291,7 @@ impl Ppu {
         if self.state.line() == State::LAST_LINE && self.state.step() == State::LAST_STEP {
             std::mem::swap(&mut self.pixels, &mut self.next_pixels);
             self.next_pixels = [[[255; 3]; SCREEN_WIDTH]; SCREEN_HEIGHT];
+            self.pixel_fetcher.reset_win_line_counter();
         }
     }
 
