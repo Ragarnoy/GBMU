@@ -230,10 +230,12 @@ impl Game {
                 ScheduledStop::Frame(count) => {
                     if frame_ended {
                         if *count == 1 {
-                            self.emulation_stopped = false;
-
-                            // Fetch current instruction
-                            self.scheduled_stop = Some(ScheduledStop::Instruction(1));
+                            if !self.cpu.controller.is_instruction_finished {
+                                self.scheduled_stop = Some(ScheduledStop::Instruction(1));
+                            } else {
+                                self.emulation_stopped = true;
+                                self.scheduled_stop = None;
+                            }
                         } else {
                             *count -= 1;
                         }
@@ -241,8 +243,12 @@ impl Game {
                 }
                 ScheduledStop::Timeout(instant, timeout) => {
                     if &instant.elapsed() > timeout {
-                        self.emulation_stopped = true;
-                        self.scheduled_stop = None;
+                        if !self.cpu.controller.is_instruction_finished {
+                            self.scheduled_stop = Some(ScheduledStop::Instruction(1));
+                        } else {
+                            self.emulation_stopped = true;
+                            self.scheduled_stop = None;
+                        }
                     }
                 }
             }
