@@ -19,6 +19,7 @@ pub use mbc5::MBC5;
 pub use rom_only::RomOnlyController;
 use serde::{Deserialize, Serialize};
 use std::convert::From;
+use std::rc::Rc;
 
 /// Size of the ROM Area
 pub const ROM_AREA_SIZE: usize = 0x8000;
@@ -30,8 +31,56 @@ pub const ROM_BANK_SIZE: usize = 0x4000;
 pub const RAM_BANK_SIZE: usize = 0x2000;
 
 pub trait Controller {
-    /// Save the current controller into a Serializer file
-    fn save(&self) -> MbcStates;
+    /// Return the size of the rom and optionnaly the size of the external ram
+    fn sizes(&self) -> (usize, Option<usize>);
+
+    /// Save Controller data to a slice
+    fn save_to_slice(&self) -> Vec<u8>;
+
+    /// Load Controller data from a slice
+    fn load_from_slice(&mut self, slice: &[u8]);
+
+    /// When data is beeing written to ROM
+    /// MBC catch these writes to modify their internal register
+    fn write_rom(&mut self, v: u8, addr: u16);
+
+    /// Indicate if the read to the RAM area was overrided
+    fn override_read_ram(&self, addr: u16) -> Option<u8>;
+
+    /// Indicate if the write to the RAM area was overrided
+    /// If the action is catch, it will no modify the ram
+    fn override_write_ram(&mut self, v: u8, addr: u16) -> Option<()>;
+
+    /// Offset the address when performing an operation on the RAM
+    /// This is usefull when you have to manage BANKS of RAM
+    fn offset_ram_addr(&self, addr: u16) -> usize;
+
+    /// Offset the address when performing an operation on the ROM
+    /// This is usefull when you have to manage BANKS of ROM
+    fn offset_rom_addr(&self, addr: u16) -> usize;
+
+    /// Create a new RAM area
+    fn create_ram(&self) -> Option<Vec<u8>> {
+        let (_, ram_size) = self.sizes();
+
+        ram_size.map(|size| vec![0; size])
+    }
+    /// Create a new ROM area
+    fn create_rom(&self) -> Vec<u8> {
+        let (rom_size, _) = self.sizes();
+
+        vec![0; rom_size]
+    }
+}
+
+fn new_controller_from_header(header: Header) -> Rc<dyn Controller> {
+    match header.cartridge_type {
+        CartridgeType::Mbc1 => mbc1::new_controller(header),
+        // CartridgeType::Mbc2 => mbc2::new_controller(header),
+        // CartridgeType::Mbc3 => mbc3::new_controller(header),
+        // CartridgeType::Mbc5 => mbc5::new_controller(header),
+        _ => panic!("unsupported cartridge type: {:?}", header.cartridge_type),
+    }
 }
 
 pub enum MbcController {
