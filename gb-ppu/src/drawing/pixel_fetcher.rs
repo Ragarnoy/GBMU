@@ -86,6 +86,7 @@ impl PixelFetcher {
         y: usize,
         x: usize,
         x_queued: usize,
+        scx: usize,
     ) {
         let tick = if let FetchMode::Sprite(_) = self.mode {
             self.internal_tick_alt
@@ -96,7 +97,7 @@ impl PixelFetcher {
         if tick % 2 == 1 {
             // the fetcher take 2 tick to process one step
             match tick / 2 {
-                0 => self.get_tile_index(vram, lcd_reg, y, x, x_queued), // get the tile index.
+                0 => self.get_tile_index(vram, lcd_reg, y, x, x_queued, scx), // get the tile index.
                 1 => {}                                     // get the high data of the tile
                 2 => self.fetch_full_row(vram, lcd_reg, y), // get the low data of the tile, the pixels are ready after this step
                 _ => {}                                     // idle on the last step
@@ -116,10 +117,10 @@ impl PixelFetcher {
         y: usize,
         x: usize,
         x_queued: usize,
+        scx: usize,
     ) {
         match self.mode {
             FetchMode::Background => {
-                let scx = lcd_reg.scrolling.scx as usize;
                 let scy = lcd_reg.scrolling.scy as usize;
                 self.tile = vram
                     .get_map_tile_index(

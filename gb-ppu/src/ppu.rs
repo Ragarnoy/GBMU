@@ -447,6 +447,7 @@ impl Ppu {
                     y as usize,
                     x as usize,
                     self.pixel_fifo.count() + self.offset as usize,
+                    self.scx as usize,
                 );
                 if self.pixel_fetcher.push_to_fifo(&mut self.pixel_fifo) {
                     Self::check_next_pixel_mode(
