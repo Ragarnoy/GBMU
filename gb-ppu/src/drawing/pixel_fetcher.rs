@@ -54,12 +54,12 @@ impl PixelFetcher {
         self.pixels.clear();
     }
 
-    pub fn set_mode(&mut self, mode: Option<FetchMode>) {
-        if let Some(mode) = mode {
-            self.mode = mode;
-        } else {
-            self.mode = self.default_mode;
-        }
+    pub fn set_mode_to_sprite(&mut self, sprite: Sprite) {
+        self.mode = FetchMode::Sprite(sprite);
+    }
+
+    pub fn set_mode_to_default(&mut self) {
+        self.mode = self.default_mode;
     }
 
     pub fn set_default_mode(&mut self, mode: FetchMode) {
@@ -226,7 +226,7 @@ impl PixelFetcher {
     fn mix_to_fifo(&mut self, fifo: &mut PixelFIFO) -> bool {
         if fifo.mix(&self.pixels) {
             self.clear();
-            self.set_mode(None);
+            self.set_mode_to_default();
             true
         } else {
             false

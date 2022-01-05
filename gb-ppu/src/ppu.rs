@@ -478,7 +478,7 @@ impl Ppu {
             {
                 pixel_fetcher.clear();
                 pixel_fetcher.set_default_mode(FetchMode::Window);
-                pixel_fetcher.set_mode(None);
+                pixel_fetcher.set_mode_to_default();
                 pixel_fifo.clear();
                 return;
             }
@@ -488,7 +488,7 @@ impl Ppu {
         if pixel_fifo.count() > 8 {
             if let Some(sprite) = sprites.pop() {
                 if sprite.x_pos() == x + Sprite::HORIZONTAL_OFFSET {
-                    pixel_fetcher.set_mode(Some(FetchMode::Sprite(sprite)));
+                    pixel_fetcher.set_mode_to_sprite(sprite);
                     pixel_fifo.enabled = false;
                 } else {
                     sprites.push(sprite);
