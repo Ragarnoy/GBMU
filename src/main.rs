@@ -12,7 +12,6 @@ mod windows;
 use clap::{AppSettings, Clap};
 
 use context::{Context, Game};
-use gb_dbg::debugger::disassembler::DisassemblyViewer;
 use gb_dbg::debugger::options::DebuggerOptions;
 use gb_dbg::debugger::{Debugger, DebuggerBuilder};
 use gb_lcd::{render, window::GBWindow};
@@ -112,12 +111,11 @@ fn main() {
             }
         }
         if debugger.reset_triggered {
-            debugger.reset_triggered = false;
             game = opts
                 .rom
                 .as_ref()
                 .and_then(|romname| load_game(romname, context.joypad.clone(), true));
-            debugger.disassembler = DisassemblyViewer::default();
+            debugger.reset();
         }
         if let Some(ref mut input_wind) = context.windows.input {
             input_wind

@@ -115,6 +115,11 @@ impl<DBGOPS: DebugOperations> Debugger<DBGOPS> {
             self.flow_status()
         }
     }
+
+    pub fn reset(&mut self) {
+        self.reset_triggered = false;
+        self.disassembler = DisassemblyViewer::default();
+    }
 }
 
 #[derive(Default)]
