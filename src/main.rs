@@ -9,7 +9,7 @@ mod time_frame;
 mod ui;
 mod windows;
 
-use clap::{AppSettings, Clap};
+use clap::Parser;
 
 use context::{Context, Game};
 use gb_dbg::debugger::options::DebuggerOptions;
@@ -20,22 +20,21 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use windows::Windows;
 
-#[derive(Clap, Debug)]
+#[derive(Parser, Debug)]
 #[clap(version = "0.1")]
-#[clap(setting = AppSettings::ColoredHelp)]
 struct Opts {
-    #[clap(short = 'l', long = "log", about = "change log level", possible_values = &["trace", "debug", "info", "warn", "error", "off"])]
+    #[clap(short = 'l', long = "log", help = "change log level", possible_values = &["trace", "debug", "info", "warn", "error", "off"])]
     #[cfg_attr(not(debug_assertions), clap(default_value = "warn"))]
     #[cfg_attr(debug_assertions, clap(default_value = "debug"))]
     log_level: log::LevelFilter,
 
-    #[clap(about = "rom file to be loaded by the gameboy")]
+    #[clap(help = "rom file to be loaded by the gameboy")]
     rom: Option<String>,
 
     #[clap(
         long = "breakpoint",
         short = 'b',
-        about = "create and enable breakpoints at the start of the rom\n\
+        help = "create and enable breakpoints at the start of the rom\n\
         breakpoints must be specified in the following format:\n\
         ./gbmu -b \"PC == 0050\" -b \"AF == 0010\" ...",
         multiple_occurrences = true,
@@ -46,7 +45,7 @@ struct Opts {
     #[clap(
         long = "debug",
         short = 'd',
-        about = "enable debug mode at the start of the rom",
+        help = "enable debug mode at the start of the rom",
         requires = "rom"
     )]
     debug: bool,

@@ -1,10 +1,12 @@
 use super::{Pixel, PixelFIFO};
 use crate::memory::Vram;
-use crate::registers::LcdReg;
+use crate::registers::{LcdReg, Palette};
 use crate::Sprite;
 use crate::TILEMAP_TILE_DIM_COUNT;
+use std::cell::Cell;
 use std::collections::VecDeque;
 use std::ops::Deref;
+use std::rc::Rc;
 
 #[derive(Eq, PartialEq, Clone, Copy, Debug)]
 pub enum FetchMode {
@@ -140,12 +142,22 @@ impl PixelFetcher {
     ) {
         match vram.read_tile_line(self.tile, line) {
             Ok(row) => {
-                for color_id in row {
-                    self.pixels.push_front(Pixel::new(
-                        color_id,
-                        lcd_reg.pal_mono.bg().clone(),
-                        false,
-                    ));
+                if lcd_reg.control.bg_win_enable() {
+                    for color_id in row {
+                        self.pixels.push_front(Pixel::new(
+                            color_id,
+                            lcd_reg.pal_mono.bg().clone(),
+                            false,
+                        ));
+                    }
+                } else {
+                    for _ in row {
+                        self.pixels.push_front(Pixel::new(
+                            0,
+                            Rc::new(Cell::new(Palette::new_background())),
+                            false,
+                        ));
+                    }
                 }
             }
             Err(err) => log::error!("Failed to fetch background/window row of pixel: {}", err),
@@ -170,7 +182,7 @@ impl PixelFetcher {
                     self.pixels.push_front(Pixel::new(
                         color_id,
                         sprite.get_palette(lcd_reg.pal_mono.obj()).clone(),
-                        false,
+                        sprite.bg_win_priority(),
                     ));
                 }
             }

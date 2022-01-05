@@ -15,7 +15,7 @@ pub enum Area {
 impl std::convert::From<Area> for u16 {
     fn from(area: Area) -> Self {
         use crate::constant::{
-            ERAM_START, EXT_RAM_START, FORBIDDEN_START, HRAM_START, IE_REG_START, IO_REG_START,
+            ERAM_START, EXT_RAM_START, FORBIDDEN_START, HRAM_START, IE_REG, IO_REG_START,
             OAM_START, RAM_START, ROM_START, VRAM_START,
         };
 
@@ -28,7 +28,7 @@ impl std::convert::From<Area> for u16 {
             Area::Oam => OAM_START,
             Area::IoReg => IO_REG_START,
             Area::HighRam => HRAM_START,
-            Area::IEReg => IE_REG_START,
+            Area::IEReg => IE_REG,
             Area::Forbidden => FORBIDDEN_START,
         }
     }
@@ -37,9 +37,9 @@ impl std::convert::From<Area> for u16 {
 impl std::convert::From<u16> for Area {
     fn from(bytes: u16) -> Self {
         use crate::constant::{
-            ERAM_START, ERAM_STOP, EXT_RAM_START, EXT_RAM_STOP, HRAM_START, HRAM_STOP,
-            IE_REG_START, IO_REG_START, IO_REG_STOP, OAM_START, OAM_STOP, RAM_START, RAM_STOP,
-            ROM_START, ROM_STOP, VRAM_START, VRAM_STOP,
+            ERAM_START, ERAM_STOP, EXT_RAM_START, EXT_RAM_STOP, HRAM_START, HRAM_STOP, IE_REG,
+            IO_REG_START, IO_REG_STOP, OAM_START, OAM_STOP, RAM_START, RAM_STOP, ROM_START,
+            ROM_STOP, VRAM_START, VRAM_STOP,
         };
 
         match bytes {
@@ -51,7 +51,7 @@ impl std::convert::From<u16> for Area {
             OAM_START..=OAM_STOP => Area::Oam,
             IO_REG_START..=IO_REG_STOP => Area::IoReg,
             HRAM_START..=HRAM_STOP => Area::HighRam,
-            IE_REG_START => Area::IEReg,
+            IE_REG => Area::IEReg,
             _ => Area::Forbidden,
         }
     }

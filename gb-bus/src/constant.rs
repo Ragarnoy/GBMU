@@ -14,7 +14,7 @@ pub const IO_REG_START: u16 = 0xff00;
 pub const IO_REG_STOP: u16 = 0xff7f;
 pub const HRAM_START: u16 = 0xff80;
 pub const HRAM_STOP: u16 = 0xfffe;
-pub const IE_REG_START: u16 = 0xffff;
+pub const IE_REG: u16 = 0xffff;
 pub const FORBIDDEN_START: u16 = 0xfea0;
 
 pub const UNDEFINED_VALUE: u8 = 0xff;
