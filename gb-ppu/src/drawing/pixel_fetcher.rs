@@ -25,6 +25,7 @@ pub struct PixelFetcher {
     pixels: VecDeque<Pixel>,
     mode: FetchMode,
     default_mode: FetchMode,
+    next_mode: Option<FetchMode>,
     internal_tick: u8,
     tile: usize,
 }
@@ -37,6 +38,7 @@ impl PixelFetcher {
             pixels: VecDeque::with_capacity(8),
             mode: FetchMode::default(),
             default_mode: FetchMode::default(),
+            next_mode: None,
             internal_tick: 0,
             tile: 0,
         }
@@ -55,7 +57,11 @@ impl PixelFetcher {
     }
 
     pub fn set_mode_to_sprite(&mut self, sprite: Sprite) {
-        self.mode = FetchMode::Sprite(sprite);
+        if self.internal_tick == 0 {
+            self.mode = FetchMode::Sprite(sprite);
+        } else {
+            self.next_mode = Some(FetchMode::Sprite(sprite));
+        }
     }
 
     pub fn set_mode_to_default(&mut self) {
@@ -217,7 +223,12 @@ impl PixelFetcher {
     fn append_to_fifo(&mut self, fifo: &mut PixelFIFO) -> bool {
         if fifo.append(&mut self.pixels) {
             self.clear();
-            true
+            if let Some(mode) = self.next_mode.take() {
+                self.mode = mode;
+                false
+            } else {
+                true
+            }
         } else {
             false
         }

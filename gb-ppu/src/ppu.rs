@@ -488,9 +488,10 @@ impl Ppu {
         }
 
         // check for sprite eventually
-        if pixel_fifo.count() > 8 {
+        if pixel_fifo.count() >= 8 {
             if let Some(sprite) = sprites.pop() {
                 if sprite.x_pos() == x + Sprite::HORIZONTAL_OFFSET {
+                    pixel_fetcher.clear();
                     pixel_fetcher.set_mode_to_sprite(sprite);
                     pixel_fifo.enabled = false;
                 } else {
