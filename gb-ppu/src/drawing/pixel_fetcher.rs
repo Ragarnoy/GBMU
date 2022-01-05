@@ -182,7 +182,7 @@ impl PixelFetcher {
                     self.pixels.push_front(Pixel::new(
                         color_id,
                         sprite.get_palette(lcd_reg.pal_mono.obj()).clone(),
-                        false,
+                        sprite.bg_win_priority(),
                     ));
                 }
             }
