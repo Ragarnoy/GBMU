@@ -1,54 +1,49 @@
-use super::ROM_AREA_SIZE;
-use gb_bus::{Address, Area, Error, FileOperation};
-use std::io::{self, ErrorKind, Read};
+use crate::Header;
 
-pub struct RomOnlyController {
-    rom: [u8; ROM_AREA_SIZE],
+use super::Controller;
+
+pub fn new_controller(header: Header) -> Box<RomOnly> {
+    Box::new(RomOnly::from_header(header))
 }
 
-impl Default for RomOnlyController {
-    fn default() -> Self {
+pub struct RomOnly {
+    rom_size: usize,
+}
+
+impl RomOnly {
+    fn from_header(header: Header) -> Self {
         Self {
-            rom: [0_u8; ROM_AREA_SIZE],
+            rom_size: header.rom_size.get_rom_size(),
         }
     }
 }
 
-impl RomOnlyController {
-    pub fn from_file(mut file: impl Read) -> Result<Self, io::Error> {
-        let mut ctl = RomOnlyController::default();
-
-        if let Err(e) = file.read_exact(&mut ctl.rom) {
-            if e.kind() != ErrorKind::UnexpectedEof {
-                return Err(e);
-            }
-        }
-        Ok(ctl)
+impl Controller for RomOnly {
+    fn sizes(&self) -> (usize, Option<usize>) {
+        (self.rom_size, None)
     }
-}
 
-impl<A> FileOperation<A, Area> for RomOnlyController
-where
-    u16: From<A>,
-    A: Address<Area>,
-{
-    fn read(&self, addr: A) -> Result<u8, Error> {
-        let address = addr.get_address();
-        if address < self.rom.len() {
-            Ok(self.rom[address])
-        } else {
-            Err(Error::bus_error(addr.into()))
-        }
+    fn save_to_slice(&self) -> Vec<u8> {
+        Vec::new()
     }
-}
 
-#[test]
-fn test_romonly_impl() {
-    use gb_bus::{address::Addr, area::Area};
+    fn load_from_slice(&mut self, _slice: &[u8]) {}
 
-    let rom = RomOnlyController {
-        rom: [42; ROM_AREA_SIZE],
-    };
+    fn write_rom(&mut self, _v: u8, _addr: u16) {}
 
-    assert_eq!(rom.read(Addr::from_offset(Area::Rom, 0x7fff, 0)), Ok(42));
+    fn override_read_ram(&self, _addr: u16) -> Option<u8> {
+        None
+    }
+
+    fn override_write_ram(&mut self, _v: u8, _addr: u16) -> Option<()> {
+        None
+    }
+
+    fn offset_ram_addr(&self, _addr: u16) -> usize {
+        usize::MAX
+    }
+
+    fn offset_rom_addr(&self, addr: u16) -> usize {
+        addr as usize
+    }
 }
