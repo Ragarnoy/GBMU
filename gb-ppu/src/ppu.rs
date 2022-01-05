@@ -447,7 +447,7 @@ impl Ppu {
                     &lcd_reg,
                     y as usize,
                     x as usize,
-                    self.pixel_fifo.count() + self.offset as usize,
+                    self.pixel_fifo.count(),
                     self.scx as usize,
                 );
                 if self.pixel_fetcher.push_to_fifo(&mut self.pixel_fifo) {
