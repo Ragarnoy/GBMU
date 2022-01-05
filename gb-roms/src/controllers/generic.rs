@@ -1,6 +1,8 @@
 use gb_bus::{Address, Area, Error, FileOperation};
 use serde::{Deserialize, Serialize};
 use std::{
+    borrow::{Borrow, BorrowMut},
+    cell::RefCell,
     io::{self, Read},
     rc::Rc,
 };
@@ -10,40 +12,47 @@ use crate::Header;
 use super::{new_controller_from_header, Controller};
 
 pub struct Generic {
-    controller: Rc<dyn Controller>,
+    controller: Box<dyn Controller>,
     rom: Vec<u8>,
     ram: Option<Vec<u8>>,
 }
 
+macro_rules! ram_op {
+    ($controller:expr, $addr:expr, $ram:expr, $fn:expr) => {{
+        let reladdr = $addr;
+        let addr = $controller.offset_ram_addr(reladdr);
+        $ram.map_or_else(|| Err(Error::new_segfault(reladdr)), |ram| $fn(ram, addr))
+    }};
+}
+
 impl Generic {
     /// Create an empty Generic MBC from an header
-    fn new(header: Header) -> Self {
+    pub fn new(header: Header) -> Self {
         let ctl = new_controller_from_header(header);
-        let (rom_size, ram_size) = ctl.sizes();
 
         Self {
-            controller: ctl,
             rom: ctl.create_rom(),
             ram: ctl.create_ram(),
+            controller: ctl,
         }
     }
 
     /// Create a Generic MBC from an header with is corresponding ROM data
-    fn from_reader(header: Header, mut reader: impl Read) -> Result<Self, io::Error> {
+    pub fn from_reader(header: Header, mut reader: impl Read) -> Result<Self, io::Error> {
         let mut mbc = Self::new(header);
 
         reader.read_exact(&mut mbc.rom)?;
         Ok(mbc)
     }
 
-    fn save_state(&self) -> GenericState {
+    pub fn save_state(&self) -> GenericState {
         GenericState {
             controller: self.controller.save_to_slice(),
             ram: self.ram.clone(),
         }
     }
 
-    fn load_state(&mut self, state: GenericState) {
+    pub fn load_state(&mut self, state: GenericState) {
         self.ram = state.ram;
         self.controller.load_from_slice(&state.controller);
     }
@@ -53,17 +62,43 @@ impl Generic {
         Ok(self.rom[addr])
     }
 
-    fn write_rom(&self, v: u8, addr: u16) -> Result<(), Error> {
+    fn write_rom(&mut self, v: u8, addr: u16) -> Result<(), Error> {
         self.controller.write_rom(v, addr);
         Ok(())
     }
 
-    fn read_ram(&self, addr: u16) -> Result<u8, Error> {
-        todo!()
+    fn read_ram(&self, reladdr: u16) -> Result<u8, Error> {
+        let ctl = &self.controller;
+
+        ctl.override_read_ram(reladdr).map_or_else(
+            || {
+                ram_op!(
+                    ctl,
+                    reladdr,
+                    self.ram.as_ref(),
+                    |ram: &[u8], addr: usize| Ok(ram[addr])
+                )
+            },
+            Ok,
+        )
     }
 
-    fn write_ram(&self, v: u8, addr: u16) -> Result<(), Error> {
-        todo!()
+    fn write_ram(&mut self, v: u8, reladdr: u16) -> Result<(), Error> {
+        let ctl = &mut self.controller;
+        ctl.override_write_ram(v, reladdr).map_or_else(
+            || {
+                ram_op!(
+                    ctl,
+                    reladdr,
+                    self.ram.as_mut(),
+                    |ram: &mut [u8], addr: usize| {
+                        ram[addr] = v;
+                        Ok(())
+                    }
+                )
+            },
+            Ok,
+        )
     }
 }
 
