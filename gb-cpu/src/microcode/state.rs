@@ -72,7 +72,7 @@ impl<'a> State<'a> {
     pub fn write_bus(&mut self, addr: u16, v: u8) {
         if let Err(e) = self.bus.write(addr, v, None) {
             log::error!(
-                "while writing the value {:02x} in the bus at {:04x} got the error: {:x?}",
+                "while writing the value {:02x} in the bus at {:04x} got the error: {}",
                 v,
                 addr,
                 e
