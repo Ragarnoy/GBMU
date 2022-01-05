@@ -1587,17 +1587,18 @@ dependencies = [
 
 [[package]]
 name = "native-dialog"
-version = "0.5.8"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "716291d444588158221ce5b7836ead33e0d1e053157735d277212eff029cb7d6"
+checksum = "3f7f684f9edef986e50d307bf3060694bd688b06e04a8731ffd5e2697c28fe46"
 dependencies = [
+ "block",
  "cocoa",
  "dirs-next",
  "objc",
  "objc-foundation",
  "objc_id",
  "once_cell",
- "raw-window-handle 0.3.4",
+ "raw-window-handle 0.4.2",
  "thiserror",
  "wfd",
  "which",
