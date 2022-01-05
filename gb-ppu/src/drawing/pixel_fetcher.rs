@@ -28,6 +28,7 @@ pub struct PixelFetcher {
     default_mode: FetchMode,
     internal_tick: u8,
     internal_tick_sprite: u8,
+    win_line_counter: u8,
     tile: usize,
 }
 
@@ -42,6 +43,7 @@ impl PixelFetcher {
             default_mode: FetchMode::default(),
             internal_tick: 0,
             internal_tick_sprite: 0,
+            win_line_counter: 0,
             tile: 0,
         }
     }
@@ -51,6 +53,9 @@ impl PixelFetcher {
         self.pixels.clear();
         self.mode = FetchMode::Background;
         self.default_mode = FetchMode::Background;
+    }
+    pub fn reset_win_line_counter(&mut self) {
+        self.win_line_counter = 0;
     }
 
     pub fn clear(&mut self) {
@@ -72,6 +77,9 @@ impl PixelFetcher {
     }
 
     pub fn set_default_mode(&mut self, mode: FetchMode) {
+        if self.default_mode == FetchMode::Background && mode == FetchMode::Window {
+            self.win_line_counter += 1;
+        }
         self.default_mode = mode;
     }
 
@@ -122,10 +130,12 @@ impl PixelFetcher {
         match self.mode {
             FetchMode::Background => {
                 let scy = lcd_reg.scrolling.scy as usize;
+                let tile_x = ((x + x_queued + scx) % 255) / 8;
+                let tile_y = ((y + scy) % 255) / 8;
+                let tile_pos_in_vram = tile_x + tile_y * TILEMAP_TILE_DIM_COUNT;
                 self.tile = vram
                     .get_map_tile_index(
-                        ((x + x_queued + scx) % 255) / 8
-                            + ((y + scy) % 255) / 8 * TILEMAP_TILE_DIM_COUNT,
+                        tile_pos_in_vram,
                         lcd_reg.control.bg_tilemap_area(),
                         lcd_reg.control.bg_win_tiledata_area(),
                     )
@@ -136,11 +146,12 @@ impl PixelFetcher {
             }
             FetchMode::Window => {
                 let wx = lcd_reg.window_pos.wx as usize;
-                let wy = lcd_reg.window_pos.wy as usize;
+                let tile_x = ((x + x_queued + Self::WINDOW_BASE_OFFSET - wx) % 255) / 8;
+                let tile_y = ((self.win_line_counter - 1) as usize) / 8;
+                let tile_pos_in_vram = tile_x + tile_y * TILEMAP_TILE_DIM_COUNT;
                 self.tile = vram
                     .get_map_tile_index(
-                        ((x + x_queued + Self::WINDOW_BASE_OFFSET - wx) % 255) / 8
-                            + ((y - wy) % 255) / 8 * TILEMAP_TILE_DIM_COUNT,
+                        tile_pos_in_vram,
                         lcd_reg.control.win_tilemap_area(),
                         lcd_reg.control.bg_win_tiledata_area(),
                     )
@@ -160,10 +171,15 @@ impl PixelFetcher {
         line: usize,
     ) {
         let scy = lcd_reg.scrolling.scy as usize;
-        let wy = lcd_reg.window_pos.wy as usize;
         match self.mode {
-            FetchMode::Background => self.fetch_bg_win_row(vram, lcd_reg, (line + scy) % 8),
-            FetchMode::Window => self.fetch_bg_win_row(vram, lcd_reg, (line + wy) % 8),
+            FetchMode::Background => {
+                let tile_line = (line + scy) % 8;
+                self.fetch_bg_win_row(vram, lcd_reg, tile_line)
+            }
+            FetchMode::Window => {
+                let tile_line = ((self.win_line_counter - 1) as usize) % 8;
+                self.fetch_bg_win_row(vram, lcd_reg, tile_line)
+            }
             FetchMode::Sprite(sprite) => self.fetch_spr_row(vram, lcd_reg, line, &sprite),
         }
     }
