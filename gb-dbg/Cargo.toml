@@ -13,6 +13,7 @@ log = "0.4"
 nom = "7.1.0"
 gb-roms = { path = "../gb-roms" }
 gb-bus = { path = "../gb-bus" }
+gb-cpu = { path = "../gb-cpu" }
 
 [dev-dependencies]
 eframe = "0.15.0"

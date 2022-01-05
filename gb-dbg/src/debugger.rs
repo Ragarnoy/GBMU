@@ -18,30 +18,30 @@ use crate::until::Until;
 use egui::{vec2, Color32, CtxRef, Style, Vec2};
 use std::ops::ControlFlow;
 
-pub struct Debugger<MEM> {
-    memory_editor: MemoryViewer<MEM>,
+pub struct Debugger<DBGOPS> {
+    memory_editor: MemoryViewer<DBGOPS>,
     register_editor: RegisterEditor,
     flow_controller: FlowController,
-    disassembler: DisassemblyViewer,
+    pub disassembler: DisassemblyViewer,
     breakpoint_editor: BreakpointEditor,
     status_bar: StatusBar,
     flow_status: Option<ControlFlow<Until>>,
     pub reset_triggered: bool,
 }
 
-impl<BUS: DebugOperations> Debugger<BUS> {
-    pub fn draw(&mut self, ctx: &CtxRef, memory: &mut BUS) {
+impl<DBGOPS: DebugOperations> Debugger<DBGOPS> {
+    pub fn draw(&mut self, ui_ctx: &CtxRef, game_ctx: &mut DBGOPS) {
         // ctx.set_debug_on_hover(true);
 
         // Set style for all UI
-        let mut style: Style = (*ctx.style()).clone();
+        let mut style: Style = (*ui_ctx.style()).clone();
         style.visuals.faint_bg_color = Color32::from_gray(50);
         style.visuals.override_text_color = Some(Color32::WHITE);
-        ctx.set_style(style);
+        ui_ctx.set_style(style);
 
         // Update cache
         self.disassembler
-            .may_update_cache(memory.cpu_get(CpuRegs::PC).into(), memory);
+            .may_update_cache(game_ctx.cpu_get(CpuRegs::PC).into(), game_ctx);
 
         egui::SidePanel::left("left_panel")
             .frame(egui::Frame {
@@ -50,8 +50,8 @@ impl<BUS: DebugOperations> Debugger<BUS> {
                 ..Default::default()
             })
             .resizable(false)
-            .show(ctx, |ui| {
-                self.memory_editor.draw(ui, memory);
+            .show(ui_ctx, |ui| {
+                self.memory_editor.draw(ui, game_ctx);
             });
 
         egui::SidePanel::right("right_panel")
@@ -62,7 +62,7 @@ impl<BUS: DebugOperations> Debugger<BUS> {
             })
             .default_width(300.0)
             .resizable(false)
-            .show(ctx, |ui| self.breakpoint_editor.draw(ui, memory));
+            .show(ui_ctx, |ui| self.breakpoint_editor.draw(ui, game_ctx));
 
         egui::TopBottomPanel::top("top_panel")
             .frame(egui::Frame {
@@ -70,7 +70,7 @@ impl<BUS: DebugOperations> Debugger<BUS> {
                 fill: Color32::from_gray(40),
                 ..Default::default()
             })
-            .show(ctx, |ui| {
+            .show(ui_ctx, |ui| {
                 let style = ui.style_mut();
                 style.spacing.button_padding = vec2(16., 4.);
                 ui.horizontal(|ui| {
@@ -89,17 +89,17 @@ impl<BUS: DebugOperations> Debugger<BUS> {
                 fill: Color32::from_gray(30),
                 ..Default::default()
             })
-            .show(ctx, |ui| {
+            .show(ui_ctx, |ui| {
                 egui::Grid::new("main_panel")
                     .spacing(Vec2::new(16., 16.))
                     .show(ui, |ui| {
                         self.disassembler.draw(ui);
                         ui.end_row();
 
-                        self.status_bar.draw(ui, memory);
+                        self.status_bar.draw(ui, game_ctx);
                         ui.end_row();
 
-                        self.register_editor.draw(ui, memory);
+                        self.register_editor.draw(ui, game_ctx);
                     });
             });
     }
@@ -108,12 +108,17 @@ impl<BUS: DebugOperations> Debugger<BUS> {
         self.flow_status.take()
     }
 
-    pub fn updated_flow_status(&mut self, memory: &BUS) -> Option<ControlFlow<Until>> {
+    pub fn updated_flow_status(&mut self, memory: &DBGOPS) -> Option<ControlFlow<Until>> {
         if self.breakpoint_editor.are_breakpoints_triggered(memory) {
             Some(ControlFlow::Break(Until::Null))
         } else {
             self.flow_status()
         }
+    }
+
+    pub fn reset(&mut self) {
+        self.reset_triggered = false;
+        self.disassembler = DisassemblyViewer::default();
     }
 }
 
@@ -132,7 +137,7 @@ impl DebuggerBuilder {
         self
     }
 
-    pub fn build<MEM: DebugOperations>(self) -> Debugger<MEM> {
+    pub fn build<DBGOPS: DebugOperations>(self) -> Debugger<DBGOPS> {
         Debugger {
             memory_editor: MemoryViewer::new(
                 self.options.clone().unwrap_or_default().address_ranges,

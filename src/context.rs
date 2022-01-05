@@ -54,6 +54,8 @@ pub struct Game {
 
 #[derive(Debug)]
 enum ScheduledStop {
+    /// Schedule a stop after `usize` cycle
+    Cycle(usize),
     /// Schedule a stop after `usize` step
     Step(usize),
     /// Schedule a stop after `usize` frame
@@ -211,7 +213,7 @@ impl Game {
                 frame_ended
             );
             match scheduled {
-                ScheduledStop::Step(count) => {
+                ScheduledStop::Cycle(count) => {
                     if *count == 1 {
                         self.emulation_stopped = true;
                         self.scheduled_stop = None;
@@ -219,8 +221,8 @@ impl Game {
                         *count -= 1;
                     }
                 }
-                ScheduledStop::Frame(count) => {
-                    if frame_ended {
+                ScheduledStop::Step(count) => {
+                    if self.cpu.controller.is_instruction_finished {
                         if *count == 1 {
                             self.emulation_stopped = true;
                             self.scheduled_stop = None;
@@ -229,13 +231,30 @@ impl Game {
                         }
                     }
                 }
+                ScheduledStop::Frame(count) => {
+                    if frame_ended {
+                        if *count == 1 {
+                            self.finish_instruction();
+                        } else {
+                            *count -= 1;
+                        }
+                    }
+                }
                 ScheduledStop::Timeout(instant, timeout) => {
                     if &instant.elapsed() > timeout {
-                        self.emulation_stopped = true;
-                        self.scheduled_stop = None;
+                        self.finish_instruction();
                     }
                 }
             }
+        }
+    }
+
+    fn finish_instruction(&mut self) {
+        if !self.cpu.controller.is_instruction_finished {
+            self.scheduled_stop = Some(ScheduledStop::Step(1));
+        } else {
+            self.emulation_stopped = true;
+            self.scheduled_stop = None;
         }
     }
 
@@ -251,9 +270,13 @@ impl Game {
                 self.emulation_stopped = false;
                 self.scheduled_stop = None;
             }
-            Break(Until::Null | Until::Step(0) | Until::Frame(0) | Until::Second(0)) => {
+            Break(Until::Null | Until::Cycle(0) | Until::Frame(0) | Until::Second(0)) => {
                 self.emulation_stopped = true;
                 self.scheduled_stop = None;
+            }
+            Break(Until::Cycle(count)) => {
+                self.emulation_stopped = false;
+                self.scheduled_stop = Some(ScheduledStop::Cycle(count));
             }
             Break(Until::Step(count)) => {
                 self.emulation_stopped = false;

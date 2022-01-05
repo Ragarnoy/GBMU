@@ -21,7 +21,8 @@ impl App for DebuggerApp {
         if let Some(flow) = self.debugger.flow_status() {
             match flow {
                 ControlFlow::Break(x) => match x {
-                    Until::Step(n) => self.memory.pc += (n << 1) as u16,
+                    Until::Cycle(n) => self.memory.pc += (n << 1) as u16,
+                    Until::Step(_n) => self.memory.pc += 1 as u16,
                     Until::Frame(n) => self.memory.pc += (n << 2) as u16,
                     Until::Second(n) => self.memory.pc += (n << 3) as u16,
                     Until::Null => self.memory.pc = 0,
