@@ -11,88 +11,29 @@ use gb_ppu::{
 };
 use native_dialog::FileDialog;
 
-#[cfg(feature = "debug_render")]
-macro_rules! ui_debug_ppu {
+macro_rules! replace_windows {
+    ($context:expr, $name:ident, $window:expr) => {
+        $context.windows.$name.replace($window)
+    };
+}
+
+macro_rules! ui_debug {
     ($ui:expr, $context:expr) => {
-        egui::menu::menu($ui, "PPU", |ui| {
-            if ui.button("tilesheet").clicked() && $context.windows.tilesheet.is_none() {
-                let mut tilesheet = GBWindow::new(
-                    "ppu tilesheet",
-                    (TILESHEET_WIDTH as u32, TILESHEET_HEIGHT as u32),
-                    true,
-                    &$context.video,
-                )
-                .expect("Error while building tilesheet window");
-                tilesheet
-                    .sdl_window_mut()
-                    .set_minimum_size(TILESHEET_WIDTH as u32, TILESHEET_HEIGHT as u32)
-                    .expect("Failed to configure tilesheet window");
-                $context.windows.tilesheet = Some((
-                    tilesheet,
-                    render::RenderImage::<TILESHEET_WIDTH, TILESHEET_HEIGHT>::with_bar_size(0.0),
-                ))
+        egui::menu::menu($ui, "Debug", |ui| {
+            if ui.button("Cpu").clicked() && $context.windows.debug.is_none() {
+                replace_windows!($context, debug, new_debug_window(&$context.video));
             }
-            if ui.button("tilemap").clicked() && $context.windows.tilemap.is_none() {
-                let bar_pixels_size =
-                    GBWindow::dots_to_pixels(&$context.video, render::MENU_BAR_SIZE)
-                        .expect("Error while computing bar size");
-                let mut tilemap = GBWindow::new(
-                    "ppu tilemap",
-                    (TILEMAP_DIM as u32, TILEMAP_DIM as u32 + bar_pixels_size),
-                    true,
-                    &$context.video,
-                )
-                .expect("Error while building tilemap window");
-                tilemap
-                    .sdl_window_mut()
-                    .set_minimum_size(TILEMAP_DIM as u32, TILEMAP_DIM as u32 + bar_pixels_size)
-                    .expect("Failed to configure tilemap window");
-                $context.windows.tilemap = Some((
-                    tilemap,
-                    render::RenderImage::<TILEMAP_DIM, TILEMAP_DIM>::with_bar_size(
-                        bar_pixels_size as f32,
-                    ),
-                    false,
-                ))
-            }
-            if ui.button("objects").clicked() && $context.windows.oam.is_none() {
-                let bar_pixels_size =
-                    GBWindow::dots_to_pixels(&$context.video, render::MENU_BAR_SIZE)
-                        .expect("Error while computing bar size");
-                let mut oam = GBWindow::new(
-                    "ppu oam",
-                    (
-                        SPRITE_RENDER_WIDTH as u32,
-                        SPRITE_RENDER_HEIGHT as u32 + bar_pixels_size,
-                    ),
-                    true,
-                    &$context.video,
-                )
-                .expect("Error while building oam window");
-                oam.sdl_window_mut()
-                    .set_minimum_size(
-                        SPRITE_RENDER_WIDTH as u32,
-                        SPRITE_RENDER_HEIGHT as u32 + bar_pixels_size,
-                    )
-                    .expect("Failed to configure oam window");
-                $context.windows.oam =
-                    Some(
-                        crate::windows::OAMConfig {
-                            window: oam,
-                            viewport: render::RenderImage::<
-                                SPRITE_RENDER_WIDTH,
-                                SPRITE_RENDER_HEIGHT,
-                            >::with_bar_size(
-                                bar_pixels_size as f32
-                            ),
-                            list: render::RenderImage::<
-                                SPRITE_LIST_RENDER_WIDTH,
-                                SPRITE_LIST_RENDER_HEIGHT,
-                            >::with_bar_size(bar_pixels_size as f32),
-                            display_list: false,
-                            invert_color: false,
-                        },
-                    )
+            #[cfg(feature = "debug_render")]
+            {
+                if ui.button("tilesheet").clicked() && $context.windows.tilesheet.is_none() {
+                    replace_windows!($context, tilesheet, new_tilesheep_window(&$context.video));
+                }
+                if ui.button("tilemap").clicked() && $context.windows.tilemap.is_none() {
+                    replace_windows!($context, tilemap, new_tilemap_window(&$context.video));
+                }
+                if ui.button("objects").clicked() && $context.windows.oam.is_none() {
+                    replace_windows!($context, oam, new_objects_window(&$context.video));
+                }
             }
         });
     };
@@ -127,14 +68,7 @@ pub fn draw_egui<const WIDTH: usize, const HEIGHT: usize>(
         egui::menu::bar(ui, |ui| {
             ui.set_height(render::MENU_BAR_SIZE);
             ui_file(ui, &mut events);
-            if ui.button("Debug").clicked() && context.windows.debug.is_none() {
-                context
-                    .windows
-                    .debug
-                    .replace(new_debug_window(&context.video));
-            }
-            #[cfg(feature = "debug_render")]
-            ui_debug_ppu!(ui, context);
+            ui_debug!(ui, context);
             ui_settings!(ui, context);
         })
     });
@@ -248,4 +182,91 @@ pub fn new_debug_window(video: &sdl2::VideoSubsystem) -> GBWindow {
         video,
     )
     .expect("Error while building debug window")
+}
+
+#[cfg(feature = "debug_render")]
+fn new_objects_window(video: &sdl2::VideoSubsystem) -> crate::windows::OAMConfig {
+    use crate::windows::OAMConfig;
+
+    let bar_pixels_size = GBWindow::dots_to_pixels(video, render::MENU_BAR_SIZE)
+        .expect("Error while computing bar size");
+    let mut oam = GBWindow::new(
+        "ppu oam",
+        (
+            SPRITE_RENDER_WIDTH as u32,
+            SPRITE_RENDER_HEIGHT as u32 + bar_pixels_size,
+        ),
+        true,
+        video,
+    )
+    .expect("Error while building oam window");
+    oam.sdl_window_mut()
+        .set_minimum_size(
+            SPRITE_RENDER_WIDTH as u32,
+            SPRITE_RENDER_HEIGHT as u32 + bar_pixels_size,
+        )
+        .expect("Failed to configure oam window");
+    OAMConfig {
+        window: oam,
+        viewport: render::RenderImage::<
+            SPRITE_RENDER_WIDTH, SPRITE_RENDER_HEIGHT
+            >::with_bar_size(bar_pixels_size as f32),
+        list: render::RenderImage::<
+            SPRITE_LIST_RENDER_WIDTH,SPRITE_LIST_RENDER_HEIGHT
+            >::with_bar_size(bar_pixels_size as f32),
+        display_list: false,
+        invert_color: false,
+    }
+}
+
+#[cfg(feature = "debug_render")]
+fn new_tilemap_window(
+    video: &sdl2::VideoSubsystem,
+) -> (
+    GBWindow,
+    render::RenderImage<TILEMAP_DIM, TILEMAP_DIM>,
+    bool,
+) {
+    let bar_pixels_size = GBWindow::dots_to_pixels(video, render::MENU_BAR_SIZE)
+        .expect("Error while computing bar size");
+    let mut tilemap = GBWindow::new(
+        "ppu tilemap",
+        (TILEMAP_DIM as u32, TILEMAP_DIM as u32 + bar_pixels_size),
+        true,
+        video,
+    )
+    .expect("Error while building tilemap window");
+    tilemap
+        .sdl_window_mut()
+        .set_minimum_size(TILEMAP_DIM as u32, TILEMAP_DIM as u32 + bar_pixels_size)
+        .expect("Failed to configure tilemap window");
+    (
+        tilemap,
+        render::RenderImage::<TILEMAP_DIM, TILEMAP_DIM>::with_bar_size(bar_pixels_size as f32),
+        false,
+    )
+}
+
+#[cfg(feature = "debug_render")]
+fn new_tilesheep_window(
+    video: &sdl2::VideoSubsystem,
+) -> (
+    GBWindow,
+    render::RenderImage<TILESHEET_WIDTH, TILESHEET_HEIGHT>,
+) {
+    let mut tilesheet = GBWindow::new(
+        "ppu tilesheet",
+        (TILESHEET_WIDTH as u32, TILESHEET_HEIGHT as u32),
+        true,
+        video,
+    )
+    .expect("Error while building tilesheet window");
+    tilesheet
+        .sdl_window_mut()
+        .set_minimum_size(TILESHEET_WIDTH as u32, TILESHEET_HEIGHT as u32)
+        .expect("Failed to configure tilesheet window");
+    (
+        tilesheet,
+        render::RenderImage::<TILESHEET_WIDTH, TILESHEET_HEIGHT>::with_bar_size(0.0),
+    )
 }
