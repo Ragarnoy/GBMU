@@ -4,7 +4,6 @@ use gb_bus::{
     generic::SimpleRW, AddressBus, Bus, IORegArea, IORegBus, IORegBusBuilder, Lock, WorkingRam,
 };
 use gb_clock::{cycles, Clock};
-use gb_cpu::microcode::controller::OpcodeType;
 use gb_cpu::{cpu::Cpu, new_cpu, registers::Registers};
 use gb_dbg::{
     dbg_interfaces::{
@@ -58,7 +57,7 @@ enum ScheduledStop {
     /// Schedule a stop after `usize` step
     Step(usize),
     /// Schedule a stop at `instruction changed` event
-    Instruction(String),
+    Instruction(usize),
     /// Schedule a stop after `usize` frame
     Frame(usize),
     /// Schedule a stop after `time` delay
@@ -218,15 +217,13 @@ impl Game {
                         *count -= 1;
                     }
                 }
-                ScheduledStop::Instruction(opcode) => {
-                    if let Some(current_opcode) = &self.cpu.controller.opcode {
-                        let was_prefixed =
-                            matches!(current_opcode, OpcodeType::CBPrefixed(_opcode));
-                        let current_opcode = current_opcode.to_string();
-                        let opcode_changed = *opcode != current_opcode;
-                        if opcode_changed && !was_prefixed {
+                ScheduledStop::Instruction(count) => {
+                    if self.cpu.controller.is_instruction_finished {
+                        if *count == 1 {
                             self.emulation_stopped = true;
                             self.scheduled_stop = None;
+                        } else {
+                            *count -= 1;
                         }
                     }
                 }
@@ -236,8 +233,7 @@ impl Game {
                             self.emulation_stopped = false;
 
                             // Fetch current instruction
-                            self.scheduled_stop =
-                                Some(ScheduledStop::Instruction(self.current_opcode()));
+                            self.scheduled_stop = Some(ScheduledStop::Instruction(1));
                         } else {
                             *count -= 1;
                         }
@@ -273,9 +269,9 @@ impl Game {
                 self.emulation_stopped = false;
                 self.scheduled_stop = Some(ScheduledStop::Step(count));
             }
-            Break(Until::Instruction(opcode)) => {
+            Break(Until::Instruction(count)) => {
                 self.emulation_stopped = false;
-                self.scheduled_stop = Some(ScheduledStop::Instruction(opcode));
+                self.scheduled_stop = Some(ScheduledStop::Instruction(count));
             }
             Break(Until::Frame(count)) => {
                 self.emulation_stopped = false;
@@ -380,13 +376,6 @@ fn game_id(rom_filename: &str) -> String {
 impl DebugOperations for Game {
     fn cycle(&self) -> usize {
         self.cycle_count
-    }
-
-    fn current_opcode(&mut self) -> String {
-        if let Some(opcode) = &self.cpu.controller.opcode {
-            return opcode.to_string();
-        }
-        String::from("")
     }
 }
 

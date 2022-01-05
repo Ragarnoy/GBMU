@@ -31,9 +31,6 @@ impl From<RegisterValue> for u16 {
 
 pub trait DebugOperations: MemoryDebugOperations + RegisterDebugOperations {
     fn cycle(&self) -> usize;
-    fn current_opcode(&mut self) -> String {
-        String::from("")
-    }
 }
 
 pub trait MemoryDebugOperations {

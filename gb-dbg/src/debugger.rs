@@ -79,7 +79,7 @@ impl<DBGOPS: DebugOperations> Debugger<DBGOPS> {
                         self.reset_triggered = true;
                     }
                     ui.separator();
-                    self.flow_status = self.flow_controller.draw(ui, game_ctx);
+                    self.flow_status = self.flow_controller.draw(ui);
                 });
             });
 

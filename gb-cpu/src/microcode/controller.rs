@@ -63,6 +63,8 @@ pub struct MicrocodeController {
     pub mode: Mode,
     /// Cache use for microcode action
     cache: Vec<u8>,
+    /// Debug helper to catch the event of end of instruction
+    pub is_instruction_finished: bool,
 
     #[cfg(feature = "registers_logs")]
     file: Rc<RefCell<BufWriter<File>>>,
@@ -92,6 +94,7 @@ impl Default for MicrocodeController {
             current_cycle: Vec::with_capacity(NB_MAX_ACTIONS),
             cache: Vec::with_capacity(CACHE_LEN),
             mode: Mode::default(),
+            is_instruction_finished: false,
             #[cfg(feature = "registers_logs")]
             file: Rc::new(RefCell::new(file)),
         }
@@ -105,6 +108,8 @@ impl MicrocodeController {
         regs: &mut Registers,
         bus: &mut dyn Bus<u8>,
     ) {
+        self.is_instruction_finished = false;
+
         let mut state = State::new(regs, bus, int_flags.clone());
 
         if let Some(cycle) = self.cycles.pop() {
@@ -115,6 +120,10 @@ impl MicrocodeController {
         }
 
         self.execute_actions(&mut state);
+
+        if self.cycles.is_empty() {
+            self.is_instruction_finished = true;
+        }
     }
 
     /// Pull the next task the cpu will do according to it's current mode
