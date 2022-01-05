@@ -49,18 +49,20 @@ impl Generic {
     }
 
     fn read_rom(&self, addr: u16) -> Result<u8, Error> {
-        todo!()
+        let addr = self.controller.offset_rom_addr(addr);
+        Ok(self.rom[addr])
     }
 
-    fn write_rom(&self, addr: u16) -> Result<(), Error> {
-        todo!()
+    fn write_rom(&self, v: u8, addr: u16) -> Result<(), Error> {
+        self.controller.write_rom(v, addr);
+        Ok(())
     }
 
     fn read_ram(&self, addr: u16) -> Result<u8, Error> {
         todo!()
     }
 
-    fn write_ram(&self, addr: u16) -> Result<(), Error> {
+    fn write_ram(&self, v: u8, addr: u16) -> Result<(), Error> {
         todo!()
     }
 }
@@ -80,8 +82,8 @@ where
 
     fn write(&mut self, v: u8, addr: A) -> Result<(), Error> {
         match addr.area_type() {
-            Area::Rom => self.write_rom(u16::from(addr)),
-            Area::Ram => self.write_ram(u16::from(addr)),
+            Area::Rom => self.write_rom(v, u16::from(addr)),
+            Area::Ram => self.write_ram(v, u16::from(addr)),
             _ => Err(Error::bus_error(u16::from(addr))),
         }
     }
