@@ -11,13 +11,24 @@ pub fn new_controller(header: Header) -> Box<Mbc5> {
     })
 }
 
-#[derive(Default)]
 pub struct Mbc5 {
     rom_banks: usize,
     ram_banks: usize,
     ram_enabled: bool,
     rom_bank: u16,
     ram_bank: u8,
+}
+
+impl Default for Mbc5 {
+    fn default() -> Self {
+        Self {
+            rom_banks: 0,
+            ram_banks: 0,
+            ram_enabled: false,
+            rom_bank: 1,
+            ram_bank: 0,
+        }
+    }
 }
 
 impl Controller for Mbc5 {
@@ -71,7 +82,7 @@ impl Controller for Mbc5 {
     }
 
     fn ram_enabled(&self) -> bool {
-        self.ram_enabled
+        self.ram_banks > 0 && self.ram_enabled
     }
 
     fn override_read_ram(&self, _addr: u16) -> Option<u8> {
