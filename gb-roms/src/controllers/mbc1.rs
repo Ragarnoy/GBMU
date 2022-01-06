@@ -7,14 +7,10 @@ pub fn new_controller(header: Header) -> Box<Mbc1> {
     Box::new(Mbc1 {
         rom_banks: header.rom_size.get_bank_amounts(),
         ram_banks: header.ram_size.get_bank_amounts(),
-        ram_enabled: false,
-        bank_1: 0,
-        bank_2: 0,
-        advance_mode: false,
+        ..Default::default()
     })
 }
 
-#[derive(Default)]
 pub struct Mbc1 {
     /// Number of ROM banks
     rom_banks: usize,
@@ -30,6 +26,19 @@ pub struct Mbc1 {
     bank_2: u8,
     /// This register determine the behavior of the [special] register
     advance_mode: bool,
+}
+
+impl Default for Mbc1 {
+    fn default() -> Self {
+        Self {
+            rom_banks: 0,
+            ram_banks: 0,
+            bank_1: 1,
+            bank_2: 0,
+            advance_mode: false,
+            ram_enabled: false,
+        }
+    }
 }
 
 impl Controller for Mbc1 {
