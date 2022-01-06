@@ -15,9 +15,14 @@ pub struct Generic {
 macro_rules! ram_op {
     ($controller:expr, $addr:expr, $ram:expr, $fn:expr) => {{
         let reladdr = $addr;
-        let addr = $controller.offset_ram_addr(reladdr);
         if $controller.ram_enabled() {
-            $ram.map_or_else(|| Err(Error::new_segfault(reladdr)), |ram| $fn(ram, addr))
+            $ram.map_or_else(
+                || Err(Error::new_segfault(reladdr)),
+                |ram| {
+                    let addr = $controller.offset_ram_addr(reladdr);
+                    $fn(ram, addr)
+                },
+            )
         } else {
             Err(Error::new_segfault(reladdr))
         }
