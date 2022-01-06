@@ -1,11 +1,6 @@
 use gb_bus::{Address, Area, Error, FileOperation};
 use serde::{Deserialize, Serialize};
-use std::{
-    borrow::{Borrow, BorrowMut},
-    cell::RefCell,
-    io::{self, Read},
-    rc::Rc,
-};
+use std::io::{self, Read};
 
 use crate::Header;
 
@@ -21,7 +16,11 @@ macro_rules! ram_op {
     ($controller:expr, $addr:expr, $ram:expr, $fn:expr) => {{
         let reladdr = $addr;
         let addr = $controller.offset_ram_addr(reladdr);
-        $ram.map_or_else(|| Err(Error::new_segfault(reladdr)), |ram| $fn(ram, addr))
+        if $controller.ram_enabled() {
+            $ram.map_or_else(|| Err(Error::new_segfault(reladdr)), |ram| $fn(ram, addr))
+        } else {
+            Err(Error::new_segfault(reladdr))
+        }
     }};
 }
 
