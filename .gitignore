@@ -4,6 +4,8 @@ assets/roms
 assets/bios
 assets/cpu_instrs.zip
 assets/cpu_instrs
+assets/mooneye-test-suite.tar.xz
+assets/mooneye-test-suite/
 
 # Rust
 target
