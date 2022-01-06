@@ -19,7 +19,7 @@ pub struct Header {
     pub entry_point: [u8; 4],
     pub logo: [u8; 48],
     pub title: Title,
-    pub new_license_code: NewLicenseCode,
+    pub new_license_code: Result<NewLicenseCode, Error>,
     pub sgb_flag: SgbFlag,
     pub cartridge_type: CartridgeType,
     pub rom_size: RomSize,
@@ -55,7 +55,7 @@ impl Default for Header {
             entry_point: Default::default(),
             logo: [0; 48],
             title: Default::default(),
-            new_license_code: Default::default(),
+            new_license_code: Ok(NewLicenseCode::None),
             sgb_flag: Default::default(),
             cartridge_type: Default::default(),
             rom_size: Default::default(),
@@ -98,7 +98,7 @@ mod test_from_chunk {
                     manufacturer: "VAAX".to_string(),
                     cgb_flag: CgbFlag::RetroCompatible
                 },
-                new_license_code: NewLicenseCode::NintendoRnD1,
+                new_license_code: Ok(NewLicenseCode::NintendoRnD1),
                 sgb_flag: SgbFlag::Supported,
                 cartridge_type: CartridgeType::Mbc3TimerRamBattery2,
                 rom_size: RomSize::MByte2,
@@ -129,7 +129,7 @@ mod test_from_chunk {
                     110, 14, 236, 204, 221, 220, 153, 159, 187, 185, 51, 62
                 ],
                 title: Title::Simple("TETRIS".to_string()),
-                new_license_code: NewLicenseCode::None,
+                new_license_code: Ok(NewLicenseCode::None),
                 sgb_flag: SgbFlag::Unsupported,
                 cartridge_type: CartridgeType::RomOnly,
                 rom_size: RomSize::KByte32,
@@ -165,7 +165,7 @@ mod test_from_chunk {
                     manufacturer: "AZ7".to_string(),
                     cgb_flag: CgbFlag::CgbOnly
                 },
-                new_license_code: NewLicenseCode::NintendoRnD1,
+                new_license_code: Ok(NewLicenseCode::NintendoRnD1),
                 sgb_flag: SgbFlag::Unsupported,
                 cartridge_type: CartridgeType::Mbc5RamBattery,
                 rom_size: RomSize::MByte2,
@@ -190,7 +190,7 @@ impl TryFrom<RawHeader> for Header {
             title: raw.title.try_into()?,
             new_license_code: NewLicenseCode::try_from(
                 String::from_utf8(raw.new_license_code.into())?.as_str(),
-            )?,
+            ),
             sgb_flag: raw.sgb_flag.try_into()?,
             cartridge_type: raw.cartridge_type.try_into()?,
             rom_size: raw.rom_size.try_into()?,
