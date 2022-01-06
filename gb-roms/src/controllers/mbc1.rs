@@ -72,7 +72,7 @@ impl Controller for Mbc1 {
 
     fn write_rom(&mut self, v: u8, addr: u16) {
         #[cfg(feature = "debug_mbc1_register")]
-        log::debug!("writing rom {:#02x} at {:#04x}", v, addr);
+        log::debug!("writing rom {:02x} at {:04x}", v, addr);
         match (addr >> 8) & 0xff {
             0x00..=0x1f => {
                 self.ram_enabled = v & 0xf == 0xa;
@@ -108,7 +108,7 @@ impl Controller for Mbc1 {
 
     fn offset_ram_addr(&self, addr: u16) -> usize {
         let bank_number = raw_effective_ram_bank(self.bank_2, self.advance_mode);
-        bank_number << 13 | (addr & 0x1fff) as usize
+        (bank_number % self.ram_banks) << 13 | (addr & 0x1fff) as usize
     }
 
     fn offset_rom_addr(&self, addr: u16) -> usize {
