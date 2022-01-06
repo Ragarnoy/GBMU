@@ -134,8 +134,8 @@ impl PixelFetcher {
         match self.mode {
             FetchMode::Background => {
                 let scy = lcd_reg.scrolling.scy as usize;
-                let tile_x = ((x + pixels_not_drawn + scx + 247) % 255) / 8;
-                let tile_y = ((y + scy) % 255) / 8;
+                let tile_x = ((x + pixels_not_drawn + scx).overflowing_sub(8).0 & 0xff) / 8;
+                let tile_y = ((y + scy) & 0xff) / 8;
                 let tile_pos_in_vram = tile_x + tile_y * TILEMAP_TILE_DIM_COUNT;
                 self.tile = vram
                     .get_map_tile_index(
@@ -150,7 +150,7 @@ impl PixelFetcher {
             }
             FetchMode::Window => {
                 let wx = lcd_reg.window_pos.wx as usize;
-                let tile_x = ((x + pixels_not_drawn + Self::WINDOW_BASE_OFFSET - wx) % 255) / 8;
+                let tile_x = ((x + pixels_not_drawn + Self::WINDOW_BASE_OFFSET - wx) & 0xff) / 8;
                 let tile_y = ((self.win_line_counter - 1) as usize) / 8;
                 let tile_pos_in_vram = tile_x + tile_y * TILEMAP_TILE_DIM_COUNT;
                 self.tile = vram

@@ -138,9 +138,9 @@ impl Ppu {
         let vram = self.vram.borrow();
         let lcd_reg = self.lcd_reg.borrow();
         let scx = lcd_reg.scrolling.scx as usize;
-        let scx_bot = (scx + 160) % 255;
+        let scx_bot = (scx + 160) & 0xff;
         let scy = lcd_reg.scrolling.scy as usize;
-        let scy_bot = (scy + 144) % 255;
+        let scy_bot = (scy + 144) & 0xff;
         for k in 0..TILEMAP_TILE_COUNT {
             let index = vram
                 .get_map_tile_index(
@@ -424,9 +424,6 @@ impl Ppu {
                 );
             }
             let pixel_offset = (self.scx & 7) + 8;
-            if x == 0 && y == 100 && self.pixel_discarded == 1 {
-                dbg!(self.scx, pixel_offset);
-            }
             if let Some(Lock::Ppu) = lock {
                 let vram = self.vram.borrow();
                 if self.pixel_fifo.enabled && x < SCREEN_WIDTH as u8 {
@@ -453,7 +450,7 @@ impl Ppu {
                     };
                 }
                 let pixels_not_drawn = if self.pixel_fetcher.mode() != FetchMode::Window {
-                    self.pixel_fifo.count() + self.pixel_discarded as usize
+                    self.pixel_fifo.count() + self.pixel_discarded.min(8) as usize
                 } else {
                     self.pixel_fifo.count()
                 };
@@ -463,7 +460,7 @@ impl Ppu {
                     y as usize,
                     x as usize,
                     pixels_not_drawn,
-                    self.scx as usize,
+                    self.scx as usize & 0xff,
                 );
                 if self.pixel_fetcher.push_to_fifo(&mut self.pixel_fifo) {
                     Self::check_next_pixel_mode(
