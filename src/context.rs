@@ -455,7 +455,7 @@ impl MemoryDebugOperations for Game {
         self.addr_bus
             .read(index, Some(Lock::Debugger))
             .unwrap_or_else(|err| {
-                log::error!("[DBG-OPS] bus read error at {}: {:?}", index, err);
+                log::trace!("[DBG-OPS] bus read error at {}: {:?}", index, err);
                 0xff
             })
     }
