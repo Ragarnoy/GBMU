@@ -4,7 +4,7 @@ pub mod generic;
 pub mod mbc1;
 // pub mod mbc2;
 // pub mod mbc3;
-// pub mod mbc5;
+pub mod mbc5;
 pub mod rom_only;
 
 use crate::Header;
@@ -80,9 +80,9 @@ fn new_controller_from_header(header: Header) -> Box<dyn Controller> {
         // Mbc3 | Mbc3Ram2 | Mbc3RamBattery2 | Mbc3TimerBattery | Mbc3TimerRamBattery2 => {
         //     mbc3::new_controller(header)
         // }
-        // Mbc5 | Mbc5Ram | Mbc5RamBattery | Mbc5Rumble | Mbc5RumbleRam | Mbc5RumbleRamBattery => {
-        //     mbc5::new_controller(header)
-        // }
+        Mbc5 | Mbc5Ram | Mbc5RamBattery | Mbc5Rumble | Mbc5RumbleRam | Mbc5RumbleRamBattery => {
+            mbc5::new_controller(header)
+        }
         _ => panic!("unsupported cartridge type: {:?}", header.cartridge_type),
     }
 }
