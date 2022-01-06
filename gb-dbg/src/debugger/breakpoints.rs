@@ -40,7 +40,16 @@ impl BreakpointEditor {
         } else {
             let breakpoints = breakpoint_list
                 .into_iter()
-                .filter_map(|b| Breakpoint::from_expression(&b).ok())
+                .filter_map(|b| {
+                    let bp = Breakpoint::from_expression(&b);
+                    match bp {
+                        Ok(p) => Some(p),
+                        Err(e) => {
+                            log::error!("invalide breakpoint expression \"{}\": {}", b, e);
+                            None
+                        }
+                    }
+                })
                 .collect();
             Self {
                 breakpoints,
