@@ -64,6 +64,7 @@ impl Controller for Mbc1 {
         match (addr >> 8) & 0xff {
             0x00..=0x1f => {
                 self.ram_enabled = v & 0xf == 0xa;
+                println!("enabling ram addr={:x}, v={:x}", addr, v);
             }
             0x20..=0x3f => {
                 self.bank_1 = (v & 0x1f).max(1);
@@ -87,12 +88,12 @@ impl Controller for Mbc1 {
     }
 
     fn offset_ram_addr(&self, addr: u16) -> usize {
-        todo!()
+        let bank_number = raw_effective_ram_bank(self.bank_2, self.advance_mode);
+        bank_number << 13 | (addr & 0x1fff) as usize
     }
 
     fn offset_rom_addr(&self, addr: u16) -> usize {
         let bank_number = raw_effective_rom_bank(self.bank_1, self.bank_2, self.advance_mode, addr);
-        println!("bank_number={:06b}", bank_number);
         (bank_number % self.rom_banks) << 14 | (addr & 0x3fff) as usize
     }
 
@@ -115,6 +116,14 @@ fn raw_effective_rom_bank(bank_1: u8, bank_2: u8, advance_mode: bool, addr: u16)
     }
 }
 
+fn raw_effective_ram_bank(bank_2: u8, mode: bool) -> usize {
+    if mode {
+        bank_2 as usize
+    } else {
+        0
+    }
+}
+
 #[test]
 fn t_raw_effective_rom_bank() {
     assert_eq!(raw_effective_rom_bank(0x12, 1, false, 0x4000), 0x32);
@@ -133,10 +142,31 @@ fn offset_rom_addr() {
         ..Default::default()
     };
 
-    assert_eq!(raw_effective_rom_bank(bank_1, bank_2, false, 0x72a7), 0x44);
     let addr = 0x72a7;
     let expect = 0x1132a7;
+    assert_eq!(raw_effective_rom_bank(bank_1, bank_2, false, addr), 0x44);
     let res = mbc.offset_rom_addr(addr);
+    assert_eq!(
+        res, expect,
+        "res = {0:x}({0:b}), expect = {1:x}({1:b})",
+        res, expect
+    );
+}
+
+#[test]
+fn offset_ram_addr() {
+    let bank_2 = 2;
+    let mbc = Mbc1 {
+        ram_banks: usize::MAX,
+        bank_2,
+        advance_mode: true,
+        ..Default::default()
+    };
+
+    assert_eq!(raw_effective_ram_bank(bank_2, true), bank_2 as usize);
+    let addr = 0xb123;
+    let expect = 0x5123;
+    let res = mbc.offset_ram_addr(addr);
     assert_eq!(
         res, expect,
         "res = {0:x}({0:b}), expect = {1:x}({1:b})",
