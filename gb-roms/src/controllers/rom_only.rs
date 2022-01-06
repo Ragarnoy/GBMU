@@ -46,4 +46,8 @@ impl Controller for RomOnly {
     fn offset_rom_addr(&self, addr: u16) -> usize {
         addr as usize
     }
+
+    fn ram_enabled(&self) -> bool {
+        false
+    }
 }
