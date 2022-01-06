@@ -428,10 +428,10 @@ impl Ppu {
                 if self.pixel_fifo.enabled && x < SCREEN_WIDTH as u8 {
                     if let Some(pixel) = self.pixel_fifo.pop() {
                         let offset = self.scx % 8;
-                        if self.pixel_fetcher.mode() == FetchMode::Window
-                            || self.state.pixel_drawn() > 0
-                            || self.pixel_discarded >= offset
-                        {
+                        if self.pixel_fetcher.mode() == FetchMode::Window {
+                            self.pixel_discarded = offset
+                        }
+                        if self.state.pixel_drawn() > 0 || self.pixel_discarded >= offset {
                             self.next_pixels[y as usize][x as usize] = Color::from(pixel).into();
                             self.state.draw_pixel();
                             x += 1;
