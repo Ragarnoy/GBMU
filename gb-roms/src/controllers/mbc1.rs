@@ -114,7 +114,7 @@ impl Controller for Mbc1 {
     }
 
     fn ram_enabled(&self) -> bool {
-        self.ram_enabled
+        self.ram_banks > 0 && self.ram_enabled
     }
 }
 
