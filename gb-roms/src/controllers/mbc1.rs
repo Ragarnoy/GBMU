@@ -8,12 +8,13 @@ pub fn new_controller(header: Header) -> Box<Mbc1> {
         rom_banks: header.rom_size.get_bank_amounts(),
         ram_banks: header.ram_size.get_bank_amounts(),
         ram_enabled: false,
-        rom_bank_selected: 0,
-        special: 0,
+        bank_1: 0,
+        bank_2: 0,
         advance_mode: false,
     })
 }
 
+#[derive(Default)]
 pub struct Mbc1 {
     /// Number of ROM banks
     rom_banks: usize,
@@ -22,11 +23,11 @@ pub struct Mbc1 {
     /// Register that enable to perform action on the RAM
     ram_enabled: bool,
     /// Lower register to select the BANK for the ROM
-    rom_bank_selected: u8,
+    bank_1: u8,
     /// Special register that depending on the mode will:
     /// - select the RAM bank
     /// - be the upper part of the ROM bank
-    special: u8,
+    bank_2: u8,
     /// This register determine the behavior of the [special] register
     advance_mode: bool,
 }
@@ -46,16 +47,16 @@ impl Controller for Mbc1 {
     fn save_to_slice(&self) -> Vec<u8> {
         vec![
             self.ram_enabled as u8,
-            self.rom_bank_selected,
-            self.special,
+            self.bank_1,
+            self.bank_2,
             self.advance_mode as u8,
         ]
     }
 
     fn load_from_slice(&mut self, slice: &[u8]) {
         self.ram_enabled = slice[0] != 0;
-        self.rom_bank_selected = slice[1] & 0x1f;
-        self.special = slice[2] & 2;
+        self.bank_1 = slice[1] & 0x1f;
+        self.bank_2 = slice[2] & 2;
         self.advance_mode = slice[3] != 0;
     }
 
@@ -65,10 +66,10 @@ impl Controller for Mbc1 {
                 self.ram_enabled = v & 0xf == 0xa;
             }
             0x20..=0x3f => {
-                self.rom_bank_selected = (v & 0x1f).max(1);
+                self.bank_1 = (v & 0x1f).max(1);
             }
             0x40..=0x5f => {
-                self.special = v & 2;
+                self.bank_2 = v & 2;
             }
             0x60..=0x7f => {
                 self.advance_mode = v & 1 != 0;
@@ -90,21 +91,55 @@ impl Controller for Mbc1 {
     }
 
     fn offset_rom_addr(&self, addr: u16) -> usize {
-        let bank_number = match addr >> 8 {
-            0x00..=0x3f => {
-                if self.advance_mode {
-                    (self.special << 5) as usize
-                } else {
-                    0
-                }
-            }
-            0x40..=0x7f => (self.special << 5 | self.rom_bank_selected) as usize,
-            _ => panic!("unexpected addr to offset {:04x}", addr),
-        };
-        (bank_number % self.rom_banks) * ROM_BANK_SIZE
+        let bank_number = raw_effective_rom_bank(self.bank_1, self.bank_2, self.advance_mode, addr);
+        println!("bank_number={:06b}", bank_number);
+        (bank_number % self.rom_banks) << 14 | (addr & 0x3fff) as usize
     }
 
     fn ram_enabled(&self) -> bool {
         self.ram_enabled
     }
+}
+
+fn raw_effective_rom_bank(bank_1: u8, bank_2: u8, advance_mode: bool, addr: u16) -> usize {
+    match addr >> 8 {
+        0x00..=0x3f => {
+            if advance_mode {
+                (bank_2 << 5) as usize
+            } else {
+                0
+            }
+        }
+        0x40..=0x7f => (bank_2 << 5 | bank_1) as usize,
+        _ => panic!("unexpected addr to offset {:04x}", addr),
+    }
+}
+
+#[test]
+fn t_raw_effective_rom_bank() {
+    assert_eq!(raw_effective_rom_bank(0x12, 1, false, 0x4000), 0x32);
+    assert_eq!(raw_effective_rom_bank(0x12, 1, false, 0x0000), 0);
+    assert_eq!(raw_effective_rom_bank(0x12, 1, true, 0x0000), 0x20);
+}
+
+#[test]
+fn offset_rom_addr() {
+    let bank_1 = 4;
+    let bank_2 = 2;
+    let mbc = Mbc1 {
+        rom_banks: usize::MAX,
+        bank_1,
+        bank_2,
+        ..Default::default()
+    };
+
+    assert_eq!(raw_effective_rom_bank(bank_1, bank_2, false, 0x72a7), 0x44);
+    let addr = 0x72a7;
+    let expect = 0x1132a7;
+    let res = mbc.offset_rom_addr(addr);
+    assert_eq!(
+        res, expect,
+        "res = {0:x}({0:b}), expect = {1:x}({1:b})",
+        res, expect
+    );
 }
