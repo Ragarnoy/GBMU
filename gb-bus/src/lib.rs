@@ -9,6 +9,7 @@ pub mod io_reg_area;
 mod io_reg_bus;
 pub mod io_reg_constant;
 mod lock;
+mod serial;
 mod working_ram;
 
 pub use address::Addr;
@@ -19,6 +20,7 @@ pub use file_operation::{Address, FileOperation};
 pub use io_reg_area::IORegArea;
 pub use io_reg_bus::{IORegBus, IORegBusBuilder};
 pub use lock::{InternalLock, Lock, MemoryLock};
+pub use serial::Serial;
 pub use working_ram::WorkingRam;
 
 pub trait Bus<N>: MemoryLock {
