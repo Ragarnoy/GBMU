@@ -47,7 +47,7 @@ pub struct Ppu {
     pixel_fetcher: PixelFetcher,
     state: State,
     scanline_sprites: Vec<Sprite>,
-    offset: u8,
+    pixel_discarded: u8,
     scx: u8,
 }
 
@@ -64,7 +64,7 @@ impl Ppu {
             pixel_fetcher: PixelFetcher::new(),
             state: State::new(),
             scanline_sprites: Vec::with_capacity(10),
-            offset: 0,
+            pixel_discarded: 0,
             scx: 0,
         }
     }
@@ -417,8 +417,10 @@ impl Ppu {
                     &mut self.pixel_fifo,
                     &mut self.scanline_sprites,
                     (x, y),
+                    self.pixel_discarded,
+                    self.scx,
                 );
-                self.offset = 0;
+                self.pixel_discarded = 0;
                 self.scx = lcd_reg.scrolling.scx;
             }
             if let Some(Lock::Ppu) = lock {
@@ -428,21 +430,23 @@ impl Ppu {
                         let offset = self.scx % 8;
                         if self.pixel_fetcher.mode() == FetchMode::Window
                             || self.state.pixel_drawn() > 0
-                            || self.offset >= offset
+                            || self.pixel_discarded >= offset
                         {
                             self.next_pixels[y as usize][x as usize] = Color::from(pixel).into();
                             self.state.draw_pixel();
                             x += 1;
-                            Self::check_next_pixel_mode(
-                                &lcd_reg,
-                                &mut self.pixel_fetcher,
-                                &mut self.pixel_fifo,
-                                &mut self.scanline_sprites,
-                                (x, y),
-                            );
                         } else {
-                            self.offset += 1;
+                            self.pixel_discarded += 1;
                         }
+                        Self::check_next_pixel_mode(
+                            &lcd_reg,
+                            &mut self.pixel_fetcher,
+                            &mut self.pixel_fifo,
+                            &mut self.scanline_sprites,
+                            (x, y),
+                            self.pixel_discarded,
+                            self.scx,
+                        );
                     };
                 }
                 self.pixel_fetcher.fetch(
@@ -460,6 +464,8 @@ impl Ppu {
                         &mut self.pixel_fifo,
                         &mut self.scanline_sprites,
                         (x, y),
+                        self.pixel_discarded,
+                        self.scx,
                     );
                 }
             }
@@ -474,8 +480,11 @@ impl Ppu {
         pixel_fifo: &mut PixelFIFO,
         sprites: &mut Vec<Sprite>,
         cursor: (u8, u8),
+        pixels_discarded: u8,
+        scx: u8,
     ) {
         let (x, y) = cursor;
+        let offset = scx % 8;
         pixel_fifo.enabled = true;
 
         // check if w switch to window mode
@@ -495,7 +504,9 @@ impl Ppu {
         // check for sprite eventually
         if pixel_fifo.count() >= 8 {
             if let Some(sprite) = sprites.pop() {
-                if sprite.x_pos() == x + Sprite::HORIZONTAL_OFFSET {
+                let viewport_x_at_sprite_scale = x + Sprite::HORIZONTAL_OFFSET;
+                let pixels_to_skip_before_viewport = offset - pixels_discarded;
+                if sprite.x_pos() == viewport_x_at_sprite_scale - pixels_to_skip_before_viewport {
                     pixel_fetcher.set_mode_to_sprite(sprite);
                     pixel_fifo.enabled = false;
                 } else {
