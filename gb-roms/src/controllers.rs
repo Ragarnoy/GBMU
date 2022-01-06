@@ -35,6 +35,9 @@ pub trait Controller {
     /// MBC catch these writes to modify their internal register
     fn write_rom(&mut self, v: u8, addr: u16);
 
+    /// Indicate that the RAM is readable/writable
+    fn ram_enabled(&self) -> bool;
+
     /// Indicate if the read to the RAM area was overrided
     fn override_read_ram(&self, addr: u16) -> Option<u8>;
 
