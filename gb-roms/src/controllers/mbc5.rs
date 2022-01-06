@@ -33,11 +33,15 @@ impl Controller for Mbc5 {
     }
 
     fn save_to_slice(&self) -> Vec<u8> {
-        todo!()
+        let mut res = vec![self.ram_enabled as u8, self.ram_bank];
+        res.extend(self.rom_bank.to_be_bytes());
+        res
     }
 
     fn load_from_slice(&mut self, slice: &[u8]) {
-        todo!()
+        self.ram_enabled = slice[0] != 0;
+        self.ram_bank = slice[1] & 0xf;
+        self.rom_bank = u16::from_be_bytes([slice[3], slice[4]]);
     }
 
     fn write_rom(&mut self, v: u8, addr: u16) {

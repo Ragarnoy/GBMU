@@ -54,20 +54,19 @@ impl Controller for Mbc1 {
     }
 
     fn save_to_slice(&self) -> Vec<u8> {
-        // vec![
-        //     self.ram_enabled as u8,
-        //     self.bank_1,
-        //     self.bank_2,
-        //     self.advance_mode as u8,
-        // ]
-        Vec::new()
+        vec![
+            self.ram_enabled as u8,
+            self.bank_1,
+            self.bank_2,
+            self.advance_mode as u8,
+        ]
     }
 
     fn load_from_slice(&mut self, slice: &[u8]) {
-        // self.ram_enabled = slice[0] != 0;
-        // self.bank_1 = slice[1] & 0x1f;
-        // self.bank_2 = slice[2] & 2;
-        // self.advance_mode = slice[3] != 0;
+        self.ram_enabled = slice[0] != 0;
+        self.bank_1 = slice[1] & 0x1f;
+        self.bank_2 = slice[2] & 2;
+        self.advance_mode = slice[3] != 0;
     }
 
     fn write_rom(&mut self, v: u8, addr: u16) {
