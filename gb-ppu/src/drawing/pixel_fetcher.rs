@@ -97,7 +97,7 @@ impl PixelFetcher {
         lcd_reg: &dyn Deref<Target = LcdReg>,
         y: usize,
         x: usize,
-        x_queued: usize,
+        pixels_not_drawn: usize,
         scx: usize,
     ) {
         let tick = if let FetchMode::Sprite(_) = self.mode {
@@ -109,7 +109,7 @@ impl PixelFetcher {
         if tick % 2 == 1 {
             // the fetcher take 2 tick to process one step
             match tick / 2 {
-                0 => self.get_tile_index(vram, lcd_reg, y, x, x_queued, scx), // get the tile index.
+                0 => self.get_tile_index(vram, lcd_reg, y, x, pixels_not_drawn, scx), // get the tile index.
                 1 => {}                                     // get the high data of the tile
                 2 => self.fetch_full_row(vram, lcd_reg, y), // get the low data of the tile, the pixels are ready after this step
                 _ => {}                                     // idle on the last step
@@ -128,13 +128,13 @@ impl PixelFetcher {
         lcd_reg: &dyn Deref<Target = LcdReg>,
         y: usize,
         x: usize,
-        x_queued: usize,
+        pixels_not_drawn: usize,
         scx: usize,
     ) {
         match self.mode {
             FetchMode::Background => {
                 let scy = lcd_reg.scrolling.scy as usize;
-                let tile_x = ((x + x_queued + scx) % 255) / 8;
+                let tile_x = ((x + pixels_not_drawn + scx + 247) % 255) / 8;
                 let tile_y = ((y + scy) % 255) / 8;
                 let tile_pos_in_vram = tile_x + tile_y * TILEMAP_TILE_DIM_COUNT;
                 self.tile = vram
@@ -150,7 +150,7 @@ impl PixelFetcher {
             }
             FetchMode::Window => {
                 let wx = lcd_reg.window_pos.wx as usize;
-                let tile_x = ((x + x_queued + Self::WINDOW_BASE_OFFSET - wx) % 255) / 8;
+                let tile_x = ((x + pixels_not_drawn + Self::WINDOW_BASE_OFFSET - wx) % 255) / 8;
                 let tile_y = ((self.win_line_counter - 1) as usize) / 8;
                 let tile_pos_in_vram = tile_x + tile_y * TILEMAP_TILE_DIM_COUNT;
                 self.tile = vram

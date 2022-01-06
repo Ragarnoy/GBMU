@@ -411,6 +411,8 @@ impl Ppu {
                 self.state.clear_pixel_count();
                 // reverse the sprites order so the ones on the left of the viewport are the first to pop
                 self.scanline_sprites = self.scanline_sprites.drain(0..).rev().collect();
+                self.scx = lcd_reg.scrolling.scx;
+                self.pixel_discarded = 0;
                 Self::check_next_pixel_mode(
                     &lcd_reg,
                     &mut self.pixel_fetcher,
@@ -418,20 +420,21 @@ impl Ppu {
                     &mut self.scanline_sprites,
                     (x, y),
                     self.pixel_discarded,
-                    self.scx,
+                    (self.scx & 7) + 8,
                 );
-                self.pixel_discarded = 0;
-                self.scx = lcd_reg.scrolling.scx;
+            }
+            let pixel_offset = (self.scx & 7) + 8;
+            if x == 0 && y == 100 && self.pixel_discarded == 1 {
+                dbg!(self.scx, pixel_offset);
             }
             if let Some(Lock::Ppu) = lock {
                 let vram = self.vram.borrow();
                 if self.pixel_fifo.enabled && x < SCREEN_WIDTH as u8 {
                     if let Some(pixel) = self.pixel_fifo.pop() {
-                        let offset = self.scx % 8;
                         if self.pixel_fetcher.mode() == FetchMode::Window {
-                            self.pixel_discarded = offset
+                            self.pixel_discarded = pixel_offset;
                         }
-                        if self.state.pixel_drawn() > 0 || self.pixel_discarded >= offset {
+                        if self.state.pixel_drawn() > 0 || self.pixel_discarded >= pixel_offset {
                             self.next_pixels[y as usize][x as usize] = Color::from(pixel).into();
                             self.state.draw_pixel();
                             x += 1;
@@ -445,16 +448,21 @@ impl Ppu {
                             &mut self.scanline_sprites,
                             (x, y),
                             self.pixel_discarded,
-                            self.scx,
+                            pixel_offset,
                         );
                     };
                 }
+                let pixels_not_drawn = if self.pixel_fetcher.mode() != FetchMode::Window {
+                    self.pixel_fifo.count() + self.pixel_discarded as usize
+                } else {
+                    self.pixel_fifo.count()
+                };
                 self.pixel_fetcher.fetch(
                     &vram,
                     &lcd_reg,
                     y as usize,
                     x as usize,
-                    self.pixel_fifo.count(),
+                    pixels_not_drawn,
                     self.scx as usize,
                 );
                 if self.pixel_fetcher.push_to_fifo(&mut self.pixel_fifo) {
@@ -465,7 +473,7 @@ impl Ppu {
                         &mut self.scanline_sprites,
                         (x, y),
                         self.pixel_discarded,
-                        self.scx,
+                        pixel_offset,
                     );
                 }
             }
@@ -481,10 +489,9 @@ impl Ppu {
         sprites: &mut Vec<Sprite>,
         cursor: (u8, u8),
         pixels_discarded: u8,
-        scx: u8,
+        pixel_offset: u8,
     ) {
         let (x, y) = cursor;
-        let offset = scx % 8;
         pixel_fifo.enabled = true;
 
         // check if w switch to window mode
@@ -505,7 +512,7 @@ impl Ppu {
         if pixel_fifo.count() >= 8 {
             if let Some(sprite) = sprites.pop() {
                 let viewport_x_at_sprite_scale = x + Sprite::HORIZONTAL_OFFSET;
-                let pixels_to_skip_before_viewport = offset - pixels_discarded;
+                let pixels_to_skip_before_viewport = pixel_offset - pixels_discarded;
                 if sprite.x_pos() == viewport_x_at_sprite_scale - pixels_to_skip_before_viewport {
                     pixel_fetcher.set_mode_to_sprite(sprite);
                     pixel_fifo.enabled = false;
