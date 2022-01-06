@@ -109,7 +109,7 @@ where
     fn read(&self, addr: A) -> Result<u8, Error> {
         match addr.area_type() {
             Area::Rom => self.read_rom(u16::from(addr)),
-            Area::Ram => self.read_ram(u16::from(addr)),
+            Area::ExtRam => self.read_ram(u16::from(addr)),
             _ => Err(Error::bus_error(u16::from(addr))),
         }
     }
@@ -117,7 +117,7 @@ where
     fn write(&mut self, v: u8, addr: A) -> Result<(), Error> {
         match addr.area_type() {
             Area::Rom => self.write_rom(v, u16::from(addr)),
-            Area::Ram => self.write_ram(v, u16::from(addr)),
+            Area::ExtRam => self.write_ram(v, u16::from(addr)),
             _ => Err(Error::bus_error(u16::from(addr))),
         }
     }
