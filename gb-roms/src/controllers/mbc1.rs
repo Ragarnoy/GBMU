@@ -54,35 +54,45 @@ impl Controller for Mbc1 {
     }
 
     fn save_to_slice(&self) -> Vec<u8> {
-        vec![
-            self.ram_enabled as u8,
-            self.bank_1,
-            self.bank_2,
-            self.advance_mode as u8,
-        ]
+        // vec![
+        //     self.ram_enabled as u8,
+        //     self.bank_1,
+        //     self.bank_2,
+        //     self.advance_mode as u8,
+        // ]
+        Vec::new()
     }
 
     fn load_from_slice(&mut self, slice: &[u8]) {
-        self.ram_enabled = slice[0] != 0;
-        self.bank_1 = slice[1] & 0x1f;
-        self.bank_2 = slice[2] & 2;
-        self.advance_mode = slice[3] != 0;
+        // self.ram_enabled = slice[0] != 0;
+        // self.bank_1 = slice[1] & 0x1f;
+        // self.bank_2 = slice[2] & 2;
+        // self.advance_mode = slice[3] != 0;
     }
 
     fn write_rom(&mut self, v: u8, addr: u16) {
+        #[cfg(feature = "debug_mbc1_register")]
+        log::debug!("writing rom {:#02x} at {:#04x}", v, addr);
         match (addr >> 8) & 0xff {
             0x00..=0x1f => {
                 self.ram_enabled = v & 0xf == 0xa;
-                println!("enabling ram addr={:x}, v={:x}", addr, v);
+                #[cfg(feature = "debug_mbc1_register")]
+                log::debug!("ram_enabled={}", self.ram_enabled);
             }
             0x20..=0x3f => {
                 self.bank_1 = (v & 0x1f).max(1);
+                #[cfg(feature = "debug_mbc1_register")]
+                log::debug!("bank_1={}", self.bank_1);
             }
             0x40..=0x5f => {
-                self.bank_2 = v & 2;
+                self.bank_2 = v & 3;
+                #[cfg(feature = "debug_mbc1_register")]
+                log::debug!("bank_2={:x}", self.bank_2);
             }
             0x60..=0x7f => {
                 self.advance_mode = v & 1 != 0;
+                #[cfg(feature = "debug_mbc1_register")]
+                log::debug!("advance_mode={}", self.advance_mode);
             }
             _ => {}
         }
