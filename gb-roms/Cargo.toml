@@ -21,4 +21,4 @@ serde = { version = "1.0.130" , features = [ "derive" ] }
 log = "0.4"
 
 [features]
-debug_mbc1_register = []
+debug_mbcs_register = []

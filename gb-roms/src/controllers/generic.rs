@@ -62,6 +62,8 @@ impl Generic {
     }
 
     fn write_rom(&mut self, v: u8, addr: u16) -> Result<(), Error> {
+        #[cfg(feature = "debug_mbcs_register")]
+        log::debug!("writing ROM({:04x}) <== {:02x}", v, addr);
         self.controller.write_rom(v, addr);
         Ok(())
     }

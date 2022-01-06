@@ -71,27 +71,25 @@ impl Controller for Mbc1 {
     }
 
     fn write_rom(&mut self, v: u8, addr: u16) {
-        #[cfg(feature = "debug_mbc1_register")]
-        log::debug!("writing rom {:02x} at {:04x}", v, addr);
         match (addr >> 8) & 0xff {
             0x00..=0x1f => {
                 self.ram_enabled = v & 0xf == 0xa;
-                #[cfg(feature = "debug_mbc1_register")]
+                #[cfg(feature = "debug_mbcs_register")]
                 log::debug!("ram_enabled={}", self.ram_enabled);
             }
             0x20..=0x3f => {
                 self.bank_1 = (v & 0x1f).max(1);
-                #[cfg(feature = "debug_mbc1_register")]
+                #[cfg(feature = "debug_mbcs_register")]
                 log::debug!("bank_1={}", self.bank_1);
             }
             0x40..=0x5f => {
                 self.bank_2 = v & 3;
-                #[cfg(feature = "debug_mbc1_register")]
+                #[cfg(feature = "debug_mbcs_register")]
                 log::debug!("bank_2={:x}", self.bank_2);
             }
             0x60..=0x7f => {
                 self.advance_mode = v & 1 != 0;
-                #[cfg(feature = "debug_mbc1_register")]
+                #[cfg(feature = "debug_mbcs_register")]
                 log::debug!("advance_mode={}", self.advance_mode);
             }
             _ => {}
