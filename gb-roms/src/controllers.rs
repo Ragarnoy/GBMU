@@ -3,7 +3,7 @@ pub mod bios_wrapper;
 pub mod generic;
 pub mod mbc1;
 pub mod mbc2;
-// pub mod mbc3;
+pub mod mbc3;
 pub mod mbc5;
 pub mod rom_only;
 
@@ -77,9 +77,9 @@ fn new_controller_from_header(header: Header) -> Box<dyn Controller> {
         RomOnly => rom_only::new_controller(header),
         Mbc1 | Mbc1Ram | Mbc1RamBattery => mbc1::new_controller(header),
         Mbc2 | Mbc2Battery => mbc2::new_controller(header),
-        // Mbc3 | Mbc3Ram2 | Mbc3RamBattery2 | Mbc3TimerBattery | Mbc3TimerRamBattery2 => {
-        //     mbc3::new_controller(header)
-        // }
+        Mbc3 | Mbc3Ram2 | Mbc3RamBattery2 | Mbc3TimerBattery | Mbc3TimerRamBattery2 => {
+            mbc3::new_controller(header)
+        }
         Mbc5 | Mbc5Ram | Mbc5RamBattery | Mbc5Rumble | Mbc5RumbleRam | Mbc5RumbleRamBattery => {
             mbc5::new_controller(header)
         }
