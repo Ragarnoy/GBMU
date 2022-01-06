@@ -84,6 +84,11 @@ impl Controller for Mbc5 {
     }
 
     fn offset_rom_addr(&self, addr: u16) -> usize {
-        todo!()
+        let bank = if addr <= 0x3fff {
+            0
+        } else {
+            self.rom_bank as usize
+        };
+        (bank % self.rom_banks) * ROM_BANK_SIZE | (addr & 0x3fff) as usize
     }
 }
