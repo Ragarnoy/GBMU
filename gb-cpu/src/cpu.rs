@@ -9,14 +9,10 @@ use std::{cell::RefCell, rc::Rc};
 pub struct Cpu {
     pub registers: Registers,
     pub controller: MicrocodeController,
-    interrupt_flags: Rc<RefCell<IORegisters>>,
+    pub interrupt_flags: Rc<RefCell<IORegisters>>,
 }
 
 impl Cpu {
-    pub fn interrupt_flags(&self) -> Rc<RefCell<IORegisters>> {
-        self.interrupt_flags.clone()
-    }
-
     pub fn set_registers(&mut self, regs: Registers) {
         self.registers = regs;
     }
