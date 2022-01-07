@@ -2,9 +2,10 @@ use crate::{Addr, Address, Area, Error, FileOperation, IORegArea};
 use std::{cell::RefCell, collections::BTreeMap, rc::Rc};
 
 type IORegElement = dyn FileOperation<Addr<IORegArea>, IORegArea>;
+type IORegNode = Rc<RefCell<IORegElement>>;
 
 pub struct IORegBus {
-    areas: BTreeMap<IORegArea, Rc<RefCell<IORegElement>>>,
+    areas: BTreeMap<IORegArea, IORegNode>,
 }
 
 impl<A> FileOperation<A, Area> for IORegBus
@@ -52,7 +53,7 @@ macro_rules! new_chardev {
 
 #[derive(Default)]
 pub struct IORegBusBuilder {
-    areas: BTreeMap<IORegArea, Rc<RefCell<IORegElement>>>,
+    areas: BTreeMap<IORegArea, IORegNode>,
 }
 
 impl IORegBusBuilder {
@@ -111,6 +112,46 @@ impl IORegBusBuilder {
     pub fn with_default_serial(&mut self) -> &mut Self {
         self.with_area(IORegArea::SB, new_chardev!())
             .with_area(IORegArea::SC, new_chardev!())
+    }
+
+    pub fn with_serial(&mut self, serial: IORegNode) -> &mut Self {
+        use IORegArea::{SB, SC};
+
+        self.with_area(SB, serial.clone()).with_area(SC, serial)
+    }
+
+    pub fn with_timer(&mut self, timer: IORegNode) -> &mut Self {
+        use IORegArea::{Div, Tac, Tima, Tma};
+
+        self.with_area(Div, timer.clone())
+            .with_area(Tima, timer.clone())
+            .with_area(Tac, timer.clone())
+            .with_area(Tma, timer)
+    }
+
+    pub fn with_ppu(&mut self, ppu: IORegNode) -> &mut Self {
+        use IORegArea::{Bgp, LcdControl, LcdStat, Ly, Lyc, Obp0, Obp1, Scx, Scy, Wx, Wy};
+
+        self.with_area(LcdControl, ppu.clone())
+            .with_area(LcdStat, ppu.clone())
+            .with_area(Scy, ppu.clone())
+            .with_area(Scx, ppu.clone())
+            .with_area(Ly, ppu.clone())
+            .with_area(Lyc, ppu.clone())
+            .with_area(Bgp, ppu.clone())
+            .with_area(Obp0, ppu.clone())
+            .with_area(Obp1, ppu.clone())
+            .with_area(Wy, ppu.clone())
+            .with_area(Wx, ppu)
+    }
+
+    #[cfg(feature = "cgb")]
+    pub fn with_hdma(&mut self, hdma: IORegNode) -> &mut Self {
+        self.with_area(IORegArea::Hdma1, hdma.clone())
+            .with_area(IORegArea::Hdma2, hdma.clone())
+            .with_area(IORegArea::Hdma3, hdma.clone())
+            .with_area(IORegArea::Hdma4, hdma.clone())
+            .with_area(IORegArea::Hdma5, hdma)
     }
 
     pub fn build(self) -> IORegBus {
