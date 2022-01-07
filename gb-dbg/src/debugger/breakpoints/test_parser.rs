@@ -117,6 +117,7 @@ mod unit_expr {
             "AF == 0x21 || PC == 0xDEAD",
         );
     }
+
     #[test]
     fn space() {
         utils_test_expr(expr_complete, "AF ==42", "AF == 0x42");
@@ -125,5 +126,11 @@ mod unit_expr {
             "AF== 21 ||PC== dead",
             "AF == 0x21 || PC == 0xDEAD",
         );
+    }
+
+    #[test]
+    fn simple() {
+        utils_test_expr(expr_complete, "HL == b000", "HL == 0xB000");
+        utils_test_expr(expr_complete, "*4088 == e3", "*0x4088 == 0xE3");
     }
 }
