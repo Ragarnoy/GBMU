@@ -273,14 +273,14 @@ impl MicrocodeController {
         use std::{env, fs::OpenOptions};
 
         let registers_logs = {
-            use env::{current_dir, var};
-            let mut project_path = var("LOG_DIR")
-                .map(std::path::PathBuf::from)
-                .or_else(|_| current_dir())?;
+            use env::{temp_dir, var};
+            let mut project_path =
+                var("LOG_DIR").map_or_else(|_| temp_dir(), std::path::PathBuf::from);
             project_path.push("registers.log");
             project_path
         };
 
+        log::info!("opening registers log at {}", registers_logs.display());
         let file = OpenOptions::new()
             .write(true)
             .create(true)
