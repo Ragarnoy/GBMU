@@ -50,12 +50,22 @@ impl TimeStat {
 
 impl Display for TimeStat {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
+        #[cfg(not(feature = "time_stat_samples"))]
+        return write!(
             f,
             "{{ min: {}ms, mean: {}ms, max: {}ms}}",
             self.min.unwrap_or_default().as_millis(),
             self.mean().as_millis(),
             self.max.unwrap_or_default().as_millis()
-        )
+        );
+        #[cfg(feature = "time_stat_samples")]
+        return write!(
+            f,
+            "{{ min: {}ms, mean: {}ms, max: {}ms, fps: {:>7.2}}}",
+            self.min.unwrap_or_default().as_millis(),
+            self.mean().as_millis(),
+            self.max.unwrap_or_default().as_millis(),
+            self.fps()
+        );
     }
 }

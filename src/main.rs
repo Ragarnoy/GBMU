@@ -84,7 +84,7 @@ fn main() {
                 let time = now.elapsed();
                 time_frame_stat.add_sample(time);
                 log::info!(
-                    "frame ready: current={}ms stat={}",
+                    "frame computed: current={}ms stat={}",
                     time.as_millis(),
                     time_frame_stat
                 );
@@ -165,8 +165,11 @@ fn main() {
         {
             let time = now_render.elapsed();
             render_time_frame.add_sample(time);
-            #[cfg(feature = "time_stat_samples")]
-            log::info!("{:.2} fps", render_time_frame.fps() as f32);
+            log::info!(
+                "frame rendered: current={}ms stat={}",
+                time.as_millis(),
+                render_time_frame
+            );
         }
     }
     log::info!("quitting");
