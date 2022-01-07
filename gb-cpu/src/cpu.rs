@@ -5,7 +5,7 @@ use gb_bus::Bus;
 use gb_clock::Ticker;
 use std::{cell::RefCell, rc::Rc};
 
-#[derive(Default, Debug, Clone)]
+#[derive(Default, Debug)]
 pub struct Cpu {
     pub registers: Registers,
     pub controller: MicrocodeController,
