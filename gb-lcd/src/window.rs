@@ -1,6 +1,7 @@
 use crate::error::Error;
 use egui::CtxRef;
 use egui_sdl2_gl::{painter::Painter, DpiScaling, EguiStateHandler, ShaderVersion};
+use sdl2::video::SwapInterval;
 use sdl2::{
     event::Event,
     video::{GLContext, Window as SdlWindow},
@@ -41,6 +42,10 @@ impl GBWindow {
 
         let gl_ctx = sdl_window
             .gl_create_context()
+            .map_err(Error::GBWindowInit)?;
+
+        video_sys
+            .gl_set_swap_interval(SwapInterval::Immediate)
             .map_err(Error::GBWindowInit)?;
 
         let (egui_painter, egui_state) = egui_sdl2_gl::with_sdl2(
