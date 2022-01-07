@@ -421,9 +421,8 @@ pub fn game_save_path(rom_filename: &str) -> String {
 
 /// Return the root path of the config folder
 pub fn game_root_config_path() -> String {
-    let path = sdl2::filesystem::pref_path(crate::constant::ORG_NAME, crate::constant::APP_NAME)
-        .expect("a prefered config");
-    path
+    sdl2::filesystem::pref_path(crate::constant::ORG_NAME, crate::constant::APP_NAME)
+        .expect("a prefered config")
 }
 
 /// Create a standardize rom name id
