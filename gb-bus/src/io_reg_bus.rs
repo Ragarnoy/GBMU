@@ -4,6 +4,7 @@ use std::{cell::RefCell, collections::BTreeMap, rc::Rc};
 type IORegElement = dyn FileOperation<Addr<IORegArea>, IORegArea>;
 type IORegNode = Rc<RefCell<IORegElement>>;
 
+#[derive(Default)]
 pub struct IORegBus {
     areas: BTreeMap<IORegArea, IORegNode>,
 }
@@ -156,5 +157,13 @@ impl IORegBusBuilder {
 
     pub fn build(self) -> IORegBus {
         IORegBus { areas: self.areas }
+    }
+}
+
+impl From<IORegBus> for IORegBusBuilder {
+    fn from(bus: IORegBus) -> Self {
+        Self {
+            areas: bus.areas
+        }
     }
 }
