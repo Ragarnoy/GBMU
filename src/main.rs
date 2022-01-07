@@ -4,7 +4,7 @@ mod custom_event;
 mod event;
 mod logger;
 mod settings;
-#[cfg(feature = "time_frame")]
+#[cfg(any(feature = "time_frame", feature = "debug_fps"))]
 mod time_frame;
 mod ui;
 mod windows;
@@ -18,6 +18,8 @@ use gb_lcd::{render, window::GBWindow};
 use logger::init_logger;
 use std::cell::RefCell;
 use std::rc::Rc;
+#[cfg(any(feature = "time_frame", feature = "debug_fps"))]
+use std::time::Instant;
 use windows::Windows;
 
 #[derive(Parser, Debug)]
@@ -55,20 +57,21 @@ fn main() {
     let opts: Opts = Opts::parse();
     #[cfg(feature = "time_frame")]
     let mut time_frame_stat = time_frame::TimeStat::default();
+    #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
+    let mut render_time_frame = time_frame::TimeStat::default();
     init_logger(opts.log_level);
 
     let (mut context, mut game, mut debugger, mut event_pump) = init_gbmu(&opts);
 
     'running: loop {
+        #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
+        let now_render = Instant::now();
         context
             .windows
             .main
             .start_frame()
             .expect("Fail at the start for the main window");
         if let Some(ref mut game) = game {
-            #[cfg(feature = "time_frame")]
-            use std::time::Instant;
-
             #[cfg(feature = "time_frame")]
             let now = Instant::now();
             while game.cycle() {
@@ -81,7 +84,7 @@ fn main() {
                 let time = now.elapsed();
                 time_frame_stat.add_sample(time);
                 log::info!(
-                    "frame ready: current={}ms stat={}",
+                    "frame computed: current={}ms stat={}",
                     time.as_millis(),
                     time_frame_stat
                 );
@@ -100,7 +103,10 @@ fn main() {
                 dgb_wind
                     .start_frame()
                     .expect("Fail at the start for the debug window");
-                debugger.draw(dgb_wind.egui_ctx(), game);
+                #[cfg(not(feature = "debug_fps"))]
+                debugger.draw(dgb_wind.egui_ctx(), game, None);
+                #[cfg(feature = "debug_fps")]
+                debugger.draw(dgb_wind.egui_ctx(), game, Some(render_time_frame.fps()));
                 dgb_wind
                     .end_frame()
                     .expect("Fail at the end for the debug window");
@@ -157,6 +163,17 @@ fn main() {
 
         if std::ops::ControlFlow::Break(()) == event::process_event(&mut context, &mut event_pump) {
             break 'running;
+        }
+        #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
+        {
+            let time = now_render.elapsed();
+            render_time_frame.add_sample(time);
+            #[cfg(feature = "time_frame")]
+            log::info!(
+                "frame rendered: current={}ms stat={}",
+                time.as_millis(),
+                render_time_frame
+            );
         }
     }
     log::info!("quitting");

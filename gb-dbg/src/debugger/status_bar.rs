@@ -16,13 +16,16 @@ const SELECT_ACTION: u16 = 0b0010_0000;
 pub struct StatusBar;
 
 impl StatusBar {
-    pub fn draw<DBG: DebugOperations>(&self, ui: &mut Ui, regs: &DBG) {
+    pub fn draw<DBG: DebugOperations>(&self, ui: &mut Ui, regs: &DBG, fps: Option<f64>) {
         ui.vertical(|ui| {
             ui.colored_label(Color32::LIGHT_BLUE, "Status");
             ui.separator();
             ui.horizontal(|ui| {
                 display_flags(ui, u16::from(regs.cpu_get(CpuRegs::AF)));
                 display_key(ui, u16::from(regs.io_get(IORegs::Joy)));
+                if let Some(fps_count) = fps {
+                    display_fps(ui, fps_count);
+                }
             });
         });
     }
@@ -68,4 +71,9 @@ fn display_flags(ui: &mut Ui, af_reg: u16) {
     }
     ui.colored_label(Color32::GOLD, "Flags: ");
     ui.colored_label(Color32::WHITE, f_display.into_iter().collect::<String>());
+}
+
+fn display_fps(ui: &mut Ui, fps: f64) {
+    ui.colored_label(Color32::GOLD, "FPS: ");
+    ui.colored_label(Color32::WHITE, format!("{:>7.2}", fps));
 }

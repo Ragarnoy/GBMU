@@ -81,6 +81,8 @@ You can customize the build by activating certain feature by using the `--featur
 | Name                         | Description                                           | Require                                                       |
 | ---------------------------- | ----------------------------------------------------- | ------------------------------------------------------------- |
 | time_frame                   | log the time taken to generate a frame                |                                                               |
+| time_stat_samples            | time stat can show the average fps of previous frames |                                                               |
+| debug_fps                    | show fps of previous frames in the debugger           | `time_stat_samples`                                           |
 | gb-lcd/debug_render          | allow the lcd's part to be debugged such as VRAM, OAM |                                                               |
 | debug_render                 | change the UI to be able to lauch lcd's debug tools   | `gb-lcd/debug_render`                                         |
 | gb-cpu/registers_logs        | at each opcode log the state of the cpu register      |                                                               |

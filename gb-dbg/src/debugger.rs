@@ -30,7 +30,7 @@ pub struct Debugger<DBGOPS> {
 }
 
 impl<DBGOPS: DebugOperations> Debugger<DBGOPS> {
-    pub fn draw(&mut self, ui_ctx: &CtxRef, game_ctx: &mut DBGOPS) {
+    pub fn draw(&mut self, ui_ctx: &CtxRef, game_ctx: &mut DBGOPS, fps: Option<f64>) {
         // ctx.set_debug_on_hover(true);
 
         // Set style for all UI
@@ -96,7 +96,7 @@ impl<DBGOPS: DebugOperations> Debugger<DBGOPS> {
                         self.disassembler.draw(ui);
                         ui.end_row();
 
-                        self.status_bar.draw(ui, game_ctx);
+                        self.status_bar.draw(ui, game_ctx, fps);
                         ui.end_row();
 
                         self.register_editor.draw(ui, game_ctx);
