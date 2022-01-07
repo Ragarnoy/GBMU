@@ -17,7 +17,7 @@ use gb_joypad::Joypad;
 use gb_lcd::render::{RenderImage, SCREEN_HEIGHT, SCREEN_WIDTH};
 use gb_ppu::Ppu;
 use gb_roms::{
-    controllers::{bios, generate_rom_controller, BiosWrapper, MbcController},
+    controllers::{bios, generate_rom_controller, BiosWrapper, Generic},
     header::AutoSave,
     Header,
 };
@@ -38,7 +38,7 @@ pub struct Game {
     pub romname: String,
     pub header: Header,
     pub auto_save: Option<AutoSave>,
-    pub mbc: Rc<RefCell<MbcController>>,
+    pub mbc: Rc<RefCell<Generic>>,
     pub cpu: Cpu,
     pub ppu: Ppu,
     pub clock: Clock,
@@ -359,18 +359,18 @@ fn mbc_with_save_state(
     romname: &str,
     header: &Header,
     file: std::fs::File,
-) -> anyhow::Result<MbcController> {
+) -> anyhow::Result<Generic> {
     let mut mbc = generate_rom_controller(file, header.clone())?;
 
     {
-        use gb_roms::controllers::MbcStates;
+        use gb_roms::controllers::GenericState;
         use rmp_serde::decode::from_read;
         use std::fs::File;
 
         let filename = game_save_path(romname);
         if let Ok(file) = File::open(&filename) {
             log::info!("found auto save file at {}", filename);
-            if let Err(e) = from_read(file).map(|state: MbcStates| mbc.with_state(state)) {
+            if let Err(e) = from_read(file).map(|state: GenericState| mbc.load_state(state)) {
                 log::error!(
                     "while loading data into mbc, got the following error: {}",
                     e
@@ -388,7 +388,6 @@ impl Drop for Game {
     fn drop(&mut self) {
         if self.auto_save == Some(AutoSave::Ram) || self.auto_save == Some(AutoSave::RamTimer) {
             use anyhow::Error;
-            use core::ops::Deref;
             use rmp_serde::encode::write_named;
             use std::fs::OpenOptions;
 
@@ -399,7 +398,7 @@ impl Drop for Game {
                 .open(&filename)
                 .map_err(Error::from)
                 .and_then(|mut file| {
-                    write_named(&mut file, self.mbc.borrow().deref()).map_err(Error::from)
+                    write_named(&mut file, &self.mbc.borrow().save_state()).map_err(Error::from)
                 }) {
                 Ok(_) => log::info!("successfuly save mbc data to {}", filename),
                 Err(e) => {
@@ -456,7 +455,7 @@ impl MemoryDebugOperations for Game {
         self.addr_bus
             .read(index, Some(Lock::Debugger))
             .unwrap_or_else(|err| {
-                log::error!("[DBG-OPS] bus read error at {}: {:?}", index, err);
+                log::trace!("[DBG-OPS] bus read error at {}: {:?}", index, err);
                 0xff
             })
     }

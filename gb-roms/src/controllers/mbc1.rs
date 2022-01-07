@@ -1,429 +1,191 @@
-use super::{Controller, MbcStates, RAM_BANK_SIZE, ROM_BANK_SIZE};
-use crate::header::{
-    size::{RamSize, RomSize},
-    Header,
-};
-use gb_bus::{Address, Area, Error, FileOperation};
-use std::io::{self, Read};
+use crate::controllers::RAM_BANK_SIZE;
+use crate::Header;
 
-pub struct MBC1 {
-    configuration: Configuration,
-    rom_banks: Vec<[u8; ROM_BANK_SIZE]>,
-    ram_banks: Vec<[u8; RAM_BANK_SIZE]>,
-    regs: MBC1Reg,
+use super::{Controller, ROM_BANK_SIZE};
+
+pub fn new_controller(header: Header) -> Box<Mbc1> {
+    Box::new(Mbc1 {
+        rom_banks: header.rom_size.get_bank_amounts(),
+        ram_banks: header.ram_size.get_bank_amounts(),
+        ..Default::default()
+    })
 }
 
-impl MBC1 {
-    pub const MAX_ROM_BANK: usize = 0x80;
-    pub const MAX_RAM_BANK: usize = 0x4;
-
-    pub fn new(header: Header) -> Self {
-        let ram_banks = header.ram_size.get_bank_amounts();
-        let rom_banks = header.rom_size.get_bank_amounts();
-
-        Self {
-            configuration: Configuration::from_sizes(header.ram_size, header.rom_size),
-            rom_banks: vec![[0_u8; ROM_BANK_SIZE]; rom_banks],
-            ram_banks: vec![[0_u8; RAM_BANK_SIZE]; ram_banks],
-            regs: MBC1Reg::default(),
-        }
-    }
-
-    pub fn from_file(mut file: impl Read, header: Header) -> Result<Self, io::Error> {
-        let mut ctl = Self::new(header);
-
-        for e in ctl.rom_banks.iter_mut() {
-            file.read_exact(e)?;
-        }
-        Ok(ctl)
-    }
-
-    pub fn with_state(&mut self, state: MbcState) -> Result<&Self, String> {
-        self.ram_banks = state
-            .ram_banks
-            .into_iter()
-            .map(<[u8; RAM_BANK_SIZE]>::try_from)
-            .collect::<Result<Vec<[u8; RAM_BANK_SIZE]>, Vec<u8>>>()
-            .map_err(|faulty| {
-                format!(
-                    "invalid state banks size, expected {}, got {}",
-                    RAM_BANK_SIZE,
-                    faulty.len()
-                )
-            })?;
-
-        Ok(self)
-    }
-
-    pub fn get_state(&self) -> MbcState {
-        MbcState::from(self.ram_banks.clone())
-    }
-
-    fn write_rom<A>(&mut self, v: u8, addr: A) -> Result<(), Error>
-    where
-        u16: From<A>,
-        A: Address<Area>,
-    {
-        match addr.get_address() {
-            0x0000..=0x1fff => self.regs.ram_enabled = (v & 0xf) == 0xa,
-            0x2000..=0x3fff => {
-                let index = v & 0x1f;
-                self.regs.rom_number = if index == 0 { 1 } else { index };
-            }
-            0x4000..=0x5fff => {
-                self.regs.special = v & 0x3;
-            }
-            0x6000..=0x7fff => {
-                self.regs.banking_mode = if (v & 1) == 1 {
-                    BankingMode::Advanced
-                } else {
-                    BankingMode::Simple
-                }
-            }
-            _ => return Err(Error::new_segfault(addr.into())),
-        }
-        Ok(())
-    }
-
-    fn read_rom<A>(&self, addr: A) -> Result<u8, Error>
-    where
-        u16: From<A>,
-        A: Address<Area>,
-    {
-        let address = addr.get_address();
-        let is_root_bank = address < 0x4000;
-        let rom = self.get_selected_rom(is_root_bank);
-
-        if is_root_bank {
-            Ok(rom[address])
-        } else {
-            let address = address - 0x4000;
-            Ok(rom[address])
-        }
-    }
-
-    fn get_selected_rom(&self, root_bank: bool) -> &[u8; ROM_BANK_SIZE] {
-        let index = if root_bank {
-            self.get_main_rom_index()
-        } else {
-            self.get_extra_rom_index()
-        };
-
-        &self.rom_banks[index]
-    }
-
-    /// Return the rom index for the area 0x0000-0x3fff
-    fn get_main_rom_index(&self) -> usize {
-        if self.regs.banking_mode == BankingMode::Simple
-            || self.configuration != Configuration::LargeRom
-        {
-            0
-        } else {
-            self.get_rom_index_special()
-        }
-    }
-
-    fn get_rom_index_special(&self) -> usize {
-        ((self.regs.special & 3) << 5) as usize
-    }
-
-    /// Return the rom index for the area 0x4000-0x7fff
-    fn get_extra_rom_index(&self) -> usize {
-        let upper_index = self.get_rom_index_special();
-        let index = self.regs.rom_number & 0x1f;
-
-        if index == 0 {
-            upper_index | 1
-        } else {
-            upper_index | index as usize
-        }
-    }
-
-    fn write_ram<A>(&mut self, v: u8, addr: A) -> Result<(), Error>
-    where
-        u16: From<A>,
-        A: Address<Area>,
-    {
-        if !self.regs.ram_enabled {
-            return Err(Error::new_segfault(addr.into()));
-        }
-        let ram = self.get_selected_ram_mut();
-        let address = addr.get_address();
-        ram[address] = v;
-        Ok(())
-    }
-
-    fn read_ram<A>(&self, addr: A) -> Result<u8, Error>
-    where
-        u16: From<A>,
-        A: Address<Area>,
-    {
-        if !self.regs.ram_enabled {
-            return Err(Error::new_segfault(addr.into()));
-        }
-        let ram = self.get_selected_ram();
-        let address = addr.get_address();
-        Ok(ram[address])
-    }
-
-    fn get_selected_ram_mut(&mut self) -> &mut [u8; RAM_BANK_SIZE] {
-        let index = self.get_ram_index();
-
-        &mut self.ram_banks[index]
-    }
-
-    fn get_selected_ram(&self) -> &[u8; RAM_BANK_SIZE] {
-        &self.ram_banks[self.get_ram_index()]
-    }
-
-    fn get_ram_index(&self) -> usize {
-        if self.regs.banking_mode == BankingMode::Simple
-            || self.configuration != Configuration::LargeRam
-        {
-            0
-        } else {
-            (self.regs.special & 0x3) as usize
-        }
-    }
-}
-
-impl<A> FileOperation<A, Area> for MBC1
-where
-    u16: From<A>,
-    A: Address<Area>,
-{
-    fn write(&mut self, v: u8, addr: A) -> Result<(), Error> {
-        match addr.area_type() {
-            Area::Rom => self.write_rom(v, addr),
-            Area::Ram => self.write_ram(v, addr),
-            _ => Err(Error::bus_error(addr.into())),
-        }
-    }
-
-    fn read(&self, addr: A) -> Result<u8, Error> {
-        match addr.area_type() {
-            Area::Rom => self.read_rom(addr),
-            Area::Ram => self.read_ram(addr),
-            _ => Err(Error::bus_error(addr.into())),
-        }
-    }
-}
-
-#[derive(serde::Serialize, serde::Deserialize)]
-pub struct MbcState {
-    ram_banks: Vec<Vec<u8>>,
-}
-
-impl From<Vec<[u8; RAM_BANK_SIZE]>> for MbcState {
-    fn from(banks: Vec<[u8; RAM_BANK_SIZE]>) -> Self {
-        Self {
-            ram_banks: banks.iter().map(|bank| bank.to_vec()).collect(),
-        }
-    }
-}
-
-impl Controller for MBC1 {
-    fn save(&self) -> MbcStates {
-        MbcStates::Mbc1(self.get_state())
-    }
-}
-
-#[cfg(test)]
-mod test_mbc1 {
-    use super::{BankingMode, Configuration, MBC1};
-    use crate::header::{
-        size::{RamSize, RomSize},
-        Header,
-    };
-    use gb_bus::{address::Addr, Area};
-
-    #[test]
-    fn test_extra_rom_default_selection() {
-        let mut ctl = MBC1::new(Header {
-            ram_size: RamSize::KByte8,
-            rom_size: RomSize::KByte256,
-            ..Default::default()
-        });
-
-        ctl.regs.rom_number = 0;
-        assert_eq!(ctl.get_extra_rom_index(), 1);
-
-        ctl.regs.rom_number = 2;
-        assert_eq!(ctl.get_extra_rom_index(), 2);
-    }
-
-    #[test]
-    fn basic_card() {
-        let mut ctl = MBC1::new(Header {
-            ram_size: RamSize::KByte8,
-            rom_size: RomSize::KByte256,
-            ..Default::default()
-        });
-
-        assert_eq!(ctl.configuration, Configuration::Basic);
-        assert_eq!(ctl.ram_banks.len(), RamSize::KByte8.get_bank_amounts());
-        assert_eq!(ctl.rom_banks.len(), RomSize::KByte256.get_bank_amounts());
-
-        assert_eq!(ctl.get_main_rom_index(), 0);
-        assert_eq!(ctl.get_extra_rom_index(), 1);
-        assert_eq!(ctl.get_ram_index(), 0);
-
-        ctl.regs.rom_number = 11;
-        ctl.regs.special = 2;
-
-        assert_eq!(ctl.get_main_rom_index(), 0);
-        assert_eq!(ctl.get_extra_rom_index(), (2 << 5) | 11);
-        assert_eq!(ctl.get_ram_index(), 0);
-
-        ctl.regs.banking_mode = BankingMode::Advanced;
-
-        assert_eq!(ctl.get_main_rom_index(), 0);
-        assert_eq!(ctl.get_extra_rom_index(), (2 << 5) | 11);
-        assert_eq!(ctl.get_ram_index(), 0);
-
-        ctl.regs.rom_number = 1;
-        ctl.regs.special = 0;
-        ctl.regs.banking_mode = BankingMode::Simple;
-
-        ctl.rom_banks[0][0x3fff] = 51;
-        ctl.rom_banks[1][0] = 42;
-        let b = ctl
-            .read_rom(Addr::from_offset(Area::Rom, 0x3fff, 0))
-            .expect("failed to read");
-        assert_eq!(b, 51);
-        let b = ctl
-            .read_rom(Addr::from_offset(Area::Rom, 0x4000, 0))
-            .expect("failed to read");
-        assert_eq!(b, 42);
-    }
-
-    #[test]
-    fn large_rom() {
-        let mut ctl = MBC1::new(Header {
-            ram_size: RamSize::KByte8,
-            rom_size: RomSize::MByte1,
-            ..Default::default()
-        });
-
-        assert_eq!(ctl.configuration, Configuration::LargeRom);
-        assert_eq!(ctl.ram_banks.len(), RamSize::KByte8.get_bank_amounts());
-        assert_eq!(ctl.rom_banks.len(), RomSize::MByte1.get_bank_amounts());
-
-        assert_eq!(ctl.get_main_rom_index(), 0);
-        assert_eq!(ctl.get_extra_rom_index(), 1);
-        assert_eq!(ctl.get_ram_index(), 0);
-
-        ctl.regs.rom_number = 11;
-        ctl.regs.special = 3;
-
-        assert_eq!(ctl.get_main_rom_index(), 0);
-        assert_eq!(ctl.get_extra_rom_index(), (3 << 5) | 11);
-        assert_eq!(ctl.get_ram_index(), 0);
-
-        ctl.regs.banking_mode = BankingMode::Advanced;
-
-        assert_eq!(ctl.get_main_rom_index(), 3 << 5);
-        assert_eq!(ctl.get_extra_rom_index(), (3 << 5) | 11);
-        assert_eq!(ctl.get_ram_index(), 0);
-    }
-
-    #[test]
-    fn large_ram() {
-        let mut ctl = MBC1::new(Header {
-            ram_size: RamSize::KByte32,
-            rom_size: RomSize::KByte256,
-            ..Default::default()
-        });
-
-        assert_eq!(ctl.configuration, Configuration::LargeRam);
-        assert_eq!(ctl.ram_banks.len(), RamSize::KByte32.get_bank_amounts());
-        assert_eq!(ctl.rom_banks.len(), RomSize::KByte256.get_bank_amounts());
-
-        assert_eq!(ctl.get_main_rom_index(), 0);
-        assert_eq!(ctl.get_extra_rom_index(), 1);
-        assert_eq!(ctl.get_ram_index(), 0);
-
-        ctl.regs.rom_number = 11;
-        ctl.regs.special = 3;
-
-        assert_eq!(ctl.get_main_rom_index(), 0);
-        assert_eq!(ctl.get_extra_rom_index(), (3 << 5) | 11);
-        assert_eq!(ctl.get_ram_index(), 0);
-
-        ctl.regs.banking_mode = BankingMode::Advanced;
-
-        assert_eq!(ctl.get_main_rom_index(), 0);
-        assert_eq!(ctl.get_extra_rom_index(), (3 << 5) | 11);
-        assert_eq!(ctl.get_ram_index(), 3);
-    }
-}
-
-struct MBC1Reg {
-    /// Enable READ/WRITE operation on RAM
+pub struct Mbc1 {
+    /// Number of ROM banks
+    rom_banks: usize,
+    /// Number of RAM banks
+    ram_banks: usize,
+    /// Register that enable to perform action on the RAM
     ram_enabled: bool,
-    /// Select ROM bank id in area 0x4000-0xbfff
-    rom_number: u8,
-    /// Special register that can be used to specify:
-    /// - Rom Bank Number (0x[0246]0) on LargeROM on are 0x0000-0x3fff
-    /// - Ram Bank Number on LargeRAM
-    special: u8,
-    /// This register has no effect when the controller is not in Large Ram/Rom
-    banking_mode: BankingMode,
+    /// Lower register to select the BANK for the ROM
+    bank_1: u8,
+    /// Special register that depending on the mode will:
+    /// - select the RAM bank
+    /// - be the upper part of the ROM bank
+    bank_2: u8,
+    /// This register determine the behavior of the [special] register
+    advance_mode: bool,
 }
 
-impl Default for MBC1Reg {
+impl Default for Mbc1 {
     fn default() -> Self {
         Self {
+            rom_banks: 0,
+            ram_banks: 0,
+            bank_1: 1,
+            bank_2: 0,
+            advance_mode: false,
             ram_enabled: false,
-            rom_number: 1,
-            special: 0,
-            banking_mode: BankingMode::Simple,
         }
     }
 }
 
-#[derive(PartialEq, Eq)]
-enum BankingMode {
-    Simple,
-    Advanced,
-}
+impl Controller for Mbc1 {
+    fn sizes(&self) -> (usize, Option<usize>) {
+        (
+            self.rom_banks * ROM_BANK_SIZE,
+            if self.ram_banks > 0 {
+                Some(self.ram_banks * RAM_BANK_SIZE)
+            } else {
+                None
+            },
+        )
+    }
 
-#[derive(Debug, PartialEq, Eq)]
-enum Configuration {
-    /// When Card has one of:
-    /// <= 8 KiB RAM
-    /// <= 512 KiB ROM
-    Basic,
-    /// Rom mode when mbc1 has >= 1MiB
-    LargeRom,
-    /// Ram mode when mbc1 has > 8KiB RAM
-    LargeRam,
-}
+    fn save_to_slice(&self) -> Vec<u8> {
+        vec![
+            self.ram_enabled as u8,
+            self.bank_1,
+            self.bank_2,
+            self.advance_mode as u8,
+        ]
+    }
 
-impl Configuration {
-    fn from_sizes(ram: RamSize, rom: RomSize) -> Self {
-        if rom >= RomSize::MByte1 {
-            Self::LargeRom
-        } else if ram > RamSize::KByte8 {
-            Self::LargeRam
-        } else {
-            Self::Basic
+    fn load_from_slice(&mut self, slice: &[u8]) {
+        self.ram_enabled = slice[0] != 0;
+        self.bank_1 = slice[1] & 0x1f;
+        self.bank_2 = slice[2] & 2;
+        self.advance_mode = slice[3] != 0;
+    }
+
+    fn write_rom(&mut self, v: u8, addr: u16) {
+        match (addr >> 8) & 0xff {
+            0x00..=0x1f => {
+                self.ram_enabled = v & 0xf == 0xa;
+                #[cfg(feature = "debug_mbcs_register")]
+                log::debug!("ram_enabled={}", self.ram_enabled);
+            }
+            0x20..=0x3f => {
+                self.bank_1 = (v & 0x1f).max(1);
+                #[cfg(feature = "debug_mbcs_register")]
+                log::debug!("bank_1={}", self.bank_1);
+            }
+            0x40..=0x5f => {
+                self.bank_2 = v & 3;
+                #[cfg(feature = "debug_mbcs_register")]
+                log::debug!("bank_2={:x}", self.bank_2);
+            }
+            0x60..=0x7f => {
+                self.advance_mode = v & 1 != 0;
+                #[cfg(feature = "debug_mbcs_register")]
+                log::debug!("advance_mode={}", self.advance_mode);
+            }
+            _ => {}
         }
+    }
+
+    fn override_read_ram(&self, _addr: u16) -> Option<u8> {
+        None
+    }
+
+    fn override_write_ram(&mut self, _v: u8, _addr: u16) -> Option<()> {
+        None
+    }
+
+    fn offset_ram_addr(&self, addr: u16) -> usize {
+        let bank_number = raw_effective_ram_bank(self.bank_2, self.advance_mode);
+        ((bank_number % self.ram_banks) * RAM_BANK_SIZE) | (addr & 0x1fff) as usize
+    }
+
+    fn offset_rom_addr(&self, addr: u16) -> usize {
+        let bank_number = raw_effective_rom_bank(self.bank_1, self.bank_2, self.advance_mode, addr);
+        ((bank_number % self.rom_banks) * ROM_BANK_SIZE) | (addr & 0x3fff) as usize
+    }
+
+    fn ram_enabled(&self) -> bool {
+        self.ram_banks > 0 && self.ram_enabled
+    }
+}
+
+fn raw_effective_rom_bank(bank_1: u8, bank_2: u8, advance_mode: bool, addr: u16) -> usize {
+    match addr >> 8 {
+        0x00..=0x3f => {
+            if advance_mode {
+                (bank_2 << 5) as usize
+            } else {
+                0
+            }
+        }
+        0x40..=0x7f => (bank_2 << 5 | bank_1) as usize,
+        _ => panic!("unexpected addr to offset {:04x}", addr),
+    }
+}
+
+fn raw_effective_ram_bank(bank_2: u8, mode: bool) -> usize {
+    if mode {
+        bank_2 as usize
+    } else {
+        0
     }
 }
 
 #[test]
-fn test_conf_sizes() {
+fn t_raw_effective_rom_bank() {
+    assert_eq!(raw_effective_rom_bank(0x12, 1, false, 0x4000), 0x32);
+    assert_eq!(raw_effective_rom_bank(0x12, 1, false, 0x0000), 0);
+    assert_eq!(raw_effective_rom_bank(0x12, 1, true, 0x0000), 0x20);
+}
+
+#[test]
+fn offset_rom_addr() {
+    let bank_1 = 4;
+    let bank_2 = 2;
+    let mbc = Mbc1 {
+        rom_banks: usize::MAX,
+        bank_1,
+        bank_2,
+        ..Default::default()
+    };
+
+    let addr = 0x72a7;
+    let expect = 0x1132a7;
+    assert_eq!(raw_effective_rom_bank(bank_1, bank_2, false, addr), 0x44);
+    let res = mbc.offset_rom_addr(addr);
     assert_eq!(
-        Configuration::from_sizes(RamSize::KByte8, RomSize::MByte1),
-        Configuration::LargeRom
+        res, expect,
+        "res = {0:x}({0:b}), expect = {1:x}({1:b})",
+        res, expect
     );
+}
+
+#[test]
+fn offset_ram_addr() {
+    let bank_2 = 2;
+    let mbc = Mbc1 {
+        ram_banks: usize::MAX,
+        bank_2,
+        advance_mode: true,
+        ..Default::default()
+    };
+
+    assert_eq!(raw_effective_ram_bank(bank_2, true), bank_2 as usize);
+    let addr = 0xb123;
+    let expect = 0x5123;
+    let res = mbc.offset_ram_addr(addr);
     assert_eq!(
-        Configuration::from_sizes(RamSize::KByte32, RomSize::KByte256),
-        Configuration::LargeRam
+        res, expect,
+        "res = {0:x}({0:b}), expect = {1:x}({1:b})",
+        res, expect
     );
-    assert_eq!(
-        Configuration::from_sizes(RamSize::KByte8, RomSize::KByte512),
-        Configuration::Basic
-    )
 }

@@ -1,5 +1,5 @@
 use gb_bus::constant::{
-    ERAM_START, ERAM_STOP, HRAM_START, HRAM_STOP, RAM_START, RAM_STOP, ROM_START, ROM_STOP,
+    EXT_RAM_START, EXT_RAM_STOP, HRAM_START, HRAM_STOP, RAM_START, RAM_STOP, ROM_START, ROM_STOP,
     VRAM_START, VRAM_STOP,
 };
 use std::ops::Range;
@@ -14,9 +14,9 @@ impl Default for DebuggerOptions {
     fn default() -> Self {
         Self {
             address_ranges: vec![
-                ("ROM", ROM_START..ROM_STOP),
                 ("VRAM", VRAM_START..VRAM_STOP),
-                ("ERAM", ERAM_START..ERAM_STOP),
+                ("EXT_RAM", EXT_RAM_START..EXT_RAM_STOP),
+                ("ROM", ROM_START..ROM_STOP),
                 ("RAM", RAM_START..RAM_STOP),
                 ("HRAM", HRAM_START..HRAM_STOP),
             ],
