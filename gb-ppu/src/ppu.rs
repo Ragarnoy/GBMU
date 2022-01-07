@@ -47,7 +47,7 @@ pub struct Ppu {
     pixel_fetcher: PixelFetcher,
     state: State,
     scanline_sprites: Vec<Sprite>,
-    offset: u8,
+    pixel_discarded: u8,
     scx: u8,
 }
 
@@ -64,7 +64,7 @@ impl Ppu {
             pixel_fetcher: PixelFetcher::new(),
             state: State::new(),
             scanline_sprites: Vec::with_capacity(10),
-            offset: 0,
+            pixel_discarded: 0,
             scx: 0,
         }
     }
@@ -138,9 +138,9 @@ impl Ppu {
         let vram = self.vram.borrow();
         let lcd_reg = self.lcd_reg.borrow();
         let scx = lcd_reg.scrolling.scx as usize;
-        let scx_bot = (scx + 160) % 255;
+        let scx_bot = (scx + 160) & 0xff;
         let scy = lcd_reg.scrolling.scy as usize;
-        let scy_bot = (scy + 144) % 255;
+        let scy_bot = (scy + 144) & 0xff;
         for k in 0..TILEMAP_TILE_COUNT {
             let index = vram
                 .get_map_tile_index(
@@ -411,47 +411,56 @@ impl Ppu {
                 self.state.clear_pixel_count();
                 // reverse the sprites order so the ones on the left of the viewport are the first to pop
                 self.scanline_sprites = self.scanline_sprites.drain(0..).rev().collect();
+                self.scx = lcd_reg.scrolling.scx;
+                self.pixel_discarded = 0;
                 Self::check_next_pixel_mode(
                     &lcd_reg,
                     &mut self.pixel_fetcher,
                     &mut self.pixel_fifo,
                     &mut self.scanline_sprites,
                     (x, y),
+                    self.pixel_discarded,
+                    (self.scx & 7) + 8,
                 );
-                self.offset = 0;
-                self.scx = lcd_reg.scrolling.scx;
             }
+            let pixel_offset = (self.scx & 7) + 8;
             if let Some(Lock::Ppu) = lock {
                 let vram = self.vram.borrow();
                 if self.pixel_fifo.enabled && x < SCREEN_WIDTH as u8 {
                     if let Some(pixel) = self.pixel_fifo.pop() {
-                        let offset = self.scx % 8;
-                        if self.pixel_fetcher.mode() == FetchMode::Window
-                            || self.state.pixel_drawn() > 0
-                            || self.offset >= offset
-                        {
+                        if self.pixel_fetcher.mode() == FetchMode::Window {
+                            self.pixel_discarded = pixel_offset;
+                        }
+                        if self.state.pixel_drawn() > 0 || self.pixel_discarded >= pixel_offset {
                             self.next_pixels[y as usize][x as usize] = Color::from(pixel).into();
                             self.state.draw_pixel();
                             x += 1;
-                            Self::check_next_pixel_mode(
-                                &lcd_reg,
-                                &mut self.pixel_fetcher,
-                                &mut self.pixel_fifo,
-                                &mut self.scanline_sprites,
-                                (x, y),
-                            );
                         } else {
-                            self.offset += 1;
+                            self.pixel_discarded += 1;
                         }
+                        Self::check_next_pixel_mode(
+                            &lcd_reg,
+                            &mut self.pixel_fetcher,
+                            &mut self.pixel_fifo,
+                            &mut self.scanline_sprites,
+                            (x, y),
+                            self.pixel_discarded,
+                            pixel_offset,
+                        );
                     };
                 }
+                let pixels_not_drawn = if self.pixel_fetcher.mode() != FetchMode::Window {
+                    self.pixel_fifo.count() + self.pixel_discarded.min(8) as usize
+                } else {
+                    self.pixel_fifo.count()
+                };
                 self.pixel_fetcher.fetch(
                     &vram,
                     &lcd_reg,
                     y as usize,
                     x as usize,
-                    self.pixel_fifo.count(),
-                    self.scx as usize,
+                    pixels_not_drawn,
+                    self.scx as usize & 0xff,
                 );
                 if self.pixel_fetcher.push_to_fifo(&mut self.pixel_fifo) {
                     Self::check_next_pixel_mode(
@@ -460,6 +469,8 @@ impl Ppu {
                         &mut self.pixel_fifo,
                         &mut self.scanline_sprites,
                         (x, y),
+                        self.pixel_discarded,
+                        pixel_offset,
                     );
                 }
             }
@@ -474,6 +485,8 @@ impl Ppu {
         pixel_fifo: &mut PixelFIFO,
         sprites: &mut Vec<Sprite>,
         cursor: (u8, u8),
+        pixels_discarded: u8,
+        pixel_offset: u8,
     ) {
         let (x, y) = cursor;
         pixel_fifo.enabled = true;
@@ -495,7 +508,9 @@ impl Ppu {
         // check for sprite eventually
         if pixel_fifo.count() >= 8 {
             if let Some(sprite) = sprites.pop() {
-                if sprite.x_pos() == x + Sprite::HORIZONTAL_OFFSET {
+                let viewport_x_at_sprite_scale = x + Sprite::HORIZONTAL_OFFSET;
+                let pixels_to_skip_before_viewport = pixel_offset - pixels_discarded;
+                if sprite.x_pos() == viewport_x_at_sprite_scale - pixels_to_skip_before_viewport {
                     pixel_fetcher.set_mode_to_sprite(sprite);
                     pixel_fifo.enabled = false;
                 } else {
