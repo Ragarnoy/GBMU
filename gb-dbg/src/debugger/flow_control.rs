@@ -14,13 +14,13 @@ impl FlowController {
             log::debug!("clicked on pause");
             ret = Some(ControlFlow::Break(Until::Null));
         }
-        if ui.button("Cycle").clicked() {
-            log::debug!("clicked on cycle");
-            ret = Some(ControlFlow::Break(Until::Cycle(1)));
-        }
         if ui.button("Step").clicked() {
             log::debug!("clicked on step");
             ret = Some(ControlFlow::Break(Until::Step(1)));
+        }
+        if ui.button("Cycle").clicked() {
+            log::debug!("clicked on cycle");
+            ret = Some(ControlFlow::Break(Until::Cycle(1)));
         }
         if ui.button("Frame").clicked() {
             log::debug!("clicked on frame");
