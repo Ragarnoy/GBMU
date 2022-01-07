@@ -65,9 +65,9 @@ impl BreakpointEditor {
 
             ui.separator();
             if self.options.is_advanced {
-                self.draw_advanced_breakpoint_widget(ui, regs);
+                self.draw_advanced_breakpoint_widget(ui);
             } else {
-                self.draw_simple_breakpoint_widget(ui, regs);
+                self.draw_simple_breakpoint_widget(ui);
             }
 
             let mut deletion_list: Vec<usize> = Vec::with_capacity(20);
@@ -106,21 +106,13 @@ impl BreakpointEditor {
         });
     }
 
-    fn add_address_breakpoint<DBG: DebugOperations>(&mut self, address: u16, regs: &DBG) {
-        if !self.breakpoints.iter().any(|x| x.is_triggered(regs)) {
-            self.breakpoints.push(Breakpoint::from_address(address));
-        }
+    fn add_address_breakpoint(&mut self, address: u16) {
+        self.breakpoints.push(Breakpoint::from_address(address));
     }
 
-    fn add_expr_breakpoint<DBG: DebugOperations>(
-        &mut self,
-        expr: &str,
-        regs: &DBG,
-    ) -> anyhow::Result<()> {
-        if !self.breakpoints.iter().any(|x| x.is_triggered(regs)) {
-            let breakpoint = Breakpoint::from_expression(expr)?;
-            self.breakpoints.push(breakpoint);
-        }
+    fn add_expr_breakpoint(&mut self, expr: &str) -> anyhow::Result<()> {
+        let breakpoint = Breakpoint::from_expression(expr)?;
+        self.breakpoints.push(breakpoint);
         Ok(())
     }
 
@@ -134,33 +126,32 @@ impl BreakpointEditor {
         false
     }
 
-    fn draw_advanced_breakpoint_widget<DBG: DebugOperations>(&mut self, ui: &mut Ui, regs: &DBG) {
+    fn draw_advanced_breakpoint_widget(&mut self, ui: &mut Ui) {
         ui.horizontal(|ui| {
             let add_button_response = ui.add_enabled(
                 is_valid_expression(&self.breakpoint_field),
                 egui::Button::new("+"),
             );
-            let text_field_response = ui.add(
+            let _text_field_response = ui.add(
                 egui::TextEdit::multiline(&mut self.breakpoint_field)
                     .desired_width(150.0)
                     .hint_text("AF == 0x80"),
             );
-            if (add_button_response.clicked()
-                || text_field_response.clicked()
-                    && is_enter_not_modified(ui)
-                    && is_valid_expression(&self.breakpoint_field))
-                && self
-                    .add_expr_breakpoint(&self.breakpoint_field.clone(), regs)
-                    .is_ok()
-            {
-                self.breakpoint_field.clear();
-            } else {
-                log::error!("Debugger input is invalid")
+            if add_button_response.clicked() {
+                if let Err(e) = self.add_expr_breakpoint(&self.breakpoint_field.clone()) {
+                    log::warn!(
+                        "cannot add breakpoint expression \"{}\", because: {}",
+                        self.breakpoint_field,
+                        e
+                    );
+                } else {
+                    self.breakpoint_field.clear();
+                }
             }
         });
     }
 
-    fn draw_simple_breakpoint_widget<DBG: DebugOperations>(&mut self, ui: &mut Ui, regs: &DBG) {
+    fn draw_simple_breakpoint_widget(&mut self, ui: &mut Ui) {
         self.breakpoint_field.retain(|c| c.is_ascii_hexdigit());
         if self.breakpoint_field.len() <= 5 {
             self.breakpoint_field.truncate(4)
@@ -187,7 +178,6 @@ impl BreakpointEditor {
             {
                 self.add_address_breakpoint(
                     u16::from_str_radix(&*self.breakpoint_field, 16).unwrap(),
-                    regs,
                 );
             }
             if text_field_response.lost_focus() {
