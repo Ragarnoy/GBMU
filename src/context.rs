@@ -331,7 +331,7 @@ impl Game {
 
     #[cfg(feature = "save_state")]
     /// Load a game state from a file
-    pub fn load_state(&mut self, filename: &Path) {
+    pub fn load_state_file(&mut self, filename: &Path) {
         use anyhow::Error;
         use rmp_serde::decode::from_read;
         use std::fs::File;
@@ -340,9 +340,7 @@ impl Game {
             .map_err(Error::from)
             .and_then(|file| Ok(from_read::<File, MinimalState>(file)?))
         {
-            Ok(minimal_state) => {
-                todo!("load minimal state {:?}", minimal_state);
-            }
+            Ok(minimal_state) => self.load_state(minimal_state),
             Err(e) => {
                 log::error!(
                     "failed to load game state from {}: {}",
@@ -351,6 +349,11 @@ impl Game {
                 );
             }
         }
+    }
+
+    #[cfg(feature = "save_state")]
+    pub fn load_state(&mut self, state: MinimalState) {
+        self.cpu.registers = state.cpu_regs;
     }
 }
 
