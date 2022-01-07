@@ -2,7 +2,9 @@ use crate::interfaces::{
     Read8BitsReg, Read8BitsRegExt, ReadFlagReg, Write8BitsReg, Write8BitsRegExt, WriteFlagReg,
 };
 
-#[derive(Default, Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde_incl::Deserialize, serde_incl::Serialize))]
+#[cfg_attr(feature = "serde", serde(crate = "serde_incl"))]
+#[derive(Default, Debug, Clone, Copy)]
 pub struct Registers {
     /// Accumulator & Flags
     pub af: u16,
