@@ -423,11 +423,7 @@ pub fn game_save_path(rom_filename: &str) -> String {
 pub fn game_root_config_path() -> String {
     let path = sdl2::filesystem::pref_path(crate::constant::ORG_NAME, crate::constant::APP_NAME)
         .expect("a prefered config");
-    if cfg!(target_os = "macos") {
-        path.replace(' ', "%20")
-    } else {
-        path
-    }
+    path
 }
 
 /// Create a standardize rom name id
