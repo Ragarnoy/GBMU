@@ -18,6 +18,8 @@ use gb_lcd::{render, window::GBWindow};
 use logger::init_logger;
 use std::cell::RefCell;
 use std::rc::Rc;
+#[cfg(feature = "time_frame")]
+use std::time::Instant;
 use windows::Windows;
 
 #[derive(Parser, Debug)]
@@ -55,20 +57,21 @@ fn main() {
     let opts: Opts = Opts::parse();
     #[cfg(feature = "time_frame")]
     let mut time_frame_stat = time_frame::TimeStat::default();
+    #[cfg(feature = "time_frame")]
+    let mut render_time_frame = time_frame::TimeStat::default();
     init_logger(opts.log_level);
 
     let (mut context, mut game, mut debugger, mut event_pump) = init_gbmu(&opts);
 
     'running: loop {
+        #[cfg(feature = "time_frame")]
+        let now_render = Instant::now();
         context
             .windows
             .main
             .start_frame()
             .expect("Fail at the start for the main window");
         if let Some(ref mut game) = game {
-            #[cfg(feature = "time_frame")]
-            use std::time::Instant;
-
             #[cfg(feature = "time_frame")]
             let now = Instant::now();
             while game.cycle() {
@@ -157,6 +160,13 @@ fn main() {
 
         if std::ops::ControlFlow::Break(()) == event::process_event(&mut context, &mut event_pump) {
             break 'running;
+        }
+        #[cfg(feature = "time_frame")]
+        {
+            let time = now_render.elapsed();
+            render_time_frame.add_sample(time);
+            #[cfg(feature = "time_stat_samples")]
+            log::info!("{:.2} fps", render_time_frame.fps() as f32);
         }
     }
     log::info!("quitting");
