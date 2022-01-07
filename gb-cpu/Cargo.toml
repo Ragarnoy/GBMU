@@ -10,6 +10,7 @@ edition = "2021"
 registers_logs = []
 trace_jump = []
 debug_decoded_opcode = []
+panic_unknow_opcode = []
 cgb = [ "gb-bus/cgb" ]
 
 [dependencies]

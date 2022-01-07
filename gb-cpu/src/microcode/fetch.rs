@@ -18,7 +18,11 @@ pub fn fetch(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow 
     Opcode::try_from(byte).map_or_else(
         |e| {
             ctl_ref.borrow_mut().opcode = None;
-            log::warn!("invalid opcode {}", e);
+            if cfg!(feature = "panic_unknow_opcode") {
+                panic!("invalid opcode {} (PC={:04x})", e, state.regs.pc);
+            } else {
+                log::warn!("invalid opcode {} (PC={:04x})", e, state.regs.pc);
+            }
             BREAK
         },
         |opcode| {
