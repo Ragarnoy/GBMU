@@ -10,7 +10,7 @@ use std::{
     fmt::{self, Debug},
 };
 
-#[derive(Clone, WorldInit, Default)]
+#[derive(WorldInit, Default)]
 struct CpuWorld {
     cpu: Cpu,
     bus: MockBus,
