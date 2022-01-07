@@ -169,6 +169,10 @@ fn main() {
 
         let mut time = now_render.elapsed();
         while time < frame_duration_target {
+            let diff = frame_duration_target - time;
+            if diff.as_micros() > 500 {
+                std::thread::sleep(diff - Duration::from_micros(100));
+            }
             time = now_render.elapsed();
         }
 
