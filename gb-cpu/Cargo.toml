@@ -12,7 +12,7 @@ trace_jump = []
 debug_decoded_opcode = []
 panic_unknow_opcode = []
 cgb = [ "gb-bus/cgb" ]
-serde = ["serde_incl", "serde_incl/std", "serde_incl/derive"]
+serialization = ["serde", "serde/std", "serde/derive"]
 
 [dependencies]
 gb-clock = { path = "../gb-clock" }
@@ -20,7 +20,7 @@ gb-bus = { path = "../gb-bus" }
 gb-roms = { path = "../gb-roms" }
 log = "0.4"
 num_enum = "0.5"
-serde_incl = { package = "serde", version = "1.0", optional = true }
+serde = { version = "1.0", optional = true }
 
 [dev-dependencies]
 cucumber = "0.10"

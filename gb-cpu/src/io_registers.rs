@@ -1,5 +1,6 @@
 use gb_bus::{Address, Area, Error, FileOperation, IORegArea};
 
+#[cfg_attr(feature = "serialization", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Default, Debug, Clone, Copy)]
 pub struct IORegisters {
     pub master_enable: bool,
