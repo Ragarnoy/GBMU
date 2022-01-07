@@ -31,6 +31,8 @@ const DEFAULT_B: Scancode = Scancode::B;
 const DEFAULT_A: Scancode = Scancode::A;
 
 impl Joypad {
+    const READ_MASK: u8 = 0b1100_0000;
+    const WRITABLE_BITS: u8 = 0b0011_0000;
     const INPUT_LIST: [InputType; 8] = [
         InputType::Up,
         InputType::Down,
@@ -252,20 +254,20 @@ where
     A: Address<IORegArea>,
 {
     fn write(&mut self, v: u8, addr: A) -> Result<(), Error> {
-        match addr.area_type() {
-            IORegArea::Joy => {
-                let v = !v & 0b0011_0000;
-                self.mode = Mode::from(v);
-                Ok(())
-            }
-            _ => Err(Error::SegmentationFault(addr.into())),
+        if IORegArea::Joy == addr.area_type() {
+            let v = !v & Self::WRITABLE_BITS;
+            self.mode = Mode::from(v);
+            Ok(())
+        } else {
+            Err(Error::SegmentationFault(addr.into()))
         }
     }
 
     fn read(&self, addr: A) -> Result<u8, Error> {
-        match addr.area_type() {
-            IORegArea::Joy => Ok(self.reg_val),
-            _ => Err(Error::SegmentationFault(addr.into())),
+        if IORegArea::Joy == addr.area_type() {
+            Ok(Self::READ_MASK | self.reg_val)
+        } else {
+            Err(Error::SegmentationFault(addr.into()))
         }
     }
 }
