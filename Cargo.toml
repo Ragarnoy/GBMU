@@ -20,7 +20,7 @@ time_stat_samples = []
 debug_fps = ["time_stat_samples"]
 cgb = ["gb-bus/cgb", "gb-ppu/cgb", "gb-cpu/cgb", "gb-dbg/cgb"]
 bios = []
-save_state = []
+save_state = ["gb-cpu/serde"]
 
 [dependencies]
 sdl2 = { version = "0.35", features = ["bundled", "static-link"] }

@@ -684,6 +684,7 @@ impl RegisterDebugOperations for Game {
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 struct MinimalState {
     pub romname: String,
+    pub cpu_regs: gb_cpu::registers::Registers,
 }
 
 #[cfg(feature = "save_state")]
@@ -691,6 +692,7 @@ impl From<&Game> for MinimalState {
     fn from(context: &Game) -> Self {
         Self {
             romname: context.romname.clone(),
+            cpu_regs: context.cpu.registers,
         }
     }
 }

@@ -968,6 +968,7 @@ dependencies = [
  "gb-test",
  "log",
  "num_enum",
+ "serde",
 ]
 
 [[package]]
