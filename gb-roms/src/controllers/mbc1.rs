@@ -105,12 +105,12 @@ impl Controller for Mbc1 {
 
     fn offset_ram_addr(&self, addr: u16) -> usize {
         let bank_number = raw_effective_ram_bank(self.bank_2, self.advance_mode);
-        (bank_number % self.ram_banks) * RAM_BANK_SIZE | (addr & 0x1fff) as usize
+        ((bank_number % self.ram_banks) * RAM_BANK_SIZE) | (addr & 0x1fff) as usize
     }
 
     fn offset_rom_addr(&self, addr: u16) -> usize {
         let bank_number = raw_effective_rom_bank(self.bank_1, self.bank_2, self.advance_mode, addr);
-        (bank_number % self.rom_banks) * ROM_BANK_SIZE | (addr & 0x3fff) as usize
+        ((bank_number % self.rom_banks) * ROM_BANK_SIZE) | (addr & 0x3fff) as usize
     }
 
     fn ram_enabled(&self) -> bool {

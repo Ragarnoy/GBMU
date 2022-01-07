@@ -50,19 +50,16 @@ impl Controller for Mbc2 {
     }
 
     fn write_rom(&mut self, v: u8, addr: u16) {
-        match (addr >> 8) & 0xff {
-            0x00..=0x3f => {
-                if addr & 0x100 == 0x100 {
-                    self.rom_bank = (v & 0xf).max(1);
-                    #[cfg(feature = "debug_mbcs_register")]
-                    log::debug!("rom_bank={}", self.rom_bank);
-                } else {
-                    self.ram_enabled = v & 0xf == 0xa;
-                    #[cfg(feature = "debug_mbcs_register")]
-                    log::debug!("ram_enabled={}", self.ram_enabled);
-                }
+        if matches!((addr >> 8) & 0xff, 0x00..=0x3f) {
+            if addr & 0x100 == 0x100 {
+                self.rom_bank = (v & 0xf).max(1);
+                #[cfg(feature = "debug_mbcs_register")]
+                log::debug!("rom_bank={}", self.rom_bank);
+            } else {
+                self.ram_enabled = v & 0xf == 0xa;
+                #[cfg(feature = "debug_mbcs_register")]
+                log::debug!("ram_enabled={}", self.ram_enabled);
             }
-            _ => {}
         }
     }
 
@@ -97,6 +94,6 @@ impl Controller for Mbc2 {
         } else {
             self.rom_bank as usize
         };
-        (bank % self.rom_banks) * ROM_BANK_SIZE | (addr & 0x3fff) as usize
+        ((bank % self.rom_banks) * ROM_BANK_SIZE) | (addr & 0x3fff) as usize
     }
 }

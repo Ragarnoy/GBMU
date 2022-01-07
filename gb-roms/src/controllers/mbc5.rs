@@ -95,7 +95,7 @@ impl Controller for Mbc5 {
 
     fn offset_ram_addr(&self, addr: u16) -> usize {
         let bank = self.ram_bank as usize;
-        (bank % self.ram_banks) * RAM_BANK_SIZE | (addr & 0x1fff) as usize
+        ((bank % self.ram_banks) * RAM_BANK_SIZE) | (addr & 0x1fff) as usize
     }
 
     fn offset_rom_addr(&self, addr: u16) -> usize {
@@ -104,6 +104,6 @@ impl Controller for Mbc5 {
         } else {
             self.rom_bank as usize
         };
-        (bank % self.rom_banks) * ROM_BANK_SIZE | (addr & 0x3fff) as usize
+        ((bank % self.rom_banks) * ROM_BANK_SIZE) | (addr & 0x3fff) as usize
     }
 }
