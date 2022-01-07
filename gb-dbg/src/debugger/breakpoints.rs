@@ -132,12 +132,16 @@ impl BreakpointEditor {
                 is_valid_expression(&self.breakpoint_field),
                 egui::Button::new("+"),
             );
-            let _text_field_response = ui.add(
+            let text_field_response = ui.add(
                 egui::TextEdit::multiline(&mut self.breakpoint_field)
                     .desired_width(150.0)
                     .hint_text("AF == 0x80"),
             );
-            if add_button_response.clicked() {
+            if add_button_response.clicked()
+                || (text_field_response.clicked()
+                    && is_enter_not_modified(ui)
+                    && is_valid_expression(&self.breakpoint_field))
+            {
                 if let Err(e) = self.add_expr_breakpoint(&self.breakpoint_field.clone()) {
                     log::warn!(
                         "cannot add breakpoint expression \"{}\", because: {}",
@@ -172,16 +176,21 @@ impl BreakpointEditor {
                     .hint_text("555F"),
             );
             if add_button_response.clicked()
-                || text_field_response.clicked()
+                || (text_field_response.clicked()
                     && ui.input().key_pressed(egui::Key::Enter)
-                    && is_valid_address(&self.breakpoint_field)
+                    && is_valid_address(&self.breakpoint_field))
             {
-                self.add_address_breakpoint(
-                    u16::from_str_radix(&*self.breakpoint_field, 16).unwrap(),
-                );
-            }
-            if text_field_response.lost_focus() {
-                self.breakpoint_field.clear();
+                match u16::from_str_radix(&self.breakpoint_field, 16) {
+                    Ok(v) => self.add_address_breakpoint(v),
+                    Err(e) => {
+                        log::error!(
+                            "cannot address \"{}\" as breakpoint, because: {}",
+                            self.breakpoint_field,
+                            e
+                        );
+                        self.breakpoint_field.clear()
+                    }
+                }
             }
         });
     }
