@@ -114,6 +114,18 @@ impl Game {
 
         let io_bus = {
             let mut bus_builder = IORegBusBuilder::default();
+            #[cfg(feature = "cgb")]
+            {
+                bus_builder
+                    .with_area(IORegArea::Vbk, ppu_reg.clone())
+                    .with_area(IORegArea::Hdma1, Rc::new(RefCell::new(CharDevice(0))))
+                    .with_area(IORegArea::Hdma2, Rc::new(RefCell::new(CharDevice(0))))
+                    .with_area(IORegArea::Hdma3, Rc::new(RefCell::new(CharDevice(0))))
+                    .with_area(IORegArea::Hdma4, Rc::new(RefCell::new(CharDevice(0))))
+                    .with_area(IORegArea::Hdma5, Rc::new(RefCell::new(CharDevice(0))))
+                    .with_area(IORegArea::Key1, cpu_io_reg.clone())
+                    .with_area(IORegArea::Svbk, wram.clone());
+            }
             bus_builder
                 .with_area(IORegArea::Joy, joypad.clone())
                 .with_area(IORegArea::Div, timer.clone())
@@ -138,19 +150,6 @@ impl Game {
                 .with_area(IORegArea::SB, serial)
                 .with_default_sound()
                 .with_default_waveform_ram();
-
-            #[cfg(feature = "cgb")]
-            {
-                bus_builder
-                    .with_area(IORegArea::Vbk, ppu_reg.clone())
-                    .with_area(IORegArea::Hdma1, Rc::new(RefCell::new(CharDevice(0))))
-                    .with_area(IORegArea::Hdma2, Rc::new(RefCell::new(CharDevice(0))))
-                    .with_area(IORegArea::Hdma3, Rc::new(RefCell::new(CharDevice(0))))
-                    .with_area(IORegArea::Hdma4, Rc::new(RefCell::new(CharDevice(0))))
-                    .with_area(IORegArea::Hdma5, Rc::new(RefCell::new(CharDevice(0))))
-                    .with_area(IORegArea::Key1, cpu_io_reg.clone())
-                    .with_area(IORegArea::Svbk, wram.clone());
-            }
             bus_builder.build()
         };
         let io_bus = Rc::new(RefCell::new(io_bus));
@@ -352,8 +351,10 @@ impl Game {
     }
 
     #[cfg(feature = "save_state")]
-    pub fn load_state(&mut self, state: MinimalState) {
+    fn load_state(&mut self, state: MinimalState) {
         self.cpu.registers = state.cpu_regs;
+        todo!("load cpu io to cpu");
+        todo!("load cpu io to io_regs");
     }
 }
 
@@ -688,6 +689,7 @@ impl RegisterDebugOperations for Game {
 struct MinimalState {
     pub romname: String,
     pub cpu_regs: gb_cpu::registers::Registers,
+    pub cpu_io_regs: gb_cpu::io_registers::IORegisters,
 }
 
 #[cfg(feature = "save_state")]
@@ -696,6 +698,7 @@ impl From<&Game> for MinimalState {
         Self {
             romname: context.romname.clone(),
             cpu_regs: context.cpu.registers,
+            cpu_io_regs: *context.cpu.interrupt_flags().borrow(),
         }
     }
 }
