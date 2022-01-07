@@ -336,8 +336,24 @@ impl Game {
     #[cfg(feature = "save_state")]
     fn load_state(&mut self, state: MinimalState) {
         self.cpu.registers = state.cpu_regs;
-        todo!("load cpu io to cpu");
-        todo!("load cpu io to io_regs");
+
+        {
+            let cpu_io = Rc::new(RefCell::new(state.cpu_io_regs));
+            self.cpu.interrupt_flags = cpu_io.clone();
+            let io_bus = {
+                let mut builder = IORegBusBuilder::from(self.io_bus.take());
+                #[cfg(feature = "cgb")]
+                {
+                    builder.with_area(IORegArea::Key1, cpu_io.clone());
+                }
+                builder.with_area(IORegArea::IF, cpu_io.clone());
+                builder.build()
+            };
+            let io_bus = Rc::new(RefCell::new(io_bus));
+            self.addr_bus.io_reg = io_bus.clone();
+            self.addr_bus.ie_reg = cpu_io;
+            self.io_bus = io_bus;
+        }
     }
 }
 
@@ -681,7 +697,7 @@ impl From<&Game> for MinimalState {
         Self {
             romname: context.romname.clone(),
             cpu_regs: context.cpu.registers,
-            cpu_io_regs: *context.cpu.interrupt_flags().borrow(),
+            cpu_io_regs: *context.cpu.interrupt_flags.borrow(),
         }
     }
 }
