@@ -16,7 +16,7 @@ pub struct DebuggerApp {
 
 impl App for DebuggerApp {
     fn update(&mut self, ctx: &CtxRef, _frame: &mut Frame<'_>) {
-        self.debugger.draw(ctx, &mut self.memory);
+        self.debugger.draw(ctx, &mut self.memory, None);
 
         if let Some(flow) = self.debugger.flow_status() {
             match flow {
