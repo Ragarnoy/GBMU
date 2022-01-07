@@ -162,8 +162,6 @@ impl IORegBusBuilder {
 
 impl From<IORegBus> for IORegBusBuilder {
     fn from(bus: IORegBus) -> Self {
-        Self {
-            areas: bus.areas
-        }
+        Self { areas: bus.areas }
     }
 }

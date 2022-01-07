@@ -1,8 +1,7 @@
 #[cfg(feature = "cgb")]
-use gb_bus::generic::CharDevice;
+use gb_bus::generic::PanicDevice;
 use gb_bus::{
-    generic::{PanicDevice, SimpleRW},
-    AddressBus, Bus, IORegArea, IORegBus, IORegBusBuilder, Lock, WorkingRam,
+    generic::SimpleRW, AddressBus, Bus, IORegArea, IORegBus, IORegBusBuilder, Lock, WorkingRam,
 };
 use gb_clock::{cycles, Clock};
 use gb_cpu::{cpu::Cpu, new_cpu, registers::Registers};
