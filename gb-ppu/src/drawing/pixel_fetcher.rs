@@ -177,7 +177,7 @@ impl PixelFetcher {
         let scy = lcd_reg.scrolling.scy as usize;
         match self.mode {
             FetchMode::Background => {
-                let tile_line = ((line + scy) % 255) % 8;
+                let tile_line = ((line + scy) & 0xff) % 8;
                 self.fetch_bg_win_row(vram, lcd_reg, tile_line)
             }
             FetchMode::Window => {
