@@ -15,7 +15,7 @@ pub struct TimeStat {
 
 impl TimeStat {
     #[cfg(feature = "time_stat_samples")]
-    const SAMPLES_MAX_COUNT: usize = 30;
+    const SAMPLES_MAX_COUNT: usize = 120;
 
     pub fn add_sample(&mut self, sample: Duration) {
         let min = self.min.get_or_insert(sample);
