@@ -18,9 +18,11 @@ use gb_lcd::{render, window::GBWindow};
 use logger::init_logger;
 use std::cell::RefCell;
 use std::rc::Rc;
-#[cfg(any(feature = "time_frame", feature = "debug_fps"))]
-use std::time::Instant;
+use std::time::{Duration, Instant};
 use windows::Windows;
+
+// const TARGET_FPS_X10: u64 = 597;    // the true value
+const TARGET_FPS_X10: u64 = 600;
 
 #[derive(Parser, Debug)]
 #[clap(version = "0.1")]
@@ -59,12 +61,12 @@ fn main() {
     let mut time_frame_stat = time_frame::TimeStat::default();
     #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
     let mut render_time_frame = time_frame::TimeStat::default();
+    let frame_duration_target = Duration::from_nanos(10_000_000_000 / TARGET_FPS_X10);
     init_logger(opts.log_level);
 
     let (mut context, mut game, mut debugger, mut event_pump) = init_gbmu(&opts);
 
     'running: loop {
-        #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
         let now_render = Instant::now();
         context
             .windows
@@ -164,9 +166,14 @@ fn main() {
         if std::ops::ControlFlow::Break(()) == event::process_event(&mut context, &mut event_pump) {
             break 'running;
         }
+
+        let mut time = now_render.elapsed();
+        while time < frame_duration_target {
+            time = now_render.elapsed();
+        }
+
         #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
         {
-            let time = now_render.elapsed();
             render_time_frame.add_sample(time);
             #[cfg(feature = "time_frame")]
             log::info!(
