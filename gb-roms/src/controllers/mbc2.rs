@@ -1,5 +1,6 @@
 use crate::Header;
 
+use super::save::{Full as Complete, Partial as Incomplete, SaveState, StateError};
 use super::{Controller, ROM_BANK_SIZE};
 
 pub fn new_controller(header: Header) -> Box<Mbc2> {
@@ -34,19 +35,6 @@ impl Mbc2 {
 impl Controller for Mbc2 {
     fn sizes(&self) -> (usize, Option<usize>) {
         (self.rom_banks * ROM_BANK_SIZE, None)
-    }
-
-    fn save_to_slice(&self) -> Vec<u8> {
-        let mut res = vec![self.ram_enabled as u8];
-        res.extend(self.ram.iter());
-        res
-    }
-
-    fn load_from_slice(&mut self, slice: &[u8]) {
-        self.ram_enabled = slice[0] != 0;
-        if let Ok(ram) = <[u8; Mbc2::RAM_SIZE]>::try_from(&slice[1..]) {
-            self.ram = Box::new(ram);
-        }
     }
 
     fn write_rom(&mut self, v: u8, addr: u16) {
@@ -95,5 +83,73 @@ impl Controller for Mbc2 {
             self.rom_bank as usize
         };
         ((bank % self.rom_banks) * ROM_BANK_SIZE) | (addr & 0x3fff) as usize
+    }
+}
+
+#[derive(serde::Serialize, serde::Deserialize)]
+pub struct Full {
+    partial: Partial,
+    rom_bank: u8,
+    ram_enabled: bool,
+}
+
+impl From<&Mbc2> for Full {
+    fn from(ctl: &Mbc2) -> Self {
+        Self {
+            partial: Partial::from(ctl.ram),
+            rom_bank: ctl.rom_bank,
+            ram_enabled: ctl.ram_enabled,
+        }
+    }
+}
+
+#[derive(serde::Serialize, serde::Deserialize)]
+pub struct Partial {
+    ram: Vec<u8>,
+}
+
+impl From<Box<[u8; Mbc2::RAM_SIZE]>> for Partial {
+    fn from(ram: Box<[u8; Mbc2::RAM_SIZE]>) -> Self {
+        Self { ram: ram.to_vec() }
+    }
+}
+
+impl SaveState for Mbc2 {
+    fn serialize(&self) -> Complete {
+        Complete::Mbc2(Full::from(self))
+    }
+
+    fn load(&self, state: Complete) -> Result<(), StateError> {
+        if let Complete::Mbc2(state) = state {
+            self.ram_enabled = state.ram_enabled;
+            self.rom_bank = state.rom_bank;
+            self.load_partial(Incomplete::Mbc2(state.partial))?;
+
+            Ok(())
+        } else {
+            Err(StateError::WrongType {
+                expected: "mbc2",
+                got: state.id(),
+            })
+        }
+    }
+
+    fn serialize_partial(&self) -> Incomplete {
+        Incomplete::Mbc2(Partial::from(self.ram))
+    }
+
+    fn load_partial(&self, state: Incomplete) -> Result<(), StateError> {
+        if let Incomplete::Mbc2(state) = state {
+            self.ram = Box::new(state.ram.try_into().map_err(|arr| StateError::RamLength {
+                expected: Mbc2::RAM_SIZE,
+                got: arr.len(),
+            })?);
+            Ok(())
+        } else {
+            Err(StateError::WrongType {
+                expected: "mbc2",
+                got: state.id(),
+            })
+        }
     }
 }
