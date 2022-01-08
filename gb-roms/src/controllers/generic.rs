@@ -4,7 +4,7 @@ use std::io::{self, Read};
 
 use crate::Header;
 
-use super::{new_controller_from_header, Controller};
+use super::{new_controller_from_header, Controller, Full, Partial};
 
 pub struct Generic {
     controller: Box<dyn Controller>,
@@ -49,16 +49,28 @@ impl Generic {
         Ok(mbc)
     }
 
-    pub fn save_state(&self) -> GenericState {
+    pub fn save(&self) -> GenericState<Full> {
         GenericState {
-            controller: self.controller.save_to_slice(),
+            controller: self.controller.serialize(),
             ram: self.ram.clone(),
         }
     }
 
-    pub fn load_state(&mut self, state: GenericState) {
+    pub fn save_partial(&self) -> GenericState<Partial> {
+        GenericState {
+            controller: self.controller.serialize_partial(),
+            ram: self.ram.clone(),
+        }
+    }
+
+    pub fn load(&mut self, state: GenericState<Full>) -> Result<(), String> {
         self.ram = state.ram;
-        self.controller.load_from_slice(&state.controller);
+        self.controller.load(&state.controller)
+    }
+
+    pub fn load_partial(&mut self, state: GenericState<Partial>) -> Result<(), String> {
+        self.ram = state.ram;
+        self.controller.load(&state.controller)
     }
 
     fn read_rom(&self, addr: u16) -> Result<u8, Error> {
@@ -131,7 +143,7 @@ where
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct GenericState {
-    pub controller: Vec<u8>,
+pub struct GenericState<CTL> {
+    pub controller: CTL,
     pub ram: Option<Vec<u8>>,
 }
