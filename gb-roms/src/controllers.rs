@@ -6,11 +6,13 @@ pub mod mbc2;
 pub mod mbc3;
 pub mod mbc5;
 pub mod rom_only;
+pub mod save;
 
 use crate::Header;
 pub use bios::Bios;
 pub use bios_wrapper::BiosWrapper;
 pub use generic::{Generic, GenericState};
+pub use save::{Full, Partial, SaveState};
 
 /// Size of the ROM Area
 pub const ROM_AREA_SIZE: usize = 0x8000;
@@ -20,33 +22,6 @@ pub const ROM_BANK_SIZE: usize = 0x4000;
 
 /// Maximum size of a ram bank
 pub const RAM_BANK_SIZE: usize = 0x2000;
-
-pub trait SaveState {
-    fn serialize(&self) -> Full;
-    fn serialize_partial(&self) -> Partial {
-        Partial::None
-    }
-    fn load(&self, state: Full) -> Result<(), String>;
-    fn load_partial(&self, _state: Partial) -> Result<(), String> {
-        Ok(())
-    }
-}
-
-#[derive(serde::Serialize, serde::Deserialize)]
-pub enum Full {
-    None,
-    Mbc1(mbc1::State),
-    Mbc2(mbc2::State),
-    Mbc3(mbc3::State),
-    Mbc5(mbc5::State),
-}
-
-#[derive(serde::Serialize, serde::Deserialize)]
-pub enum Partial {
-    None,
-    Mbc2(mbc2::PartialState),
-    Mbc3(mbc3::PartialState),
-}
 
 pub trait Controller: SaveState {
     /// Return the size of the rom and optionnaly the size of the external ram
