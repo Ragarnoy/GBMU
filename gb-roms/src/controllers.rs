@@ -21,15 +21,36 @@ pub const ROM_BANK_SIZE: usize = 0x4000;
 /// Maximum size of a ram bank
 pub const RAM_BANK_SIZE: usize = 0x2000;
 
-pub trait Controller {
+pub trait SaveState {
+    fn serialize(&self) -> Full;
+    fn serialize_partial(&self) -> Partial {
+        Partial::None
+    }
+    fn load(&self, state: Full) -> Result<(), String>;
+    fn load_partial(&self, _state: Partial) -> Result<(), String> {
+        Ok(())
+    }
+}
+
+#[derive(serde::Serialize, serde::Deserialize)]
+pub enum Full {
+    None,
+    Mbc1(mbc1::State),
+    Mbc2(mbc2::State),
+    Mbc3(mbc3::State),
+    Mbc5(mbc5::State),
+}
+
+#[derive(serde::Serialize, serde::Deserialize)]
+pub enum Partial {
+    None,
+    Mbc2(mbc2::PartialState),
+    Mbc3(mbc3::PartialState),
+}
+
+pub trait Controller: SaveState {
     /// Return the size of the rom and optionnaly the size of the external ram
     fn sizes(&self) -> (usize, Option<usize>);
-
-    /// Save Controller data to a slice
-    fn save_to_slice(&self) -> Vec<u8>;
-
-    /// Load Controller data from a slice
-    fn load_from_slice(&mut self, slice: &[u8]);
 
     /// When data is beeing written to ROM
     /// MBC catch these writes to modify their internal register
