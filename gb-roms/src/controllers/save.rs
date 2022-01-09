@@ -8,8 +8,8 @@ pub trait SaveState {
     fn serialize_partial(&self) -> Partial {
         Partial::None
     }
-    fn load(&self, state: Full) -> Result<(), StateError>;
-    fn load_partial(&self, _state: Partial) -> Result<(), StateError> {
+    fn load(&mut self, state: Full) -> Result<(), StateError>;
+    fn load_partial(&mut self, _state: Partial) -> Result<(), StateError> {
         Ok(())
     }
 }
@@ -24,7 +24,7 @@ pub enum Full {
 }
 
 impl Full {
-    fn id(&self) -> String {
+    pub fn id(&self) -> &'static str {
         match self {
             Full::None => "none",
             Full::Mbc1(_) => "mbc1",
@@ -43,7 +43,7 @@ pub enum Partial {
 }
 
 impl Partial {
-    fn id(&self) -> String {
+    pub fn id(&self) -> &'static str {
         match self {
             Partial::None => "none",
             Partial::Mbc2(_) => "mbc2",
@@ -54,8 +54,14 @@ impl Partial {
 
 #[derive(Debug)]
 pub enum StateError {
-    WrongType { expected: String, got: String },
-    RamLength { expected: usize, got: usize },
+    WrongType {
+        expected: &'static str,
+        got: &'static str,
+    },
+    RamLength {
+        expected: usize,
+        got: usize,
+    },
 }
 
 impl Error for StateError {}
