@@ -176,11 +176,11 @@ fn offset_ram_addr() {
 }
 
 impl SaveState for Mbc1 {
-    fn serialize(&self) -> super::Full {
-        Full::Mbc1(Full::from(self))
+    fn serialize(&self) -> Complete {
+        Complete::Mbc1(Full::from(self))
     }
 
-    fn load(&self, state: Complete) -> Result<(), StateError> {
+    fn load(&mut self, state: Complete) -> Result<(), StateError> {
         if let Complete::Mbc1(state) = state {
             self.ram_enabled = state.ram_enabled;
             self.bank_1 = state.bank_1;
@@ -189,10 +189,10 @@ impl SaveState for Mbc1 {
 
             Ok(())
         } else {
-            StateError::WrongType {
+            Err(StateError::WrongType {
                 expected: "mbc1",
                 got: state.id(),
-            }
+            })
         }
     }
 }

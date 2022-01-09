@@ -96,7 +96,7 @@ pub struct Full {
 impl From<&Mbc2> for Full {
     fn from(ctl: &Mbc2) -> Self {
         Self {
-            partial: Partial::from(ctl.ram),
+            partial: Partial::from(ctl.ram.clone()),
             rom_bank: ctl.rom_bank,
             ram_enabled: ctl.ram_enabled,
         }
@@ -119,7 +119,7 @@ impl SaveState for Mbc2 {
         Complete::Mbc2(Full::from(self))
     }
 
-    fn load(&self, state: Complete) -> Result<(), StateError> {
+    fn load(&mut self, state: Complete) -> Result<(), StateError> {
         if let Complete::Mbc2(state) = state {
             self.ram_enabled = state.ram_enabled;
             self.rom_bank = state.rom_bank;
@@ -135,15 +135,21 @@ impl SaveState for Mbc2 {
     }
 
     fn serialize_partial(&self) -> Incomplete {
-        Incomplete::Mbc2(Partial::from(self.ram))
+        Incomplete::Mbc2(Partial::from(self.ram.clone()))
     }
 
-    fn load_partial(&self, state: Incomplete) -> Result<(), StateError> {
+    fn load_partial(&mut self, state: Incomplete) -> Result<(), StateError> {
         if let Incomplete::Mbc2(state) = state {
-            self.ram = Box::new(state.ram.try_into().map_err(|arr| StateError::RamLength {
-                expected: Mbc2::RAM_SIZE,
-                got: arr.len(),
-            })?);
+            self.ram =
+                Box::new(
+                    state
+                        .ram
+                        .try_into()
+                        .map_err(|arr: Vec<u8>| StateError::RamLength {
+                            expected: Mbc2::RAM_SIZE,
+                            got: arr.len(),
+                        })?,
+                );
             Ok(())
         } else {
             Err(StateError::WrongType {

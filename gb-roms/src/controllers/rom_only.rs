@@ -1,5 +1,6 @@
 use crate::Header;
 
+use super::save::StateError;
 use super::{Controller, SaveState};
 
 pub fn new_controller(header: Header) -> Box<RomOnly> {
@@ -51,7 +52,7 @@ impl SaveState for RomOnly {
         super::Full::None
     }
 
-    fn load(&self, _state: super::Full) -> Result<(), String> {
+    fn load(&mut self, _state: super::Full) -> Result<(), StateError> {
         Ok(())
     }
 }
