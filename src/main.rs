@@ -93,7 +93,10 @@ fn main() {
             }
             game.draw(&mut context);
         }
+        #[cfg(not(feature = "debug_fps"))]
         let events = ui::draw_egui(&mut context);
+        #[cfg(feature = "debug_fps")]
+        let events = ui::draw_egui(&mut context, render_time_frame.fps());
         context
             .windows
             .main

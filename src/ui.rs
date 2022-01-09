@@ -62,8 +62,17 @@ macro_rules! ui_settings {
     };
 }
 
+#[cfg(feature = "debug_fps")]
+macro_rules! ui_fps {
+    ($ui:expr, $context:expr, $fps:expr) => {
+        $ui.add_space($ui.available_size().x - 50.0);
+        $ui.label((format!("{:>7.2}", $fps)));
+    };
+}
+
 pub fn draw_egui<const WIDTH: usize, const HEIGHT: usize>(
     context: &mut Context<WIDTH, HEIGHT>,
+    #[cfg(feature = "debug_fps")] fps: f64,
 ) -> Vec<CustomEvent> {
     let mut events = Vec::new();
     egui::containers::TopBottomPanel::top("Top menu").show(context.windows.main.egui_ctx(), |ui| {
@@ -72,7 +81,9 @@ pub fn draw_egui<const WIDTH: usize, const HEIGHT: usize>(
             ui_file(ui, &mut events);
             ui_debug!(ui, context);
             ui_settings!(ui, context);
-        })
+            #[cfg(feature = "debug_fps")]
+            ui_fps!(ui, context, fps);
+        });
     });
     events
 }
