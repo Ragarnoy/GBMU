@@ -3,6 +3,7 @@ use gb_rtc::{Naive, ReadRtcRegisters};
 use crate::controllers::RAM_BANK_SIZE;
 use crate::Header;
 
+use super::save::{Full as Complete, Partial as Incomplete, SaveState, StateError};
 use super::{Controller, ROM_BANK_SIZE};
 
 pub fn new_controller(header: Header) -> Box<Mbc3> {
@@ -104,14 +105,6 @@ impl Controller for Mbc3 {
         )
     }
 
-    fn save_to_slice(&self) -> Vec<u8> {
-        todo!()
-    }
-
-    fn load_from_slice(&mut self, _slice: &[u8]) {
-        todo!()
-    }
-
     fn write_rom(&mut self, v: u8, addr: u16) {
         match (addr >> 8) & 0xff {
             0x00..=0x1f => {
@@ -174,7 +167,7 @@ impl Controller for Mbc3 {
     }
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone, Copy, serde::Serialize, serde::Deserialize)]
 struct RTCRegs {
     seconds: u8,
     minutes: u8,
@@ -193,4 +186,75 @@ impl<RTC: ReadRtcRegisters> From<&RTC> for RTCRegs {
             upper_day_counter: rtc.control(),
         }
     }
+}
+
+impl SaveState for Mbc3 {
+    fn serialize(&self) -> Complete {
+        Complete::Mbc3(Full::from(self))
+    }
+
+    fn load(&mut self, state: Complete) -> Result<(), StateError> {
+        if let Complete::Mbc3(state) = state {
+            self.rtc_regs = state.rtc_regs;
+            self.external_gate = state.external_gate;
+            self.rom_bank = state.rom_bank;
+            self.external_selector = state.external_selector;
+            self.last_writed_byte = state.last_writed_byte;
+
+            self.load_partial(Incomplete::Mbc3(state.partial))
+        } else {
+            Err(StateError::WrongType {
+                expected: "mbc3",
+                got: state.id(),
+            })
+        }
+    }
+
+    fn serialize_partial(&self) -> Incomplete {
+        Incomplete::Mbc3(Partial {
+            clock: self.clock.clone(),
+        })
+    }
+
+    fn load_partial(&mut self, state: Incomplete) -> Result<(), StateError> {
+        if let Incomplete::Mbc3(state) = state {
+            self.clock = state.clock;
+            Ok(())
+        } else {
+            Err(StateError::WrongType {
+                expected: "mbc3",
+                got: state.id(),
+            })
+        }
+    }
+}
+
+#[derive(serde::Serialize, serde::Deserialize)]
+pub struct Full {
+    partial: Partial,
+    rtc_regs: RTCRegs,
+    external_gate: bool,
+    rom_bank: u8,
+    external_selector: u8,
+    last_writed_byte: Option<u8>,
+}
+
+impl From<&Mbc3> for Full {
+    fn from(ctl: &Mbc3) -> Self {
+        Self {
+            partial: Partial {
+                clock: ctl.clock.clone(),
+            },
+            rtc_regs: ctl.rtc_regs,
+            external_gate: ctl.external_gate,
+            rom_bank: ctl.rom_bank,
+            external_selector: ctl.external_selector,
+            last_writed_byte: ctl.last_writed_byte,
+        }
+    }
+}
+
+#[derive(serde::Serialize, serde::Deserialize)]
+pub struct Partial {
+    clock: Option<Naive>,
 }
