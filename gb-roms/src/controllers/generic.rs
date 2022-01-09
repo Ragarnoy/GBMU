@@ -4,6 +4,7 @@ use std::io::{self, Read};
 
 use crate::Header;
 
+use super::save::StateError;
 use super::{new_controller_from_header, Controller, Full, Partial};
 
 pub struct Generic {
@@ -63,14 +64,14 @@ impl Generic {
         }
     }
 
-    pub fn load(&mut self, state: GenericState<Full>) -> Result<(), String> {
+    pub fn load(&mut self, state: GenericState<Full>) -> Result<(), StateError> {
         self.ram = state.ram;
-        self.controller.load(&state.controller)
+        self.controller.load(state.controller)
     }
 
-    pub fn load_partial(&mut self, state: GenericState<Partial>) -> Result<(), String> {
+    pub fn load_partial(&mut self, state: GenericState<Partial>) -> Result<(), StateError> {
         self.ram = state.ram;
-        self.controller.load(&state.controller)
+        self.controller.load_partial(state.controller)
     }
 
     fn read_rom(&self, addr: u16) -> Result<u8, Error> {
