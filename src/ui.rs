@@ -19,7 +19,7 @@ macro_rules! replace_windows {
 
 macro_rules! ui_debug {
     ($ui:expr, $context:expr) => {
-        $ui.menu_button("Debug", |ui| {
+        $ui.menu_button("🔧", |ui| {
             if ui.button("Cpu").clicked() && $context.windows.debug.is_none() {
                 replace_windows!($context, debug, new_debug_window(&$context.video));
             }
@@ -41,22 +41,24 @@ macro_rules! ui_debug {
 
 macro_rules! ui_settings {
     ($ui:expr, $context:expr) => {
-        if $ui.button("Input").clicked() && $context.windows.input.is_none() {
-            $context.windows.input.replace(
-                GBWindow::new(
-                    "GBMU Input Settings",
-                    (
-                        GBWindow::dots_to_pixels(&$context.video, 250.0)
-                            .expect("error while computing window size"),
-                        GBWindow::dots_to_pixels(&$context.video, 250.0)
-                            .expect("error while computing window size"),
-                    ),
-                    false,
-                    &$context.video,
-                )
-                .expect("Error while building input window"),
-            );
-        }
+        $ui.menu_button("⚙", |ui| {
+            if ui.button("Input").clicked() && $context.windows.input.is_none() {
+                $context.windows.input.replace(
+                    GBWindow::new(
+                        "GBMU Input Settings",
+                        (
+                            GBWindow::dots_to_pixels(&$context.video, 250.0)
+                                .expect("error while computing window size"),
+                            GBWindow::dots_to_pixels(&$context.video, 250.0)
+                                .expect("error while computing window size"),
+                        ),
+                        false,
+                        &$context.video,
+                    )
+                    .expect("Error while building input window"),
+                );
+            }
+        });
     };
 }
 
@@ -92,7 +94,7 @@ pub fn draw_ppu_debug_ui<const WIDTH: usize, const HEIGHT: usize>(
                 |ui| {
                     egui::menu::bar(ui, |ui| {
                         ui.set_height(render::MENU_BAR_SIZE);
-                        egui::menu::menu(ui, "bg/win", |ui| {
+                        ui.menu_button("bg/win", |ui| {
                             if ui.button("background").clicked() {
                                 *display_window = false;
                             }
@@ -132,7 +134,7 @@ pub fn draw_ppu_debug_ui<const WIDTH: usize, const HEIGHT: usize>(
             egui::containers::TopBottomPanel::top("Top menu").show(cfg.window.egui_ctx(), |ui| {
                 egui::menu::bar(ui, |ui| {
                     ui.set_height(render::MENU_BAR_SIZE);
-                    egui::menu::menu(ui, "mode", |ui| {
+                    ui.menu_button("mode", |ui| {
                         if ui.button("viewport").clicked() {
                             cfg.display_list = false;
                         }
@@ -160,7 +162,7 @@ pub fn draw_ppu_debug_ui<const WIDTH: usize, const HEIGHT: usize>(
 }
 
 fn ui_file(ui: &mut Ui, events: &mut Vec<CustomEvent>) {
-    ui.menu_button("File", |ui| {
+    ui.menu_button("💾", |ui| {
         if ui.button("Load").clicked() {
             let file = FileDialog::new()
                 .set_location(
