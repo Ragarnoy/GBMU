@@ -197,7 +197,7 @@ impl SaveState for Mbc1 {
     }
 }
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct Full {
     ram_enabled: bool,
     bank_1: u8,

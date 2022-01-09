@@ -86,7 +86,7 @@ impl Controller for Mbc2 {
     }
 }
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct Full {
     partial: Partial,
     rom_bank: u8,
@@ -103,7 +103,7 @@ impl From<&Mbc2> for Full {
     }
 }
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct Partial {
     ram: Vec<u8>,
 }

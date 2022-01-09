@@ -143,7 +143,7 @@ where
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct GenericState<CTL> {
     pub controller: CTL,
     pub ram: Option<Vec<u8>>,

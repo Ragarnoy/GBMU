@@ -14,7 +14,7 @@ pub trait SaveState {
     }
 }
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub enum Full {
     None,
     Mbc1(mbc1::Full),
@@ -35,7 +35,7 @@ impl Full {
     }
 }
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub enum Partial {
     None,
     Mbc2(mbc2::Partial),

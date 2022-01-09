@@ -229,7 +229,7 @@ impl SaveState for Mbc3 {
     }
 }
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct Full {
     partial: Partial,
     rtc_regs: RTCRegs,
@@ -254,7 +254,7 @@ impl From<&Mbc3> for Full {
     }
 }
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct Partial {
     clock: Option<Naive>,
 }
