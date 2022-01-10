@@ -20,6 +20,7 @@ macro_rules! replace_windows {
 macro_rules! ui_debug {
     ($ui:expr, $context:expr) => {
         $ui.menu_button("🔧", |ui| {
+            ui.style_mut().override_text_style = None;
             if ui.button("Cpu").clicked() && $context.windows.debug.is_none() {
                 replace_windows!($context, debug, new_debug_window(&$context.video));
             }
@@ -42,6 +43,7 @@ macro_rules! ui_debug {
 macro_rules! ui_settings {
     ($ui:expr, $context:expr) => {
         $ui.menu_button("⚙", |ui| {
+            ui.style_mut().override_text_style = None;
             if ui.button("Input").clicked() && $context.windows.input.is_none() {
                 $context.windows.input.replace(
                     GBWindow::new(
@@ -78,9 +80,11 @@ pub fn draw_egui<const WIDTH: usize, const HEIGHT: usize>(
     egui::containers::TopBottomPanel::top("Top menu").show(context.windows.main.egui_ctx(), |ui| {
         egui::menu::bar(ui, |ui| {
             ui.set_height(render::MENU_BAR_SIZE);
+            ui.style_mut().override_text_style = Some(egui::TextStyle::Heading);
             ui_file(ui, &mut events);
             ui_debug!(ui, context);
             ui_settings!(ui, context);
+            ui.style_mut().override_text_style = None;
             #[cfg(feature = "debug_fps")]
             ui_fps!(ui, context, fps);
         });
@@ -174,6 +178,7 @@ pub fn draw_ppu_debug_ui<const WIDTH: usize, const HEIGHT: usize>(
 
 fn ui_file(ui: &mut Ui, events: &mut Vec<CustomEvent>) {
     ui.menu_button("💾", |ui| {
+        ui.style_mut().override_text_style = None;
         if ui.button("Load").clicked() {
             let file = FileDialog::new()
                 .set_location(
