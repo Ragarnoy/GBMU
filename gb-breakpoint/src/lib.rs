@@ -28,7 +28,7 @@ macro_rules! boxed {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Ast {
     Register(Register),
-    Address(u16),
+    Address(Box<Ast>),
     Raw(u16),
     UnaryExpr(UnaryExpr),
     BinaryExpr(BinaryExpr),
@@ -38,7 +38,7 @@ impl Display for Ast {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Ast::Register(r) => write!(f, "{}", r),
-            Ast::Address(addr) => write!(f, "*{:#X}", addr),
+            Ast::Address(addr) => write!(f, "*{}", addr),
             Ast::Raw(v) => write!(f, "{:#X}", v),
             Ast::UnaryExpr(expr) => write!(f, "{}", expr),
             Ast::BinaryExpr(expr) => write!(f, "{}", expr),

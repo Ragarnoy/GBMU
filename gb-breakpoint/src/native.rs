@@ -11,8 +11,8 @@ use nom::{combinator::map, IResult};
 /// # Examples
 ///
 /// ```
-/// # use gb_breakpoint::parser::raw_value;
-/// assert_eq!(raw_value("42"), Ok(("", 0x42)));
+/// # use gb_breakpoint::native::value;
+/// assert_eq!(value("42"), Ok(("", 0x42)));
 /// ```
 pub fn value(input: &str) -> IResult<&str, u16> {
     use nom::bytes::complete::take_while_m_n;

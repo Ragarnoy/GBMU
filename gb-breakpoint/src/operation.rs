@@ -88,7 +88,7 @@ impl Display for Operator {
 /// # Examples
 ///
 /// ```
-/// # use gb_breakpoint::parser::bin_op;
+/// # use gb_breakpoint::operation::bin_op;
 /// assert!(bin_op("==").is_ok());
 /// ```
 pub fn bin_op(input: &str) -> IResult<&str, Operator> {
@@ -131,7 +131,7 @@ fn test_bin_op() {
 /// # Example
 ///
 /// ```
-/// # use gb_breakpoint::parser::comb_op;
+/// # use gb_breakpoint::operation::comb_op;
 /// assert!(comb_op("&&").is_ok());
 /// ```
 pub fn comb_op(input: &str) -> IResult<&str, Operator> {
@@ -160,8 +160,8 @@ fn test_comb_op() {
 /// # Examples
 ///
 /// ```
-/// # use gb_breakpoint::parser::operation;
-/// assert!(operation("BC == DE").is_ok());
+/// # use gb_breakpoint::operation::bin_expr;
+/// assert!(bin_expr("BC == DE").is_ok());
 /// ```
 pub fn bin_expr(input: &str) -> IResult<&str, BinaryExpr> {
     map(
@@ -176,22 +176,22 @@ pub fn bin_expr(input: &str) -> IResult<&str, BinaryExpr> {
 
 #[cfg(test)]
 mod unit_operation {
-    use crate::test_parser::utils_test_expr;
-    use crate::wrapper::wrap_bin_expr;
+    use crate::operation::bin_expr;
+    use crate::utils_test_expr;
 
     #[test]
     fn no_space() {
-        utils_test_expr(wrap_bin_expr, "AF==42", "AF == 0x42");
-        utils_test_expr(wrap_bin_expr, "SP<=fffe", "SP <= 0xFFFE");
-        utils_test_expr(wrap_bin_expr, "HL!=*ff0f", "HL != *0xFF0F");
-        utils_test_expr(wrap_bin_expr, "HL<DE", "HL < DE");
+        utils_test_expr!(bin_expr, "AF==42", "AF == 0x42");
+        utils_test_expr!(bin_expr, "SP<=fffe", "SP <= 0xFFFE");
+        utils_test_expr!(bin_expr, "HL!=*ff0f", "HL != *0xFF0F");
+        utils_test_expr!(bin_expr, "HL<DE", "HL < DE");
     }
 
     #[test]
     fn space() {
-        utils_test_expr(wrap_bin_expr, "AF ==42", "AF == 0x42");
-        utils_test_expr(wrap_bin_expr, "SP<= fffe", "SP <= 0xFFFE");
-        utils_test_expr(wrap_bin_expr, "HL != *ff0f", "HL != *0xFF0F");
-        utils_test_expr(wrap_bin_expr, "HL < DE", "HL < DE");
+        utils_test_expr!(bin_expr, "AF ==42", "AF == 0x42");
+        utils_test_expr!(bin_expr, "SP<= fffe", "SP <= 0xFFFE");
+        utils_test_expr!(bin_expr, "HL != *ff0f", "HL != *0xFF0F");
+        utils_test_expr!(bin_expr, "HL < DE", "HL < DE");
     }
 }

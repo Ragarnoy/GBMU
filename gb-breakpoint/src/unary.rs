@@ -73,7 +73,7 @@ fn test_unary_expr() {
 /// Parse a [UnaryOperator] identifier
 ///
 /// ```
-/// # use gb_breakpoint::parser::unary_expr_id;
+/// # use gb_breakpoint::unary::unary_expr_id;
 /// assert!(unary_expr_id("U").is_ok());
 /// ```
 pub fn unary_expr_id(input: &str) -> IResult<&str, UnaryOperator> {

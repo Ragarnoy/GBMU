@@ -4,7 +4,9 @@ use crate::Ast;
 
 /// Wrap [crate::register::Register] in [Ast::Register]
 pub fn wrap_register(input: &str) -> IResult<&str, Ast> {
-    map(crate::register::register, Ast::Register)(input)
+    let res = map(crate::register::register, Ast::Register)(input);
+    eprintln!("[wrap_register] res: {:?}", res);
+    res
 }
 
 /// Wrap [crate::native::value] in [Ast::Raw]

@@ -74,7 +74,7 @@ where
 /// assert!(any_value("U(AF)").is_ok());
 /// ```
 pub fn any_value(input: &str) -> IResult<&str, Ast> {
-    alt((wrap_unary, wrap_value))(input)
+    alt((wrap_unary, value))(input)
 }
 
 /// Parse a value
@@ -95,7 +95,7 @@ pub fn value(input: &str) -> IResult<&str, Ast> {
 /// # Definition
 ///
 /// ```txt
-/// address = '*' raw_value
+/// address = '*' any_value
 /// ```
 ///
 /// # Examples
@@ -107,5 +107,5 @@ pub fn value(input: &str) -> IResult<&str, Ast> {
 pub fn address(input: &str) -> IResult<&str, Ast> {
     let (input, _) = tag("*")(input)?;
 
-    map(crate::native::value, Ast::Address)(input)
+    map(map(any_value, |v| boxed!(v)), Ast::Address)(input)
 }
