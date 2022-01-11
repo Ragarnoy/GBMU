@@ -1,6 +1,6 @@
 use crate::{
     boxed,
-    breakpoint::Operator,
+    operation::{comb_op, operation},
     unary::unary_expr,
     wrapper::{wrap_register, wrap_value},
     Ast,
@@ -12,6 +12,7 @@ use nom::{
     sequence::{delimited, tuple},
     IResult,
 };
+
 /// Parse a breakpoint expression to generate an [Ast]
 ///
 /// # Definition
@@ -41,33 +42,8 @@ pub fn expr(input: &str) -> IResult<&str, Ast> {
     ))(input)
 }
 
-/// Parse an expression to generate an [Ast]
-///
-/// # Definition
-///
-/// ```txt
-/// operation = any_value bin_op any_value
-/// ```
-///
-/// # Examples
-///
-/// ```
-/// # use gb_breakpoint::parser::operation;
-/// assert!(operation("BC == DE").is_ok());
-/// ```
-pub fn operation(input: &str) -> IResult<&str, Ast> {
-    map(
-        tuple((any_value, ws(bin_op), any_value)),
-        |(lhs, op, rhs)| Ast::BinaryExpr {
-            op,
-            lhs: boxed!(lhs),
-            rhs: boxed!(rhs),
-        },
-    )(input)
-}
-
 /// Skip surounding whitespaces
-fn ws<I, O, E, P>(parser: P) -> impl FnMut(I) -> IResult<I, O, E>
+pub fn ws<I, O, E, P>(parser: P) -> impl FnMut(I) -> IResult<I, O, E>
 where
     I: nom::InputTakeAtPosition,
     <I as nom::InputTakeAtPosition>::Item: nom::AsChar + Clone,
@@ -77,30 +53,6 @@ where
     use nom::character::complete::space0;
 
     delimited(space0, parser, space0)
-}
-
-/// Parse a [Operator] token
-///
-/// # Definition
-///
-/// ```txt
-/// comb_op |= '&&'
-///         |= '||'
-///         |= '^^'
-/// ```
-///
-/// # Example
-///
-/// ```
-/// # use gb_breakpoint::parser::comb_op;
-/// assert!(comb_op("&&").is_ok());
-/// ```
-pub fn comb_op(input: &str) -> IResult<&str, Operator> {
-    alt((
-        map(tag("&&"), |_| Operator::LogicAnd),
-        map(tag("||"), |_| Operator::LogicOr),
-        map(tag("^^"), |_| Operator::LogicXor),
-    ))(input)
 }
 
 /// Parser a value that can be wrapped in a [UnaryExpr]
@@ -153,40 +105,4 @@ pub fn address(input: &str) -> IResult<&str, Ast> {
     let (input, _) = tag("*")(input)?;
 
     map(crate::native::value, Ast::Address)(input)
-}
-
-/// Parse a [Operator] token
-///
-/// # Definition
-///
-/// ```txt
-/// bin_op |= '=='
-///        |= '!='
-///        |= '>'
-///        |= '<'
-///        |= '>='
-///        |= '<='
-///        |= '&'
-///        |= '|'
-///        |= '^'
-/// ```
-///
-/// # Examples
-///
-/// ```
-/// # use gb_breakpoint::parser::bin_op;
-/// assert!(bin_op("==").is_ok());
-/// ```
-pub fn bin_op(input: &str) -> IResult<&str, Operator> {
-    alt((
-        map(tag("=="), |_| Operator::Eq),
-        map(tag("!="), |_| Operator::NotEq),
-        map(tag("<="), |_| Operator::InfEq),
-        map(tag(">="), |_| Operator::SupEq),
-        map(tag(">"), |_| Operator::Sup),
-        map(tag("<"), |_| Operator::Inf),
-        map(tag("|"), |_| Operator::BinaryOr),
-        map(tag("&"), |_| Operator::BinaryAnd),
-        map(tag("^"), |_| Operator::BinaryXor),
-    ))(input.trim())
 }

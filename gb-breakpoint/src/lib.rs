@@ -1,5 +1,5 @@
-pub mod breakpoint;
 pub mod native;
+pub mod operation;
 pub mod parser;
 pub mod register;
 #[cfg(test)]
@@ -12,7 +12,7 @@ use std::{
     str::FromStr,
 };
 
-pub use breakpoint::Operator;
+pub use operation::Operator;
 use register::Register;
 pub use unary::UnaryOperator;
 
