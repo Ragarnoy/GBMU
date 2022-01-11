@@ -47,7 +47,7 @@ use crate::{
 };
 use nom::{
     branch::alt,
-    bytes::streaming::tag,
+    bytes::complete::tag,
     combinator::map,
     sequence::{delimited, tuple},
     IResult,
@@ -76,19 +76,6 @@ pub fn expr_complete(input: &str) -> IResult<&str, Ast> {
     ))(input)
 }
 
-/*pub fn expr(input: &str) -> IResult<&str, Ast> {
-    alt((
-        map(tuple((operation, ws(comb_op), expr)), |(lhs, op, rhs)| {
-            Ast::BinaryExpr {
-                op,
-                lhs: boxed!(lhs),
-                rhs: boxed!(rhs),
-            }
-        }),
-        operation,
-    ))(input)
-}
-*/
 pub fn operation(input: &str) -> IResult<&str, Ast> {
     map(
         tuple((any_value, ws(bin_op), any_value)),
@@ -167,8 +154,6 @@ pub fn address(input: &str) -> IResult<&str, Ast> {
 }
 
 pub fn bin_op(input: &str) -> IResult<&str, Operator> {
-    use nom::bytes::complete::tag;
-
     alt((
         map(tag("=="), |_| Operator::Eq),
         map(tag("!="), |_| Operator::NotEq),
