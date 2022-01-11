@@ -14,7 +14,7 @@ pub fn compute_expression<DBG: DebugOperations>(node: &Ast, dbg: &DBG) -> u16 {
     match current {
         Ast::Register(r) => u16::from(dbg.cpu_get(CpuRegs::try_from(*r).unwrap())),
         Ast::Address(a) => u16::from(dbg.read(*a)),
-        Ast::Value(v) => *v,
+        Ast::Raw(v) => *v,
         Ast::UnaryExpr { op, child } => eval_unary_op(op, compute_expression(child, dbg)),
         Ast::BinaryExpr { op, lhs, rhs } => eval_binary_op(
             op,

@@ -18,7 +18,7 @@ use register::Register;
 pub enum Ast {
     Register(Register),
     Address(u16),
-    Value(u16),
+    Raw(u16),
     UnaryExpr {
         op: UnaryOperator,
         child: Box<Ast>,
@@ -35,7 +35,7 @@ impl Display for Ast {
         match self {
             Ast::Register(r) => write!(f, "{}", r),
             Ast::Address(addr) => write!(f, "*{:#X}", addr),
-            Ast::Value(v) => write!(f, "{:#X}", v),
+            Ast::Raw(v) => write!(f, "{:#X}", v),
             Ast::UnaryExpr { op, child } => write!(f, "{}({})", op, child),
             Ast::BinaryExpr { op, lhs, rhs } => write!(f, "{} {} {}", lhs, op, rhs),
         }
@@ -47,7 +47,7 @@ impl Ast {
         Self::BinaryExpr {
             op: Operator::Eq,
             lhs: boxed!(Self::Register(Register::PC)),
-            rhs: boxed!(Self::Value(address)),
+            rhs: boxed!(Self::Raw(address)),
         }
     }
 }

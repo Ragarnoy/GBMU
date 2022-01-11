@@ -9,5 +9,5 @@ pub fn wrap_register(input: &str) -> IResult<&str, Ast> {
 
 /// Wrap [crate::native::value] in [Ast::Value]
 pub fn wrap_value(input: &str) -> IResult<&str, Ast> {
-    map(crate::native::value, Ast::Value)(input)
+    map(crate::native::value, Ast::Raw)(input)
 }
