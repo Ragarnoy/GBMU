@@ -14,6 +14,7 @@ use std::{
 
 pub use operation::Operator;
 use register::Register;
+use unary::UnaryExpr;
 pub use unary::UnaryOperator;
 
 #[macro_export]
@@ -23,15 +24,12 @@ macro_rules! boxed {
     };
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Ast {
     Register(Register),
     Address(u16),
     Raw(u16),
-    UnaryExpr {
-        op: UnaryOperator,
-        child: Box<Ast>,
-    },
+    UnaryExpr(UnaryExpr),
     BinaryExpr {
         op: Operator,
         lhs: Box<Ast>,
@@ -45,7 +43,7 @@ impl Display for Ast {
             Ast::Register(r) => write!(f, "{}", r),
             Ast::Address(addr) => write!(f, "*{:#X}", addr),
             Ast::Raw(v) => write!(f, "{:#X}", v),
-            Ast::UnaryExpr { op, child } => write!(f, "{}({})", op, child),
+            Ast::UnaryExpr(op) => write!(f, "{}", op),
             Ast::BinaryExpr { op, lhs, rhs } => write!(f, "{} {} {}", lhs, op, rhs),
         }
     }

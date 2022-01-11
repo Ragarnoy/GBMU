@@ -2,6 +2,18 @@ use crate::{boxed, wrapper::wrap_register, Ast};
 use nom::{branch::alt, bytes::complete::tag, combinator::map, sequence::delimited, IResult};
 use std::fmt::{self, Display};
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UnaryExpr {
+    pub op: UnaryOperator,
+    pub child: Box<Ast>,
+}
+
+impl Display for UnaryExpr {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}({})", self.op, self.child)
+    }
+}
+
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum UnaryOperator {
     /// Get the upper bound of a value, U(<r16>)
@@ -29,13 +41,13 @@ impl Display for UnaryOperator {
 /// ```txt
 /// unary_expr = (L|U) '(' register ')'
 /// ```
-pub fn unary_expr(input: &str) -> IResult<&str, Ast> {
+pub fn unary_expr(input: &str) -> IResult<&str, UnaryExpr> {
     let (input, unary_op) = unary_expr_id(input)?;
 
     let (input, reg) = delimited(tag("("), wrap_register, tag(")"))(input)?;
     Ok((
         input,
-        Ast::UnaryExpr {
+        UnaryExpr {
             op: unary_op,
             child: boxed!(reg),
         },
@@ -50,7 +62,7 @@ fn test_unary_expr() {
         unary_expr("U(AF)"),
         Ok((
             "",
-            Ast::UnaryExpr {
+            UnaryExpr {
                 op: UnaryOperator::Upper,
                 child: crate::boxed!(Ast::Register(Register::AF))
             }

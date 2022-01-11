@@ -11,3 +11,7 @@ pub fn wrap_register(input: &str) -> IResult<&str, Ast> {
 pub fn wrap_value(input: &str) -> IResult<&str, Ast> {
     map(crate::native::value, Ast::Raw)(input)
 }
+
+pub fn wrap_unary(input: &str) -> IResult<&str, Ast> {
+    map(crate::unary::unary_expr, Ast::UnaryExpr)(input)
+}

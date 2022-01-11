@@ -1,8 +1,7 @@
 use crate::{
     boxed,
     operation::{comb_op, operation},
-    unary::unary_expr,
-    wrapper::{wrap_register, wrap_value},
+    wrapper::{wrap_register, wrap_unary, wrap_value},
     Ast,
 };
 use nom::{
@@ -71,7 +70,7 @@ where
 /// assert!(any_value("U(AF)").is_ok());
 /// ```
 pub fn any_value(input: &str) -> IResult<&str, Ast> {
-    alt((unary_expr, wrap_value))(input)
+    alt((wrap_unary, wrap_value))(input)
 }
 
 /// Parse a value
