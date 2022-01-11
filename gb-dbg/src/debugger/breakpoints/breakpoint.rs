@@ -47,6 +47,8 @@ impl Breakpoint {
 
     pub fn from_expression(expr: &str) -> anyhow::Result<Self> {
         let node = Ast::from_str(expr).map_err(|e| anyhow::anyhow!(e))?;
+
+        log::debug!("parsed expression: {:?}", node);
         Ok(Self {
             expr: node,
             enabled: true,
