@@ -56,7 +56,7 @@ impl FromStr for Ast {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         use nom::combinator::all_consuming;
 
-        let (_rest, ast) = match all_consuming(parser::expr_complete)(s) {
+        let (_rest, ast) = match all_consuming(parser::expr)(s) {
             Ok(ret) => ret,
             Err(e) => {
                 return Err(format!("Invalid input: {}", e));

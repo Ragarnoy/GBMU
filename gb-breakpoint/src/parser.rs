@@ -1,6 +1,6 @@
 //! ## Parser Definition
 //!
-//! ```ignore
+//! ```txt
 //! expr = operation comb_op expr
 //! operation = any_value bin_op any_value
 //!
@@ -60,19 +60,32 @@ macro_rules! boxed {
     };
 }
 
-pub fn expr_complete(input: &str) -> IResult<&str, Ast> {
-    use nom::combinator::complete;
-
+/// Parse a breakpoint expression to generate an [Ast]
+///
+/// # Definition
+///
+/// ```txt
+/// expr |= operation comb_op expr
+///      |= operation
+/// ```
+///
+/// # Examples
+///
+/// ```
+/// # use gb_breakpoint::parser::expr;
+/// assert!(expr("AF == DEAD").is_ok());
+/// assert!(expr("PC == 42 && *FF0F == 5").is_ok());
+/// ```
+pub fn expr(input: &str) -> IResult<&str, Ast> {
     alt((
-        map(
-            complete(tuple((operation, ws(comb_op), expr_complete))),
-            |(lhs, op, rhs)| Ast::BinaryExpr {
+        map(tuple((operation, ws(comb_op), expr)), |(lhs, op, rhs)| {
+            Ast::BinaryExpr {
                 op,
                 lhs: boxed!(lhs),
                 rhs: boxed!(rhs),
-            },
-        ),
-        complete(operation),
+            }
+        }),
+        operation,
     ))(input)
 }
 

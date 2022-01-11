@@ -28,7 +28,7 @@ impl Display for Register {
 /// function that parser an input into a [Register]
 ///
 /// ```
-/// # use gb_breakpoint::register::register
+/// # use gb_breakpoint::register::{Register, register};
 /// assert_eq!(register("AF"), Ok(("", Register::AF)));
 /// assert!(register("foo").is_err());
 /// ```
