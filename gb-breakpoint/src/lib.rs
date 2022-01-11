@@ -4,6 +4,7 @@ pub mod parser;
 pub mod register;
 #[cfg(test)]
 mod test_parser;
+pub mod unary;
 mod wrapper;
 
 use std::{
@@ -11,8 +12,16 @@ use std::{
     str::FromStr,
 };
 
-pub use breakpoint::{Operator, UnaryOperator};
+pub use breakpoint::Operator;
 use register::Register;
+pub use unary::UnaryOperator;
+
+#[macro_export]
+macro_rules! boxed {
+    ($any:expr) => {
+        Box::new($any)
+    };
+}
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Ast {

@@ -1,26 +1,6 @@
 use std::fmt::{self, Display};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
-pub enum UnaryOperator {
-    /// Get the upper bound of a value, U(<r16>)
-    Upper,
-    /// Get the lower bound of a value, L(<r16>)
-    Lower,
-    //Raising,
-    //Falling,
-    //Update,
-}
-
-impl Display for UnaryOperator {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            UnaryOperator::Upper => write!(f, "U"),
-            UnaryOperator::Lower => write!(f, "L"),
-        }
-    }
-}
-
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum Operator {
     /// Check for equality of value between another, `==`
     Eq,

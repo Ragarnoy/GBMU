@@ -1,6 +1,7 @@
 use crate::{
-    breakpoint::{Operator, UnaryOperator},
-    register,
+    boxed,
+    breakpoint::Operator,
+    unary::unary_expr,
     wrapper::{wrap_register, wrap_value},
     Ast,
 };
@@ -11,14 +12,6 @@ use nom::{
     sequence::{delimited, tuple},
     IResult,
 };
-
-#[macro_export]
-macro_rules! boxed {
-    ($any:expr) => {
-        Box::new($any)
-    };
-}
-
 /// Parse a breakpoint expression to generate an [Ast]
 ///
 /// # Definition
@@ -127,39 +120,6 @@ pub fn comb_op(input: &str) -> IResult<&str, Operator> {
 /// ```
 pub fn any_value(input: &str) -> IResult<&str, Ast> {
     alt((unary_expr, wrap_value))(input)
-}
-
-/// Parse a [Ast::UnaryExpr]
-///
-/// # Definition
-///
-/// ```txt
-/// unary_expr = (L|U) '(' register ')'
-/// ```
-pub fn unary_expr(input: &str) -> IResult<&str, Ast> {
-    let (input, unary_op) = unary_expr_id(input)?;
-
-    let (input, reg) = delimited(tag("("), register, tag(")"))(input)?;
-    Ok((
-        input,
-        Ast::UnaryExpr {
-            op: unary_op,
-            child: boxed!(reg),
-        },
-    ))
-}
-
-/// Parse a [UnaryOperator] identifier
-///
-/// ```
-/// # use gb_breakpoint::parser::unary_expr_id;
-/// assert!(unary_expr_id("U").is_ok());
-/// ```
-pub fn unary_expr_id(input: &str) -> IResult<&str, UnaryOperator> {
-    alt((
-        map(tag("L"), |_| UnaryOperator::Lower),
-        map(tag("U"), |_| UnaryOperator::Upper),
-    ))(input)
 }
 
 /// Parse a value

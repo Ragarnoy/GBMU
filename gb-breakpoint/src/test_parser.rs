@@ -1,6 +1,5 @@
-use crate::breakpoint::{Operator, UnaryOperator};
-use crate::parser::{address, bin_op, comb_op, raw_value, unary_expr, unary_expr_id};
-use crate::register::Register;
+use crate::breakpoint::Operator;
+use crate::parser::{address, bin_op, comb_op};
 use crate::Ast;
 
 #[test]
@@ -24,37 +23,9 @@ fn test_comb_op() {
 }
 
 #[test]
-fn test_raw_value() {
-    assert_eq!(raw_value("1"), Ok(("", 0x1_u16)));
-    assert_eq!(raw_value("1f"), Ok(("", 0x1f_u16)));
-    assert_eq!(raw_value("b1f"), Ok(("", 0xb1f_u16)));
-    assert_eq!(raw_value("ab1f"), Ok(("", 0xab1f_u16)));
-}
-
-#[test]
 fn test_address() {
     assert_eq!(address("*1"), Ok(("", Ast::Address(1))));
     assert_eq!(address("*dead"), Ok(("", Ast::Address(0xdead))));
-}
-
-#[test]
-fn test_unary_expr_id() {
-    assert_eq!(unary_expr_id("U"), Ok(("", UnaryOperator::Upper)));
-    assert_eq!(unary_expr_id("L"), Ok(("", UnaryOperator::Lower)));
-}
-
-#[test]
-fn test_unary_expr() {
-    assert_eq!(
-        unary_expr("U(AF)"),
-        Ok((
-            "",
-            Ast::UnaryExpr {
-                op: UnaryOperator::Upper,
-                child: crate::boxed!(Ast::Register(Register::AF))
-            }
-        ))
-    );
 }
 
 #[cfg(test)]
