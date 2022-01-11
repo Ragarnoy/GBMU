@@ -1,6 +1,8 @@
 use crate::{
     breakpoint::{Operator, UnaryOperator},
-    register, Ast,
+    register,
+    wrapper::{wrap_register, wrap_value},
+    Ast,
 };
 use nom::{
     branch::alt,
@@ -124,7 +126,7 @@ pub fn comb_op(input: &str) -> IResult<&str, Operator> {
 /// assert!(any_value("U(AF)").is_ok());
 /// ```
 pub fn any_value(input: &str) -> IResult<&str, Ast> {
-    alt((unary_expr, value))(input)
+    alt((unary_expr, wrap_value))(input)
 }
 
 /// Parse a [Ast::UnaryExpr]
@@ -160,36 +162,17 @@ pub fn unary_expr_id(input: &str) -> IResult<&str, UnaryOperator> {
     ))(input)
 }
 
-/// Wrap [u16] in [Ast::Value]
-pub fn value(input: &str) -> IResult<&str, Ast> {
-    alt((register, map(raw_value, Ast::Value), address))(input)
-}
-
-/// Wrap [register::register] in [Ast::Register]
-pub fn register(input: &str) -> IResult<&str, Ast> {
-    map(register::register, Ast::Register)(input)
-}
-
-/// Parse an [u16]
+/// Parse a value
 ///
 /// # Definition
 ///
 /// ```txt
-/// raw_value = [A-Fa-f0-9]{1,4}
+/// value |= register
+///       |= u16
+///       |= adress
 /// ```
-///
-/// # Examples
-///
-/// ```
-/// # use gb_breakpoint::parser::raw_value;
-/// assert_eq!(raw_value("42"), Ok(("", 0x42)));
-/// ```
-pub fn raw_value(input: &str) -> IResult<&str, u16> {
-    use nom::bytes::complete::take_while_m_n;
-
-    map(take_while_m_n(1, 4, |c: char| c.is_ascii_hexdigit()), |s| {
-        u16::from_str_radix(s, 16).unwrap()
-    })(input)
+pub fn value(input: &str) -> IResult<&str, Ast> {
+    alt((wrap_register, wrap_value, address))(input)
 }
 
 /// Parse an [Ast::Address]
@@ -209,7 +192,7 @@ pub fn raw_value(input: &str) -> IResult<&str, u16> {
 pub fn address(input: &str) -> IResult<&str, Ast> {
     let (input, _) = tag("*")(input)?;
 
-    map(raw_value, Ast::Address)(input)
+    map(crate::native::value, Ast::Address)(input)
 }
 
 /// Parse a [Operator] token

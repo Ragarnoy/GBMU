@@ -1,8 +1,10 @@
 pub mod breakpoint;
+pub mod native;
 pub mod parser;
 pub mod register;
 #[cfg(test)]
 mod test_parser;
+mod wrapper;
 
 use std::{
     fmt::{self, Display},
