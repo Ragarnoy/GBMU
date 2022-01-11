@@ -1,46 +1,3 @@
-//! ## Parser Definition
-//!
-//! ```txt
-//! expr = operation comb_op expr
-//! operation = any_value bin_op any_value
-//!
-//! comb_op |= '&&'
-//!         |= '||'
-//!         |= '^^'
-//!
-//! bin_op |= '=='
-//!        |= '!='
-//!        |= '>'
-//!        |= '<'
-//!        |= '>='
-//!        |= '<='
-//!        |= '&'
-//!        |= '|'
-//!        |= '^'
-//!
-//! any_value |= unary
-//!           |= value
-//!
-//! unary = transformator
-//!
-//! transformator = (L|U) '(' register ')'
-//!
-//! register |= 'AF'
-//!          |= 'BC'
-//!          |= 'DE'
-//!          |= 'HL'
-//!          |= 'PC'
-//!          |= 'SP'
-//!
-//! value |= register
-//!       |= address
-//!       |= raw_value
-//!
-//! address = '*' raw_value
-//!
-//! raw_value = [A-Fa-f0-9]{1,4}
-//! ```
-
 use crate::{
     breakpoint::{Operator, UnaryOperator},
     register, Ast,
@@ -89,6 +46,20 @@ pub fn expr(input: &str) -> IResult<&str, Ast> {
     ))(input)
 }
 
+/// Parse an expression to generate an [Ast]
+///
+/// # Definition
+///
+/// ```txt
+/// operation = any_value bin_op any_value
+/// ```
+///
+/// # Examples
+///
+/// ```
+/// # use gb_breakpoint::parser::operation;
+/// assert!(operation("BC == DE").is_ok());
+/// ```
 pub fn operation(input: &str) -> IResult<&str, Ast> {
     map(
         tuple((any_value, ws(bin_op), any_value)),
@@ -100,6 +71,7 @@ pub fn operation(input: &str) -> IResult<&str, Ast> {
     )(input)
 }
 
+/// Skip surounding whitespaces
 fn ws<I, O, E, P>(parser: P) -> impl FnMut(I) -> IResult<I, O, E>
 where
     I: nom::InputTakeAtPosition,
@@ -112,6 +84,22 @@ where
     delimited(space0, parser, space0)
 }
 
+/// Parse a [Operator] token
+///
+/// # Definition
+///
+/// ```txt
+/// comb_op |= '&&'
+///         |= '||'
+///         |= '^^'
+/// ```
+///
+/// # Example
+///
+/// ```
+/// # use gb_breakpoint::parser::comb_op;
+/// assert!(comb_op("&&").is_ok());
+/// ```
 pub fn comb_op(input: &str) -> IResult<&str, Operator> {
     alt((
         map(tag("&&"), |_| Operator::LogicAnd),
@@ -120,10 +108,32 @@ pub fn comb_op(input: &str) -> IResult<&str, Operator> {
     ))(input)
 }
 
+/// Parser a value that can be wrapped in a [UnaryExpr]
+///
+/// # Definition
+///
+/// ```txt
+/// any_value = unary | value
+/// ```
+///
+/// # Examples
+///
+/// ```
+/// # use gb_breakpoint::parser::any_value;
+/// assert!(any_value("42").is_ok());
+/// assert!(any_value("U(AF)").is_ok());
+/// ```
 pub fn any_value(input: &str) -> IResult<&str, Ast> {
     alt((unary_expr, value))(input)
 }
 
+/// Parse a [Ast::UnaryExpr]
+///
+/// # Definition
+///
+/// ```txt
+/// unary_expr = (L|U) '(' register ')'
+/// ```
 pub fn unary_expr(input: &str) -> IResult<&str, Ast> {
     let (input, unary_op) = unary_expr_id(input)?;
 
@@ -137,6 +147,12 @@ pub fn unary_expr(input: &str) -> IResult<&str, Ast> {
     ))
 }
 
+/// Parse a [UnaryOperator] identifier
+///
+/// ```
+/// # use gb_breakpoint::parser::unary_expr_id;
+/// assert!(unary_expr_id("U").is_ok());
+/// ```
 pub fn unary_expr_id(input: &str) -> IResult<&str, UnaryOperator> {
     alt((
         map(tag("L"), |_| UnaryOperator::Lower),
@@ -144,14 +160,30 @@ pub fn unary_expr_id(input: &str) -> IResult<&str, UnaryOperator> {
     ))(input)
 }
 
+/// Wrap [u16] in [Ast::Value]
 pub fn value(input: &str) -> IResult<&str, Ast> {
     alt((register, map(raw_value, Ast::Value), address))(input)
 }
 
+/// Wrap [register::register] in [Ast::Register]
 pub fn register(input: &str) -> IResult<&str, Ast> {
     map(register::register, Ast::Register)(input)
 }
 
+/// Parse an [u16]
+///
+/// # Definition
+///
+/// ```txt
+/// raw_value = [A-Fa-f0-9]{1,4}
+/// ```
+///
+/// # Examples
+///
+/// ```
+/// # use gb_breakpoint::parser::raw_value;
+/// assert_eq!(raw_value("42"), Ok(("", 0x42)));
+/// ```
 pub fn raw_value(input: &str) -> IResult<&str, u16> {
     use nom::bytes::complete::take_while_m_n;
 
@@ -160,12 +192,48 @@ pub fn raw_value(input: &str) -> IResult<&str, u16> {
     })(input)
 }
 
+/// Parse an [Ast::Address]
+///
+/// # Definition
+///
+/// ```txt
+/// address = '*' raw_value
+/// ```
+///
+/// # Examples
+///
+/// ```
+/// # use gb_breakpoint::parser::address;
+/// assert!(address("*42").is_ok());
+/// ```
 pub fn address(input: &str) -> IResult<&str, Ast> {
     let (input, _) = tag("*")(input)?;
 
     map(raw_value, Ast::Address)(input)
 }
 
+/// Parse a [Operator] token
+///
+/// # Definition
+///
+/// ```txt
+/// bin_op |= '=='
+///        |= '!='
+///        |= '>'
+///        |= '<'
+///        |= '>='
+///        |= '<='
+///        |= '&'
+///        |= '|'
+///        |= '^'
+/// ```
+///
+/// # Examples
+///
+/// ```
+/// # use gb_breakpoint::parser::bin_op;
+/// assert!(bin_op("==").is_ok());
+/// ```
 pub fn bin_op(input: &str) -> IResult<&str, Operator> {
     alt((
         map(tag("=="), |_| Operator::Eq),
