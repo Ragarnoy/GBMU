@@ -12,6 +12,7 @@ use std::{
     str::FromStr,
 };
 
+use operation::BinaryExpr;
 pub use operation::Operator;
 use register::Register;
 use unary::UnaryExpr;
@@ -30,11 +31,7 @@ pub enum Ast {
     Address(u16),
     Raw(u16),
     UnaryExpr(UnaryExpr),
-    BinaryExpr {
-        op: Operator,
-        lhs: Box<Ast>,
-        rhs: Box<Ast>,
-    },
+    BinaryExpr(BinaryExpr),
 }
 
 impl Display for Ast {
@@ -43,19 +40,19 @@ impl Display for Ast {
             Ast::Register(r) => write!(f, "{}", r),
             Ast::Address(addr) => write!(f, "*{:#X}", addr),
             Ast::Raw(v) => write!(f, "{:#X}", v),
-            Ast::UnaryExpr(op) => write!(f, "{}", op),
-            Ast::BinaryExpr { op, lhs, rhs } => write!(f, "{} {} {}", lhs, op, rhs),
+            Ast::UnaryExpr(expr) => write!(f, "{}", expr),
+            Ast::BinaryExpr(expr) => write!(f, "{}", expr),
         }
     }
 }
 
 impl Ast {
     pub fn simple(address: u16) -> Self {
-        Self::BinaryExpr {
+        Self::BinaryExpr(BinaryExpr {
             op: Operator::Eq,
             lhs: boxed!(Self::Register(Register::PC)),
             rhs: boxed!(Self::Raw(address)),
-        }
+        })
     }
 }
 

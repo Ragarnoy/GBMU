@@ -1,7 +1,7 @@
 use crate::{
     boxed,
-    operation::{comb_op, operation},
-    wrapper::{wrap_register, wrap_unary, wrap_value},
+    operation::{comb_op, BinaryExpr},
+    wrapper::{wrap_bin_expr, wrap_register, wrap_unary, wrap_value},
     Ast,
 };
 use nom::{
@@ -29,16 +29,20 @@ use nom::{
 /// assert!(expr("PC == 42 && *FF0F == 5").is_ok());
 /// ```
 pub fn expr(input: &str) -> IResult<&str, Ast> {
-    alt((
-        map(tuple((operation, ws(comb_op), expr)), |(lhs, op, rhs)| {
-            Ast::BinaryExpr {
+    alt((comb_expr, wrap_bin_expr))(input)
+}
+
+pub fn comb_expr(input: &str) -> IResult<&str, Ast> {
+    map(
+        tuple((wrap_bin_expr, ws(comb_op), expr)),
+        |(lhs, op, rhs)| {
+            Ast::BinaryExpr(BinaryExpr {
                 op,
                 lhs: boxed!(lhs),
                 rhs: boxed!(rhs),
-            }
-        }),
-        operation,
-    ))(input)
+            })
+        },
+    )(input)
 }
 
 /// Skip surounding whitespaces

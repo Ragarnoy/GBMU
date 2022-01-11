@@ -7,11 +7,17 @@ pub fn wrap_register(input: &str) -> IResult<&str, Ast> {
     map(crate::register::register, Ast::Register)(input)
 }
 
-/// Wrap [crate::native::value] in [Ast::Value]
+/// Wrap [crate::native::value] in [Ast::Raw]
 pub fn wrap_value(input: &str) -> IResult<&str, Ast> {
     map(crate::native::value, Ast::Raw)(input)
 }
 
+/// Wrap [crate::unary::unary_expr] to [Ast::UnaryExpr]
 pub fn wrap_unary(input: &str) -> IResult<&str, Ast> {
     map(crate::unary::unary_expr, Ast::UnaryExpr)(input)
+}
+
+/// Wrap [crate::operation::bin_expr] to [Ast::BinaryExpr]
+pub fn wrap_bin_expr(input: &str) -> IResult<&str, Ast> {
+    map(crate::operation::bin_expr, Ast::BinaryExpr)(input)
 }

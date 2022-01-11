@@ -7,6 +7,19 @@ use crate::{
 };
 use nom::{branch::alt, bytes::complete::tag, combinator::map, sequence::tuple, IResult};
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct BinaryExpr {
+    pub op: Operator,
+    pub lhs: Box<Ast>,
+    pub rhs: Box<Ast>,
+}
+
+impl Display for BinaryExpr {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{} {} {}", self.lhs, self.op, self.rhs)
+    }
+}
+
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum Operator {
     /// Check for equality of value between another, `==`
@@ -150,10 +163,10 @@ fn test_comb_op() {
 /// # use gb_breakpoint::parser::operation;
 /// assert!(operation("BC == DE").is_ok());
 /// ```
-pub fn operation(input: &str) -> IResult<&str, Ast> {
+pub fn bin_expr(input: &str) -> IResult<&str, BinaryExpr> {
     map(
         tuple((any_value, ws(bin_op), any_value)),
-        |(lhs, op, rhs)| Ast::BinaryExpr {
+        |(lhs, op, rhs)| BinaryExpr {
             op,
             lhs: boxed!(lhs),
             rhs: boxed!(rhs),
@@ -163,22 +176,22 @@ pub fn operation(input: &str) -> IResult<&str, Ast> {
 
 #[cfg(test)]
 mod unit_operation {
-    use crate::operation::operation;
     use crate::test_parser::utils_test_expr;
+    use crate::wrapper::wrap_bin_expr;
 
     #[test]
     fn no_space() {
-        utils_test_expr(operation, "AF==42", "AF == 0x42");
-        utils_test_expr(operation, "SP<=fffe", "SP <= 0xFFFE");
-        utils_test_expr(operation, "HL!=*ff0f", "HL != *0xFF0F");
-        utils_test_expr(operation, "HL<DE", "HL < DE");
+        utils_test_expr(wrap_bin_expr, "AF==42", "AF == 0x42");
+        utils_test_expr(wrap_bin_expr, "SP<=fffe", "SP <= 0xFFFE");
+        utils_test_expr(wrap_bin_expr, "HL!=*ff0f", "HL != *0xFF0F");
+        utils_test_expr(wrap_bin_expr, "HL<DE", "HL < DE");
     }
 
     #[test]
     fn space() {
-        utils_test_expr(operation, "AF ==42", "AF == 0x42");
-        utils_test_expr(operation, "SP<= fffe", "SP <= 0xFFFE");
-        utils_test_expr(operation, "HL != *ff0f", "HL != *0xFF0F");
-        utils_test_expr(operation, "HL < DE", "HL < DE");
+        utils_test_expr(wrap_bin_expr, "AF ==42", "AF == 0x42");
+        utils_test_expr(wrap_bin_expr, "SP<= fffe", "SP <= 0xFFFE");
+        utils_test_expr(wrap_bin_expr, "HL != *ff0f", "HL != *0xFF0F");
+        utils_test_expr(wrap_bin_expr, "HL < DE", "HL < DE");
     }
 }

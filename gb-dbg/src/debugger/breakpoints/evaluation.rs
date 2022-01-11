@@ -15,11 +15,11 @@ pub fn compute_expression<DBG: DebugOperations>(node: &Ast, dbg: &DBG) -> u16 {
         Ast::Register(r) => u16::from(dbg.cpu_get(CpuRegs::try_from(*r).unwrap())),
         Ast::Address(a) => u16::from(dbg.read(*a)),
         Ast::Raw(v) => *v,
-        Ast::UnaryExpr(op) => eval_unary_op(&op.op, compute_expression(&op.child, dbg)),
-        Ast::BinaryExpr { op, lhs, rhs } => eval_binary_op(
-            op,
-            compute_expression(lhs, dbg),
-            compute_expression(rhs, dbg),
+        Ast::UnaryExpr(expr) => eval_unary_op(&expr.op, compute_expression(&expr.child, dbg)),
+        Ast::BinaryExpr(expr) => eval_binary_op(
+            &expr.op,
+            compute_expression(&expr.lhs, dbg),
+            compute_expression(&expr.rhs, dbg),
         ),
     }
 }
