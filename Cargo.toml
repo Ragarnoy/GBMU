@@ -58,6 +58,7 @@ members = [
   "gb-joypad",
   "gb-timer",
   "gb-test",
+  "gb-breakpoint",
 ]
 
 # Currently this patch doesn't work on macos

@@ -1,8 +1,7 @@
-use crate::dbg_interfaces::CpuRegs;
-use crate::debugger::breakpoints::breakpoint::{Node, Operator, UnaryOperator};
-use crate::debugger::breakpoints::parser::{
-    address, bin_op, comb_op, raw_register, raw_value, unary_expr, unary_expr_id,
-};
+use crate::breakpoint::{Operator, UnaryOperator};
+use crate::parser::{address, bin_op, comb_op, raw_value, unary_expr, unary_expr_id};
+use crate::register::Register;
+use crate::Ast;
 
 #[test]
 fn test_bin_op() {
@@ -15,16 +14,6 @@ fn test_bin_op() {
     assert_eq!(bin_op("|"), Ok(("", Operator::BinaryOr)));
     assert_eq!(bin_op("&"), Ok(("", Operator::BinaryAnd)));
     assert_eq!(bin_op("^"), Ok(("", Operator::BinaryXor)));
-}
-
-#[test]
-fn test_raw_register() {
-    assert_eq!(raw_register("AF"), Ok(("", CpuRegs::AF)));
-    assert_eq!(raw_register("BC"), Ok(("", CpuRegs::BC)));
-    assert_eq!(raw_register("DE"), Ok(("", CpuRegs::DE)));
-    assert_eq!(raw_register("HL"), Ok(("", CpuRegs::HL)));
-    assert_eq!(raw_register("PC"), Ok(("", CpuRegs::PC)));
-    assert_eq!(raw_register("SP"), Ok(("", CpuRegs::SP)));
 }
 
 #[test]
@@ -44,8 +33,8 @@ fn test_raw_value() {
 
 #[test]
 fn test_address() {
-    assert_eq!(address("*1"), Ok(("", Node::Address(1))));
-    assert_eq!(address("*dead"), Ok(("", Node::Address(0xdead))));
+    assert_eq!(address("*1"), Ok(("", Ast::Address(1))));
+    assert_eq!(address("*dead"), Ok(("", Ast::Address(0xdead))));
 }
 
 #[test]
@@ -60,9 +49,9 @@ fn test_unary_expr() {
         unary_expr("U(AF)"),
         Ok((
             "",
-            Node::UnaryExpr {
+            Ast::UnaryExpr {
                 op: UnaryOperator::Upper,
-                child: crate::boxed!(Node::Register(CpuRegs::AF))
+                child: crate::boxed!(Ast::Register(Register::AF))
             }
         ))
     );
@@ -71,7 +60,7 @@ fn test_unary_expr() {
 #[cfg(test)]
 fn utils_test_expr<'a, P>(parser: P, input: &'a str, expected: &str)
 where
-    P: nom::Parser<&'a str, Node, nom::error::Error<&'a str>>,
+    P: nom::Parser<&'a str, Ast, nom::error::Error<&'a str>>,
 {
     use nom::combinator::all_consuming;
 
@@ -85,7 +74,7 @@ where
 #[cfg(test)]
 mod unit_operation {
     use super::utils_test_expr;
-    use crate::debugger::breakpoints::parser::operation;
+    use crate::parser::operation;
 
     #[test]
     fn no_space() {
@@ -107,7 +96,7 @@ mod unit_operation {
 #[cfg(test)]
 mod unit_expr {
     use super::utils_test_expr;
-    use crate::debugger::breakpoints::parser::expr_complete;
+    use crate::parser::expr_complete;
     #[test]
     fn no_space() {
         utils_test_expr(expr_complete, "AF==42", "AF == 0x42");

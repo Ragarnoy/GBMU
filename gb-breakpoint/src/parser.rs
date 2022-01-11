@@ -41,8 +41,10 @@
 //! raw_value = [A-Fa-f0-9]{1,4}
 //! ```
 
-use crate::dbg_interfaces::CpuRegs;
-use crate::debugger::breakpoints::breakpoint::{Node, Operator, UnaryOperator};
+use crate::{
+    breakpoint::{Operator, UnaryOperator},
+    register, Ast,
+};
 use nom::{
     branch::alt,
     bytes::streaming::tag,
@@ -58,13 +60,13 @@ macro_rules! boxed {
     };
 }
 
-pub fn expr_complete(input: &str) -> IResult<&str, Node> {
+pub fn expr_complete(input: &str) -> IResult<&str, Ast> {
     use nom::combinator::complete;
 
     alt((
         map(
             complete(tuple((operation, ws(comb_op), expr_complete))),
-            |(lhs, op, rhs)| Node::BinaryExpr {
+            |(lhs, op, rhs)| Ast::BinaryExpr {
                 op,
                 lhs: boxed!(lhs),
                 rhs: boxed!(rhs),
@@ -74,10 +76,10 @@ pub fn expr_complete(input: &str) -> IResult<&str, Node> {
     ))(input)
 }
 
-/*pub fn expr(input: &str) -> IResult<&str, Node> {
+/*pub fn expr(input: &str) -> IResult<&str, Ast> {
     alt((
         map(tuple((operation, ws(comb_op), expr)), |(lhs, op, rhs)| {
-            Node::BinaryExpr {
+            Ast::BinaryExpr {
                 op,
                 lhs: boxed!(lhs),
                 rhs: boxed!(rhs),
@@ -87,10 +89,10 @@ pub fn expr_complete(input: &str) -> IResult<&str, Node> {
     ))(input)
 }
 */
-pub fn operation(input: &str) -> IResult<&str, Node> {
+pub fn operation(input: &str) -> IResult<&str, Ast> {
     map(
         tuple((any_value, ws(bin_op), any_value)),
-        |(lhs, op, rhs)| Node::BinaryExpr {
+        |(lhs, op, rhs)| Ast::BinaryExpr {
             op,
             lhs: boxed!(lhs),
             rhs: boxed!(rhs),
@@ -118,17 +120,17 @@ pub fn comb_op(input: &str) -> IResult<&str, Operator> {
     ))(input)
 }
 
-pub fn any_value(input: &str) -> IResult<&str, Node> {
+pub fn any_value(input: &str) -> IResult<&str, Ast> {
     alt((unary_expr, value))(input)
 }
 
-pub fn unary_expr(input: &str) -> IResult<&str, Node> {
+pub fn unary_expr(input: &str) -> IResult<&str, Ast> {
     let (input, unary_op) = unary_expr_id(input)?;
 
     let (input, reg) = delimited(tag("("), register, tag(")"))(input)?;
     Ok((
         input,
-        Node::UnaryExpr {
+        Ast::UnaryExpr {
             op: unary_op,
             child: boxed!(reg),
         },
@@ -142,23 +144,12 @@ pub fn unary_expr_id(input: &str) -> IResult<&str, UnaryOperator> {
     ))(input)
 }
 
-pub fn register(input: &str) -> IResult<&str, Node> {
-    map(raw_register, Node::Register)(input)
+pub fn value(input: &str) -> IResult<&str, Ast> {
+    alt((register, map(raw_value, Ast::Value), address))(input)
 }
 
-pub fn raw_register(input: &str) -> IResult<&str, CpuRegs> {
-    alt((
-        map(tag("AF"), |_| CpuRegs::AF),
-        map(tag("BC"), |_| CpuRegs::BC),
-        map(tag("DE"), |_| CpuRegs::DE),
-        map(tag("HL"), |_| CpuRegs::HL),
-        map(tag("PC"), |_| CpuRegs::PC),
-        map(tag("SP"), |_| CpuRegs::SP),
-    ))(input)
-}
-
-pub fn value(input: &str) -> IResult<&str, Node> {
-    alt((register, map(raw_value, Node::Value), address))(input)
+pub fn register(input: &str) -> IResult<&str, Ast> {
+    map(register::register, Ast::Register)(input)
 }
 
 pub fn raw_value(input: &str) -> IResult<&str, u16> {
@@ -169,10 +160,10 @@ pub fn raw_value(input: &str) -> IResult<&str, u16> {
     })(input)
 }
 
-pub fn address(input: &str) -> IResult<&str, Node> {
+pub fn address(input: &str) -> IResult<&str, Ast> {
     let (input, _) = tag("*")(input)?;
 
-    map(raw_value, Node::Address)(input)
+    map(raw_value, Ast::Address)(input)
 }
 
 pub fn bin_op(input: &str) -> IResult<&str, Operator> {
