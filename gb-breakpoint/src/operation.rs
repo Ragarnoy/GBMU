@@ -195,3 +195,17 @@ mod unit_operation {
         utils_test_expr!(bin_expr, "HL < DE", "HL < DE");
     }
 }
+
+pub fn comb_expr(input: &str) -> IResult<&str, BinaryExpr> {
+    use crate::parser::expr;
+    use crate::wrapper::wrap_bin_expr;
+
+    map(
+        tuple((wrap_bin_expr, ws(comb_op), expr)),
+        |(lhs, op, rhs)| BinaryExpr {
+            op,
+            lhs: boxed!(lhs),
+            rhs: boxed!(rhs),
+        },
+    )(input)
+}

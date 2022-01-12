@@ -1,16 +1,5 @@
-use crate::{
-    boxed,
-    operation::{comb_op, BinaryExpr},
-    wrapper::{wrap_bin_expr, wrap_register, wrap_unary, wrap_value},
-    Ast,
-};
-use nom::{
-    branch::alt,
-    bytes::complete::tag,
-    combinator::map,
-    sequence::{delimited, tuple},
-    IResult,
-};
+use crate::{boxed, Ast};
+use nom::{branch::alt, bytes::complete::tag, combinator::map, sequence::delimited, IResult};
 
 /// Parse a breakpoint expression to generate an [Ast]
 ///
@@ -29,20 +18,9 @@ use nom::{
 /// assert!(expr("PC == 42 && *FF0F == 5").is_ok());
 /// ```
 pub fn expr(input: &str) -> IResult<&str, Ast> {
-    alt((comb_expr, wrap_bin_expr))(input)
-}
+    use crate::wrapper::{wrap_bin_expr, wrap_comb_expr};
 
-pub fn comb_expr(input: &str) -> IResult<&str, Ast> {
-    map(
-        tuple((wrap_bin_expr, ws(comb_op), expr)),
-        |(lhs, op, rhs)| {
-            Ast::BinaryExpr(BinaryExpr {
-                op,
-                lhs: boxed!(lhs),
-                rhs: boxed!(rhs),
-            })
-        },
-    )(input)
+    alt((wrap_comb_expr, wrap_bin_expr))(input)
 }
 
 /// Skip surounding whitespaces
@@ -74,6 +52,8 @@ where
 /// assert!(any_value("U(AF)").is_ok());
 /// ```
 pub fn any_value(input: &str) -> IResult<&str, Ast> {
+    use crate::wrapper::wrap_unary;
+
     alt((wrap_unary, value))(input)
 }
 
@@ -87,6 +67,8 @@ pub fn any_value(input: &str) -> IResult<&str, Ast> {
 ///       |= adress
 /// ```
 pub fn value(input: &str) -> IResult<&str, Ast> {
+    use crate::wrapper::{wrap_register, wrap_value};
+
     alt((wrap_register, wrap_value, address))(input)
 }
 
