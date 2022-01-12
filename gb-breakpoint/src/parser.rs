@@ -36,7 +36,7 @@ where
     delimited(space0, parser, space0)
 }
 
-/// Parser a value that can be wrapped in a [UnaryExpr]
+/// Parser a value that can be wrapped in a [Ast::UnaryExpr]
 ///
 /// # Definition
 ///
