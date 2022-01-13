@@ -3,15 +3,15 @@ use std::fmt::{self, Display};
 use crate::{
     boxed,
     parser::{any_value, ws},
-    Ast,
+    Node,
 };
 use nom::{branch::alt, bytes::complete::tag, combinator::map, sequence::tuple, IResult};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BinaryExpr {
     pub op: Operator,
-    pub lhs: Box<Ast>,
-    pub rhs: Box<Ast>,
+    pub lhs: Box<Node>,
+    pub rhs: Box<Node>,
 }
 
 impl Display for BinaryExpr {

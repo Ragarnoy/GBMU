@@ -1,12 +1,12 @@
 use crate::parser::address;
-use crate::{boxed, Ast};
+use crate::{boxed, Node};
 
 #[test]
 fn test_address() {
-    assert_eq!(address("*1"), Ok(("", Ast::Address(boxed!(Ast::Raw(1))))));
+    assert_eq!(address("*1"), Ok(("", Node::Address(boxed!(Node::Raw(1))))));
     assert_eq!(
         address("*dead"),
-        Ok(("", Ast::Address(boxed!(Ast::Raw(0xdead)))))
+        Ok(("", Node::Address(boxed!(Node::Raw(0xdead)))))
     );
 }
 

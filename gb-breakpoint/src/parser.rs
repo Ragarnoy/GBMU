@@ -1,4 +1,4 @@
-use crate::{boxed, Ast};
+use crate::{boxed, Node};
 use nom::{branch::alt, bytes::complete::tag, combinator::map, sequence::delimited, IResult};
 
 /// Parse a breakpoint expression to generate an [Ast]
@@ -17,7 +17,7 @@ use nom::{branch::alt, bytes::complete::tag, combinator::map, sequence::delimite
 /// assert!(expr("AF == DEAD").is_ok());
 /// assert!(expr("PC == 42 && *FF0F == 5").is_ok());
 /// ```
-pub fn expr(input: &str) -> IResult<&str, Ast> {
+pub fn expr(input: &str) -> IResult<&str, Node> {
     use crate::wrapper::{wrap_bin_expr, wrap_comb_expr};
 
     alt((wrap_comb_expr, wrap_bin_expr))(input)
@@ -51,7 +51,7 @@ where
 /// assert!(any_value("42").is_ok());
 /// assert!(any_value("U(AF)").is_ok());
 /// ```
-pub fn any_value(input: &str) -> IResult<&str, Ast> {
+pub fn any_value(input: &str) -> IResult<&str, Node> {
     use crate::wrapper::wrap_unary;
 
     alt((wrap_unary, value))(input)
@@ -66,7 +66,7 @@ pub fn any_value(input: &str) -> IResult<&str, Ast> {
 ///       |= u16
 ///       |= adress
 /// ```
-pub fn value(input: &str) -> IResult<&str, Ast> {
+pub fn value(input: &str) -> IResult<&str, Node> {
     use crate::wrapper::{wrap_register, wrap_value};
 
     alt((wrap_register, wrap_value, address))(input)
@@ -86,8 +86,8 @@ pub fn value(input: &str) -> IResult<&str, Ast> {
 /// # use gb_breakpoint::parser::address;
 /// assert!(address("*42").is_ok());
 /// ```
-pub fn address(input: &str) -> IResult<&str, Ast> {
+pub fn address(input: &str) -> IResult<&str, Node> {
     let (input, _) = tag("*")(input)?;
 
-    map(map(any_value, |v| boxed!(v)), Ast::Address)(input)
+    map(map(any_value, |v| boxed!(v)), Node::Address)(input)
 }

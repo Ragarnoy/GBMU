@@ -26,27 +26,27 @@ macro_rules! boxed {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Ast {
+pub enum Node {
     Register(Register),
-    Address(Box<Ast>),
+    Address(Box<Node>),
     Raw(u16),
     UnaryExpr(UnaryExpr),
     BinaryExpr(BinaryExpr),
 }
 
-impl Display for Ast {
+impl Display for Node {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Ast::Register(r) => write!(f, "{}", r),
-            Ast::Address(addr) => write!(f, "*{}", addr),
-            Ast::Raw(v) => write!(f, "{:#X}", v),
-            Ast::UnaryExpr(expr) => write!(f, "{}", expr),
-            Ast::BinaryExpr(expr) => write!(f, "{}", expr),
+            Node::Register(r) => write!(f, "{}", r),
+            Node::Address(addr) => write!(f, "*{}", addr),
+            Node::Raw(v) => write!(f, "{:#X}", v),
+            Node::UnaryExpr(expr) => write!(f, "{}", expr),
+            Node::BinaryExpr(expr) => write!(f, "{}", expr),
         }
     }
 }
 
-impl Ast {
+impl Node {
     pub fn simple(address: u16) -> Self {
         Self::BinaryExpr(BinaryExpr {
             op: Operator::Eq,
@@ -56,7 +56,7 @@ impl Ast {
     }
 }
 
-impl FromStr for Ast {
+impl FromStr for Node {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {

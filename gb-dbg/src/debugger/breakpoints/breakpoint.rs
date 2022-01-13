@@ -1,4 +1,4 @@
-use gb_breakpoint::Ast;
+use gb_breakpoint::Node;
 use std::{
     fmt::{self, Display},
     str::FromStr,
@@ -10,7 +10,7 @@ use super::evaluation::is_expression_true;
 
 #[derive(Debug)]
 pub struct Breakpoint {
-    expr: Ast,
+    expr: Node,
     pub enabled: bool,
     last_state: bool,
 }
@@ -39,14 +39,14 @@ impl Display for Breakpoint {
 impl Breakpoint {
     pub fn from_address(address: u16) -> Self {
         Self {
-            expr: Ast::simple(address),
+            expr: Node::simple(address),
             enabled: true,
             last_state: false,
         }
     }
 
     pub fn from_expression(expr: &str) -> anyhow::Result<Self> {
-        let node = Ast::from_str(expr).map_err(|e| anyhow::anyhow!(e))?;
+        let node = Node::from_str(expr).map_err(|e| anyhow::anyhow!(e))?;
 
         log::debug!("parsed expression: {:?}", node);
         Ok(Self {

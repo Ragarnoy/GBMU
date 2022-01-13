@@ -1,11 +1,11 @@
-use crate::{boxed, wrapper::wrap_register, Ast};
+use crate::{boxed, wrapper::wrap_register, Node};
 use nom::{branch::alt, bytes::complete::tag, combinator::map, sequence::delimited, IResult};
 use std::fmt::{self, Display};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UnaryExpr {
     pub op: UnaryOperator,
-    pub child: Box<Ast>,
+    pub child: Box<Node>,
 }
 
 impl Display for UnaryExpr {
@@ -64,7 +64,7 @@ fn test_unary_expr() {
             "",
             UnaryExpr {
                 op: UnaryOperator::Upper,
-                child: crate::boxed!(Ast::Register(Register::AF))
+                child: crate::boxed!(Node::Register(Register::AF))
             }
         ))
     );
