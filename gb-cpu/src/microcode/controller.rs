@@ -51,7 +51,6 @@ impl From<OpcodeCB> for OpcodeType {
     }
 }
 
-// #[derive(Clone)]
 pub struct MicrocodeController {
     /// current opcode
     pub opcode: Option<OpcodeType>,
