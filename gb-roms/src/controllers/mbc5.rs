@@ -1,6 +1,7 @@
 use crate::controllers::RAM_BANK_SIZE;
 use crate::Header;
 
+use super::save::{Full as Complete, SaveState, StateError};
 use super::{Controller, ROM_BANK_SIZE};
 
 pub fn new_controller(header: Header) -> Box<Mbc5> {
@@ -41,18 +42,6 @@ impl Controller for Mbc5 {
                 None
             },
         )
-    }
-
-    fn save_to_slice(&self) -> Vec<u8> {
-        let mut res = vec![self.ram_enabled as u8, self.ram_bank];
-        res.extend(self.rom_bank.to_be_bytes());
-        res
-    }
-
-    fn load_from_slice(&mut self, slice: &[u8]) {
-        self.ram_enabled = slice[0] != 0;
-        self.ram_bank = slice[1] & 0xf;
-        self.rom_bank = u16::from_be_bytes([slice[3], slice[4]]);
     }
 
     fn write_rom(&mut self, v: u8, addr: u16) {
@@ -105,5 +94,43 @@ impl Controller for Mbc5 {
             self.rom_bank as usize
         };
         ((bank % self.rom_banks) * ROM_BANK_SIZE) | (addr & 0x3fff) as usize
+    }
+}
+
+impl SaveState for Mbc5 {
+    fn serialize(&self) -> Complete {
+        Complete::Mbc5(Full::from(self))
+    }
+
+    fn load(&mut self, state: Complete) -> Result<(), StateError> {
+        if let Complete::Mbc5(state) = state {
+            self.ram_enabled = state.ram_enabled;
+            self.rom_bank = state.rom_bank;
+            self.ram_bank = state.ram_bank;
+
+            Ok(())
+        } else {
+            Err(StateError::WrongType {
+                expected: "mbc5",
+                got: state.id(),
+            })
+        }
+    }
+}
+
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+pub struct Full {
+    ram_enabled: bool,
+    rom_bank: u16,
+    ram_bank: u8,
+}
+
+impl From<&Mbc5> for Full {
+    fn from(ctl: &Mbc5) -> Self {
+        Self {
+            ram_enabled: ctl.ram_enabled,
+            rom_bank: ctl.rom_bank,
+            ram_bank: ctl.ram_bank,
+        }
     }
 }

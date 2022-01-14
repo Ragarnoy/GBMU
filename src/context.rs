@@ -16,8 +16,10 @@ use gb_dma::Dma;
 use gb_joypad::Joypad;
 use gb_lcd::render::{RenderImage, SCREEN_HEIGHT, SCREEN_WIDTH};
 use gb_ppu::Ppu;
+#[cfg(feature = "save_state")]
+use gb_roms::controllers::Full;
 use gb_roms::{
-    controllers::{bios, generate_rom_controller, BiosWrapper, Generic},
+    controllers::{bios, generate_rom_controller, BiosWrapper, Generic, GenericState, Partial},
     header::AutoSave,
     Header,
 };
@@ -308,7 +310,7 @@ impl Game {
         use rmp_serde::encode::write_named;
         use std::fs::OpenOptions;
 
-        let minimal_state = MinimalState::from(self);
+        let minimal_state = SaveState::from(self);
         if let Err(e) = OpenOptions::new()
             .create(true)
             .write(true)
@@ -331,17 +333,19 @@ impl Game {
 
     #[cfg(feature = "save_state")]
     /// Load a game state from a file
-    pub fn load_state(&mut self, filename: &Path) {
+    pub fn load_save_file(&mut self, filename: &Path) {
         use anyhow::Error;
         use rmp_serde::decode::from_read;
         use std::fs::File;
 
         match File::open(&filename)
             .map_err(Error::from)
-            .and_then(|file| Ok(from_read::<File, MinimalState>(file)?))
+            .and_then(|file| Ok(from_read::<File, SaveState>(file)?))
         {
             Ok(minimal_state) => {
-                todo!("load minimal state {:?}", minimal_state);
+                if let Err(e) = self.load_state(minimal_state) {
+                    log::error!("failed to load save state: {}", e)
+                }
             }
             Err(e) => {
                 log::error!(
@@ -351,6 +355,12 @@ impl Game {
                 );
             }
         }
+    }
+
+    #[cfg(feature = "save_state")]
+    fn load_state(&mut self, state: SaveState) -> Result<(), anyhow::Error> {
+        self.mbc.borrow_mut().load(state.mbcs)?;
+        Ok(())
     }
 }
 
@@ -363,14 +373,15 @@ fn mbc_with_save_state(
     let mut mbc = generate_rom_controller(file, header.clone())?;
 
     {
-        use gb_roms::controllers::GenericState;
         use rmp_serde::decode::from_read;
         use std::fs::File;
 
         let filename = game_save_path(romname);
         if let Ok(file) = File::open(&filename) {
             log::info!("found auto save file at {}", filename);
-            if let Err(e) = from_read(file).map(|state: GenericState| mbc.load_state(state)) {
+            if let Err(e) =
+                from_read(file).map(|state: GenericState<Partial>| mbc.load_partial(state))
+            {
                 log::error!(
                     "while loading data into mbc, got the following error: {}",
                     e
@@ -398,7 +409,7 @@ impl Drop for Game {
                 .open(&filename)
                 .map_err(Error::from)
                 .and_then(|mut file| {
-                    write_named(&mut file, &self.mbc.borrow().save_state()).map_err(Error::from)
+                    write_named(&mut file, &self.mbc.borrow().save_partial()).map_err(Error::from)
                 }) {
                 Ok(_) => log::info!("successfuly save mbc data to {}", filename),
                 Err(e) => {
@@ -682,15 +693,17 @@ impl RegisterDebugOperations for Game {
 
 #[cfg(feature = "save_state")]
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
-struct MinimalState {
+struct SaveState {
     pub romname: String,
+    pub mbcs: GenericState<Full>,
 }
 
 #[cfg(feature = "save_state")]
-impl From<&Game> for MinimalState {
+impl From<&Game> for SaveState {
     fn from(context: &Game) -> Self {
         Self {
             romname: context.romname.clone(),
+            mbcs: context.mbc.borrow().save(),
         }
     }
 }
