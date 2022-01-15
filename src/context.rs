@@ -696,12 +696,9 @@ impl RegisterDebugOperations for Game {
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 struct SaveState {
     pub romname: String,
-<<<<<<< HEAD
     pub cpu_regs: gb_cpu::registers::Registers,
     pub cpu_io_regs: gb_cpu::io_registers::IORegisters,
-=======
     pub mbcs: GenericState<Full>,
->>>>>>> origin/develop
 }
 
 #[cfg(feature = "save_state")]
@@ -709,12 +706,9 @@ impl From<&Game> for SaveState {
     fn from(context: &Game) -> Self {
         Self {
             romname: context.romname.clone(),
-<<<<<<< HEAD
             cpu_regs: context.cpu.registers,
             cpu_io_regs: *context.cpu.interrupt_flags.borrow(),
-=======
             mbcs: context.mbc.borrow().save(),
->>>>>>> origin/develop
         }
     }
 }
