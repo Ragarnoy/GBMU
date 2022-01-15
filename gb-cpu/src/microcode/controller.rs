@@ -51,7 +51,6 @@ impl From<OpcodeCB> for OpcodeType {
     }
 }
 
-#[derive(Clone)]
 pub struct MicrocodeController {
     /// current opcode
     pub opcode: Option<OpcodeType>,
@@ -67,7 +66,7 @@ pub struct MicrocodeController {
     pub is_instruction_finished: bool,
 
     #[cfg(feature = "registers_logs")]
-    file: Rc<RefCell<BufWriter<File>>>,
+    file: BufWriter<File>,
 }
 
 impl Debug for MicrocodeController {
@@ -96,7 +95,7 @@ impl Default for MicrocodeController {
             mode: Mode::default(),
             is_instruction_finished: false,
             #[cfg(feature = "registers_logs")]
-            file: Rc::new(RefCell::new(file)),
+            file: file,
         }
     }
 }
@@ -260,7 +259,7 @@ impl MicrocodeController {
     #[cfg(feature = "registers_logs")]
     fn log_registers_to_file(&mut self, state: &State) -> std::io::Result<()> {
         use std::io::Write;
-        let mut file = self.file.borrow_mut();
+        let file = &mut self.file;
 
         if let Err(e) = writeln!(file, "{:?}", state) {
             log::error!("Couldn't write to file: {}", e);

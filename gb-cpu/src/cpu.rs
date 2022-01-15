@@ -5,18 +5,14 @@ use gb_bus::Bus;
 use gb_clock::Ticker;
 use std::{cell::RefCell, rc::Rc};
 
-#[derive(Default, Debug, Clone)]
+#[derive(Default, Debug)]
 pub struct Cpu {
     pub registers: Registers,
     pub controller: MicrocodeController,
-    interrupt_flags: Rc<RefCell<IORegisters>>,
+    pub io_regs: Rc<RefCell<IORegisters>>,
 }
 
 impl Cpu {
-    pub fn interrupt_flags(&self) -> Rc<RefCell<IORegisters>> {
-        self.interrupt_flags.clone()
-    }
-
     pub fn set_registers(&mut self, regs: Registers) {
         self.registers = regs;
     }
@@ -29,6 +25,6 @@ impl Ticker for Cpu {
 
     fn tick(&mut self, addr_bus: &mut dyn Bus<u8>) {
         self.controller
-            .step(self.interrupt_flags.clone(), &mut self.registers, addr_bus)
+            .step(self.io_regs.clone(), &mut self.registers, addr_bus)
     }
 }

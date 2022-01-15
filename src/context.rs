@@ -1,5 +1,5 @@
 #[cfg(feature = "cgb")]
-use gb_bus::generic::CharDevice;
+use gb_bus::generic::PanicDevice;
 use gb_bus::{
     generic::SimpleRW, AddressBus, Bus, IORegArea, IORegBus, IORegBusBuilder, Lock, WorkingRam,
 };
@@ -116,43 +116,24 @@ impl Game {
 
         let io_bus = {
             let mut bus_builder = IORegBusBuilder::default();
-            bus_builder
-                .with_area(IORegArea::Joy, joypad.clone())
-                .with_area(IORegArea::Div, timer.clone())
-                .with_area(IORegArea::Tima, timer.clone())
-                .with_area(IORegArea::Tma, timer.clone())
-                .with_area(IORegArea::Tac, timer.clone())
-                .with_area(IORegArea::IF, cpu_io_reg.clone())
-                .with_area(IORegArea::LcdControl, ppu_reg.clone())
-                .with_area(IORegArea::LcdStat, ppu_reg.clone())
-                .with_area(IORegArea::Scy, ppu_reg.clone())
-                .with_area(IORegArea::Scx, ppu_reg.clone())
-                .with_area(IORegArea::Ly, ppu_reg.clone())
-                .with_area(IORegArea::Lyc, ppu_reg.clone())
-                .with_area(IORegArea::Dma, dma.clone())
-                .with_area(IORegArea::Bgp, ppu_reg.clone())
-                .with_area(IORegArea::Obp0, ppu_reg.clone())
-                .with_area(IORegArea::Obp1, ppu_reg.clone())
-                .with_area(IORegArea::Wy, ppu_reg.clone())
-                .with_area(IORegArea::Wx, ppu_reg)
-                .with_area(IORegArea::BootRom, bios_wrapper.clone())
-                .with_area(IORegArea::SC, serial.clone())
-                .with_area(IORegArea::SB, serial)
-                .with_default_sound()
-                .with_default_waveform_ram();
-
             #[cfg(feature = "cgb")]
             {
                 bus_builder
                     .with_area(IORegArea::Vbk, ppu_reg.clone())
-                    .with_area(IORegArea::Hdma1, Rc::new(RefCell::new(CharDevice(0))))
-                    .with_area(IORegArea::Hdma2, Rc::new(RefCell::new(CharDevice(0))))
-                    .with_area(IORegArea::Hdma3, Rc::new(RefCell::new(CharDevice(0))))
-                    .with_area(IORegArea::Hdma4, Rc::new(RefCell::new(CharDevice(0))))
-                    .with_area(IORegArea::Hdma5, Rc::new(RefCell::new(CharDevice(0))))
                     .with_area(IORegArea::Key1, cpu_io_reg.clone())
+                    .with_hdma(Rc::new(RefCell::new(PanicDevice::default())))
                     .with_area(IORegArea::Svbk, wram.clone());
             }
+            bus_builder
+                .with_area(IORegArea::Joy, joypad.clone())
+                .with_timer(timer.clone())
+                .with_ppu(ppu_reg)
+                .with_area(IORegArea::IF, cpu_io_reg.clone())
+                .with_area(IORegArea::Dma, dma.clone())
+                .with_area(IORegArea::BootRom, bios_wrapper.clone())
+                .with_serial(serial)
+                .with_default_sound()
+                .with_default_waveform_ram();
             bus_builder.build()
         };
         let io_bus = Rc::new(RefCell::new(io_bus));
@@ -359,6 +340,25 @@ impl Game {
 
     #[cfg(feature = "save_state")]
     fn load_state(&mut self, state: SaveState) -> Result<(), anyhow::Error> {
+        self.cpu.registers = state.cpu_regs;
+
+        {
+            let cpu_io = Rc::new(RefCell::new(state.cpu_io_regs));
+            self.cpu.io_regs = cpu_io.clone();
+            let io_bus = {
+                let mut builder = IORegBusBuilder::from(self.io_bus.take());
+                #[cfg(feature = "cgb")]
+                {
+                    builder.with_area(IORegArea::Key1, cpu_io.clone());
+                }
+                builder.with_area(IORegArea::IF, cpu_io.clone());
+                builder.build()
+            };
+            let io_bus = Rc::new(RefCell::new(io_bus));
+            self.addr_bus.io_reg = io_bus.clone();
+            self.addr_bus.ie_reg = cpu_io;
+            self.io_bus = io_bus;
+        }
         self.mbc.borrow_mut().load(state.mbcs)?;
         Ok(())
     }
@@ -695,6 +695,8 @@ impl RegisterDebugOperations for Game {
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 struct SaveState {
     pub romname: String,
+    pub cpu_regs: gb_cpu::registers::Registers,
+    pub cpu_io_regs: gb_cpu::io_registers::IORegisters,
     pub mbcs: GenericState<Full>,
 }
 
@@ -703,6 +705,8 @@ impl From<&Game> for SaveState {
     fn from(context: &Game) -> Self {
         Self {
             romname: context.romname.clone(),
+            cpu_regs: context.cpu.registers,
+            cpu_io_regs: *context.cpu.io_regs.borrow(),
             mbcs: context.mbc.borrow().save(),
         }
     }
