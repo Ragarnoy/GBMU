@@ -25,6 +25,6 @@ impl Ticker for Cpu {
 
     fn tick(&mut self, addr_bus: &mut dyn Bus<u8>) {
         self.controller
-            .step(self.interrupt_flags.clone(), &mut self.registers, addr_bus)
+            .step(self.io_regs.clone(), &mut self.registers, addr_bus)
     }
 }
