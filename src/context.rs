@@ -143,7 +143,10 @@ impl Game {
             vram: ppu_mem.clone(),
             ext_ram: mbc.clone(),
             ram: wram.clone(),
+            #[cfg(feature = "save_state")]
             eram: wram.clone(),
+            #[cfg(not(feature = "save_state"))]
+            eram: wram,
             oam: ppu_mem,
             io_reg: io_bus.clone(),
             hram: Rc::new(RefCell::new(SimpleRW::<0x80>::default())),
@@ -356,7 +359,7 @@ impl Game {
         io_regs: gb_cpu::io_registers::IORegisters,
     ) -> anyhow::Result<()> {
         let cpu_io = Rc::new(RefCell::new(io_regs));
-        self.cpu.interrupt_flags = cpu_io.clone();
+        self.cpu.io_regs = cpu_io.clone();
         let mut io_bus = self.io_bus.borrow_mut();
         #[cfg(feature = "cgb")]
         {
