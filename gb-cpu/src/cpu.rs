@@ -9,7 +9,7 @@ use std::{cell::RefCell, rc::Rc};
 pub struct Cpu {
     pub registers: Registers,
     pub controller: MicrocodeController,
-    pub interrupt_flags: Rc<RefCell<IORegisters>>,
+    pub io_regs: Rc<RefCell<IORegisters>>,
 }
 
 impl Cpu {
