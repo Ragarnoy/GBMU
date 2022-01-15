@@ -1,6 +1,7 @@
 use crate::Header;
 
-use super::Controller;
+use super::save::StateError;
+use super::{Controller, SaveState};
 
 pub fn new_controller(header: Header) -> Box<RomOnly> {
     Box::new(RomOnly::from_header(header))
@@ -23,12 +24,6 @@ impl Controller for RomOnly {
         (self.rom_size, None)
     }
 
-    fn save_to_slice(&self) -> Vec<u8> {
-        Vec::new()
-    }
-
-    fn load_from_slice(&mut self, _slice: &[u8]) {}
-
     fn write_rom(&mut self, _v: u8, _addr: u16) {}
 
     fn override_read_ram(&self, _addr: u16) -> Option<u8> {
@@ -49,5 +44,15 @@ impl Controller for RomOnly {
 
     fn ram_enabled(&self) -> bool {
         false
+    }
+}
+
+impl SaveState for RomOnly {
+    fn serialize(&self) -> super::Full {
+        super::Full::None
+    }
+
+    fn load(&mut self, _state: super::Full) -> Result<(), StateError> {
+        Ok(())
     }
 }

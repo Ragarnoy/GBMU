@@ -155,7 +155,7 @@ fn main() {
                 #[cfg(feature = "save_state")]
                 CustomEvent::LoadState(file) => {
                     if let Some(ref mut game) = game {
-                        game.load_state_file(&file);
+                        game.load_save_file(&file);
                     } else {
                         log::warn!("no game context to load the state into");
                     }

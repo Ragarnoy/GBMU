@@ -1,6 +1,7 @@
 use crate::controllers::RAM_BANK_SIZE;
 use crate::Header;
 
+use super::save::{Full as Complete, SaveState, StateError};
 use super::{Controller, ROM_BANK_SIZE};
 
 pub fn new_controller(header: Header) -> Box<Mbc1> {
@@ -51,22 +52,6 @@ impl Controller for Mbc1 {
                 None
             },
         )
-    }
-
-    fn save_to_slice(&self) -> Vec<u8> {
-        vec![
-            self.ram_enabled as u8,
-            self.bank_1,
-            self.bank_2,
-            self.advance_mode as u8,
-        ]
-    }
-
-    fn load_from_slice(&mut self, slice: &[u8]) {
-        self.ram_enabled = slice[0] != 0;
-        self.bank_1 = slice[1] & 0x1f;
-        self.bank_2 = slice[2] & 2;
-        self.advance_mode = slice[3] != 0;
     }
 
     fn write_rom(&mut self, v: u8, addr: u16) {
@@ -188,4 +173,45 @@ fn offset_ram_addr() {
         "res = {0:x}({0:b}), expect = {1:x}({1:b})",
         res, expect
     );
+}
+
+impl SaveState for Mbc1 {
+    fn serialize(&self) -> Complete {
+        Complete::Mbc1(Full::from(self))
+    }
+
+    fn load(&mut self, state: Complete) -> Result<(), StateError> {
+        if let Complete::Mbc1(state) = state {
+            self.ram_enabled = state.ram_enabled;
+            self.bank_1 = state.bank_1;
+            self.bank_2 = state.bank_2;
+            self.advance_mode = state.advance_mode;
+
+            Ok(())
+        } else {
+            Err(StateError::WrongType {
+                expected: "mbc1",
+                got: state.id(),
+            })
+        }
+    }
+}
+
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+pub struct Full {
+    ram_enabled: bool,
+    bank_1: u8,
+    bank_2: u8,
+    advance_mode: bool,
+}
+
+impl From<&Mbc1> for Full {
+    fn from(ctl: &Mbc1) -> Self {
+        Self {
+            ram_enabled: ctl.ram_enabled,
+            bank_1: ctl.bank_1,
+            bank_2: ctl.bank_2,
+            advance_mode: ctl.advance_mode,
+        }
+    }
 }

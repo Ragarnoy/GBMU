@@ -6,11 +6,13 @@ pub mod mbc2;
 pub mod mbc3;
 pub mod mbc5;
 pub mod rom_only;
+pub mod save;
 
 use crate::Header;
 pub use bios::Bios;
 pub use bios_wrapper::BiosWrapper;
 pub use generic::{Generic, GenericState};
+pub use save::{Full, Partial, SaveState};
 
 /// Size of the ROM Area
 pub const ROM_AREA_SIZE: usize = 0x8000;
@@ -21,15 +23,9 @@ pub const ROM_BANK_SIZE: usize = 0x4000;
 /// Maximum size of a ram bank
 pub const RAM_BANK_SIZE: usize = 0x2000;
 
-pub trait Controller {
+pub trait Controller: SaveState {
     /// Return the size of the rom and optionnaly the size of the external ram
     fn sizes(&self) -> (usize, Option<usize>);
-
-    /// Save Controller data to a slice
-    fn save_to_slice(&self) -> Vec<u8>;
-
-    /// Load Controller data from a slice
-    fn load_from_slice(&mut self, slice: &[u8]);
 
     /// When data is beeing written to ROM
     /// MBC catch these writes to modify their internal register
