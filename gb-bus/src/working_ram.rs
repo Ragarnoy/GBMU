@@ -31,7 +31,7 @@ impl WorkingRam {
 
     fn offset_addr(&self, addr: usize) -> usize {
         let bank = self.get_bank_for_addr(addr);
-        bank * RAM_BANK_SIZE | (addr & 0xfff) as usize
+        (bank * RAM_BANK_SIZE) | (addr & 0xfff) as usize
     }
 
     fn get_bank_for_addr(&self, addr: usize) -> usize {
