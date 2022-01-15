@@ -52,6 +52,8 @@ pub struct Game {
     scheduled_stop: Option<ScheduledStop>,
     emulation_stopped: bool,
     cycle_count: usize,
+    #[cfg(feature = "save_state")]
+    hram: Rc<RefCell<SimpleRW<0x80>>>,
 }
 
 #[derive(Debug)]
@@ -137,6 +139,7 @@ impl Game {
             bus_builder.build()
         };
         let io_bus = Rc::new(RefCell::new(io_bus));
+        let hram = Rc::new(RefCell::new(SimpleRW::<0x80>::default()));
 
         let bus = AddressBus {
             rom: bios_wrapper,
@@ -146,7 +149,10 @@ impl Game {
             eram: wram,
             oam: ppu_mem,
             io_reg: io_bus.clone(),
-            hram: Rc::new(RefCell::new(SimpleRW::<0x80>::default())),
+            #[cfg(feature = "save_state")]
+            hram: hram.clone(),
+            #[cfg(not(feature = "save_state"))]
+            hram,
 
             ie_reg: cpu_io_reg,
             area_locks: BTreeMap::new(),
@@ -168,6 +174,8 @@ impl Game {
             scheduled_stop: None,
             emulation_stopped: stopped,
             cycle_count: 0,
+            #[cfg(feature = "save_state")]
+            hram,
         })
     }
 
@@ -340,6 +348,7 @@ impl Game {
 
     #[cfg(feature = "save_state")]
     fn load_state(&mut self, state: SaveState) -> Result<(), anyhow::Error> {
+        self.load_hram(state.hram)?;
         self.cpu.registers = state.cpu_regs;
 
         {
@@ -361,6 +370,16 @@ impl Game {
         }
 
         self.mbc.borrow_mut().load(state.mbcs)?;
+        Ok(())
+    }
+
+    #[cfg(feature = "save_state")]
+    fn load_hram(&mut self, hram: Vec<u8>) -> anyhow::Result<()> {
+        let hram = SimpleRW::try_from(hram)
+            .map_err(|size| anyhow::anyhow!("Failed to load HRAM, invalid size {:x}", size))?;
+        let hram = Rc::new(RefCell::new(hram));
+        self.addr_bus.hram = hram.clone();
+        self.hram = hram;
         Ok(())
     }
 }
@@ -699,6 +718,7 @@ struct SaveState {
     pub cpu_regs: gb_cpu::registers::Registers,
     pub cpu_io_regs: gb_cpu::io_registers::IORegisters,
     pub mbcs: GenericState<Full>,
+    pub hram: Vec<u8>,
 }
 
 #[cfg(feature = "save_state")]
@@ -709,6 +729,7 @@ impl From<&Game> for SaveState {
             cpu_regs: context.cpu.registers,
             cpu_io_regs: *context.cpu.interrupt_flags.borrow(),
             mbcs: context.mbc.borrow().save(),
+            hram: context.hram.borrow().save(),
         }
     }
 }
