@@ -19,7 +19,7 @@ macro_rules! replace_windows {
 
 macro_rules! ui_debug {
     ($ui:expr, $context:expr) => {
-        egui::menu::menu($ui, "Debug", |ui| {
+        $ui.menu_button("Debug", |ui| {
             if ui.button("Cpu").clicked() && $context.windows.debug.is_none() {
                 replace_windows!($context, debug, new_debug_window(&$context.video));
             }
@@ -160,7 +160,7 @@ pub fn draw_ppu_debug_ui<const WIDTH: usize, const HEIGHT: usize>(
 }
 
 fn ui_file(ui: &mut Ui, events: &mut Vec<CustomEvent>) {
-    egui::menu::menu(ui, "File", |ui| {
+    ui.menu_button("File", |ui| {
         if ui.button("Load").clicked() {
             let file = FileDialog::new()
                 .set_location(
