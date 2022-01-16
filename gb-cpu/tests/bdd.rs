@@ -3,7 +3,10 @@ use cucumber::{given, then, when, World, WorldInit};
 use futures::executor::block_on;
 use gb_bus::Bus;
 use gb_clock::Ticker;
-use gb_cpu::cpu::Cpu;
+use gb_cpu::{
+    cpu::Cpu,
+    microcode::{controller::OpcodeType::Unprefixed, opcode::Opcode::Rst38},
+};
 use gb_test::{MockBus, Reg16, Reg8};
 use std::{
     convert::Infallible,
@@ -151,6 +154,35 @@ async fn check_flag(world: &mut CpuWorld, flag: String, toggle: String) {
         _ => panic!("invalid flag name {}", flag),
     };
     assert_eq!(toggle, flag);
+}
+
+#[then(regex = r"the cpu has ticked (\d+) times for the current opcode (\w+)")]
+async fn check_opcode_duration(world: &mut CpuWorld, count: usize, opcode: String) {
+    assert_eq!(world.cpu.controller.opcode, None);
+    for i in 0..count {
+        world.cpu.tick(&mut world.bus);
+        let current_opcode = world.cpu.controller.opcode.as_ref().unwrap().to_string();
+        assert_eq!(
+            opcode, current_opcode,
+            "at tick {}, current opcode = {}, expected = {}",
+            i, current_opcode, opcode
+        );
+        if i == count - 1 {
+            assert!(
+                world.cpu.controller.is_instruction_finished,
+                "opcode should be finished"
+            );
+        } else {
+            assert!(
+                !world.cpu.controller.is_instruction_finished,
+                "at tick {} opcode finished",
+                i
+            );
+        }
+    }
+    world.cpu.tick(&mut world.bus);
+    let current_opcode = world.cpu.controller.opcode.clone();
+    assert_eq!(current_opcode, Some(Unprefixed(Rst38)));
 }
 
 fn main() {
