@@ -244,7 +244,7 @@ Feature: Verify unprefixed opcodes duration
       | PushAf   | 4   | F5    |
       | OrA8     | 2   | F6    |
       | Rst30    | 4   | F7    |
-      | LdhlSp8  | 2   | F8    |
+      | LdhlSp8  | 3   | F8    |
       | LdSPHL   | 2   | F9    |
       | LdA16    | 4   | FA    |
       | Ei       | 1   | FB    |
