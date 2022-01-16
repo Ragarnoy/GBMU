@@ -230,7 +230,7 @@ fn config_actions_for_opcode(opcode: Opcode, ctl: &mut MicrocodeController) {
         Opcode::LdHL16 => ctl.push_cycles(&[&[read::byte, read::byte], &[write::hl]]),
         Opcode::LdSP16 => ctl.push_cycles(&[&[read::byte, read::byte], &[write::sp]]),
 
-        Opcode::Ld16A => ctl.push_to_current_cycle(&[read::a, read::byte, read::byte, write::ind]),
+        Opcode::Ld16A => ctl.push_cycles(&[&[read::a], &[read::byte, read::byte], &[write::ind]]),
 
         Opcode::LdiHLA => ctl.push_cycle(&[read::a, read::hl, write::ind, inc::hl]),
         Opcode::LdiAHL => ctl.push_cycle(&[read::hl, read::ind, write::a, inc::hl]),
