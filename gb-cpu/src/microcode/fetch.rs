@@ -322,12 +322,12 @@ fn config_actions_for_opcode(opcode: Opcode, ctl: &mut MicrocodeController) {
         Opcode::LdLL => ctl.push_to_current_cycle(&[read::l, write::l]),
         Opcode::LdLHL => ctl.push_cycle(&[read::hl, read::ind, write::l]),
 
-        Opcode::LdHLA => ctl.push_to_current_cycle(&[read::a, read::hl, write::ind]),
-        Opcode::LdHLB => ctl.push_to_current_cycle(&[read::b, read::hl, write::ind]),
-        Opcode::LdHLC => ctl.push_to_current_cycle(&[read::c, read::hl, write::ind]),
-        Opcode::LdHLD => ctl.push_to_current_cycle(&[read::d, read::hl, write::ind]),
-        Opcode::LdHLE => ctl.push_to_current_cycle(&[read::e, read::hl, write::ind]),
-        Opcode::LdHLH => ctl.push_to_current_cycle(&[read::h, read::hl, write::ind]),
+        Opcode::LdHLA => ctl.push_cycle(&[read::a, read::hl, write::ind]),
+        Opcode::LdHLB => ctl.push_cycle(&[read::b, read::hl, write::ind]),
+        Opcode::LdHLC => ctl.push_cycle(&[read::c, read::hl, write::ind]),
+        Opcode::LdHLD => ctl.push_cycle(&[read::d, read::hl, write::ind]),
+        Opcode::LdHLE => ctl.push_cycle(&[read::e, read::hl, write::ind]),
+        Opcode::LdHLH => ctl.push_cycle(&[read::h, read::hl, write::ind]),
         Opcode::LdHLL => ctl.push_cycle(&[read::l, read::hl, write::ind]),
 
         Opcode::LdhAC => ctl.push_cycle(&[read::c, read::hram, write::a]),
