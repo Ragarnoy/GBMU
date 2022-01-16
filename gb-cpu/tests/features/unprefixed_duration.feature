@@ -208,7 +208,6 @@ Feature: Verify unprefixed opcodes duration
       | RetZ     | 2-5 | C8    |
       | Ret      | 4   | C9    |
       | JpZ      | 3-4 | CA    |
-      | PrefixCb | 1   | CB    |
       | CallZ16  | 3-6 | CC    |
       | Call16   | 6   | CD    |
       | AdcA8    | 2   | CE    |
