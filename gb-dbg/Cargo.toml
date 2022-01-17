@@ -6,8 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-egui_memory_editor = { git = "https://github.com/Ragarnoy/egui_memory_editor", rev = "bbd226e9e5878d08e5a0221031a1c3e1cbff4bb4" }
-egui = "0.15"
+egui_memory_editor = { git = "https://github.com/FirelightFlagboy/egui_memory_editor", rev = "6a28daad74f11d93126baa4f377490a012399cf0" }
+egui = "0.16"
 anyhow = "1.0.43"
 log = "0.4"
 nom = "7.1.0"
@@ -16,7 +16,7 @@ gb-bus = { path = "../gb-bus" }
 gb-cpu = { path = "../gb-cpu" }
 
 [dev-dependencies]
-eframe = "0.15.0"
+eframe = "0.16"
 
 [features]
 cgb = []
