@@ -8,6 +8,7 @@ authors = [
   "Cedric M'Passi <cedricmpassi@gmail.com>",
 ]
 edition = "2021"
+rust-version = "1.58.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

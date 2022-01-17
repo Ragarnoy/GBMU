@@ -21,8 +21,7 @@ pub fn compile(src: &str, ty: GLenum) -> GLuint {
         if status != (gl::TRUE as GLint) {
             let mut len = 0;
             gl::GetShaderiv(shader, gl::INFO_LOG_LENGTH, &mut len);
-            let mut buf = Vec::with_capacity(len as usize);
-            buf.set_len((len as usize) - 1); // subtract 1 to skip the trailing null character
+            let mut buf = Vec::with_capacity(len as usize - 1);
             gl::GetShaderInfoLog(
                 shader,
                 len,
@@ -52,8 +51,7 @@ pub fn link(vs: GLuint, fs: GLuint) -> GLuint {
         if status != (gl::TRUE as GLint) {
             let mut len: GLint = 0;
             gl::GetProgramiv(program, gl::INFO_LOG_LENGTH, &mut len);
-            let mut buf = Vec::with_capacity(len as usize);
-            buf.set_len((len as usize) - 1); // subtract 1 to skip the trailing null character
+            let mut buf = Vec::with_capacity(len as usize - 1);
             gl::GetProgramInfoLog(
                 program,
                 len,

@@ -12,13 +12,13 @@ the documentation is available [here](#docs/Home.md)
 
 #### Rust configuration
 
-This project require the rust toolchain: `1.56.X`, you can check it with the following command:
+This project require the rust toolchain: `1.58.X`, you can check it with the following command:
 
 ```sh
 $ cargo --version
-cargo 1.57.0 (4ed5d137b 2021-10-04)
+cargo 1.58.0 (4ed5d137b 2021-10-04)
 $ rustc --version
-rustc 1.57.0 (09c42c458 2021-10-18)
+rustc 1.58.0 (09c42c458 2021-10-18)
 ```
 
 Outside of the toolchain version, we use `clippy` and `rustfmt`.
