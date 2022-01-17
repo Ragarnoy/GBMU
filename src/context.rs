@@ -344,7 +344,7 @@ impl Game {
 
         {
             let cpu_io = Rc::new(RefCell::new(state.cpu_io_regs));
-            self.cpu.interrupt_flags = cpu_io.clone();
+            self.cpu.io_regs = cpu_io.clone();
             let io_bus = {
                 let mut builder = IORegBusBuilder::from(self.io_bus.take());
                 #[cfg(feature = "cgb")]
@@ -359,7 +359,6 @@ impl Game {
             self.addr_bus.ie_reg = cpu_io;
             self.io_bus = io_bus;
         }
-
         self.mbc.borrow_mut().load(state.mbcs)?;
         Ok(())
     }
@@ -707,7 +706,7 @@ impl From<&Game> for SaveState {
         Self {
             romname: context.romname.clone(),
             cpu_regs: context.cpu.registers,
-            cpu_io_regs: *context.cpu.interrupt_flags.borrow(),
+            cpu_io_regs: *context.cpu.io_regs.borrow(),
             mbcs: context.mbc.borrow().save(),
         }
     }

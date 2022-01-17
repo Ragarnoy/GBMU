@@ -14,6 +14,7 @@ nom = "7.1.0"
 gb-roms = { path = "../gb-roms" }
 gb-bus = { path = "../gb-bus" }
 gb-cpu = { path = "../gb-cpu" }
+gb-breakpoint = { path = "../gb-breakpoint" }
 
 [dev-dependencies]
 eframe = "0.16"

@@ -839,6 +839,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "gb-breakpoint"
+version = "0.1.0"
+dependencies = [
+ "nom",
+]
+
+[[package]]
 name = "gb-bus"
 version = "0.1.0"
 dependencies = [
@@ -879,6 +886,7 @@ dependencies = [
  "eframe",
  "egui",
  "egui_memory_editor",
+ "gb-breakpoint",
  "gb-bus",
  "gb-cpu",
  "gb-roms",
