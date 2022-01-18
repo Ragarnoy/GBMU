@@ -35,10 +35,16 @@ impl IORegisters {
         self.should_handle_interrupt() && self.is_interrupt_ready()
     }
 
-    /// Indicate when we need to switch between `normal speed <=> double speed`
     #[cfg(feature = "cgb")]
+    /// Indicate when we need to switch between `normal speed <=> double speed`
     pub fn need_to_change_speed(&self) -> bool {
         self.current_speed != self.desired_speed
+    }
+
+    #[cfg(feature = "cgb")]
+    /// Switch the current speed of the cpu
+    pub fn switch_speed(&mut self) {
+        self.current_speed = self.desired_speed;
     }
 }
 
