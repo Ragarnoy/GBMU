@@ -74,8 +74,13 @@ where
         }
     }
 
-    fn write(&mut self, v: u8, _addr: A) -> Result<(), gb_bus::Error> {
-        self.flag = v & !(IORegisters::FLAG_MASK);
+    fn write(&mut self, v: u8, addr: A) -> Result<(), gb_bus::Error> {
+        match addr.area_type() {
+            IORegArea::IF => self.flag = v & !(IORegisters::FLAG_MASK),
+            #[cfg(feature = "cgb")]
+            IORegArea::Key1 => self.desired_speed = v & 1 == 1,
+            _ => return Err(gb_bus::Error::bus_error(addr.into())),
+        }
         Ok(())
     }
 }
