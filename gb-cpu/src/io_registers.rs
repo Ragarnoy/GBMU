@@ -46,6 +46,12 @@ impl IORegisters {
     pub fn switch_speed(&mut self) {
         self.current_speed = self.desired_speed;
     }
+
+    #[cfg(feature = "cgb")]
+    /// Determine if we are in the double mode of the gameboy color
+    pub fn fast_mode(&self) -> bool {
+        self.current_speed
+    }
 }
 
 impl<A> FileOperation<A, Area> for IORegisters
