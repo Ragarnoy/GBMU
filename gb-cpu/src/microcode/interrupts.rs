@@ -7,18 +7,14 @@ pub fn handle_interrupts(ctl: &mut MicrocodeController, state: &mut State) -> Mi
     let mut int_flags = state.int_flags.borrow_mut();
     let interrupt_flag = int_flags.flag;
     let interrupt_enable = int_flags.enable_mask;
-    let mut interrupt_match = interrupt_flag & interrupt_enable;
+    let interrupt_match = interrupt_flag & interrupt_enable;
 
     // Shift to right until first bit is set
-    let mut source_bit: u8 = 0;
+    let source_bit = interrupt_match.trailing_zeros();
     assert_ne!(
         interrupt_match, 0,
         "Zero value would provoke an infinite loop."
     );
-    while interrupt_match & 0x1 == 0 {
-        interrupt_match >>= 1;
-        source_bit += 1;
-    }
     if source_bit > 4 {
         return CONTINUE;
     }
