@@ -15,7 +15,7 @@ use gb_bus::{Address, Error, IORegArea};
 use std::convert::TryInto;
 
 /// Regroup the registers of the Lcd IOregister area.
-#[derive(Default, Debug)]
+#[derive(Default, Debug, serde::Deserialize, serde::Serialize)]
 pub struct LcdReg {
     pub control: Control,
     pub stat: Stat,

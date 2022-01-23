@@ -3,7 +3,7 @@ use crate::Color;
 use std::cell::Cell;
 use std::rc::Rc;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
 pub struct Pixel {
     pub color: u8,
     pub palette: Rc<Cell<Palette>>,

@@ -4,7 +4,7 @@ use crate::Color;
 use modular_bitfield::{bitfield, specifiers::B2};
 
 #[bitfield]
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default, serde::Deserialize, serde::Serialize)]
 struct MapField {
     index_0: B2,
     index_1: B2,
@@ -12,7 +12,7 @@ struct MapField {
     index_3: B2,
 }
 
-#[derive(Clone, Copy, Default, Debug)]
+#[derive(Clone, Copy, Default, Debug, serde::Deserialize, serde::Serialize)]
 pub struct Palette {
     map: MapField,
     is_sprite: bool,

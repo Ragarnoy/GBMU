@@ -7,8 +7,12 @@ pub const TILEMAP_START_0: usize = 0x1800;
 pub const TILEMAP_START_1: usize = 0x1C00;
 pub const TILEDATA_START_1: usize = 0x1000 / 16;
 
+serde_big_array::big_array! { VramDataSize; Vram::SIZE }
+
 /// Contains operations to read more easily the differents values of the vram.
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Vram {
+    #[serde(with = "VramDataSize")]
     data: [u8; Vram::SIZE as usize],
     lock: Option<Lock>,
 }

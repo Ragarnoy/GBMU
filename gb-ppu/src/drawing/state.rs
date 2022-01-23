@@ -4,6 +4,7 @@ use crate::registers::LcdReg;
 use gb_bus::Bus;
 use std::cell::RefMut;
 
+#[derive(Clone, serde::Deserialize, serde::Serialize)]
 pub struct State {
     mode: Mode,
     line: u8,

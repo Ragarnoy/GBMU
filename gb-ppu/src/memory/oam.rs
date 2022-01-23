@@ -4,8 +4,12 @@ use crate::Sprite;
 use std::collections::BTreeMap;
 use std::convert::TryInto;
 
+serde_big_array::big_array! { OamDataSize; Oam::SIZE }
+
 /// Contains operations to collect sprites from memory.
+#[derive(serde::Deserialize, serde::Serialize)]
 pub struct Oam {
+    #[serde(with = "OamDataSize")]
     data: [u8; Oam::SIZE as usize],
     lock: Option<Lock>,
 }

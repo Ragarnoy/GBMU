@@ -8,7 +8,7 @@ use std::collections::VecDeque;
 use std::ops::Deref;
 use std::rc::Rc;
 
-#[derive(Eq, PartialEq, Clone, Copy, Debug)]
+#[derive(Eq, PartialEq, Clone, Copy, Debug, serde::Deserialize, serde::Serialize)]
 pub enum FetchMode {
     Background,
     Window,
@@ -21,6 +21,7 @@ impl Default for FetchMode {
     }
 }
 
+#[derive(Clone, serde::Deserialize, serde::Serialize)]
 pub struct PixelFetcher {
     pixels: VecDeque<Pixel>,
     pixels_sprite: VecDeque<Pixel>,

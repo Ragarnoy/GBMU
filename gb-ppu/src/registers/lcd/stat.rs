@@ -4,7 +4,7 @@ use crate::error::PPUResult;
 
 use std::convert::TryInto;
 
-#[derive(Default, Clone, Copy, Debug)]
+#[derive(Default, Clone, Copy, Debug, serde::Deserialize, serde::Serialize)]
 pub struct Stat {
     bits: u8,
 }

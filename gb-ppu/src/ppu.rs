@@ -1,3 +1,5 @@
+mod de_ser;
+
 use crate::drawing::{FetchMode, Mode, PixelFIFO, PixelFetcher, State};
 use crate::memory::{Lock, Lockable, Oam, PPUMem, Vram};
 use crate::registers::{LcdReg, PPURegisters};
@@ -8,6 +10,7 @@ use crate::{
     SPRITE_RENDER_HEIGHT, SPRITE_RENDER_WIDTH, TILEMAP_DIM, TILEMAP_TILE_COUNT, TILESHEET_HEIGHT,
     TILESHEET_TILE_COUNT, TILESHEET_WIDTH,
 };
+use de_ser::PpuPixelsFlatten;
 use gb_bus::{Area, Bus};
 use gb_clock::{Tick, Ticker};
 use gb_lcd::render::{RenderData, SCREEN_HEIGHT, SCREEN_WIDTH};
@@ -36,6 +39,8 @@ macro_rules! view_border {
 /// The Pixel Process Unit is in charge of selecting the pixel to be displayed on the lcd screen.
 ///
 /// It owns the VRAM and the OAM, as well as a few registers.
+#[derive(Clone, serde::Deserialize, serde::Serialize)]
+#[serde(into = "PpuPixelsFlatten", from = "PpuPixelsFlatten")]
 pub struct Ppu {
     enabled: bool,
     vram: Rc<RefCell<Vram>>,

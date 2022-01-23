@@ -1,6 +1,8 @@
 use crate::{file_operation::Address, Area, FileOperation};
 
-#[derive(Eq, PartialEq, Debug, Clone, Copy, PartialOrd, Ord)]
+#[derive(
+    Eq, PartialEq, Debug, Clone, Copy, PartialOrd, Ord, serde::Deserialize, serde::Serialize,
+)]
 pub enum Lock {
     Ppu,
     Dma,

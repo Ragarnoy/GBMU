@@ -2,7 +2,7 @@ use super::super::Palette;
 use std::cell::Cell;
 use std::rc::Rc;
 
-#[derive(Default, Clone, Debug)]
+#[derive(Default, Clone, Debug, serde::Deserialize, serde::Serialize)]
 pub struct PalettesMono {
     bg: Rc<Cell<Palette>>,
     obj_0: Rc<Cell<Palette>>,
