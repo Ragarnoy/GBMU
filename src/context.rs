@@ -1,6 +1,9 @@
 #[cfg(feature = "cgb")]
 use gb_bus::generic::PanicDevice;
-use gb_bus::{generic::SimpleRW, AddressBus, Bus, IORegArea, IORegBus, Lock, WorkingRam};
+use gb_bus::{
+    generic::{CharDevice, SimpleRW},
+    AddressBus, Bus, IORegArea, IORegBus, Lock, WorkingRam,
+};
 use gb_clock::{cycles, Clock};
 use gb_cpu::{cpu::Cpu, new_cpu, registers::Registers};
 use gb_dbg::{
@@ -124,6 +127,7 @@ impl Game {
                     .with_area(IORegArea::Vbk, ppu_reg.clone())
                     .with_area(IORegArea::Key1, cpu_io_reg.clone())
                     .with_hdma(Rc::new(RefCell::new(PanicDevice::default())))
+                    .with_area(IORegArea::RP, Rc::new(RefCell::new(CharDevice(0))))
                     .with_area(IORegArea::Svbk, wram.clone());
             }
             io_bus
