@@ -1,41 +1,36 @@
 use super::Register;
 use crate::error::{PPUError, PPUResult};
 use crate::Color;
-use modular_bitfield::{bitfield, specifiers::B2};
 
-#[bitfield]
-#[derive(Clone, Copy, Debug, Default, serde::Deserialize, serde::Serialize)]
-struct MapField {
-    index_0: B2,
-    index_1: B2,
-    index_2: B2,
-    index_3: B2,
-}
+const INDEX_0: u8 = 0b11;
+const INDEX_1: u8 = 0b1100;
+const INDEX_2: u8 = 0b11_0000;
+const INDEX_3: u8 = 0b1100_0000;
 
 #[derive(Clone, Copy, Default, Debug, serde::Deserialize, serde::Serialize)]
 pub struct Palette {
-    map: MapField,
+    map: u8,
     is_sprite: bool,
 }
 
 impl Palette {
     pub fn new(byte: u8, is_sprite: bool) -> Self {
         Palette {
-            map: byte.into(),
+            map: byte,
             is_sprite,
         }
     }
 
     pub fn new_background() -> Self {
         Palette {
-            map: MapField::new(),
+            map: 0,
             is_sprite: false,
         }
     }
 
     pub fn new_sprite() -> Self {
         Palette {
-            map: MapField::new(),
+            map: 0,
             is_sprite: true,
         }
     }
@@ -47,10 +42,10 @@ impl Palette {
     /// Get the color value associated to the given index.
     pub fn get_value(&self, index: u8) -> PPUResult<u8> {
         match index {
-            3 => Ok(self.map.index_3()),
-            2 => Ok(self.map.index_2()),
-            1 => Ok(self.map.index_1()),
-            0 => Ok(self.map.index_0()),
+            3 => Ok((self.map & INDEX_3) >> 6),
+            2 => Ok((self.map & INDEX_2) >> 4),
+            1 => Ok((self.map & INDEX_1) >> 2),
+            0 => Ok(self.map & INDEX_0),
             _ => Err(PPUError::OutOfBound {
                 value: index as usize,
                 min_bound: 0,
@@ -65,35 +60,23 @@ impl Palette {
     }
 }
 
-impl From<u8> for MapField {
-    fn from(byte: u8) -> MapField {
-        MapField::from_bytes([byte])
-    }
-}
-
 impl From<u8> for Palette {
     fn from(byte: u8) -> Palette {
         Palette {
-            map: byte.into(),
+            map: byte,
             is_sprite: false,
         }
     }
 }
 
-impl From<MapField> for u8 {
-    fn from(map: MapField) -> u8 {
-        map.into_bytes()[0]
-    }
-}
-
 impl From<Palette> for u8 {
     fn from(register: Palette) -> u8 {
-        register.map.into()
+        register.map
     }
 }
 
 impl Register for Palette {
     fn write(&mut self, v: u8) {
-        self.map = v.into();
+        self.map = v;
     }
 }
