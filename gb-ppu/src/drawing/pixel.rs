@@ -1,3 +1,5 @@
+pub mod de_ser;
+
 use crate::registers::Palette;
 use crate::Color;
 use std::cell::Cell;

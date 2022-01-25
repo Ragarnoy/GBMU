@@ -1,7 +1,9 @@
-use crate::drawing::{PixelFIFO, PixelFetcher, State};
+use super::Ppu;
+use crate::drawing::{
+    pixel_fetcher::de_ser::PixelFetcherDeSer, pixel_fifo::de_ser::PixelFIFODeSer, State,
+};
 use crate::memory::{Oam, Vram};
 use crate::registers::LcdReg;
-use crate::Ppu;
 use crate::Sprite;
 use gb_lcd::render::{SCREEN_HEIGHT, SCREEN_WIDTH};
 
@@ -10,8 +12,15 @@ use std::rc::Rc;
 
 serde_big_array::big_array! { PixelBufferSize; SCREEN_HEIGHT * SCREEN_WIDTH * 3 }
 
+#[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
+pub enum MonoPaletteRef {
+    BgWin,
+    Sprite0,
+    Sprite1,
+}
+
 #[derive(Clone, serde::Deserialize, serde::Serialize)]
-pub struct PpuPixelsFlatten {
+pub struct PpuDeSer {
     enabled: bool,
     vram: Rc<RefCell<Vram>>,
     oam: Rc<RefCell<Oam>>,
@@ -20,15 +29,15 @@ pub struct PpuPixelsFlatten {
     pixels: [u8; SCREEN_WIDTH * SCREEN_HEIGHT * 3],
     #[serde(with = "PixelBufferSize")]
     next_pixels: [u8; SCREEN_WIDTH * SCREEN_HEIGHT * 3],
-    pixel_fifo: PixelFIFO,
-    pixel_fetcher: PixelFetcher,
+    pixel_fifo: PixelFIFODeSer,
+    pixel_fetcher: PixelFetcherDeSer,
     state: State,
     scanline_sprites: Vec<Sprite>,
     pixel_discarded: u8,
     scx: u8,
 }
 
-impl PpuPixelsFlatten {
+impl PpuDeSer {
     pub fn flatten(
         pixels: [[[u8; 3]; SCREEN_WIDTH]; SCREEN_HEIGHT],
     ) -> [u8; SCREEN_HEIGHT * SCREEN_WIDTH * 3] {
@@ -55,11 +64,13 @@ impl PpuPixelsFlatten {
     }
 }
 
-impl From<Ppu> for PpuPixelsFlatten {
-    fn from(ppu: Ppu) -> PpuPixelsFlatten {
-        let pixel_flatten = PpuPixelsFlatten::flatten(ppu.pixels);
-        let next_pixel_flatten = PpuPixelsFlatten::flatten(ppu.next_pixels);
-        PpuPixelsFlatten {
+impl From<Ppu> for PpuDeSer {
+    fn from(ppu: Ppu) -> PpuDeSer {
+        let pixel_flatten = PpuDeSer::flatten(ppu.pixels);
+        let next_pixel_flatten = PpuDeSer::flatten(ppu.next_pixels);
+        let fifo = PixelFIFODeSer::from_fifo(ppu.pixel_fifo, ppu.lcd_reg.borrow());
+        let fetcher = PixelFetcherDeSer::from_fetcher(ppu.pixel_fetcher, ppu.lcd_reg.borrow());
+        PpuDeSer {
             enabled: ppu.enabled,
             vram: ppu.vram,
             oam: ppu.oam,
@@ -68,8 +79,8 @@ impl From<Ppu> for PpuPixelsFlatten {
             pixels: pixel_flatten,
             next_pixels: next_pixel_flatten,
 
-            pixel_fifo: ppu.pixel_fifo,
-            pixel_fetcher: ppu.pixel_fetcher,
+            pixel_fifo: fifo,
+            pixel_fetcher: fetcher,
             state: ppu.state,
             scanline_sprites: ppu.scanline_sprites,
             pixel_discarded: ppu.pixel_discarded,
@@ -78,10 +89,14 @@ impl From<Ppu> for PpuPixelsFlatten {
     }
 }
 
-impl From<PpuPixelsFlatten> for Ppu {
-    fn from(ppu_flat: PpuPixelsFlatten) -> Ppu {
-        let pixel = PpuPixelsFlatten::unflatten(ppu_flat.pixels);
-        let next_pixel = PpuPixelsFlatten::unflatten(ppu_flat.next_pixels);
+impl From<PpuDeSer> for Ppu {
+    fn from(ppu_flat: PpuDeSer) -> Ppu {
+        let pixel = PpuDeSer::unflatten(ppu_flat.pixels);
+        let next_pixel = PpuDeSer::unflatten(ppu_flat.next_pixels);
+        let fifo = ppu_flat.pixel_fifo.into_fifo(ppu_flat.lcd_reg.borrow());
+        let fetcher = ppu_flat
+            .pixel_fetcher
+            .into_fetcher(ppu_flat.lcd_reg.borrow());
         Ppu {
             enabled: ppu_flat.enabled,
             vram: ppu_flat.vram,
@@ -91,8 +106,8 @@ impl From<PpuPixelsFlatten> for Ppu {
             pixels: pixel,
             next_pixels: next_pixel,
 
-            pixel_fifo: ppu_flat.pixel_fifo,
-            pixel_fetcher: ppu_flat.pixel_fetcher,
+            pixel_fifo: fifo,
+            pixel_fetcher: fetcher,
             state: ppu_flat.state,
             scanline_sprites: ppu_flat.scanline_sprites,
             pixel_discarded: ppu_flat.pixel_discarded,

@@ -1,3 +1,5 @@
+pub mod de_ser;
+
 use super::Pixel;
 use std::collections::VecDeque;
 

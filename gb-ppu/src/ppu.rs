@@ -1,4 +1,4 @@
-mod de_ser;
+pub mod de_ser;
 
 use crate::drawing::{FetchMode, Mode, PixelFIFO, PixelFetcher, State};
 use crate::memory::{Lock, Lockable, Oam, PPUMem, Vram};
@@ -10,7 +10,7 @@ use crate::{
     SPRITE_RENDER_HEIGHT, SPRITE_RENDER_WIDTH, TILEMAP_DIM, TILEMAP_TILE_COUNT, TILESHEET_HEIGHT,
     TILESHEET_TILE_COUNT, TILESHEET_WIDTH,
 };
-use de_ser::PpuPixelsFlatten;
+use de_ser::PpuDeSer;
 use gb_bus::{Area, Bus};
 use gb_clock::{Tick, Ticker};
 use gb_lcd::render::{RenderData, SCREEN_HEIGHT, SCREEN_WIDTH};
@@ -40,7 +40,7 @@ macro_rules! view_border {
 ///
 /// It owns the VRAM and the OAM, as well as a few registers.
 #[derive(Clone, serde::Deserialize, serde::Serialize)]
-#[serde(into = "PpuPixelsFlatten", from = "PpuPixelsFlatten")]
+#[serde(into = "PpuDeSer", from = "PpuDeSer")]
 pub struct Ppu {
     enabled: bool,
     vram: Rc<RefCell<Vram>>,

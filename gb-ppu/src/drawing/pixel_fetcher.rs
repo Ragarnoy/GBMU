@@ -1,3 +1,5 @@
+pub mod de_ser;
+
 use super::{Pixel, PixelFIFO};
 use crate::memory::Vram;
 use crate::registers::{LcdReg, Palette};

@@ -39,6 +39,10 @@ impl Palette {
         self.is_sprite
     }
 
+    pub fn get_map(&self) -> u8 {
+        self.map
+    }
+
     /// Get the color value associated to the given index.
     pub fn get_value(&self, index: u8) -> PPUResult<u8> {
         match index {

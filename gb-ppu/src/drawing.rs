@@ -1,7 +1,7 @@
 mod mode;
 mod pixel;
-mod pixel_fetcher;
-mod pixel_fifo;
+pub mod pixel_fetcher;
+pub mod pixel_fifo;
 mod state;
 
 pub use mode::Mode;
