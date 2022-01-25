@@ -64,6 +64,44 @@ async fn setup_u8_register(world: &mut CpuWorld, reg: Reg8, value: String) {
     reg.write_corresponding_regs(&mut world.cpu.registers, value);
 }
 
+#[given(regex = r"the flag ([\w ]+) is (re)?set")]
+async fn set_flag(world: &mut CpuWorld, flag: String, toggle: String) {
+    use gb_cpu::interfaces::WriteFlagReg;
+
+    let toggle = toggle.is_empty();
+    match flag.as_str() {
+        "zero" => world.cpu.registers.set_zero(toggle),
+        "half carry" => world.cpu.registers.set_half_carry(toggle),
+        "carry" => world.cpu.registers.set_carry(toggle),
+        "subtraction" => world.cpu.registers.set_subtraction(toggle),
+        _ => panic!("invalid flag name {}", flag),
+    }
+}
+
+#[given(regex = r"the flag ([\w ]+) is toggle")]
+async fn toggle_flag(world: &mut CpuWorld, flag: String) {
+    use gb_cpu::interfaces::{ReadFlagReg, WriteFlagReg};
+
+    match flag.as_str() {
+        "zero" => world.cpu.registers.set_zero(!world.cpu.registers.zero()),
+        "half carry" => world
+            .cpu
+            .registers
+            .set_half_carry(!world.cpu.registers.half_carry()),
+        "carry" => world.cpu.registers.set_carry(!world.cpu.registers.carry()),
+        "subtraction" => world
+            .cpu
+            .registers
+            .set_subtraction(!world.cpu.registers.subtraction()),
+        _ => panic!("invalid flag name {}", flag),
+    }
+}
+
+#[given("the cpu is reset")]
+async fn reset_cpu(world: &mut CpuWorld) {
+    world.cpu = Cpu::default();
+}
+
 #[when(regex = r"the cpu has ticked (\d+) times?")]
 async fn tick_cpu(world: &mut CpuWorld, amount: usize) {
     let mut count = 0;
