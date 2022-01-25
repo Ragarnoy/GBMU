@@ -2,33 +2,25 @@ use crate::error::{PPUError, PPUResult};
 use crate::memory::Vram;
 use crate::registers::Palette;
 use crate::Color;
-use modular_bitfield::{
-    bitfield,
-    specifiers::{B1, B3},
-};
 use std::cell::Cell;
 use std::ops::Deref;
 use std::rc::Rc;
 
-#[bitfield]
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq, serde::Deserialize, serde::Serialize)]
-struct Attributes {
-    #[skip]
-    pub palette_cgb_nb: B3,
-    #[skip]
-    pub tile_bank: B1,
-    pub palette_nb: B1,
-    pub x_flip: B1,
-    pub y_flip: B1,
-    pub bg_win_priority: B1,
-}
+// CGB bits, unused yet
+const _PALETTE_CGB_NB: u8 = 0b111;
+const _TILE_BANK: u8 = 0b1000;
+
+const PALETTE_NB: u8 = 0b1_0000;
+const X_FLIP: u8 = 0b10_0000;
+const Y_FLIP: u8 = 0b100_0000;
+const BG_WIN_PRIORITY: u8 = 0b1000_0000;
 
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq, serde::Deserialize, serde::Serialize)]
 pub struct Sprite {
     y_pos: u8,
     x_pos: u8,
     tile_index: u8,
-    attributes: Attributes,
+    attributes: u8,
 }
 
 impl<'r> Sprite {
@@ -42,7 +34,7 @@ impl<'r> Sprite {
             y_pos: 0,
             x_pos: 0,
             tile_index: 0,
-            attributes: Attributes::new(),
+            attributes: 0,
         }
     }
 
@@ -57,11 +49,11 @@ impl<'r> Sprite {
     }
 
     fn y_flip(&self) -> bool {
-        self.attributes.y_flip() != 0
+        self.attributes & Y_FLIP != 0
     }
 
     fn x_flip(&self) -> bool {
-        self.attributes.x_flip() != 0
+        self.attributes & X_FLIP != 0
     }
 
     pub fn tile_index(&self) -> u8 {
@@ -72,7 +64,7 @@ impl<'r> Sprite {
         &self,
         palettes: (&'r Rc<Cell<Palette>>, &'r Rc<Cell<Palette>>),
     ) -> &'r Rc<Cell<Palette>> {
-        if self.attributes.palette_nb() == 0 {
+        if self.attributes & PALETTE_NB == 0 {
             palettes.0
         } else {
             palettes.1
@@ -80,7 +72,7 @@ impl<'r> Sprite {
     }
 
     pub fn bg_win_priority(&self) -> bool {
-        self.attributes.bg_win_priority() != 0
+        self.attributes & BG_WIN_PRIORITY != 0
     }
 
     /// Read the row of 8 pixels values for this sprite.
@@ -179,18 +171,13 @@ impl From<[u8; Sprite::SIZE]> for Sprite {
             y_pos: bytes[0],
             x_pos: bytes[1],
             tile_index: bytes[2],
-            attributes: Attributes::from_bytes([bytes[3]]),
+            attributes: bytes[3],
         }
     }
 }
 
 impl From<Sprite> for [u8; Sprite::SIZE] {
     fn from(obj: Sprite) -> [u8; Sprite::SIZE] {
-        [
-            obj.y_pos,
-            obj.x_pos,
-            obj.tile_index,
-            obj.attributes.into_bytes()[0],
-        ]
+        [obj.y_pos, obj.x_pos, obj.tile_index, obj.attributes]
     }
 }

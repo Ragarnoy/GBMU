@@ -936,7 +936,6 @@ dependencies = [
  "gb-clock",
  "gb-lcd",
  "log",
- "modular-bitfield",
  "sdl2",
  "serde",
  "serde-big-array",
