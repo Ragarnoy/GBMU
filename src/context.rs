@@ -347,6 +347,7 @@ impl Game {
     fn load_state(&mut self, state: SaveState) -> anyhow::Result<()> {
         self.load_cpu_state(state.cpu_regs, state.cpu_io_regs)?;
         self.load_wram(state.working_ram)?;
+        self.load_timer(state.timer)?;
 
         self.mbc.borrow_mut().load(state.mbcs)?;
         Ok(())
@@ -381,6 +382,14 @@ impl Game {
             .borrow_mut()
             .with_area(IORegArea::Svbk, wram.clone());
         self.wram = wram;
+        Ok(())
+    }
+
+    #[cfg(feature = "save_state")]
+    fn load_timer(&mut self, state: Timer) -> anyhow::Result<()> {
+        let timer = Rc::new(RefCell::new(state));
+        self.io_bus.borrow_mut().with_timer(timer.clone());
+        self.timer = timer;
         Ok(())
     }
 }
@@ -720,6 +729,7 @@ struct SaveState {
     pub cpu_io_regs: gb_cpu::io_registers::IORegisters,
     pub mbcs: GenericState<Full>,
     pub working_ram: WorkingRam,
+    pub timer: Timer,
 }
 
 #[cfg(feature = "save_state")]
@@ -731,6 +741,7 @@ impl From<&Game> for SaveState {
             cpu_io_regs: *context.cpu.io_regs.borrow(),
             mbcs: context.mbc.borrow().save(),
             working_ram: context.wram.borrow().clone(),
+            timer: *context.timer.borrow(),
         }
     }
 }
