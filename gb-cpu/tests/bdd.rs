@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use cucumber::{given, then, when, World, WorldInit};
+use cucumber::{gherkin::Step, given, then, when, World, WorldInit};
 use futures::executor::block_on;
 use gb_bus::Bus;
 use gb_clock::Ticker;
@@ -100,6 +100,21 @@ async fn toggle_flag(world: &mut CpuWorld, flag: String) {
 #[given("the cpu is reset")]
 async fn reset_cpu(world: &mut CpuWorld) {
     world.cpu = Cpu::default();
+}
+
+#[given("the following bytes")]
+async fn write_bytes(world: &mut CpuWorld, step: &Step) {
+    let table = step.table.as_ref().expect("missing data table");
+    let mut rows = table.rows.iter();
+    rows.next();
+    for row in rows {
+        let address = u16::from_str_radix(&row[0], 16).expect("valid hexa value");
+        let value = u8::from_str_radix(&row[1], 16).expect("valid hexa value");
+        world
+            .bus
+            .write(address, value, None)
+            .expect("could not write value at address in bus")
+    }
 }
 
 #[when(regex = r"the cpu has ticked (\d+) times?")]
@@ -208,7 +223,8 @@ async fn check_opcode_duration(world: &mut CpuWorld, count: usize, opcode: Strin
         if i == count - 1 {
             assert!(
                 world.cpu.controller.is_instruction_finished,
-                "opcode should be finished"
+                "opcode should be finished, {} cycles remaining",
+                world.cpu.controller.cycles.len()
             );
         } else {
             assert!(
@@ -220,7 +236,15 @@ async fn check_opcode_duration(world: &mut CpuWorld, count: usize, opcode: Strin
     }
     world.cpu.tick(&mut world.bus);
     let current_opcode = world.cpu.controller.opcode.clone();
-    assert_eq!(current_opcode, Some(Unprefixed(Rst38)));
+    assert_ne!(
+        opcode,
+        current_opcode
+            .as_ref()
+            .map(|opc| opc.to_string())
+            .unwrap_or_default(),
+        "current opcode = {:?}",
+        current_opcode
+    );
 }
 
 fn main() {

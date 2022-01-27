@@ -382,23 +382,27 @@ fn config_actions_for_opcode(opcode: Opcode, ctl: &mut MicrocodeController) {
         ]),
         Opcode::RetNz => ctl.push_cycles(&[
             &[not_zero],
-            &[read::sp, read::ind, inc::sp, read::sp],
-            &[read::ind, inc::sp, jump::jump],
+            &[read::sp, read::ind, inc::sp],
+            &[read::sp, read::ind, inc::sp],
+            &[jump::jump],
         ]),
         Opcode::RetZ => ctl.push_cycles(&[
             &[zero],
-            &[read::sp, read::ind, inc::sp, read::sp],
-            &[read::ind, inc::sp, jump::jump],
+            &[read::sp, read::ind, inc::sp],
+            &[read::sp, read::ind, inc::sp],
+            &[jump::jump],
         ]),
         Opcode::RetNc => ctl.push_cycles(&[
             &[not_carry],
-            &[read::sp, read::ind, inc::sp, read::sp],
-            &[read::ind, inc::sp, jump::jump],
+            &[read::sp, read::ind, inc::sp],
+            &[read::sp, read::ind, inc::sp],
+            &[jump::jump],
         ]),
         Opcode::RetC => ctl.push_cycles(&[
             &[carry],
-            &[read::sp, read::ind, inc::sp, read::sp],
-            &[read::ind, inc::sp, jump::jump],
+            &[read::sp, read::ind, inc::sp],
+            &[read::sp, read::ind, inc::sp],
+            &[jump::jump],
         ]),
 
         Opcode::Rst00 => ctl.push_cycles(&[

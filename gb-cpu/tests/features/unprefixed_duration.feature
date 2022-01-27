@@ -1,6 +1,7 @@
 Feature: Verify unprefixed opcodes duration
   Scenario Outline: Verify unprefixed opcodes duration
     Given the register SP set to the value BEEF
+    And the register PC set to the value DEAD
     And the bytes <Bytes> at the position PC
     Then the cpu has ticked <N> times for the current opcode <Name>
 
@@ -199,7 +200,6 @@ Feature: Verify unprefixed opcodes duration
       | PushBc   | 4 | C5    |
       | AddA8    | 2 | C6    |
       | Rst00    | 4 | C7    |
-      | Ret      | 4 | C9    |
       | Call16   | 6 | CD    |
       | AdcA8    | 2 | CE    |
       | Rst08    | 4 | CF    |
@@ -207,7 +207,6 @@ Feature: Verify unprefixed opcodes duration
       | PushDe   | 4 | D5    |
       | SubA8    | 2 | D6    |
       | Rst10    | 4 | D7    |
-      | Reti     | 4 | D9    |
       | SbcA8    | 2 | DE    |
       | Rst18    | 4 | DF    |
       | Ldh8A    | 3 | E0    |
@@ -237,10 +236,13 @@ Feature: Verify unprefixed opcodes duration
 
   Scenario Outline: Verify unprefixed opcodes duration with condition
     Given the register SP set to the value BEEF
-    And the bytes <Bytes> at the position PC
+    And the register PC set to the value DEAD
+    And the bytes <Bytes>, DE, DE at the position PC
     And the flag <Flag> is <Condition>
     Then the cpu has ticked <DBranch> times for the current opcode <Name>
     Given the cpu is reset
+    And the register SP set to the value BEEF
+    And the register PC set to the value DEAD
     And the bytes <Bytes> at the position PC
     And the flag <Flag> is toggle
     Then the cpu has ticked <DNoBranch> times for the current opcode <Name>
@@ -251,15 +253,50 @@ Feature: Verify unprefixed opcodes duration
       | JrZ      | zero  | set       | 2         | 3       | 28    |
       | JrNc     | carry | reset     | 2         | 3       | 30    |
       | JrC      | carry | set       | 2         | 3       | 38    |
-      | RetNz    | zero  | reset     | 2         | 5       | C0    |
       | JpNz     | zero  | reset     | 3         | 4       | C2    |
       | CallNz   | zero  | reset     | 3         | 6       | C4    |
-      | RetZ     | zero  | set       | 2         | 5       | C8    |
       | JpZ      | zero  | set       | 3         | 4       | CA    |
       | CallZ16  | zero  | set       | 3         | 6       | CC    |
-      | RetNc    | carry | reset     | 2         | 5       | D0    |
       | JpNc     | carry | reset     | 3         | 4       | D2    |
       | CallNc16 | carry | reset     | 3         | 6       | D4    |
-      | RetC     | carry | set       | 2         | 5       | D8    |
       | JpC      | carry | set       | 3         | 4       | DA    |
       | CallC16  | carry | set       | 3         | 6       | DC    |
+
+  Scenario Outline: Verify Ret opcodes duration with condition
+    Given the following bytes
+      | Address | Value |
+      | BEEF    | DE    |
+      | BEF0    | AD    |
+    And the register SP set to the value BEEF
+    And the bytes <Bytes> at the position PC
+    And the flag <Flag> is <Condition>
+    Then the cpu has ticked <DBranch> times for the current opcode <Name>
+    Given the cpu is reset
+    And the register SP set to the value BEEF
+    And the bytes <Bytes> at the position PC
+    And the flag <Flag> is <Condition>
+    And the flag <Flag> is toggle
+    Then the cpu has ticked <DNoBranch> times for the current opcode <Name>
+
+    Examples:
+      | Name  | Flag  | Condition | DNoBranch | DBranch | Bytes |
+      | RetNz | zero  | reset     | 2         | 5       | C0    |
+      | RetZ  | zero  | set       | 2         | 5       | C8    |
+      | RetNc | carry | reset     | 2         | 5       | D0    |
+      | RetC  | carry | set       | 2         | 5       | D8    |
+
+  Scenario Outline: Verify Ret opcodes duration
+    Given the following bytes
+      | Address | Value |
+      | BEEF    | DE    |
+      | BEF0    | AD    |
+    And the register SP set to the value BEEF
+    And the bytes <Bytes> at the position PC
+    Then the cpu has ticked <N> times for the current opcode <Name>
+
+    Examples:
+      | Name | N | Bytes |
+      | Ret  | 4 | C9    |
+      | Reti | 4 | D9    |
+
+
