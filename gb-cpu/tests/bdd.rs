@@ -3,10 +3,7 @@ use cucumber::{gherkin::Step, given, then, when, World, WorldInit};
 use futures::executor::block_on;
 use gb_bus::Bus;
 use gb_clock::Ticker;
-use gb_cpu::{
-    cpu::Cpu,
-    microcode::{controller::OpcodeType::Unprefixed, opcode::Opcode::Rst38},
-};
+use gb_cpu::cpu::Cpu;
 use gb_test::{MockBus, Reg16, Reg8};
 use std::{
     convert::Infallible,
@@ -234,17 +231,6 @@ async fn check_opcode_duration(world: &mut CpuWorld, count: usize, opcode: Strin
             );
         }
     }
-    world.cpu.tick(&mut world.bus);
-    let current_opcode = world.cpu.controller.opcode.clone();
-    assert_ne!(
-        opcode,
-        current_opcode
-            .as_ref()
-            .map(|opc| opc.to_string())
-            .unwrap_or_default(),
-        "current opcode = {:?}",
-        current_opcode
-    );
 }
 
 fn main() {

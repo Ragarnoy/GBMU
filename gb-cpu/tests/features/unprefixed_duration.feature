@@ -2,7 +2,8 @@ Feature: Verify unprefixed opcodes duration
   Scenario Outline: Verify unprefixed opcodes duration
     Given the register SP set to the value BEEF
     And the register PC set to the value DEAD
-    And the bytes <Bytes> at the position PC
+    And the register HL set to the value F000
+    And the bytes <Bytes>, DE, DE at the position PC
     Then the cpu has ticked <N> times for the current opcode <Name>
 
     Examples:
@@ -244,6 +245,7 @@ Feature: Verify unprefixed opcodes duration
     And the register SP set to the value BEEF
     And the register PC set to the value DEAD
     And the bytes <Bytes> at the position PC
+    And the flag <Flag> is <Condition>
     And the flag <Flag> is toggle
     Then the cpu has ticked <DNoBranch> times for the current opcode <Name>
 
