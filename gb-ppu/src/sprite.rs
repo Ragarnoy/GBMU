@@ -13,7 +13,11 @@ const X_FLIP: u8 = 0b10_0000;
 const Y_FLIP: u8 = 0b100_0000;
 const BG_WIN_PRIORITY: u8 = 0b1000_0000;
 
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq, serde::Deserialize, serde::Serialize)]
+#[cfg_attr(
+    feature = "serialization",
+    derive(serde::Deserialize, serde::Serialize)
+)]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct Sprite {
     y_pos: u8,
     x_pos: u8,

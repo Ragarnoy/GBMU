@@ -2,7 +2,11 @@ use crate::registers::{LcdReg, MonoPaletteRef};
 use crate::Color;
 use std::ops::Deref;
 
-#[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
+#[cfg_attr(
+    feature = "serialization",
+    derive(serde::Deserialize, serde::Serialize)
+)]
+#[derive(Clone, Debug)]
 pub struct Pixel {
     pub color: u8,
     pub palette: Option<MonoPaletteRef>,

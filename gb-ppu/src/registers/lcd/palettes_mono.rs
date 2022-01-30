@@ -1,7 +1,11 @@
 use super::super::Palette;
 use std::ops::Deref;
 
-#[derive(PartialEq, Eq, Clone, Debug, serde::Deserialize, serde::Serialize)]
+#[cfg_attr(
+    feature = "serialization",
+    derive(serde::Deserialize, serde::Serialize)
+)]
+#[derive(PartialEq, Eq, Clone, Debug)]
 pub enum MonoPaletteRef {
     BgWin,
     Sprite0,
@@ -22,7 +26,11 @@ impl MonoPaletteRef {
     }
 }
 
-#[derive(Default, Clone, Debug, serde::Deserialize, serde::Serialize)]
+#[cfg_attr(
+    feature = "serialization",
+    derive(serde::Deserialize, serde::Serialize)
+)]
+#[derive(Default, Clone, Debug)]
 pub struct PalettesMono {
     bg: Palette,
     obj_0: Palette,

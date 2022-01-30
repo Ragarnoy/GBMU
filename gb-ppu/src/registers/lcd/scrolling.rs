@@ -1,7 +1,11 @@
 use super::RegisterArray;
 use std::ops::{Index, IndexMut};
 
-#[derive(Default, Clone, Copy, Debug, serde::Deserialize, serde::Serialize)]
+#[cfg_attr(
+    feature = "serialization",
+    derive(serde::Deserialize, serde::Serialize)
+)]
+#[derive(Default, Clone, Copy, Debug)]
 pub struct Scrolling {
     pub scy: u8,
     pub scx: u8,

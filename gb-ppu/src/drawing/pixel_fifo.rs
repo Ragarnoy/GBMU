@@ -1,7 +1,11 @@
 use super::Pixel;
 use std::collections::VecDeque;
 
-#[derive(Clone, serde::Deserialize, serde::Serialize)]
+#[cfg_attr(
+    feature = "serialization",
+    derive(serde::Deserialize, serde::Serialize)
+)]
+#[derive(Clone)]
 pub struct PixelFIFO {
     pixels: VecDeque<Pixel>,
     pub enabled: bool,

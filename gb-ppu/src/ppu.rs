@@ -1,3 +1,4 @@
+#[cfg(feature = "serialization")]
 pub mod de_ser;
 
 use crate::drawing::{FetchMode, Mode, PixelFIFO, PixelFetcher, State};
@@ -9,6 +10,7 @@ use crate::{
     SPRITE_RENDER_HEIGHT, SPRITE_RENDER_WIDTH, TILEMAP_DIM, TILEMAP_TILE_COUNT, TILESHEET_HEIGHT,
     TILESHEET_TILE_COUNT, TILESHEET_WIDTH,
 };
+#[cfg(feature = "serialization")]
 use de_ser::PpuDeSer;
 use gb_bus::{Area, Bus};
 use gb_clock::{Tick, Ticker};
@@ -38,8 +40,12 @@ macro_rules! view_border {
 /// The Pixel Process Unit is in charge of selecting the pixel to be displayed on the lcd screen.
 ///
 /// It owns the VRAM and the OAM, as well as a few registers.
-#[derive(Clone, serde::Deserialize, serde::Serialize)]
-#[serde(into = "PpuDeSer", from = "PpuDeSer")]
+#[cfg_attr(
+    feature = "serialization",
+    derive(serde::Deserialize, serde::Serialize)
+)]
+#[derive(Clone)]
+#[cfg_attr(feature = "serialization", serde(into = "PpuDeSer", from = "PpuDeSer"))]
 pub struct Ppu {
     enabled: bool,
     vram: Rc<RefCell<Vram>>,

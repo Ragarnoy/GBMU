@@ -7,7 +7,11 @@ const INDEX_1: u8 = 0b1100;
 const INDEX_2: u8 = 0b11_0000;
 const INDEX_3: u8 = 0b1100_0000;
 
-#[derive(Clone, Copy, Default, Debug, serde::Deserialize, serde::Serialize)]
+#[cfg_attr(
+    feature = "serialization",
+    derive(serde::Deserialize, serde::Serialize)
+)]
+#[derive(Clone, Copy, Default, Debug)]
 pub struct Palette {
     map: u8,
     is_sprite: bool,

@@ -4,12 +4,16 @@ use crate::Sprite;
 use std::collections::BTreeMap;
 use std::convert::TryInto;
 
+#[cfg(feature = "serialization")]
 serde_big_array::big_array! { OamDataSize; Oam::SIZE }
 
 /// Contains operations to collect sprites from memory.
-#[derive(serde::Deserialize, serde::Serialize)]
+#[cfg_attr(
+    feature = "serialization",
+    derive(serde::Deserialize, serde::Serialize)
+)]
 pub struct Oam {
-    #[serde(with = "OamDataSize")]
+    #[cfg_attr(feature = "serialization", serde(with = "OamDataSize"))]
     data: [u8; Oam::SIZE as usize],
     lock: Option<Lock>,
 }

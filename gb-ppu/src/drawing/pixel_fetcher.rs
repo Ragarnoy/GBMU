@@ -6,7 +6,11 @@ use crate::TILEMAP_TILE_DIM_COUNT;
 use std::collections::VecDeque;
 use std::ops::Deref;
 
-#[derive(Eq, PartialEq, Clone, Copy, Debug, serde::Deserialize, serde::Serialize)]
+#[cfg_attr(
+    feature = "serialization",
+    derive(serde::Deserialize, serde::Serialize)
+)]
+#[derive(Eq, PartialEq, Clone, Copy, Debug)]
 pub enum FetchMode {
     Background,
     Window,
@@ -19,7 +23,11 @@ impl Default for FetchMode {
     }
 }
 
-#[derive(Clone, serde::Deserialize, serde::Serialize)]
+#[cfg_attr(
+    feature = "serialization",
+    derive(serde::Deserialize, serde::Serialize)
+)]
+#[derive(Clone)]
 pub struct PixelFetcher {
     pixels: VecDeque<Pixel>,
     pixels_sprite: VecDeque<Pixel>,

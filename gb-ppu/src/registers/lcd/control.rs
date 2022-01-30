@@ -9,7 +9,11 @@ const WIN_ENABLE: u8 = 0b10_0000;
 const WIN_TILEMAP_AREA: u8 = 0b100_0000;
 const PPU_ENABLE: u8 = 0b1000_0000;
 
-#[derive(Default, Clone, Copy, Debug, serde::Deserialize, serde::Serialize)]
+#[cfg_attr(
+    feature = "serialization",
+    derive(serde::Deserialize, serde::Serialize)
+)]
+#[derive(Default, Clone, Copy, Debug)]
 pub struct Control {
     pub bits: u8,
 }
