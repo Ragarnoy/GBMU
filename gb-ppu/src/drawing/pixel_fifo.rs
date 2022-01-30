@@ -1,5 +1,3 @@
-pub mod de_ser;
-
 use super::Pixel;
 use std::collections::VecDeque;
 
@@ -63,35 +61,31 @@ impl PixelFIFO {
 #[cfg(test)]
 mod tests {
     use super::{Pixel, PixelFIFO};
-    use crate::registers::Palette;
-    use std::cell::Cell;
+    use crate::registers::MonoPaletteRef;
     use std::collections::VecDeque;
     use std::iter::FromIterator;
-    use std::rc::Rc;
 
     #[test]
     fn mix() {
-        let pal_0 = Rc::new(Cell::new(Palette::new_background()));
         let mut pixels_0 = VecDeque::from_iter([
-            Pixel::new(1, pal_0.clone(), false),
-            Pixel::new(1, pal_0.clone(), false),
-            Pixel::new(1, pal_0.clone(), false),
-            Pixel::new(1, pal_0.clone(), false),
-            Pixel::new(1, pal_0.clone(), false),
-            Pixel::new(1, pal_0.clone(), false),
-            Pixel::new(1, pal_0.clone(), false),
-            Pixel::new(1, pal_0, false),
+            Pixel::new(1, Some(MonoPaletteRef::BgWin), false),
+            Pixel::new(1, Some(MonoPaletteRef::BgWin), false),
+            Pixel::new(1, Some(MonoPaletteRef::BgWin), false),
+            Pixel::new(1, Some(MonoPaletteRef::BgWin), false),
+            Pixel::new(1, Some(MonoPaletteRef::BgWin), false),
+            Pixel::new(1, Some(MonoPaletteRef::BgWin), false),
+            Pixel::new(1, Some(MonoPaletteRef::BgWin), false),
+            Pixel::new(1, Some(MonoPaletteRef::BgWin), false),
         ]);
-        let pal_1 = Rc::new(Cell::new(Palette::new_sprite()));
         let pixels_1 = VecDeque::from_iter([
-            Pixel::new(2, pal_1.clone(), false),
-            Pixel::new(0, pal_1.clone(), false),
-            Pixel::new(2, pal_1.clone(), false),
-            Pixel::new(0, pal_1.clone(), false),
-            Pixel::new(2, pal_1.clone(), false),
-            Pixel::new(0, pal_1.clone(), false),
-            Pixel::new(2, pal_1.clone(), false),
-            Pixel::new(0, pal_1, false),
+            Pixel::new(2, Some(MonoPaletteRef::Sprite0), false),
+            Pixel::new(0, Some(MonoPaletteRef::Sprite0), false),
+            Pixel::new(2, Some(MonoPaletteRef::Sprite0), false),
+            Pixel::new(0, Some(MonoPaletteRef::Sprite0), false),
+            Pixel::new(2, Some(MonoPaletteRef::Sprite0), false),
+            Pixel::new(0, Some(MonoPaletteRef::Sprite0), false),
+            Pixel::new(2, Some(MonoPaletteRef::Sprite0), false),
+            Pixel::new(0, Some(MonoPaletteRef::Sprite0), false),
         ]);
         let mut fifo = PixelFIFO::new();
 
@@ -100,25 +94,30 @@ mod tests {
         assert_eq!(fifo.pixels.len(), 8, "incorrect pixel amount pushed");
         for (i, pixel) in fifo.pixels.iter().enumerate() {
             if i % 2 == 0 {
-                assert!(pixel.palette.get().is_sprite(), "pixel mixing failed");
+                assert!(
+                    pixel.palette.as_ref().unwrap().is_sprite(),
+                    "pixel mixing failed"
+                );
             } else {
-                assert!(!pixel.palette.get().is_sprite(), "pixel mixing failed");
+                assert!(
+                    !pixel.palette.as_ref().unwrap().is_sprite(),
+                    "pixel mixing failed"
+                );
             }
         }
     }
 
     #[test]
     fn append() {
-        let palette = Rc::new(Cell::new(Palette::new_background()));
         let mut pixels = VecDeque::from_iter([
-            Pixel::new(0, palette.clone(), false),
-            Pixel::new(1, palette.clone(), false),
-            Pixel::new(2, palette.clone(), false),
-            Pixel::new(3, palette.clone(), false),
-            Pixel::new(0, palette.clone(), false),
-            Pixel::new(1, palette.clone(), false),
-            Pixel::new(2, palette.clone(), false),
-            Pixel::new(3, palette, false),
+            Pixel::new(0, Some(MonoPaletteRef::BgWin), false),
+            Pixel::new(1, Some(MonoPaletteRef::BgWin), false),
+            Pixel::new(2, Some(MonoPaletteRef::BgWin), false),
+            Pixel::new(3, Some(MonoPaletteRef::BgWin), false),
+            Pixel::new(0, Some(MonoPaletteRef::BgWin), false),
+            Pixel::new(1, Some(MonoPaletteRef::BgWin), false),
+            Pixel::new(2, Some(MonoPaletteRef::BgWin), false),
+            Pixel::new(3, Some(MonoPaletteRef::BgWin), false),
         ]);
         let mut fifo = PixelFIFO::new();
 
@@ -131,26 +130,25 @@ mod tests {
 
     #[test]
     fn pop() {
-        let palette = Rc::new(Cell::new(Palette::new_background()));
         let mut pixels_0 = VecDeque::from_iter([
-            Pixel::new(0, palette.clone(), false),
-            Pixel::new(1, palette.clone(), false),
-            Pixel::new(0, palette.clone(), false),
-            Pixel::new(1, palette.clone(), false),
-            Pixel::new(0, palette.clone(), false),
-            Pixel::new(1, palette.clone(), false),
-            Pixel::new(0, palette.clone(), false),
-            Pixel::new(1, palette.clone(), false),
+            Pixel::new(0, Some(MonoPaletteRef::BgWin), false),
+            Pixel::new(1, Some(MonoPaletteRef::BgWin), false),
+            Pixel::new(0, Some(MonoPaletteRef::BgWin), false),
+            Pixel::new(1, Some(MonoPaletteRef::BgWin), false),
+            Pixel::new(0, Some(MonoPaletteRef::BgWin), false),
+            Pixel::new(1, Some(MonoPaletteRef::BgWin), false),
+            Pixel::new(0, Some(MonoPaletteRef::BgWin), false),
+            Pixel::new(1, Some(MonoPaletteRef::BgWin), false),
         ]);
         let mut pixels_1 = VecDeque::from_iter([
-            Pixel::new(2, palette.clone(), false),
-            Pixel::new(3, palette.clone(), false),
-            Pixel::new(2, palette.clone(), false),
-            Pixel::new(3, palette.clone(), false),
-            Pixel::new(2, palette.clone(), false),
-            Pixel::new(3, palette.clone(), false),
-            Pixel::new(2, palette.clone(), false),
-            Pixel::new(3, palette, false),
+            Pixel::new(2, Some(MonoPaletteRef::BgWin), false),
+            Pixel::new(3, Some(MonoPaletteRef::BgWin), false),
+            Pixel::new(2, Some(MonoPaletteRef::BgWin), false),
+            Pixel::new(3, Some(MonoPaletteRef::BgWin), false),
+            Pixel::new(2, Some(MonoPaletteRef::BgWin), false),
+            Pixel::new(3, Some(MonoPaletteRef::BgWin), false),
+            Pixel::new(2, Some(MonoPaletteRef::BgWin), false),
+            Pixel::new(3, Some(MonoPaletteRef::BgWin), false),
         ]);
         let mut fifo = PixelFIFO::new();
 

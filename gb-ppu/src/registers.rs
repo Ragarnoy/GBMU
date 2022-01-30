@@ -2,7 +2,7 @@ mod lcd;
 mod palette;
 mod ppu_registers;
 
-pub use lcd::{LcdReg, PalettesMono};
+pub use lcd::{LcdReg, MonoPaletteRef, PalettesMono};
 pub use palette::Palette;
 pub use ppu_registers::PPURegisters;
 

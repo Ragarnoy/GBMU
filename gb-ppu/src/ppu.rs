@@ -3,7 +3,6 @@ pub mod de_ser;
 use crate::drawing::{FetchMode, Mode, PixelFIFO, PixelFetcher, State};
 use crate::memory::{Lock, Lockable, Oam, PPUMem, Vram};
 use crate::registers::{LcdReg, PPURegisters};
-use crate::Color;
 use crate::Sprite;
 use crate::{
     SPRITE_LIST_PER_LINE, SPRITE_LIST_RENDER_HEIGHT, SPRITE_LIST_RENDER_WIDTH,
@@ -118,7 +117,6 @@ impl Ppu {
                     image[y * 8 + j][x * 8 + i] = lcd_reg
                         .pal_mono
                         .bg()
-                        .get()
                         .get_color(*pixel)
                         .unwrap_or_default()
                         .into();
@@ -176,7 +174,6 @@ impl Ppu {
                     image[pix_y][pix_x] = lcd_reg
                         .pal_mono
                         .bg()
-                        .get()
                         .get_color(*pixel)
                         .unwrap_or_default()
                         .into();
@@ -437,7 +434,8 @@ impl Ppu {
                             self.pixel_discarded = pixel_offset;
                         }
                         if self.state.pixel_drawn() > 0 || self.pixel_discarded >= pixel_offset {
-                            self.next_pixels[y as usize][x as usize] = Color::from(pixel).into();
+                            self.next_pixels[y as usize][x as usize] =
+                                pixel.into_color(&lcd_reg).into();
                             self.state.draw_pixel();
                             x += 1;
                         } else {

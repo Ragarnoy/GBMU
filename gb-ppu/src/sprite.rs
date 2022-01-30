@@ -1,10 +1,8 @@
 use crate::error::{PPUError, PPUResult};
 use crate::memory::Vram;
-use crate::registers::Palette;
+use crate::registers::{MonoPaletteRef, Palette};
 use crate::Color;
-use std::cell::Cell;
 use std::ops::Deref;
-use std::rc::Rc;
 
 // CGB bits, unused yet
 const _PALETTE_CGB_NB: u8 = 0b111;
@@ -60,14 +58,19 @@ impl<'r> Sprite {
         self.tile_index
     }
 
-    pub fn get_palette(
-        &self,
-        palettes: (&'r Rc<Cell<Palette>>, &'r Rc<Cell<Palette>>),
-    ) -> &'r Rc<Cell<Palette>> {
+    pub fn get_palette(&self, palettes: (&'r Palette, &'r Palette)) -> &'r Palette {
         if self.attributes & PALETTE_NB == 0 {
             palettes.0
         } else {
             palettes.1
+        }
+    }
+
+    pub fn get_palette_ref(&self) -> MonoPaletteRef {
+        if self.attributes & PALETTE_NB == 0 {
+            MonoPaletteRef::Sprite0
+        } else {
+            MonoPaletteRef::Sprite1
         }
     }
 
@@ -86,13 +89,13 @@ impl<'r> Sprite {
         line: usize,
         vram: &dyn Deref<Target = Vram>,
         size_16: bool,
-        palettes: (&Rc<Cell<Palette>>, &Rc<Cell<Palette>>),
+        palettes: (&Palette, &Palette),
     ) -> PPUResult<[(u8, Color); 8]> {
         let palette = self.get_palette(palettes);
         if !size_16 {
-            self.get_pixels_row_8x8(line, vram, &palette.get())
+            self.get_pixels_row_8x8(line, vram, palette)
         } else {
-            self.get_pixels_row_8x16(line, vram, &palette.get())
+            self.get_pixels_row_8x16(line, vram, palette)
         }
     }
 
