@@ -34,10 +34,9 @@ pub fn handle_interrupts(ctl: &mut MicrocodeController, state: &mut State) -> Mi
 
     ctl.push_cycles(&[
         // Store pc into stack
-        &[read::pc, dec::sp, read::sp],
-        &[write::ind],
-        &[dec::sp, read::sp],
-        &[write::ind],
+        &[read::pc],
+        &[dec::sp, read::sp, write::ind],
+        &[dec::sp, read::sp, write::ind],
         // Jump to interrupt source address
         &[jump],
     ]);
