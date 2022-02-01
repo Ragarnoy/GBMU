@@ -216,7 +216,7 @@ async fn check_opcode_duration(
     if !prefixed.is_empty() {
         world.cpu.tick(&mut world.bus);
         let current_opcode = world.cpu.controller.opcode.as_ref().unwrap().to_string();
-        assert_eq!("PrefixCb", current_opcode,);
+        assert_eq!("PrefixCb", current_opcode);
         count -= 1;
     }
     for i in 0..count {
