@@ -145,7 +145,7 @@ pub enum OpcodeCB {
     Bit0H = 0x44,
     /// `BIT 0, L`: test if bit 0 is set on `L`. 2m
     Bit0L = 0x45,
-    /// `BIT 0, (HL)`: test if bit 0 is set on `(HL)`. 4m
+    /// `BIT 0, (HL)`: test if bit 0 is set on `(HL)`. 3m
     Bit0HL = 0x46,
     /// `BIT 0, A`: test if bit 0 is set on `A`. 2m
     Bit0A = 0x47,
@@ -161,7 +161,7 @@ pub enum OpcodeCB {
     Bit1H = 0x4c,
     /// `BIT 1, L`: test if bit 1 is set on `L`. 2m
     Bit1L = 0x4d,
-    /// `BIT 1, (HL)`: test if bit 1 is set on `(HL)`. 4m
+    /// `BIT 1, (HL)`: test if bit 1 is set on `(HL)`. 3m
     Bit1HL = 0x4e,
     /// `BIT 1, A`: test if bit 1 is set on `A`. 2m
     Bit1A = 0x4f,
@@ -177,7 +177,7 @@ pub enum OpcodeCB {
     Bit2H = 0x54,
     /// `BIT 2, L`: test if bit 2 is set on `L`. 2m
     Bit2L = 0x55,
-    /// `BIT 2, (HL)`: test if bit 2 is set on `(HL)`. 4m
+    /// `BIT 2, (HL)`: test if bit 2 is set on `(HL)`. 3m
     Bit2HL = 0x56,
     /// `BIT 2, A`: test if bit 2 is set on `A`. 2m
     Bit2A = 0x57,
@@ -193,7 +193,7 @@ pub enum OpcodeCB {
     Bit3H = 0x5c,
     /// `BIT 3, L`: test if bit 3 is set on `L`. 2m
     Bit3L = 0x5d,
-    /// `BIT 3, (HL)`: test if bit 3 is set on `(HL)`. 4m
+    /// `BIT 3, (HL)`: test if bit 3 is set on `(HL)`. 3m
     Bit3HL = 0x5e,
     /// `BIT 3, A`: test if bit 3 is set on `A`. 2m
     Bit3A = 0x5f,
@@ -209,7 +209,7 @@ pub enum OpcodeCB {
     Bit4H = 0x64,
     /// `BIT 4, L`: test if bit 4 is set on `L`. 2m
     Bit4L = 0x65,
-    /// `BIT 4, (HL)`: test if bit 4 is set on `(HL)`. 4m
+    /// `BIT 4, (HL)`: test if bit 4 is set on `(HL)`. 3m
     Bit4HL = 0x66,
     /// `BIT 4, A`: test if bit 4 is set on `A`. 2m
     Bit4A = 0x67,
@@ -225,7 +225,7 @@ pub enum OpcodeCB {
     Bit5H = 0x6c,
     /// `BIT 5, L`: test if bit 5 is set on `L`. 2m
     Bit5L = 0x6d,
-    /// `BIT 5, (HL)`: test if bit 5 is set on `(HL)`. 4m
+    /// `BIT 5, (HL)`: test if bit 5 is set on `(HL)`. 3m
     Bit5HL = 0x6e,
     /// `BIT 5, A`: test if bit 5 is set on `A`. 2m
     Bit5A = 0x6f,
@@ -241,7 +241,7 @@ pub enum OpcodeCB {
     Bit6H = 0x74,
     /// `BIT 6, L`: test if bit 6 is set on `L`. 2m
     Bit6L = 0x75,
-    /// `BIT 6, (HL)`: test if bit 6 is set on `(HL)`. 4m
+    /// `BIT 6, (HL)`: test if bit 6 is set on `(HL)`. 3m
     Bit6HL = 0x76,
     /// `BIT 6, A`: test if bit 6 is set on `A`. 2m
     Bit6A = 0x77,
@@ -257,7 +257,7 @@ pub enum OpcodeCB {
     Bit7H = 0x7c,
     /// `BIT 7, L`: test if bit 7 is set on `L`. 2m
     Bit7L = 0x7d,
-    /// `BIT 7, (HL)`: test if bit 7 is set on `(HL)`. 4m
+    /// `BIT 7, (HL)`: test if bit 7 is set on `(HL)`. 3m
     Bit7HL = 0x7e,
     /// `BIT 7, A`: test if bit 7 is set on `A`. 2m
     Bit7A = 0x7f,
