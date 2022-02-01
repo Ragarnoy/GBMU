@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use cucumber::{given, then, when, World, WorldInit};
+use cucumber::{gherkin::Step, given, then, when, World, WorldInit};
 use futures::executor::block_on;
 use gb_bus::Bus;
 use gb_clock::Ticker;
@@ -59,6 +59,59 @@ async fn setup_register(world: &mut CpuWorld, reg: Reg16, value: String) {
 async fn setup_u8_register(world: &mut CpuWorld, reg: Reg8, value: String) {
     let value = u8::from_str_radix(&value, 16).expect("valid hexa value");
     reg.write_corresponding_regs(&mut world.cpu.registers, value);
+}
+
+#[given(regex = r"the flag ([\w ]+) is (re)?set")]
+async fn set_flag(world: &mut CpuWorld, flag: String, toggle: String) {
+    use gb_cpu::interfaces::WriteFlagReg;
+
+    let toggle = toggle.is_empty();
+    match flag.as_str() {
+        "zero" => world.cpu.registers.set_zero(toggle),
+        "half carry" => world.cpu.registers.set_half_carry(toggle),
+        "carry" => world.cpu.registers.set_carry(toggle),
+        "subtraction" => world.cpu.registers.set_subtraction(toggle),
+        _ => panic!("invalid flag name {}", flag),
+    }
+}
+
+#[given(regex = r"the flag ([\w ]+) is toggle")]
+async fn toggle_flag(world: &mut CpuWorld, flag: String) {
+    use gb_cpu::interfaces::{ReadFlagReg, WriteFlagReg};
+
+    match flag.as_str() {
+        "zero" => world.cpu.registers.set_zero(!world.cpu.registers.zero()),
+        "half carry" => world
+            .cpu
+            .registers
+            .set_half_carry(!world.cpu.registers.half_carry()),
+        "carry" => world.cpu.registers.set_carry(!world.cpu.registers.carry()),
+        "subtraction" => world
+            .cpu
+            .registers
+            .set_subtraction(!world.cpu.registers.subtraction()),
+        _ => panic!("invalid flag name {}", flag),
+    }
+}
+
+#[given("the cpu is reset")]
+async fn reset_cpu(world: &mut CpuWorld) {
+    world.cpu = Cpu::default();
+}
+
+#[given("the following bytes")]
+async fn write_bytes(world: &mut CpuWorld, step: &Step) {
+    let table = step.table.as_ref().expect("missing data table");
+    let mut rows = table.rows.iter();
+    rows.next();
+    for row in rows {
+        let address = u16::from_str_radix(&row[0], 16).expect("valid hexa value");
+        let value = u8::from_str_radix(&row[1], 16).expect("valid hexa value");
+        world
+            .bus
+            .write(address, value, None)
+            .expect("could not write value at address in bus")
+    }
 }
 
 #[when(regex = r"the cpu has ticked (\d+) times?")]
@@ -151,6 +204,33 @@ async fn check_flag(world: &mut CpuWorld, flag: String, toggle: String) {
         _ => panic!("invalid flag name {}", flag),
     };
     assert_eq!(toggle, flag);
+}
+
+#[then(regex = r"the cpu has ticked (\d+) times for the current opcode (\w+)")]
+async fn check_opcode_duration(world: &mut CpuWorld, count: usize, opcode: String) {
+    assert_eq!(world.cpu.controller.opcode, None);
+    for i in 0..count {
+        world.cpu.tick(&mut world.bus);
+        let current_opcode = world.cpu.controller.opcode.as_ref().unwrap().to_string();
+        assert_eq!(
+            opcode, current_opcode,
+            "at tick {}, current opcode = {}, expected = {}",
+            i, current_opcode, opcode
+        );
+        if i == count - 1 {
+            assert!(
+                world.cpu.controller.is_instruction_finished,
+                "opcode should be finished, {} cycles remaining",
+                world.cpu.controller.cycles.len()
+            );
+        } else {
+            assert!(
+                !world.cpu.controller.is_instruction_finished,
+                "at tick {} opcode finished",
+                i
+            );
+        }
+    }
 }
 
 fn main() {
