@@ -107,9 +107,10 @@ fn config_actions_for_opcode_cb(opcode: OpcodeCB, ctl: &mut MicrocodeController)
         OpcodeCB::Set0E => ctl.push_to_current_cycle(&[read::e, bitwise::set_0, write::e]),
         OpcodeCB::Set0H => ctl.push_to_current_cycle(&[read::h, bitwise::set_0, write::h]),
         OpcodeCB::Set0L => ctl.push_to_current_cycle(&[read::l, bitwise::set_0, write::l]),
-        OpcodeCB::Set0HL => {
-            ctl.push_to_current_cycle(&[read::hl, read::ind, bitwise::set_0, read::hl, write::ind])
-        }
+        OpcodeCB::Set0HL => ctl.push_cycles(&[
+            &[read::hl, read::ind, bitwise::set_0],
+            &[read::hl, write::ind],
+        ]),
         OpcodeCB::Set0A => ctl.push_to_current_cycle(&[read::a, bitwise::set_0, write::a]),
 
         OpcodeCB::Set1B => ctl.push_to_current_cycle(&[read::b, bitwise::set_1, write::b]),
@@ -118,9 +119,10 @@ fn config_actions_for_opcode_cb(opcode: OpcodeCB, ctl: &mut MicrocodeController)
         OpcodeCB::Set1E => ctl.push_to_current_cycle(&[read::e, bitwise::set_1, write::e]),
         OpcodeCB::Set1H => ctl.push_to_current_cycle(&[read::h, bitwise::set_1, write::h]),
         OpcodeCB::Set1L => ctl.push_to_current_cycle(&[read::l, bitwise::set_1, write::l]),
-        OpcodeCB::Set1HL => {
-            ctl.push_to_current_cycle(&[read::hl, read::ind, bitwise::set_1, read::hl, write::ind])
-        }
+        OpcodeCB::Set1HL => ctl.push_cycles(&[
+            &[read::hl, read::ind, bitwise::set_1],
+            &[read::hl, write::ind],
+        ]),
         OpcodeCB::Set1A => ctl.push_to_current_cycle(&[read::a, bitwise::set_1, write::a]),
 
         OpcodeCB::Set2B => ctl.push_to_current_cycle(&[read::b, bitwise::set_2, write::b]),
@@ -129,9 +131,10 @@ fn config_actions_for_opcode_cb(opcode: OpcodeCB, ctl: &mut MicrocodeController)
         OpcodeCB::Set2E => ctl.push_to_current_cycle(&[read::e, bitwise::set_2, write::e]),
         OpcodeCB::Set2H => ctl.push_to_current_cycle(&[read::h, bitwise::set_2, write::h]),
         OpcodeCB::Set2L => ctl.push_to_current_cycle(&[read::l, bitwise::set_2, write::l]),
-        OpcodeCB::Set2HL => {
-            ctl.push_to_current_cycle(&[read::hl, read::ind, bitwise::set_2, read::hl, write::ind])
-        }
+        OpcodeCB::Set2HL => ctl.push_cycles(&[
+            &[read::hl, read::ind, bitwise::set_2],
+            &[read::hl, write::ind],
+        ]),
         OpcodeCB::Set2A => ctl.push_to_current_cycle(&[read::a, bitwise::set_2, write::a]),
 
         OpcodeCB::Set3B => ctl.push_to_current_cycle(&[read::b, bitwise::set_3, write::b]),
@@ -140,9 +143,10 @@ fn config_actions_for_opcode_cb(opcode: OpcodeCB, ctl: &mut MicrocodeController)
         OpcodeCB::Set3E => ctl.push_to_current_cycle(&[read::e, bitwise::set_3, write::e]),
         OpcodeCB::Set3H => ctl.push_to_current_cycle(&[read::h, bitwise::set_3, write::h]),
         OpcodeCB::Set3L => ctl.push_to_current_cycle(&[read::l, bitwise::set_3, write::l]),
-        OpcodeCB::Set3HL => {
-            ctl.push_to_current_cycle(&[read::hl, read::ind, bitwise::set_3, read::hl, write::ind])
-        }
+        OpcodeCB::Set3HL => ctl.push_cycles(&[
+            &[read::hl, read::ind, bitwise::set_3],
+            &[read::hl, write::ind],
+        ]),
         OpcodeCB::Set3A => ctl.push_to_current_cycle(&[read::a, bitwise::set_3, write::a]),
 
         OpcodeCB::Set4B => ctl.push_to_current_cycle(&[read::b, bitwise::set_4, write::b]),
@@ -151,9 +155,10 @@ fn config_actions_for_opcode_cb(opcode: OpcodeCB, ctl: &mut MicrocodeController)
         OpcodeCB::Set4E => ctl.push_to_current_cycle(&[read::e, bitwise::set_4, write::e]),
         OpcodeCB::Set4H => ctl.push_to_current_cycle(&[read::h, bitwise::set_4, write::h]),
         OpcodeCB::Set4L => ctl.push_to_current_cycle(&[read::l, bitwise::set_4, write::l]),
-        OpcodeCB::Set4HL => {
-            ctl.push_to_current_cycle(&[read::hl, read::ind, bitwise::set_4, read::hl, write::ind])
-        }
+        OpcodeCB::Set4HL => ctl.push_cycles(&[
+            &[read::hl, read::ind, bitwise::set_4],
+            &[read::hl, write::ind],
+        ]),
         OpcodeCB::Set4A => ctl.push_to_current_cycle(&[read::a, bitwise::set_4, write::a]),
 
         OpcodeCB::Set5B => ctl.push_to_current_cycle(&[read::b, bitwise::set_5, write::b]),
@@ -162,9 +167,10 @@ fn config_actions_for_opcode_cb(opcode: OpcodeCB, ctl: &mut MicrocodeController)
         OpcodeCB::Set5E => ctl.push_to_current_cycle(&[read::e, bitwise::set_5, write::e]),
         OpcodeCB::Set5H => ctl.push_to_current_cycle(&[read::h, bitwise::set_5, write::h]),
         OpcodeCB::Set5L => ctl.push_to_current_cycle(&[read::l, bitwise::set_5, write::l]),
-        OpcodeCB::Set5HL => {
-            ctl.push_to_current_cycle(&[read::hl, read::ind, bitwise::set_5, read::hl, write::ind])
-        }
+        OpcodeCB::Set5HL => ctl.push_cycles(&[
+            &[read::hl, read::ind, bitwise::set_5],
+            &[read::hl, write::ind],
+        ]),
         OpcodeCB::Set5A => ctl.push_to_current_cycle(&[read::a, bitwise::set_5, write::a]),
 
         OpcodeCB::Set6B => ctl.push_to_current_cycle(&[read::b, bitwise::set_6, write::b]),
@@ -173,9 +179,10 @@ fn config_actions_for_opcode_cb(opcode: OpcodeCB, ctl: &mut MicrocodeController)
         OpcodeCB::Set6E => ctl.push_to_current_cycle(&[read::e, bitwise::set_6, write::e]),
         OpcodeCB::Set6H => ctl.push_to_current_cycle(&[read::h, bitwise::set_6, write::h]),
         OpcodeCB::Set6L => ctl.push_to_current_cycle(&[read::l, bitwise::set_6, write::l]),
-        OpcodeCB::Set6HL => {
-            ctl.push_to_current_cycle(&[read::hl, read::ind, bitwise::set_6, read::hl, write::ind])
-        }
+        OpcodeCB::Set6HL => ctl.push_cycles(&[
+            &[read::hl, read::ind, bitwise::set_6],
+            &[read::hl, write::ind],
+        ]),
         OpcodeCB::Set6A => ctl.push_to_current_cycle(&[read::a, bitwise::set_6, write::a]),
 
         OpcodeCB::Set7B => ctl.push_to_current_cycle(&[read::b, bitwise::set_7, write::b]),
@@ -184,9 +191,10 @@ fn config_actions_for_opcode_cb(opcode: OpcodeCB, ctl: &mut MicrocodeController)
         OpcodeCB::Set7E => ctl.push_to_current_cycle(&[read::e, bitwise::set_7, write::e]),
         OpcodeCB::Set7H => ctl.push_to_current_cycle(&[read::h, bitwise::set_7, write::h]),
         OpcodeCB::Set7L => ctl.push_to_current_cycle(&[read::l, bitwise::set_7, write::l]),
-        OpcodeCB::Set7HL => {
-            ctl.push_to_current_cycle(&[read::hl, read::ind, bitwise::set_7, read::hl, write::ind])
-        }
+        OpcodeCB::Set7HL => ctl.push_cycles(&[
+            &[read::hl, read::ind, bitwise::set_7],
+            &[read::hl, write::ind],
+        ]),
         OpcodeCB::Set7A => ctl.push_to_current_cycle(&[read::a, bitwise::set_7, write::a]),
 
         OpcodeCB::Res0B => ctl.push_to_current_cycle(&[read::b, bitwise::res_0, write::b]),
@@ -195,9 +203,10 @@ fn config_actions_for_opcode_cb(opcode: OpcodeCB, ctl: &mut MicrocodeController)
         OpcodeCB::Res0E => ctl.push_to_current_cycle(&[read::e, bitwise::res_0, write::e]),
         OpcodeCB::Res0H => ctl.push_to_current_cycle(&[read::h, bitwise::res_0, write::h]),
         OpcodeCB::Res0L => ctl.push_to_current_cycle(&[read::l, bitwise::res_0, write::l]),
-        OpcodeCB::Res0HL => {
-            ctl.push_to_current_cycle(&[read::hl, read::ind, bitwise::res_0, read::hl, write::ind])
-        }
+        OpcodeCB::Res0HL => ctl.push_cycles(&[
+            &[read::hl, read::ind, bitwise::res_0],
+            &[read::hl, write::ind],
+        ]),
         OpcodeCB::Res0A => ctl.push_to_current_cycle(&[read::a, bitwise::res_0, write::a]),
 
         OpcodeCB::Res1B => ctl.push_to_current_cycle(&[read::b, bitwise::res_1, write::b]),
@@ -206,9 +215,10 @@ fn config_actions_for_opcode_cb(opcode: OpcodeCB, ctl: &mut MicrocodeController)
         OpcodeCB::Res1E => ctl.push_to_current_cycle(&[read::e, bitwise::res_1, write::e]),
         OpcodeCB::Res1H => ctl.push_to_current_cycle(&[read::h, bitwise::res_1, write::h]),
         OpcodeCB::Res1L => ctl.push_to_current_cycle(&[read::l, bitwise::res_1, write::l]),
-        OpcodeCB::Res1HL => {
-            ctl.push_to_current_cycle(&[read::hl, read::ind, bitwise::res_1, read::hl, write::ind])
-        }
+        OpcodeCB::Res1HL => ctl.push_cycles(&[
+            &[read::hl, read::ind, bitwise::res_1],
+            &[read::hl, write::ind],
+        ]),
         OpcodeCB::Res1A => ctl.push_to_current_cycle(&[read::a, bitwise::res_1, write::a]),
 
         OpcodeCB::Res2B => ctl.push_to_current_cycle(&[read::b, bitwise::res_2, write::b]),
@@ -217,9 +227,10 @@ fn config_actions_for_opcode_cb(opcode: OpcodeCB, ctl: &mut MicrocodeController)
         OpcodeCB::Res2E => ctl.push_to_current_cycle(&[read::e, bitwise::res_2, write::e]),
         OpcodeCB::Res2H => ctl.push_to_current_cycle(&[read::h, bitwise::res_2, write::h]),
         OpcodeCB::Res2L => ctl.push_to_current_cycle(&[read::l, bitwise::res_2, write::l]),
-        OpcodeCB::Res2HL => {
-            ctl.push_to_current_cycle(&[read::hl, read::ind, bitwise::res_2, read::hl, write::ind])
-        }
+        OpcodeCB::Res2HL => ctl.push_cycles(&[
+            &[read::hl, read::ind, bitwise::res_2],
+            &[read::hl, write::ind],
+        ]),
         OpcodeCB::Res2A => ctl.push_to_current_cycle(&[read::a, bitwise::res_2, write::a]),
 
         OpcodeCB::Res3B => ctl.push_to_current_cycle(&[read::b, bitwise::res_3, write::b]),
@@ -228,9 +239,10 @@ fn config_actions_for_opcode_cb(opcode: OpcodeCB, ctl: &mut MicrocodeController)
         OpcodeCB::Res3E => ctl.push_to_current_cycle(&[read::e, bitwise::res_3, write::e]),
         OpcodeCB::Res3H => ctl.push_to_current_cycle(&[read::h, bitwise::res_3, write::h]),
         OpcodeCB::Res3L => ctl.push_to_current_cycle(&[read::l, bitwise::res_3, write::l]),
-        OpcodeCB::Res3HL => {
-            ctl.push_to_current_cycle(&[read::hl, read::ind, bitwise::res_3, read::hl, write::ind])
-        }
+        OpcodeCB::Res3HL => ctl.push_cycles(&[
+            &[read::hl, read::ind, bitwise::res_3],
+            &[read::hl, write::ind],
+        ]),
         OpcodeCB::Res3A => ctl.push_to_current_cycle(&[read::a, bitwise::res_3, write::a]),
 
         OpcodeCB::Res4B => ctl.push_to_current_cycle(&[read::b, bitwise::res_4, write::b]),
@@ -239,9 +251,10 @@ fn config_actions_for_opcode_cb(opcode: OpcodeCB, ctl: &mut MicrocodeController)
         OpcodeCB::Res4E => ctl.push_to_current_cycle(&[read::e, bitwise::res_4, write::e]),
         OpcodeCB::Res4H => ctl.push_to_current_cycle(&[read::h, bitwise::res_4, write::h]),
         OpcodeCB::Res4L => ctl.push_to_current_cycle(&[read::l, bitwise::res_4, write::l]),
-        OpcodeCB::Res4HL => {
-            ctl.push_to_current_cycle(&[read::hl, read::ind, bitwise::res_4, read::hl, write::ind])
-        }
+        OpcodeCB::Res4HL => ctl.push_cycles(&[
+            &[read::hl, read::ind, bitwise::res_4],
+            &[read::hl, write::ind],
+        ]),
         OpcodeCB::Res4A => ctl.push_to_current_cycle(&[read::a, bitwise::res_4, write::a]),
 
         OpcodeCB::Res5B => ctl.push_to_current_cycle(&[read::b, bitwise::res_5, write::b]),
@@ -250,9 +263,10 @@ fn config_actions_for_opcode_cb(opcode: OpcodeCB, ctl: &mut MicrocodeController)
         OpcodeCB::Res5E => ctl.push_to_current_cycle(&[read::e, bitwise::res_5, write::e]),
         OpcodeCB::Res5H => ctl.push_to_current_cycle(&[read::h, bitwise::res_5, write::h]),
         OpcodeCB::Res5L => ctl.push_to_current_cycle(&[read::l, bitwise::res_5, write::l]),
-        OpcodeCB::Res5HL => {
-            ctl.push_to_current_cycle(&[read::hl, read::ind, bitwise::res_5, read::hl, write::ind])
-        }
+        OpcodeCB::Res5HL => ctl.push_cycles(&[
+            &[read::hl, read::ind, bitwise::res_5],
+            &[read::hl, write::ind],
+        ]),
         OpcodeCB::Res5A => ctl.push_to_current_cycle(&[read::a, bitwise::res_5, write::a]),
 
         OpcodeCB::Res6B => ctl.push_to_current_cycle(&[read::b, bitwise::res_6, write::b]),
@@ -261,9 +275,10 @@ fn config_actions_for_opcode_cb(opcode: OpcodeCB, ctl: &mut MicrocodeController)
         OpcodeCB::Res6E => ctl.push_to_current_cycle(&[read::e, bitwise::res_6, write::e]),
         OpcodeCB::Res6H => ctl.push_to_current_cycle(&[read::h, bitwise::res_6, write::h]),
         OpcodeCB::Res6L => ctl.push_to_current_cycle(&[read::l, bitwise::res_6, write::l]),
-        OpcodeCB::Res6HL => {
-            ctl.push_to_current_cycle(&[read::hl, read::ind, bitwise::res_6, read::hl, write::ind])
-        }
+        OpcodeCB::Res6HL => ctl.push_cycles(&[
+            &[read::hl, read::ind, bitwise::res_6],
+            &[read::hl, write::ind],
+        ]),
         OpcodeCB::Res6A => ctl.push_to_current_cycle(&[read::a, bitwise::res_6, write::a]),
 
         OpcodeCB::Res7B => ctl.push_to_current_cycle(&[read::b, bitwise::res_7, write::b]),
@@ -272,9 +287,10 @@ fn config_actions_for_opcode_cb(opcode: OpcodeCB, ctl: &mut MicrocodeController)
         OpcodeCB::Res7E => ctl.push_to_current_cycle(&[read::e, bitwise::res_7, write::e]),
         OpcodeCB::Res7H => ctl.push_to_current_cycle(&[read::h, bitwise::res_7, write::h]),
         OpcodeCB::Res7L => ctl.push_to_current_cycle(&[read::l, bitwise::res_7, write::l]),
-        OpcodeCB::Res7HL => {
-            ctl.push_to_current_cycle(&[read::hl, read::ind, bitwise::res_7, read::hl, write::ind])
-        }
+        OpcodeCB::Res7HL => ctl.push_cycles(&[
+            &[read::hl, read::ind, bitwise::res_7],
+            &[read::hl, write::ind],
+        ]),
         OpcodeCB::Res7A => ctl.push_to_current_cycle(&[read::a, bitwise::res_7, write::a]),
 
         OpcodeCB::RlB => ctl.push_to_current_cycle(&[read::b, bitwise::rl, write::b]),
