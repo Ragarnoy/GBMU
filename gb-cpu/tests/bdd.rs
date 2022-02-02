@@ -206,9 +206,19 @@ async fn check_flag(world: &mut CpuWorld, flag: String, toggle: String) {
     assert_eq!(toggle, flag);
 }
 
-#[then(regex = r"the cpu has ticked (\d+) times for the current opcode (\w+)")]
-async fn check_opcode_duration(world: &mut CpuWorld, count: usize, opcode: String) {
-    assert_eq!(world.cpu.controller.opcode, None);
+#[then(regex = r"the cpu has ticked (\d+) times for the current (prefixed )?opcode (\w+)")]
+async fn check_opcode_duration(
+    world: &mut CpuWorld,
+    mut count: usize,
+    prefixed: String,
+    opcode: String,
+) {
+    if !prefixed.is_empty() {
+        world.cpu.tick(&mut world.bus);
+        let current_opcode = world.cpu.controller.opcode.as_ref().unwrap().to_string();
+        assert_eq!("PrefixCb", current_opcode);
+        count -= 1;
+    }
     for i in 0..count {
         world.cpu.tick(&mut world.bus);
         let current_opcode = world.cpu.controller.opcode.as_ref().unwrap().to_string();
