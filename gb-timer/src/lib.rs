@@ -13,6 +13,7 @@ pub struct Timer {
     pub tima: u8,
     tma: u8,
     tac: u8,
+    last_and_result: bool,
 }
 
 impl Timer {
@@ -44,18 +45,19 @@ impl Ticker for Timer {
     }
 
     fn tick(&mut self, addr_bus: &mut dyn Bus<u8>) {
-        let old_bit = self.edge_detector_timer();
         self.system_clock = self.system_clock.wrapping_add(Self::INC_PER_TICK);
-        let new_bit = self.edge_detector_timer();
+        let edge_bit = self.edge_detector_timer();
+        let timer_enable = self.tac & Self::TAC_ENABLED != 0;
+        let and_result = edge_bit && timer_enable;
 
         #[cfg(feature = "trace")]
         log::trace!(
-            "timer={:x?}, old_bit={}, new_bit={}",
+            "timer={:x?}, last_and_result={}, and_result={}",
             self,
-            old_bit,
-            new_bit
+            self.last_and_result,
+            and_result
         );
-        if (self.tac & Self::TAC_ENABLED) != 0 && old_bit && !new_bit {
+        if self.last_and_result && !and_result {
             let (new_tima, overflowing) = self.tima.overflowing_add(1);
             if overflowing {
                 let int_mask = addr_bus.read(0xff0f, None).unwrap_or_else(|e| {
@@ -70,6 +72,7 @@ impl Ticker for Timer {
                 self.tima = new_tima
             }
         }
+        self.last_and_result = and_result;
     }
 }
 
