@@ -1,3 +1,4 @@
+use gb_bus::io_reg_constant::IF;
 use gb_bus::{Address, Bus, Error, FileOperation, IORegArea};
 use gb_clock::Ticker;
 #[cfg(test)]
@@ -14,6 +15,8 @@ pub struct Timer {
     tma: u8,
     tac: u8,
     last_and_result: bool,
+    tima_overflow: bool,
+    reload_counter: u8,
 }
 
 impl Timer {
@@ -38,20 +41,30 @@ impl Timer {
         self.system_clock & mask != 0
     }
 
-    fn increment_tima(&mut self, addr_bus: &mut dyn Bus<u8>) {
+    fn increment_tima(&mut self) {
         let (new_tima, overflowing) = self.tima.overflowing_add(1);
-        if overflowing {
-            let int_mask = addr_bus.read(0xff0f, None).unwrap_or_else(|e| {
-                log::warn!("cannot read IF register: {:?}", e);
-                0
-            });
-            if let Err(err) = addr_bus.write(0xff0f, int_mask | Timer::TIMER_INT_MASK, None) {
-                log::warn!("failed to update interrupt bitfield: {:?}", err);
-            }
-            self.tima = self.tma
-        } else {
-            self.tima = new_tima
+        self.tima = new_tima;
+        self.tima_overflow = overflowing;
+        self.reload_counter = 0;
+    }
+
+    fn reload_tima_delayer(&mut self, addr_bus: &mut dyn Bus<u8>) {
+        self.reload_counter += 1;
+        if self.reload_counter >= 4 {
+            self.reload_tima(addr_bus)
         }
+    }
+
+    fn reload_tima(&mut self, addr_bus: &mut dyn Bus<u8>) {
+        let int_flag = addr_bus.read(IF, None).unwrap_or_else(|e| {
+            log::error!("cannot read IF register: {}", e);
+            0
+        });
+        if let Err(e) = addr_bus.write(IF, int_flag | Timer::TIMER_INT_MASK, None) {
+            log::error!("failed to update IF: {}", e);
+        }
+        self.tima_overflow = false;
+        self.tima = self.tma;
     }
 }
 
@@ -61,9 +74,13 @@ impl Ticker for Timer {
     }
 
     fn tick(&mut self, addr_bus: &mut dyn Bus<u8>) {
+        let timer_enable = self.tac & Self::TAC_ENABLED != 0;
+        if timer_enable && self.tima_overflow {
+            self.reload_tima_delayer(addr_bus);
+        }
+
         self.system_clock = self.system_clock.wrapping_add(Self::INC_PER_TICK);
         let edge_bit = self.edge_detector_timer();
-        let timer_enable = self.tac & Self::TAC_ENABLED != 0;
         let current_and_result = edge_bit && timer_enable;
 
         #[cfg(feature = "trace")]
@@ -74,7 +91,7 @@ impl Ticker for Timer {
             current_and_result
         );
         if self.last_and_result && !current_and_result {
-            self.increment_tima(addr_bus);
+            self.increment_tima();
         }
         self.last_and_result = current_and_result;
     }
