@@ -19,8 +19,8 @@ impl Timer {
     const TIMER_INT_MASK: u8 = 0b100;
     const TAC_MASK: u8 = 0b111;
     const TAC_ENABLED: u8 = 0b100;
-    const TICK: gb_clock::Tick = gb_clock::Tick::MCycle;
-    const INC_PER_TICK: u16 = 4;
+    const TICK: gb_clock::Tick = gb_clock::Tick::TCycle;
+    const INC_PER_TICK: u16 = 1;
 
     pub fn div(&self) -> u8 {
         self.system_clock.to_le_bytes()[1]
@@ -28,10 +28,11 @@ impl Timer {
 
     fn edge_detector_timer(&self) -> bool {
         let mask: u16 = match self.tac & 0b11 {
-            0b01 => 0xf,
-            0b10 => 0x3f,
-            0b11 => 0xff,
-            _ => 0x3ff,
+            0b00 => 0x200,
+            0b01 => 0x4,
+            0b10 => 0x20,
+            0b11 => 0x80,
+            _ => unreachable!("WTF"),
         };
         self.system_clock & mask != 0
     }
