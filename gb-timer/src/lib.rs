@@ -37,6 +37,22 @@ impl Timer {
         };
         self.system_clock & mask != 0
     }
+
+    fn increment_tima(&mut self, addr_bus: &mut dyn Bus<u8>) {
+        let (new_tima, overflowing) = self.tima.overflowing_add(1);
+        if overflowing {
+            let int_mask = addr_bus.read(0xff0f, None).unwrap_or_else(|e| {
+                log::warn!("cannot read IF register: {:?}", e);
+                0
+            });
+            if let Err(err) = addr_bus.write(0xff0f, int_mask | Timer::TIMER_INT_MASK, None) {
+                log::warn!("failed to update interrupt bitfield: {:?}", err);
+            }
+            self.tima = self.tma
+        } else {
+            self.tima = new_tima
+        }
+    }
 }
 
 impl Ticker for Timer {
@@ -48,31 +64,19 @@ impl Ticker for Timer {
         self.system_clock = self.system_clock.wrapping_add(Self::INC_PER_TICK);
         let edge_bit = self.edge_detector_timer();
         let timer_enable = self.tac & Self::TAC_ENABLED != 0;
-        let and_result = edge_bit && timer_enable;
+        let current_and_result = edge_bit && timer_enable;
 
         #[cfg(feature = "trace")]
         log::trace!(
-            "timer={:x?}, last_and_result={}, and_result={}",
+            "timer={:x?}, last_and_result={}, current_and_result={}",
             self,
             self.last_and_result,
-            and_result
+            current_and_result
         );
-        if self.last_and_result && !and_result {
-            let (new_tima, overflowing) = self.tima.overflowing_add(1);
-            if overflowing {
-                let int_mask = addr_bus.read(0xff0f, None).unwrap_or_else(|e| {
-                    log::warn!("cannot read IF register: {:?}", e);
-                    0
-                });
-                if let Err(err) = addr_bus.write(0xff0f, int_mask | Timer::TIMER_INT_MASK, None) {
-                    log::warn!("failed to update interrupt bitfield: {:?}", err);
-                }
-                self.tima = self.tma
-            } else {
-                self.tima = new_tima
-            }
+        if self.last_and_result && !current_and_result {
+            self.increment_tima(addr_bus);
         }
-        self.last_and_result = and_result;
+        self.last_and_result = current_and_result;
     }
 }
 
