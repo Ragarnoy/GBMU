@@ -28,10 +28,10 @@ impl Timer {
 
     fn edge_detector_timer(&self) -> bool {
         let mask: u16 = match self.tac & 0b11 {
-            0b00 => 0x200,
-            0b01 => 0x4,
-            0b10 => 0x20,
-            0b11 => 0x80,
+            0b00 => 1 << 9,
+            0b01 => 1 << 3,
+            0b10 => 1 << 5,
+            0b11 => 1 << 7,
             _ => unreachable!("WTF"),
         };
         self.system_clock & mask != 0
