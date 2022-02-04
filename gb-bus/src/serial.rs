@@ -26,7 +26,8 @@ impl Serial {
 
     fn update(&mut self) {
         if self.internal_data_to_transfer() {
-            log::info!("Serial: {0:#02x}", self.payload);
+            let c = self.payload as char;
+            log::debug!("Serial: {0:#02x}({1})", self.payload, c.escape_default());
             self.transfer_finished()
         }
     }
