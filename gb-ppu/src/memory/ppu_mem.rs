@@ -27,7 +27,7 @@ impl PPUMem {
     pub fn overwrite_vram(&self, data: &[u8; Vram::SIZE]) -> PPUResult<()> {
         match self.vram.try_borrow_mut() {
             Ok(mut vram) => {
-                vram.overwrite(data);
+                vram.overwrite(data, None);
                 log::info!("overwritting vram");
                 Ok(())
             }
@@ -100,7 +100,7 @@ where
         match addr.area_type() {
             Area::Vram => match self.vram.try_borrow() {
                 Ok(vram) => vram
-                    .read(addr.get_address())
+                    .read(addr.get_address(), None)
                     .map_err(|_| Error::SegmentationFault(addr.into())),
                 Err(err) => {
                     log::error!("failed vram read: {}", err);
@@ -125,7 +125,7 @@ where
         match addr.area_type() {
             Area::Vram => match self.vram.try_borrow_mut() {
                 Ok(mut vram) => vram
-                    .write(addr.get_address(), v)
+                    .write(addr.get_address(), v, None)
                     .map_err(|_| Error::SegmentationFault(addr.into())),
                 Err(err) => {
                     log::error!("failed vram write: {}", err);

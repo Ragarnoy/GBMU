@@ -107,7 +107,7 @@ impl Ppu {
         let vram = self.vram.borrow();
         let lcd_reg = self.lcd_reg.borrow();
         for k in 0..TILESHEET_TILE_COUNT {
-            let tile = vram.read_8x8_tile(k).unwrap();
+            let tile = vram.read_8x8_tile(k, None).unwrap();
             for (j, row) in tile.iter().enumerate() {
                 for (i, pixel) in row.iter().rev().enumerate() {
                     image[y * 8 + j][x * 8 + i] = lcd_reg
@@ -151,9 +151,10 @@ impl Ppu {
                         lcd_reg.control.win_tilemap_area()
                     },
                     lcd_reg.control.bg_win_tiledata_area(),
+                    None,
                 )
                 .unwrap();
-            let tile = vram.read_8x8_tile(index).unwrap();
+            let tile = vram.read_8x8_tile(index, None).unwrap();
             for (j, row) in tile.iter().enumerate() {
                 for (i, pixel) in row.iter().rev().enumerate() {
                     let pix_y = y * 8 + j;
