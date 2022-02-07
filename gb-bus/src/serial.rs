@@ -1,9 +1,10 @@
 use crate::{Address, Error, FileOperation, IORegArea};
 
-#[derive(Default, Debug, Clone, Copy)]
+#[derive(Clone, Default)]
 pub struct Serial {
     payload: u8,
     control: u8,
+    buffer: String,
 }
 
 impl Serial {
@@ -26,8 +27,23 @@ impl Serial {
 
     fn update(&mut self) {
         if self.internal_data_to_transfer() {
-            log::info!("Serial: {0:#02x}", self.payload);
+            let ch = self.payload as char;
+            log::debug!("Serial: {0:#02x}({1})", self.payload, ch.escape_default());
+            if ch == '\n' {
+                println!("{}", self.buffer);
+                self.buffer.clear();
+            } else {
+                self.buffer.push(ch);
+            }
             self.transfer_finished()
+        }
+    }
+}
+
+impl Drop for Serial {
+    fn drop(&mut self) {
+        if !self.buffer.is_empty() {
+            println!("{}", self.buffer);
         }
     }
 }
