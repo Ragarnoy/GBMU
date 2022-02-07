@@ -52,10 +52,10 @@ pub struct Ppu {
 }
 
 impl Ppu {
-    pub fn new() -> Self {
+    pub fn new(cgb_enabled: bool) -> Self {
         Ppu {
             enabled: false,
-            vram: Rc::new(RefCell::new(Vram::new())),
+            vram: Rc::new(RefCell::new(Vram::new(cgb_enabled))),
             oam: Rc::new(RefCell::new(Oam::new())),
             lcd_reg: Rc::new(RefCell::new(LcdReg::new())),
             pixels: [[[255; 3]; SCREEN_WIDTH]; SCREEN_HEIGHT],
@@ -532,7 +532,7 @@ impl Ppu {
 
 impl Default for Ppu {
     fn default() -> Ppu {
-        Ppu::new()
+        Ppu::new(false)
     }
 }
 

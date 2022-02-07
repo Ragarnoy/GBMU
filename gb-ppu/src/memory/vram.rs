@@ -37,9 +37,9 @@ pub struct Vram {
 impl Vram {
     pub const SIZE: usize = 0x2000;
 
-    pub fn new() -> Self {
+    pub fn new(cgb_enabled: bool) -> Self {
         Vram {
-            data: vec![[0x00; Self::SIZE]],
+            data: vec![[0x00; Self::SIZE]; if cgb_enabled { 2 } else { 1 }],
             lock: None,
         }
     }
@@ -191,7 +191,7 @@ impl From<[u8; Vram::SIZE]> for Vram {
 
 impl Default for Vram {
     fn default() -> Vram {
-        Vram::new()
+        Vram::new(false)
     }
 }
 
@@ -215,7 +215,7 @@ mod tests {
 
     #[test]
     fn read_8_pixels() {
-        let mut vram = Vram::new();
+        let mut vram = Vram::default();
         vram.data[0][42] = 0x33;
         vram.data[0][43] = 0x66;
         let pixels = vram.read_8_pixels(42, None).unwrap();
@@ -231,7 +231,7 @@ mod tests {
 
     #[test]
     fn read_pixel_out_of_bound() {
-        let vram = Vram::new();
+        let vram = Vram::default();
         vram.read_8_pixels(0x17FF, None).unwrap_err();
     }
 }

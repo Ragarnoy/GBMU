@@ -84,7 +84,7 @@ impl Game {
         let mbc = mbc_with_save_state(&romname, &header, file)?;
         let mbc = Rc::new(RefCell::new(mbc));
 
-        let ppu = Ppu::new();
+        let ppu = Ppu::default();
         let ppu_mem = Rc::new(RefCell::new(ppu.memory()));
         let ppu_reg = Rc::new(RefCell::new(ppu.registers()));
         let (cpu, cpu_io_reg) = if cfg!(feature = "bios") {
