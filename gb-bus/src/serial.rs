@@ -30,7 +30,7 @@ impl Serial {
             let ch = self.payload as char;
             log::debug!("Serial: {0:#02x}({1})", self.payload, ch.escape_default());
             if ch == '\n' {
-                println!("{}", self.buffer);
+                println!("{}", self.buffer.escape_default());
                 self.buffer.clear();
             } else {
                 self.buffer.push(ch);
