@@ -3,7 +3,11 @@ use gb_clock::Ticker;
 #[cfg(test)]
 mod test_timer;
 
-#[derive(Default, Debug)]
+#[cfg_attr(
+    feature = "serialization",
+    derive(serde::Deserialize, serde::Serialize)
+)]
+#[derive(Default, Debug, Clone, Copy)]
 pub struct Timer {
     system_clock: u16,
     tima: u8,
