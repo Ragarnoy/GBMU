@@ -8,6 +8,7 @@ authors = [
   "Cedric M'Passi <cedricmpassi@gmail.com>",
 ]
 edition = "2021"
+rust-version = "1.58.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -24,7 +25,7 @@ save_state = ["gb-cpu/serialization", "gb-bus/serialization"]
 
 [dependencies]
 sdl2 = { version = "0.35", features = ["bundled", "static-link"] }
-egui = "0.15"
+egui = "0.16"
 native-dialog = { version = "0.6" }
 log = { version = "0.4", features = ["std"] }
 simplelog = "0.10"
@@ -58,6 +59,7 @@ members = [
   "gb-joypad",
   "gb-timer",
   "gb-test",
+  "gb-breakpoint",
 ]
 
 # Currently this patch doesn't work on macos

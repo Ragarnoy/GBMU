@@ -90,7 +90,7 @@ pub fn main() {
         egui::containers::TopBottomPanel::top("Top menu").show(gb_window.egui_ctx(), |ui| {
             egui::menu::bar(ui, |ui| {
                 ui.set_height(render::MENU_BAR_SIZE);
-                egui::menu::menu(ui, "dump", |ui| {
+                ui.menu_button("dump", |ui| {
                     for (title, vram, oam, io_reg) in dumps {
                         if ui.button(title).clicked() {
                             overwrite_memory(&ppu_mem, &ppu_reg, (title, vram, oam, io_reg));
@@ -105,7 +105,7 @@ pub fn main() {
                     view_image = view;
                     list_image = list;
                 };
-                egui::menu::menu(ui, "mode", |ui| {
+                ui.menu_button("mode", |ui| {
                     if ui.button("viewport").clicked() {
                         list_mode = false;
                     }

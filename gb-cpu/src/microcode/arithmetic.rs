@@ -68,30 +68,32 @@ pub fn daa(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
     CONTINUE
 }
 
-fn daa_subtraction(mut a: u8, carry: bool, half_carry: bool) -> (u8, bool) {
-    if carry {
-        a -= 0x60;
-    }
-    if half_carry {
-        a -= 0x6;
-    }
+fn daa_subtraction(a: u8, carry: bool, half_carry: bool) -> (u8, bool) {
+    let coef = if carry { 0x60 } else { 0 } + if half_carry { 0x6 } else { 0 };
+    let (a, _) = a.overflowing_sub(coef);
     (a, carry)
 }
 
-fn daa_addition(mut a: u8, mut carry: bool, half_carry: bool) -> (u8, bool) {
-    if carry || a > 0x99 {
-        a += 0x60;
+fn daa_addition(a: u8, mut carry: bool, half_carry: bool) -> (u8, bool) {
+    let coef = if carry || a > 0x99 {
         carry = true;
-    }
-    if half_carry || (a & 0x0f) > 0x09 {
-        a += 0x6;
-    }
+        0x60
+    } else {
+        0
+    } + if half_carry || (a & 0x0f) > 0x09 {
+        0x6
+    } else {
+        0
+    };
+    let (a, _) = a.overflowing_add(coef);
     (a, carry)
 }
 
 #[test]
 fn test_daa_addition() {
     assert_eq!(daa_addition(0x7D, false, false), (0x83, false));
+    assert_eq!(daa_addition(0x30, false, true), (0x36, false));
+    assert_eq!(daa_addition(0x5D, false, true), (0x63, false));
 }
 
 #[test]

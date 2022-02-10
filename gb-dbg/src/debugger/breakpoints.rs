@@ -1,13 +1,10 @@
 mod breakpoint;
 mod evaluation;
-mod parser;
-#[cfg(test)]
-mod test_parser;
 
 use crate::dbg_interfaces::DebugOperations;
 use crate::debugger::breakpoints::breakpoint::Breakpoint;
 
-use egui::{Color32, Ui, Vec2};
+use egui::{Color32, RichText, Ui, Vec2};
 
 const VALID_CHARS: &[char] = &['&', '|', '!', '=', '<', '>', '*', '%', '^', '(', ')'];
 
@@ -81,17 +78,13 @@ impl BreakpointEditor {
                     ui.end_row();
 
                     for (i, breakpoint) in &mut self.breakpoints.iter_mut().enumerate() {
-                        if ui
-                            .add(egui::Button::new("-").text_color(Color32::RED))
-                            .clicked()
-                        {
+                        if ui.button(RichText::new("-").color(Color32::RED)).clicked() {
                             deletion_list.push(i)
                         }
                         ui.checkbox(&mut breakpoint.enabled, "");
                         if breakpoint.is_triggered(regs) {
-                            ui.add(
-                                egui::Label::new(breakpoint.to_string().clone())
-                                    .text_color(Color32::RED),
+                            ui.label(
+                                RichText::new(breakpoint.to_string().clone()).color(Color32::RED),
                             );
                         } else {
                             ui.add(egui::Label::new(breakpoint.to_string().clone()));
@@ -165,11 +158,7 @@ impl BreakpointEditor {
                 is_valid_address(&self.breakpoint_field),
                 egui::Button::new("+"),
             );
-            ui.add(
-                egui::Label::new("0x")
-                    .text_color(Color32::from_gray(90))
-                    .weak(),
-            );
+            ui.label(RichText::new("0x").color(Color32::from_gray(90)).weak());
             let text_field_response = ui.add(
                 egui::TextEdit::singleline(&mut self.breakpoint_field)
                     .desired_width(85.0)

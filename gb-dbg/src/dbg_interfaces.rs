@@ -1,5 +1,7 @@
 use std::fmt::{self, Debug, Display, Formatter};
 
+use gb_breakpoint::register::Register;
+
 pub struct RegisterMap<T: Display + Debug>(pub T, pub RegisterValue);
 
 #[derive(Clone, Copy)]
@@ -76,6 +78,21 @@ impl Display for CpuRegs {
             CpuRegs::PC => "PC",
         };
         write!(f, "{}", name)
+    }
+}
+
+impl TryFrom<Register> for CpuRegs {
+    type Error = String;
+
+    fn try_from(s: Register) -> Result<Self, Self::Error> {
+        match s {
+            Register::AF => Ok(CpuRegs::AF),
+            Register::BC => Ok(CpuRegs::BC),
+            Register::DE => Ok(CpuRegs::DE),
+            Register::HL => Ok(CpuRegs::HL),
+            Register::SP => Ok(CpuRegs::SP),
+            Register::PC => Ok(CpuRegs::PC),
+        }
     }
 }
 

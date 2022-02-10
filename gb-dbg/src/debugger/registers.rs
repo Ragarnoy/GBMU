@@ -57,7 +57,7 @@ impl RegisterEditor {
                                     != format!("{:?}", &row.0).to_lowercase()
                                 {
                                     ui.colored_label(Color32::WHITE, format!("{:?}", &row.0))
-                                        .on_hover_text(&row.0);
+                                        .on_hover_text(row.0.to_string());
                                 } else {
                                     ui.colored_label(Color32::WHITE, format!("{}", &row.0));
                                 }

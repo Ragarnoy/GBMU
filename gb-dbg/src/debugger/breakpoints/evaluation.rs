@@ -1,5 +1,5 @@
-use crate::dbg_interfaces::DebugOperations;
-use crate::debugger::breakpoints::breakpoint::{Node, Operator, UnaryOperator};
+use crate::dbg_interfaces::{CpuRegs, DebugOperations};
+use gb_breakpoint::{Node, Operator, UnaryOperator};
 
 const TRUE: u16 = 0xffff;
 const FALSE: u16 = 0x0000;
@@ -12,14 +12,14 @@ pub fn compute_expression<DBG: DebugOperations>(node: &Node, dbg: &DBG) -> u16 {
     let current = node;
 
     match current {
-        Node::Register(r) => u16::from(dbg.cpu_get(*r)),
-        Node::Address(a) => u16::from(dbg.read(*a)),
-        Node::Value(v) => *v,
-        Node::UnaryExpr { op, child } => eval_unary_op(op, compute_expression(child, dbg)),
-        Node::BinaryExpr { op, lhs, rhs } => eval_binary_op(
-            op,
-            compute_expression(lhs, dbg),
-            compute_expression(rhs, dbg),
+        Node::Register(r) => u16::from(dbg.cpu_get(CpuRegs::try_from(*r).unwrap())),
+        Node::Address(a) => u16::from(dbg.read(compute_expression(a, dbg))),
+        Node::Raw(v) => *v,
+        Node::UnaryExpr(expr) => eval_unary_op(&expr.op, compute_expression(&expr.child, dbg)),
+        Node::BinaryExpr(expr) => eval_binary_op(
+            &expr.op,
+            compute_expression(&expr.lhs, dbg),
+            compute_expression(&expr.rhs, dbg),
         ),
     }
 }

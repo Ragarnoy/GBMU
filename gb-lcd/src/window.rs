@@ -118,7 +118,7 @@ impl GBWindow {
         let paint_jobs = self.egui_ctx.tessellate(paint_cmds);
 
         self.egui_painter
-            .paint_jobs(None, paint_jobs, &self.egui_ctx.texture());
+            .paint_jobs(None, paint_jobs, &self.egui_ctx.font_image());
 
         self.sdl_window.gl_swap_window();
         Ok(())
