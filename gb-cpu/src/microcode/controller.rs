@@ -24,7 +24,7 @@ impl Default for Mode {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum OpcodeType {
     Unprefixed(Opcode),
     CBPrefixed(OpcodeCB),

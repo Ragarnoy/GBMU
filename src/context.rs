@@ -1,5 +1,5 @@
 #[cfg(feature = "cgb")]
-use gb_bus::generic::PanicDevice;
+use gb_bus::generic::{CharDevice, PanicDevice};
 use gb_bus::{generic::SimpleRW, AddressBus, Bus, IORegArea, IORegBus, Lock, WorkingRam};
 use gb_clock::{cycles, Clock};
 use gb_cpu::{cpu::Cpu, new_cpu, registers::Registers};
@@ -50,6 +50,8 @@ pub struct Game {
     scheduled_stop: Option<ScheduledStop>,
     emulation_stopped: bool,
     cycle_count: usize,
+    #[cfg(feature = "save_state")]
+    hram: Rc<RefCell<SimpleRW<0x80>>>,
     #[cfg(feature = "save_state")]
     wram: Rc<RefCell<WorkingRam>>,
 }
@@ -122,6 +124,7 @@ impl Game {
                     .with_area(IORegArea::Vbk, ppu_reg.clone())
                     .with_area(IORegArea::Key1, cpu_io_reg.clone())
                     .with_hdma(Rc::new(RefCell::new(PanicDevice::default())))
+                    .with_area(IORegArea::RP, Rc::new(RefCell::new(CharDevice(0))))
                     .with_area(IORegArea::Svbk, wram.clone());
             }
             io_bus
@@ -137,6 +140,7 @@ impl Game {
             io_bus
         };
         let io_bus = Rc::new(RefCell::new(io_bus));
+        let hram = Rc::new(RefCell::new(SimpleRW::<0x80>::default()));
 
         let bus = AddressBus {
             rom: bios_wrapper,
@@ -149,7 +153,10 @@ impl Game {
             eram: wram,
             oam: ppu_mem,
             io_reg: io_bus.clone(),
-            hram: Rc::new(RefCell::new(SimpleRW::<0x80>::default())),
+            #[cfg(feature = "save_state")]
+            hram: hram.clone(),
+            #[cfg(not(feature = "save_state"))]
+            hram,
 
             ie_reg: cpu_io_reg,
             area_locks: BTreeMap::new(),
@@ -171,6 +178,8 @@ impl Game {
             scheduled_stop: None,
             emulation_stopped: stopped,
             cycle_count: 0,
+            #[cfg(feature = "save_state")]
+            hram,
             #[cfg(feature = "save_state")]
             wram,
         })
@@ -348,8 +357,20 @@ impl Game {
         self.load_cpu_state(state.cpu_regs, state.cpu_io_regs)?;
         self.load_wram(state.working_ram)?;
         self.load_timer(state.timer)?;
+        self.load_hram(state.hram)?;
 
         self.mbc.borrow_mut().load(state.mbcs)?;
+        Ok(())
+    }
+
+    #[cfg(feature = "save_state")]
+    fn load_hram(&mut self, hram: Vec<u8>) -> anyhow::Result<()> {
+        let hram = SimpleRW::try_from(hram)
+            .map_err(|size| anyhow::anyhow!("Failed to load HRAM, invalid size {:x}", size))?;
+        let hram = Rc::new(RefCell::new(hram));
+        self.addr_bus.hram = hram.clone();
+        self.hram = hram;
+
         Ok(())
     }
 
@@ -730,6 +751,7 @@ struct SaveState {
     pub mbcs: GenericState<Full>,
     pub working_ram: WorkingRam,
     pub timer: Timer,
+    pub hram: Vec<u8>,
 }
 
 #[cfg(feature = "save_state")]
@@ -742,6 +764,7 @@ impl From<&Game> for SaveState {
             mbcs: context.mbc.borrow().save(),
             working_ram: context.wram.borrow().clone(),
             timer: *context.timer.borrow(),
+            hram: context.hram.borrow().save(),
         }
     }
 }

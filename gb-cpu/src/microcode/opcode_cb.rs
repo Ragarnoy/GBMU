@@ -145,7 +145,7 @@ pub enum OpcodeCB {
     Bit0H = 0x44,
     /// `BIT 0, L`: test if bit 0 is set on `L`. 2m
     Bit0L = 0x45,
-    /// `BIT 0, (HL)`: test if bit 0 is set on `(HL)`. 4m
+    /// `BIT 0, (HL)`: test if bit 0 is set on `(HL)`. 3m
     Bit0HL = 0x46,
     /// `BIT 0, A`: test if bit 0 is set on `A`. 2m
     Bit0A = 0x47,
@@ -161,7 +161,7 @@ pub enum OpcodeCB {
     Bit1H = 0x4c,
     /// `BIT 1, L`: test if bit 1 is set on `L`. 2m
     Bit1L = 0x4d,
-    /// `BIT 1, (HL)`: test if bit 1 is set on `(HL)`. 4m
+    /// `BIT 1, (HL)`: test if bit 1 is set on `(HL)`. 3m
     Bit1HL = 0x4e,
     /// `BIT 1, A`: test if bit 1 is set on `A`. 2m
     Bit1A = 0x4f,
@@ -177,7 +177,7 @@ pub enum OpcodeCB {
     Bit2H = 0x54,
     /// `BIT 2, L`: test if bit 2 is set on `L`. 2m
     Bit2L = 0x55,
-    /// `BIT 2, (HL)`: test if bit 2 is set on `(HL)`. 4m
+    /// `BIT 2, (HL)`: test if bit 2 is set on `(HL)`. 3m
     Bit2HL = 0x56,
     /// `BIT 2, A`: test if bit 2 is set on `A`. 2m
     Bit2A = 0x57,
@@ -193,7 +193,7 @@ pub enum OpcodeCB {
     Bit3H = 0x5c,
     /// `BIT 3, L`: test if bit 3 is set on `L`. 2m
     Bit3L = 0x5d,
-    /// `BIT 3, (HL)`: test if bit 3 is set on `(HL)`. 4m
+    /// `BIT 3, (HL)`: test if bit 3 is set on `(HL)`. 3m
     Bit3HL = 0x5e,
     /// `BIT 3, A`: test if bit 3 is set on `A`. 2m
     Bit3A = 0x5f,
@@ -209,7 +209,7 @@ pub enum OpcodeCB {
     Bit4H = 0x64,
     /// `BIT 4, L`: test if bit 4 is set on `L`. 2m
     Bit4L = 0x65,
-    /// `BIT 4, (HL)`: test if bit 4 is set on `(HL)`. 4m
+    /// `BIT 4, (HL)`: test if bit 4 is set on `(HL)`. 3m
     Bit4HL = 0x66,
     /// `BIT 4, A`: test if bit 4 is set on `A`. 2m
     Bit4A = 0x67,
@@ -225,7 +225,7 @@ pub enum OpcodeCB {
     Bit5H = 0x6c,
     /// `BIT 5, L`: test if bit 5 is set on `L`. 2m
     Bit5L = 0x6d,
-    /// `BIT 5, (HL)`: test if bit 5 is set on `(HL)`. 4m
+    /// `BIT 5, (HL)`: test if bit 5 is set on `(HL)`. 3m
     Bit5HL = 0x6e,
     /// `BIT 5, A`: test if bit 5 is set on `A`. 2m
     Bit5A = 0x6f,
@@ -241,7 +241,7 @@ pub enum OpcodeCB {
     Bit6H = 0x74,
     /// `BIT 6, L`: test if bit 6 is set on `L`. 2m
     Bit6L = 0x75,
-    /// `BIT 6, (HL)`: test if bit 6 is set on `(HL)`. 4m
+    /// `BIT 6, (HL)`: test if bit 6 is set on `(HL)`. 3m
     Bit6HL = 0x76,
     /// `BIT 6, A`: test if bit 6 is set on `A`. 2m
     Bit6A = 0x77,
@@ -257,7 +257,7 @@ pub enum OpcodeCB {
     Bit7H = 0x7c,
     /// `BIT 7, L`: test if bit 7 is set on `L`. 2m
     Bit7L = 0x7d,
-    /// `BIT 7, (HL)`: test if bit 7 is set on `(HL)`. 4m
+    /// `BIT 7, (HL)`: test if bit 7 is set on `(HL)`. 3m
     Bit7HL = 0x7e,
     /// `BIT 7, A`: test if bit 7 is set on `A`. 2m
     Bit7A = 0x7f,
@@ -274,7 +274,7 @@ pub enum OpcodeCB {
     Res0H = 0x84,
     /// `RES 0, L`: set bit 0 to `0` on `L`. 2m
     Res0L = 0x85,
-    /// `RES 0, (HL)`: set bit 0 to `0` on `(HL)`. 2m
+    /// `RES 0, (HL)`: set bit 0 to `0` on `(HL)`. 4m
     Res0HL = 0x86,
     /// `RES 0, A`: set bit 0 to `0` on `A`. 2m
     Res0A = 0x87,
@@ -290,7 +290,7 @@ pub enum OpcodeCB {
     Res1H = 0x8c,
     /// `RES 1, L`: set bit 1 to `0` on `L`. 2m
     Res1L = 0x8d,
-    /// `RES 1, (HL)`: set bit 1 to `0` on `(HL)`. 2m
+    /// `RES 1, (HL)`: set bit 1 to `0` on `(HL)`. 4m
     Res1HL = 0x8e,
     /// `RES 1, A`: set bit 1 to `0` on `A`. 2m
     Res1A = 0x8f,
@@ -306,7 +306,7 @@ pub enum OpcodeCB {
     Res2H = 0x94,
     /// `RES 2, L`: set bit 2 to `0` on `L`. 2m
     Res2L = 0x95,
-    /// `RES 2, (HL)`: set bit 2 to `0` on `(HL)`. 2m
+    /// `RES 2, (HL)`: set bit 2 to `0` on `(HL)`. 4m
     Res2HL = 0x96,
     /// `RES 2, A`: set bit 2 to `0` on `A`. 2m
     Res2A = 0x97,
@@ -322,7 +322,7 @@ pub enum OpcodeCB {
     Res3H = 0x9c,
     /// `RES 3, L`: set bit 3 to `0` on `L`. 2m
     Res3L = 0x9d,
-    /// `RES 3, (HL)`: set bit 3 to `0` on `(HL)`. 2m
+    /// `RES 3, (HL)`: set bit 3 to `0` on `(HL)`. 4m
     Res3HL = 0x9e,
     /// `RES 3, A`: set bit 3 to `0` on `A`. 2m
     Res3A = 0x9f,
@@ -338,7 +338,7 @@ pub enum OpcodeCB {
     Res4H = 0xa4,
     /// `RES 4, L`: set bit 4 to `0` on `L`. 2m
     Res4L = 0xa5,
-    /// `RES 4, (HL)`: set bit 4 to `0` on `(HL)`. 2m
+    /// `RES 4, (HL)`: set bit 4 to `0` on `(HL)`. 4m
     Res4HL = 0xa6,
     /// `RES 4, A`: set bit 4 to `0` on `A`. 2m
     Res4A = 0xa7,
@@ -354,7 +354,7 @@ pub enum OpcodeCB {
     Res5H = 0xac,
     /// `RES 5, L`: set bit 5 to `0` on `L`. 2m
     Res5L = 0xad,
-    /// `RES 5, (HL)`: set bit 5 to `0` on `(HL)`. 2m
+    /// `RES 5, (HL)`: set bit 5 to `0` on `(HL)`. 4m
     Res5HL = 0xae,
     /// `RES 5, A`: set bit 5 to `0` on `A`. 2m
     Res5A = 0xaf,
@@ -370,7 +370,7 @@ pub enum OpcodeCB {
     Res6H = 0xb4,
     /// `RES 6, L`: set bit 6 to `0` on `L`. 2m
     Res6L = 0xb5,
-    /// `RES 6, (HL)`: set bit 6 to `0` on `(HL)`. 2m
+    /// `RES 6, (HL)`: set bit 6 to `0` on `(HL)`. 4m
     Res6HL = 0xb6,
     /// `RES 6, A`: set bit 6 to `0` on `A`. 2m
     Res6A = 0xb7,
@@ -386,7 +386,7 @@ pub enum OpcodeCB {
     Res7H = 0xbc,
     /// `RES 7, L`: set bit 7 to `0` on `L`. 2m
     Res7L = 0xbd,
-    /// `RES 7, (HL)`: set bit 7 to `0` on `(HL)`. 2m
+    /// `RES 7, (HL)`: set bit 7 to `0` on `(HL)`. 4m
     Res7HL = 0xbe,
     /// `RES 7, A`: set bit 7 to `0` on `A`. 2m
     Res7A = 0xbf,
@@ -403,7 +403,7 @@ pub enum OpcodeCB {
     Set0H = 0xc4,
     /// `SET 0, L`: set bit 0 to `1` on `L`. 2m
     Set0L = 0xc5,
-    /// `SET 0, (HL)`: set bit 0 to `1` on `(HL)`. 2m
+    /// `SET 0, (HL)`: set bit 0 to `1` on `(HL)`. 4m
     Set0HL = 0xc6,
     /// `SET 0, A`: set bit 0 to `1` on `A`. 2m
     Set0A = 0xc7,
@@ -419,7 +419,7 @@ pub enum OpcodeCB {
     Set1H = 0xcc,
     /// `SET 1, L`: set bit 1 to `1` on `L`. 2m
     Set1L = 0xcd,
-    /// `SET 1, (HL)`: set bit 1 to `1` on `(HL)`. 2m
+    /// `SET 1, (HL)`: set bit 1 to `1` on `(HL)`. 4m
     Set1HL = 0xce,
     /// `SET 1, A`: set bit 1 to `1` on `A`. 2m
     Set1A = 0xcf,
@@ -435,7 +435,7 @@ pub enum OpcodeCB {
     Set2H = 0xd4,
     /// `SET 2, L`: set bit 2 to `1` on `L`. 2m
     Set2L = 0xd5,
-    /// `SET 2, (HL)`: set bit 2 to `1` on `(HL)`. 2m
+    /// `SET 2, (HL)`: set bit 2 to `1` on `(HL)`. 4m
     Set2HL = 0xd6,
     /// `SET 2, A`: set bit 2 to `1` on `A`. 2m
     Set2A = 0xd7,
@@ -451,7 +451,7 @@ pub enum OpcodeCB {
     Set3H = 0xdc,
     /// `SET 3, L`: set bit 3 to `1` on `L`. 2m
     Set3L = 0xdd,
-    /// `SET 3, (HL)`: set bit 3 to `1` on `(HL)`. 2m
+    /// `SET 3, (HL)`: set bit 3 to `1` on `(HL)`. 4m
     Set3HL = 0xde,
     /// `SET 3, A`: set bit 3 to `1` on `A`. 2m
     Set3A = 0xdf,
@@ -467,7 +467,7 @@ pub enum OpcodeCB {
     Set4H = 0xe4,
     /// `SET 4, L`: set bit 4 to `1` on `L`. 2m
     Set4L = 0xe5,
-    /// `SET 4, (HL)`: set bit 4 to `1` on `(HL)`. 2m
+    /// `SET 4, (HL)`: set bit 4 to `1` on `(HL)`. 4m
     Set4HL = 0xe6,
     /// `SET 4, A`: set bit 4 to `1` on `A`. 2m
     Set4A = 0xe7,
@@ -483,7 +483,7 @@ pub enum OpcodeCB {
     Set5H = 0xec,
     /// `SET 5, L`: set bit 5 to `1` on `L`. 2m
     Set5L = 0xed,
-    /// `SET 5, (HL)`: set bit 5 to `1` on `(HL)`. 2m
+    /// `SET 5, (HL)`: set bit 5 to `1` on `(HL)`. 4m
     Set5HL = 0xee,
     /// `SET 5, A`: set bit 5 to `1` on `A`. 2m
     Set5A = 0xef,
@@ -499,7 +499,7 @@ pub enum OpcodeCB {
     Set6H = 0xf4,
     /// `SET 6, L`: set bit 6 to `1` on `L`. 2m
     Set6L = 0xf5,
-    /// `SET 6, (HL)`: set bit 6 to `1` on `(HL)`. 2m
+    /// `SET 6, (HL)`: set bit 6 to `1` on `(HL)`. 4m
     Set6HL = 0xf6,
     /// `SET 6, A`: set bit 6 to `1` on `A`. 2m
     Set6A = 0xf7,
@@ -515,7 +515,7 @@ pub enum OpcodeCB {
     Set7H = 0xfc,
     /// `SET 7, L`: set bit 7 to `1` on `L`. 2m
     Set7L = 0xfd,
-    /// `SET 7, (HL)`: set bit 7 to `1` on `(HL)`. 2m
+    /// `SET 7, (HL)`: set bit 7 to `1` on `(HL)`. 4m
     Set7HL = 0xfe,
     /// `SET 7, A`: set bit 7 to `1` on `A`. 2m
     Set7A = 0xff,

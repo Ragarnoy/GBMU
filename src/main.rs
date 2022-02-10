@@ -93,7 +93,10 @@ fn main() {
             }
             game.draw(&mut context);
         }
+        #[cfg(not(feature = "debug_fps"))]
         let events = ui::draw_egui(&mut context);
+        #[cfg(feature = "debug_fps")]
+        let events = ui::draw_egui(&mut context, render_time_frame.fps());
         context
             .windows
             .main
@@ -105,10 +108,14 @@ fn main() {
                 dgb_wind
                     .start_frame()
                     .expect("Fail at the start for the debug window");
-                #[cfg(not(feature = "debug_fps"))]
+                #[cfg(not(feature = "time_frame"))]
                 debugger.draw(dgb_wind.egui_ctx(), game, None);
-                #[cfg(feature = "debug_fps")]
-                debugger.draw(dgb_wind.egui_ctx(), game, Some(render_time_frame.fps()));
+                #[cfg(feature = "time_frame")]
+                debugger.draw(
+                    dgb_wind.egui_ctx(),
+                    game,
+                    Some((&"time frame", &time_frame_stat)),
+                );
                 dgb_wind
                     .end_frame()
                     .expect("Fail at the end for the debug window");
