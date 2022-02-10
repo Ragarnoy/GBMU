@@ -4,6 +4,24 @@ pub struct SimpleRW<const SIZE: usize> {
     store: [u8; SIZE],
 }
 
+#[cfg(feature = "serialization")]
+impl<const SIZE: usize> SimpleRW<SIZE> {
+    pub fn save(&self) -> Vec<u8> {
+        self.store.to_vec()
+    }
+}
+
+#[cfg(feature = "serialization")]
+impl<const SIZE: usize> TryFrom<Vec<u8>> for SimpleRW<SIZE> {
+    type Error = usize;
+
+    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
+        <[u8; SIZE]>::try_from(value)
+            .map_err(|v| v.len())
+            .map(|store| Self { store })
+    }
+}
+
 impl<const SIZE: usize> FileOperation<Addr<Area>, Area> for SimpleRW<SIZE> {
     fn write(&mut self, v: u8, addr: Addr<Area>) -> Result<(), Error> {
         let address = addr.get_address();

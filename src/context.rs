@@ -51,6 +51,8 @@ pub struct Game {
     emulation_stopped: bool,
     cycle_count: usize,
     #[cfg(feature = "save_state")]
+    hram: Rc<RefCell<SimpleRW<0x80>>>,
+    #[cfg(feature = "save_state")]
     wram: Rc<RefCell<WorkingRam>>,
 }
 
@@ -137,6 +139,7 @@ impl Game {
             io_bus
         };
         let io_bus = Rc::new(RefCell::new(io_bus));
+        let hram = Rc::new(RefCell::new(SimpleRW::<0x80>::default()));
 
         let bus = AddressBus {
             rom: bios_wrapper,
@@ -149,7 +152,10 @@ impl Game {
             eram: wram,
             oam: ppu_mem,
             io_reg: io_bus.clone(),
-            hram: Rc::new(RefCell::new(SimpleRW::<0x80>::default())),
+            #[cfg(feature = "save_state")]
+            hram: hram.clone(),
+            #[cfg(not(feature = "save_state"))]
+            hram,
 
             ie_reg: cpu_io_reg,
             area_locks: BTreeMap::new(),
@@ -171,6 +177,8 @@ impl Game {
             scheduled_stop: None,
             emulation_stopped: stopped,
             cycle_count: 0,
+            #[cfg(feature = "save_state")]
+            hram,
             #[cfg(feature = "save_state")]
             wram,
         })
@@ -347,8 +355,20 @@ impl Game {
     fn load_state(&mut self, state: SaveState) -> anyhow::Result<()> {
         self.load_cpu_state(state.cpu_regs, state.cpu_io_regs)?;
         self.load_wram(state.working_ram)?;
+        self.load_hram(state.hram)?;
 
         self.mbc.borrow_mut().load(state.mbcs)?;
+        Ok(())
+    }
+
+    #[cfg(feature = "save_state")]
+    fn load_hram(&mut self, hram: Vec<u8>) -> anyhow::Result<()> {
+        let hram = SimpleRW::try_from(hram)
+            .map_err(|size| anyhow::anyhow!("Failed to load HRAM, invalid size {:x}", size))?;
+        let hram = Rc::new(RefCell::new(hram));
+        self.addr_bus.hram = hram.clone();
+        self.hram = hram;
+
         Ok(())
     }
 
@@ -719,6 +739,7 @@ struct SaveState {
     pub cpu_regs: gb_cpu::registers::Registers,
     pub cpu_io_regs: gb_cpu::io_registers::IORegisters,
     pub mbcs: GenericState<Full>,
+    pub hram: Vec<u8>,
     pub working_ram: WorkingRam,
 }
 
@@ -730,6 +751,7 @@ impl From<&Game> for SaveState {
             cpu_regs: context.cpu.registers,
             cpu_io_regs: *context.cpu.io_regs.borrow(),
             mbcs: context.mbc.borrow().save(),
+            hram: context.hram.borrow().save(),
             working_ram: context.wram.borrow().clone(),
         }
     }
