@@ -40,7 +40,7 @@ pub fn main() {
 
     let mut display =
         render::RenderImage::<TILEMAP_DIM, TILEMAP_DIM>::with_bar_size(bar_pixels_size as f32);
-    let ppu = Ppu::new();
+    let ppu = Ppu::default();
     let ppu_mem = ppu.memory();
     let ppu_reg = ppu.registers();
     let dumps = [

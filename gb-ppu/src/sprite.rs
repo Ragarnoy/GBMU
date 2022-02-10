@@ -124,7 +124,7 @@ impl<'r> Sprite {
             });
         }
         let y = if self.y_flip() { 7 - line } else { line };
-        let tile_row = vram.read_tile_line(self.tile_index as usize, y)?;
+        let tile_row = vram.read_tile_line(self.tile_index as usize, y, None)?;
         for (i, pixel) in row.iter_mut().enumerate() {
             let x = if self.x_flip() { 7 - i } else { i };
             let value = tile_row[x];
@@ -162,7 +162,7 @@ impl<'r> Sprite {
             line -= 8
         }
         let y = if self.y_flip() { 7 - line } else { line };
-        let tile_line = vram.read_tile_line(index, y).unwrap();
+        let tile_line = vram.read_tile_line(index, y, None).unwrap();
         for (i, pixel) in row.iter_mut().enumerate() {
             let x = if self.x_flip() { 7 - i } else { i };
             let value = tile_line[x];
