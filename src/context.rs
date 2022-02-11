@@ -1,8 +1,6 @@
 #[cfg(feature = "cgb")]
-use gb_bus::generic::PanicDevice;
-use gb_bus::{
-    generic::SimpleRW, AddressBus, Bus, IORegArea, IORegBus, IORegBusBuilder, Lock, WorkingRam,
-};
+use gb_bus::generic::{CharDevice, PanicDevice};
+use gb_bus::{generic::SimpleRW, AddressBus, Bus, IORegArea, IORegBus, Lock, WorkingRam};
 use gb_clock::{cycles, Clock};
 use gb_cpu::{cpu::Cpu, new_cpu, registers::Registers};
 use gb_dbg::{
@@ -52,6 +50,10 @@ pub struct Game {
     scheduled_stop: Option<ScheduledStop>,
     emulation_stopped: bool,
     cycle_count: usize,
+    #[cfg(feature = "save_state")]
+    hram: Rc<RefCell<SimpleRW<0x80>>>,
+    #[cfg(feature = "save_state")]
+    wram: Rc<RefCell<WorkingRam>>,
 }
 
 #[derive(Debug)]
@@ -84,7 +86,7 @@ impl Game {
         let mbc = mbc_with_save_state(&romname, &header, file)?;
         let mbc = Rc::new(RefCell::new(mbc));
 
-        let ppu = Ppu::new();
+        let ppu = Ppu::default();
         let ppu_mem = Rc::new(RefCell::new(ppu.memory()));
         let ppu_reg = Rc::new(RefCell::new(ppu.registers()));
         let (cpu, cpu_io_reg) = if cfg!(feature = "bios") {
@@ -115,16 +117,17 @@ impl Game {
         let serial = Rc::new(RefCell::new(gb_bus::Serial::default()));
 
         let io_bus = {
-            let mut bus_builder = IORegBusBuilder::default();
+            let mut io_bus = IORegBus::default();
             #[cfg(feature = "cgb")]
             {
-                bus_builder
+                io_bus
                     .with_area(IORegArea::Vbk, ppu_reg.clone())
                     .with_area(IORegArea::Key1, cpu_io_reg.clone())
                     .with_hdma(Rc::new(RefCell::new(PanicDevice::default())))
+                    .with_area(IORegArea::RP, Rc::new(RefCell::new(CharDevice(0))))
                     .with_area(IORegArea::Svbk, wram.clone());
             }
-            bus_builder
+            io_bus
                 .with_area(IORegArea::Joy, joypad.clone())
                 .with_timer(timer.clone())
                 .with_ppu(ppu_reg)
@@ -134,19 +137,26 @@ impl Game {
                 .with_serial(serial)
                 .with_default_sound()
                 .with_default_waveform_ram();
-            bus_builder.build()
+            io_bus
         };
         let io_bus = Rc::new(RefCell::new(io_bus));
+        let hram = Rc::new(RefCell::new(SimpleRW::<0x80>::default()));
 
         let bus = AddressBus {
             rom: bios_wrapper,
             vram: ppu_mem.clone(),
             ext_ram: mbc.clone(),
             ram: wram.clone(),
+            #[cfg(feature = "save_state")]
+            eram: wram.clone(),
+            #[cfg(not(feature = "save_state"))]
             eram: wram,
             oam: ppu_mem,
             io_reg: io_bus.clone(),
-            hram: Rc::new(RefCell::new(SimpleRW::<0x80>::default())),
+            #[cfg(feature = "save_state")]
+            hram: hram.clone(),
+            #[cfg(not(feature = "save_state"))]
+            hram,
 
             ie_reg: cpu_io_reg,
             area_locks: BTreeMap::new(),
@@ -168,6 +178,10 @@ impl Game {
             scheduled_stop: None,
             emulation_stopped: stopped,
             cycle_count: 0,
+            #[cfg(feature = "save_state")]
+            hram,
+            #[cfg(feature = "save_state")]
+            wram,
         })
     }
 
@@ -182,8 +196,19 @@ impl Game {
                 self.joypad.borrow_mut().deref_mut(),
                 self.dma.borrow_mut().deref_mut()
             );
-            self.cycle_count += 1;
             self.check_scheduled_stop(!frame_not_finished);
+            #[cfg(feature = "cgb")]
+            if self.cpu.io_regs.borrow().fast_mode() {
+                cycles!(
+                    self.clock,
+                    &mut self.addr_bus,
+                    &mut self.cpu,
+                    self.timer.borrow_mut().deref_mut(),
+                    self.dma.borrow_mut().deref_mut()
+                );
+                self.check_scheduled_stop(!frame_not_finished);
+            }
+            self.cycle_count += 1;
             frame_not_finished
         } else {
             false
@@ -339,27 +364,64 @@ impl Game {
     }
 
     #[cfg(feature = "save_state")]
-    fn load_state(&mut self, state: SaveState) -> Result<(), anyhow::Error> {
-        self.cpu.registers = state.cpu_regs;
+    fn load_state(&mut self, state: SaveState) -> anyhow::Result<()> {
+        self.load_cpu_state(state.cpu_regs, state.cpu_io_regs)?;
+        self.load_wram(state.working_ram)?;
+        self.load_timer(state.timer)?;
+        self.load_hram(state.hram)?;
 
-        {
-            let cpu_io = Rc::new(RefCell::new(state.cpu_io_regs));
-            self.cpu.io_regs = cpu_io.clone();
-            let io_bus = {
-                let mut builder = IORegBusBuilder::from(self.io_bus.take());
-                #[cfg(feature = "cgb")]
-                {
-                    builder.with_area(IORegArea::Key1, cpu_io.clone());
-                }
-                builder.with_area(IORegArea::IF, cpu_io.clone());
-                builder.build()
-            };
-            let io_bus = Rc::new(RefCell::new(io_bus));
-            self.addr_bus.io_reg = io_bus.clone();
-            self.addr_bus.ie_reg = cpu_io;
-            self.io_bus = io_bus;
-        }
         self.mbc.borrow_mut().load(state.mbcs)?;
+        Ok(())
+    }
+
+    #[cfg(feature = "save_state")]
+    fn load_hram(&mut self, hram: Vec<u8>) -> anyhow::Result<()> {
+        let hram = SimpleRW::try_from(hram)
+            .map_err(|size| anyhow::anyhow!("Failed to load HRAM, invalid size {:x}", size))?;
+        let hram = Rc::new(RefCell::new(hram));
+        self.addr_bus.hram = hram.clone();
+        self.hram = hram;
+
+        Ok(())
+    }
+
+    #[cfg(feature = "save_state")]
+    fn load_cpu_state(
+        &mut self,
+        registers: gb_cpu::registers::Registers,
+        io_regs: gb_cpu::io_registers::IORegisters,
+    ) -> anyhow::Result<()> {
+        let cpu_io = Rc::new(RefCell::new(io_regs));
+        self.cpu.io_regs = cpu_io.clone();
+        let mut io_bus = self.io_bus.borrow_mut();
+        #[cfg(feature = "cgb")]
+        {
+            io_bus.with_area(IORegArea::Key1, cpu_io.clone());
+        }
+        io_bus.with_area(IORegArea::IF, cpu_io.clone());
+
+        self.cpu.registers = registers;
+        self.addr_bus.ie_reg = cpu_io;
+        Ok(())
+    }
+
+    #[cfg(feature = "save_state")]
+    fn load_wram(&mut self, state: WorkingRam) -> anyhow::Result<()> {
+        let wram = Rc::new(RefCell::new(state));
+        self.addr_bus.ram = wram.clone();
+        #[cfg(feature = "cgb")]
+        self.io_bus
+            .borrow_mut()
+            .with_area(IORegArea::Svbk, wram.clone());
+        self.wram = wram;
+        Ok(())
+    }
+
+    #[cfg(feature = "save_state")]
+    fn load_timer(&mut self, state: Timer) -> anyhow::Result<()> {
+        let timer = Rc::new(RefCell::new(state));
+        self.io_bus.borrow_mut().with_timer(timer.clone());
+        self.timer = timer;
         Ok(())
     }
 }
@@ -698,6 +760,9 @@ struct SaveState {
     pub cpu_regs: gb_cpu::registers::Registers,
     pub cpu_io_regs: gb_cpu::io_registers::IORegisters,
     pub mbcs: GenericState<Full>,
+    pub working_ram: WorkingRam,
+    pub timer: Timer,
+    pub hram: Vec<u8>,
 }
 
 #[cfg(feature = "save_state")]
@@ -708,6 +773,9 @@ impl From<&Game> for SaveState {
             cpu_regs: context.cpu.registers,
             cpu_io_regs: *context.cpu.io_regs.borrow(),
             mbcs: context.mbc.borrow().save(),
+            working_ram: context.wram.borrow().clone(),
+            timer: *context.timer.borrow(),
+            hram: context.hram.borrow().save(),
         }
     }
 }

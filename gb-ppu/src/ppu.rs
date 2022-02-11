@@ -62,10 +62,10 @@ pub struct Ppu {
 }
 
 impl Ppu {
-    pub fn new() -> Self {
+    pub fn new(cgb_enabled: bool) -> Self {
         Ppu {
             enabled: false,
-            vram: Rc::new(RefCell::new(Vram::new())),
+            vram: Rc::new(RefCell::new(Vram::new(cgb_enabled))),
             oam: Rc::new(RefCell::new(Oam::new())),
             lcd_reg: Rc::new(RefCell::new(LcdReg::new())),
             pixels: [[[255; 3]; SCREEN_WIDTH]; SCREEN_HEIGHT],
@@ -117,7 +117,7 @@ impl Ppu {
         let vram = self.vram.borrow();
         let lcd_reg = self.lcd_reg.borrow();
         for k in 0..TILESHEET_TILE_COUNT {
-            let tile = vram.read_8x8_tile(k).unwrap();
+            let tile = vram.read_8x8_tile(k, None).unwrap();
             for (j, row) in tile.iter().enumerate() {
                 for (i, pixel) in row.iter().rev().enumerate() {
                     image[y * 8 + j][x * 8 + i] = lcd_reg
@@ -160,9 +160,10 @@ impl Ppu {
                         lcd_reg.control.win_tilemap_area()
                     },
                     lcd_reg.control.bg_win_tiledata_area(),
+                    None,
                 )
                 .unwrap();
-            let tile = vram.read_8x8_tile(index).unwrap();
+            let tile = vram.read_8x8_tile(index, None).unwrap();
             for (j, row) in tile.iter().enumerate() {
                 for (i, pixel) in row.iter().rev().enumerate() {
                     let pix_y = y * 8 + j;
@@ -519,7 +520,9 @@ impl Ppu {
             if let Some(sprite) = sprites.pop() {
                 let viewport_x_at_sprite_scale = x + Sprite::HORIZONTAL_OFFSET;
                 let pixels_to_skip_before_viewport = pixel_offset - pixels_discarded;
-                if sprite.x_pos() == viewport_x_at_sprite_scale - pixels_to_skip_before_viewport {
+                if viewport_x_at_sprite_scale >= pixels_to_skip_before_viewport
+                    && sprite.x_pos() == viewport_x_at_sprite_scale - pixels_to_skip_before_viewport
+                {
                     pixel_fetcher.set_mode_to_sprite(sprite);
                     pixel_fifo.enabled = false;
                 } else {
@@ -538,7 +541,7 @@ impl Ppu {
 
 impl Default for Ppu {
     fn default() -> Ppu {
-        Ppu::new()
+        Ppu::new(false)
     }
 }
 

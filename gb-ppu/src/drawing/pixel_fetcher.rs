@@ -149,6 +149,7 @@ impl PixelFetcher {
                         tile_pos_in_vram,
                         lcd_reg.control.bg_tilemap_area(),
                         lcd_reg.control.bg_win_tiledata_area(),
+                        None,
                     )
                     .unwrap_or_else(|err| {
                         log::error!("Failed to get background tile index: {}", err);
@@ -165,6 +166,7 @@ impl PixelFetcher {
                         tile_pos_in_vram,
                         lcd_reg.control.win_tilemap_area(),
                         lcd_reg.control.bg_win_tiledata_area(),
+                        None,
                     )
                     .unwrap_or_else(|err| {
                         log::error!("Failed to get window tile index: {}", err);
@@ -201,7 +203,7 @@ impl PixelFetcher {
         lcd_reg: &dyn Deref<Target = LcdReg>,
         line: usize,
     ) {
-        match vram.read_tile_line(self.tile, line) {
+        match vram.read_tile_line(self.tile, line, None) {
             Ok(row) => {
                 if lcd_reg.control.bg_win_enable() {
                     for color_id in row {

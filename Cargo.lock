@@ -979,6 +979,7 @@ dependencies = [
  "gb-clock",
  "gb-test",
  "log",
+ "serde",
 ]
 
 [[package]]

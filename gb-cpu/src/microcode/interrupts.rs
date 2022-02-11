@@ -30,10 +30,9 @@ pub fn handle_interrupts(ctl: &mut MicrocodeController, state: &mut State) -> Mi
 
     ctl.push_cycles(&[
         // Store pc into stack
-        &[read::pc, dec::sp, read::sp],
-        &[write::ind],
-        &[dec::sp, read::sp],
-        &[write::ind],
+        &[read::pc],
+        &[dec::sp, read::sp, write::ind],
+        &[dec::sp, read::sp, write::ind],
         // Jump to interrupt source address
         &[jump],
     ]);
@@ -107,7 +106,38 @@ pub fn stop(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
             ctl.mode = Mode::Halt;
         }
     } else if cfg!(feature = "cgb") {
-        unimplemented!("speed swicth");
+        drop(int_flags);
+        #[cfg(feature = "cgb")]
+        stop_cgb_mode(ctl, state);
     }
     CONTINUE
+}
+
+#[cfg(feature = "cgb")]
+fn stop_cgb_mode(ctl: &mut MicrocodeController, state: &mut State) {
+    use gb_bus::io_reg_constant::DIV;
+
+    let mut int_flags = state.int_flags.borrow_mut();
+    let interrupt_ready = int_flags.is_interrupt_ready();
+    let need_to_switch_speed = int_flags.need_to_change_speed();
+    let mut mode = None;
+
+    if need_to_switch_speed {
+        int_flags.switch_speed();
+        if !interrupt_ready {
+            mode = Some(Mode::Halt);
+        }
+    } else {
+        mode = Some(Mode::Stop);
+    }
+
+    drop(int_flags);
+
+    if !interrupt_ready {
+        state.read();
+    }
+    state.write_bus(DIV, 0);
+    if let Some(mode) = mode {
+        ctl.mode = mode;
+    }
 }

@@ -230,7 +230,7 @@ fn config_actions_for_opcode(opcode: Opcode, ctl: &mut MicrocodeController) {
         Opcode::LdHL16 => ctl.push_cycles(&[&[read::byte, read::byte], &[write::hl]]),
         Opcode::LdSP16 => ctl.push_cycles(&[&[read::byte, read::byte], &[write::sp]]),
 
-        Opcode::Ld16A => ctl.push_to_current_cycle(&[read::a, read::byte, read::byte, write::ind]),
+        Opcode::Ld16A => ctl.push_cycles(&[&[read::a], &[read::byte, read::byte], &[write::ind]]),
 
         Opcode::LdiHLA => ctl.push_cycle(&[read::a, read::hl, write::ind, inc::hl]),
         Opcode::LdiAHL => ctl.push_cycle(&[read::hl, read::ind, write::a, inc::hl]),
@@ -322,12 +322,12 @@ fn config_actions_for_opcode(opcode: Opcode, ctl: &mut MicrocodeController) {
         Opcode::LdLL => ctl.push_to_current_cycle(&[read::l, write::l]),
         Opcode::LdLHL => ctl.push_cycle(&[read::hl, read::ind, write::l]),
 
-        Opcode::LdHLA => ctl.push_to_current_cycle(&[read::a, read::hl, write::ind]),
-        Opcode::LdHLB => ctl.push_to_current_cycle(&[read::b, read::hl, write::ind]),
-        Opcode::LdHLC => ctl.push_to_current_cycle(&[read::c, read::hl, write::ind]),
-        Opcode::LdHLD => ctl.push_to_current_cycle(&[read::d, read::hl, write::ind]),
-        Opcode::LdHLE => ctl.push_to_current_cycle(&[read::e, read::hl, write::ind]),
-        Opcode::LdHLH => ctl.push_to_current_cycle(&[read::h, read::hl, write::ind]),
+        Opcode::LdHLA => ctl.push_cycle(&[read::a, read::hl, write::ind]),
+        Opcode::LdHLB => ctl.push_cycle(&[read::b, read::hl, write::ind]),
+        Opcode::LdHLC => ctl.push_cycle(&[read::c, read::hl, write::ind]),
+        Opcode::LdHLD => ctl.push_cycle(&[read::d, read::hl, write::ind]),
+        Opcode::LdHLE => ctl.push_cycle(&[read::e, read::hl, write::ind]),
+        Opcode::LdHLH => ctl.push_cycle(&[read::h, read::hl, write::ind]),
         Opcode::LdHLL => ctl.push_cycle(&[read::l, read::hl, write::ind]),
 
         Opcode::LdhAC => ctl.push_cycle(&[read::c, read::hram, write::a]),
@@ -382,23 +382,27 @@ fn config_actions_for_opcode(opcode: Opcode, ctl: &mut MicrocodeController) {
         ]),
         Opcode::RetNz => ctl.push_cycles(&[
             &[not_zero],
-            &[read::sp, read::ind, inc::sp, read::sp],
-            &[read::ind, inc::sp, jump::jump],
+            &[read::sp, read::ind, inc::sp],
+            &[read::sp, read::ind, inc::sp],
+            &[jump::jump],
         ]),
         Opcode::RetZ => ctl.push_cycles(&[
             &[zero],
-            &[read::sp, read::ind, inc::sp, read::sp],
-            &[read::ind, inc::sp, jump::jump],
+            &[read::sp, read::ind, inc::sp],
+            &[read::sp, read::ind, inc::sp],
+            &[jump::jump],
         ]),
         Opcode::RetNc => ctl.push_cycles(&[
             &[not_carry],
-            &[read::sp, read::ind, inc::sp, read::sp],
-            &[read::ind, inc::sp, jump::jump],
+            &[read::sp, read::ind, inc::sp],
+            &[read::sp, read::ind, inc::sp],
+            &[jump::jump],
         ]),
         Opcode::RetC => ctl.push_cycles(&[
             &[carry],
-            &[read::sp, read::ind, inc::sp, read::sp],
-            &[read::ind, inc::sp, jump::jump],
+            &[read::sp, read::ind, inc::sp],
+            &[read::sp, read::ind, inc::sp],
+            &[jump::jump],
         ]),
 
         Opcode::Rst00 => ctl.push_cycles(&[

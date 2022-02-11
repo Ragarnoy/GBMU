@@ -10,6 +10,27 @@ pub const TILEDATA_START_1: usize = 0x1000 / 16;
 #[cfg(feature = "serialization")]
 serde_big_array::big_array! { VramDataSize; Vram::SIZE }
 
+#[derive(Clone, Copy)]
+pub enum BankSelector {
+    Bank0,
+    Bank1,
+}
+
+impl Default for BankSelector {
+    fn default() -> BankSelector {
+        BankSelector::Bank0
+    }
+}
+
+impl From<BankSelector> for usize {
+    fn from(bank: BankSelector) -> usize {
+        match bank {
+            BankSelector::Bank0 => 0,
+            BankSelector::Bank1 => 1,
+        }
+    }
+}
+
 /// Contains operations to read more easily the differents values of the vram.
 #[cfg_attr(
     feature = "serialization",
@@ -17,23 +38,24 @@ serde_big_array::big_array! { VramDataSize; Vram::SIZE }
 )]
 pub struct Vram {
     #[cfg_attr(feature = "serialization", serde(with = "VramDataSize"))]
-    data: [u8; Vram::SIZE as usize],
+    data: Vec<[u8; Vram::SIZE as usize]>,
     lock: Option<Lock>,
 }
 
 impl Vram {
     pub const SIZE: usize = 0x2000;
 
-    pub fn new() -> Self {
+    pub fn new(cgb_enabled: bool) -> Self {
         Vram {
-            data: [0x00; Self::SIZE as usize],
+            data: vec![[0x00; Self::SIZE]; if cgb_enabled { 2 } else { 1 }],
             lock: None,
         }
     }
 
-    pub fn read(&self, addr: usize) -> PPUResult<u8> {
+    pub fn read(&self, addr: usize, bank: Option<BankSelector>) -> PPUResult<u8> {
+        let bank_index: usize = bank.unwrap_or_default().into();
         if addr < Self::SIZE {
-            Ok(self.data[addr])
+            Ok(self.data[bank_index][addr])
         } else {
             Err(PPUError::OutOfBound {
                 value: addr,
@@ -43,9 +65,10 @@ impl Vram {
         }
     }
 
-    pub fn write(&mut self, addr: usize, value: u8) -> PPUResult<()> {
+    pub fn write(&mut self, addr: usize, value: u8, bank: Option<BankSelector>) -> PPUResult<()> {
+        let bank_index: usize = bank.unwrap_or_default().into();
         if addr < Self::SIZE {
-            self.data[addr] = value;
+            self.data[bank_index][addr] = value;
             Ok(())
         } else {
             Err(PPUError::OutOfBound {
@@ -67,6 +90,7 @@ impl Vram {
         pos: usize,
         map_area_bit: bool,
         data_area_bit: bool,
+        bank: Option<BankSelector>,
     ) -> PPUResult<usize> {
         if pos > TILEMAP_POSITION_MAX {
             return Err(PPUError::OutOfBound {
@@ -75,10 +99,11 @@ impl Vram {
                 max_bound: TILEMAP_POSITION_MAX,
             });
         }
+        let bank_index: usize = bank.unwrap_or_default().into();
         let index = if map_area_bit {
-            self.data[TILEMAP_START_1 + pos]
+            self.data[bank_index][TILEMAP_START_1 + pos]
         } else {
-            self.data[TILEMAP_START_0 + pos]
+            self.data[bank_index][TILEMAP_START_0 + pos]
         };
         if data_area_bit {
             Ok(index as usize)
@@ -92,8 +117,9 @@ impl Vram {
     ///
     /// ### Parameters
     ///  - **pos**: position of the couple of bytes to be interpreted as pixels values.
-    pub fn read_8_pixels(&self, pos: usize) -> PPUResult<[u8; 8]> {
+    pub fn read_8_pixels(&self, pos: usize, bank: Option<BankSelector>) -> PPUResult<[u8; 8]> {
         let mut pixels = [0; 8];
+        let bank_index: usize = bank.unwrap_or_default().into();
         if pos > TILEDATA_ADRESS_MAX - 1 {
             return Err(PPUError::OutOfBound {
                 value: pos,
@@ -101,8 +127,8 @@ impl Vram {
                 max_bound: TILEDATA_ADRESS_MAX - 1,
             });
         }
-        let byte_a = self.data[pos];
-        let byte_b = self.data[pos + 1];
+        let byte_a = self.data[bank_index][pos];
+        let byte_b = self.data[bank_index][pos + 1];
         for (i, pixel) in pixels.iter_mut().enumerate() {
             let bit = 0b0000_0001 << i;
             *pixel = if i > 0 {
@@ -119,7 +145,12 @@ impl Vram {
     /// ### Parameters
     ///  - **tile_pos**: The position of the tile to get the line from.
     ///  - **line**: The number of the line to return.
-    pub fn read_tile_line(&self, tile_pos: usize, line: usize) -> PPUResult<[u8; 8]> {
+    pub fn read_tile_line(
+        &self,
+        tile_pos: usize,
+        line: usize,
+        bank: Option<BankSelector>,
+    ) -> PPUResult<[u8; 8]> {
         if line > 7 {
             return Err(PPUError::OutOfBound {
                 value: line,
@@ -127,7 +158,7 @@ impl Vram {
                 max_bound: 7,
             });
         }
-        self.read_8_pixels((tile_pos * 8 + line) * 2)
+        self.read_8_pixels((tile_pos * 8 + line) * 2, bank)
     }
 
     /// Return all the pixel values of a tile.
@@ -136,7 +167,7 @@ impl Vram {
     ///
     /// ### Parameters
     ///  - **pos**: position of the first byte of the tile.
-    pub fn read_8x8_tile(&self, pos: usize) -> PPUResult<[[u8; 8]; 8]> {
+    pub fn read_8x8_tile(&self, pos: usize, bank: Option<BankSelector>) -> PPUResult<[[u8; 8]; 8]> {
         let mut tile = [[0; 8]; 8];
         if pos * 8 * 2 > TILEDATA_ADRESS_MAX + 1 - 8 * 2 {
             return Err(PPUError::OutOfBound {
@@ -146,25 +177,29 @@ impl Vram {
             });
         }
         for (i, row) in tile.iter_mut().enumerate() {
-            *row = self.read_tile_line(pos, i)?;
+            *row = self.read_tile_line(pos, i, bank)?;
         }
         Ok(tile)
     }
 
-    pub fn overwrite(&mut self, data: &[u8; Self::SIZE as usize]) {
-        self.data = *data;
+    pub fn overwrite(&mut self, data: &[u8; Self::SIZE as usize], bank: Option<BankSelector>) {
+        let bank_index: usize = bank.unwrap_or_default().into();
+        self.data[bank_index] = *data;
     }
 }
 
 impl From<[u8; Vram::SIZE]> for Vram {
     fn from(data: [u8; Vram::SIZE]) -> Vram {
-        Vram { data, lock: None }
+        Vram {
+            data: vec![data],
+            lock: None,
+        }
     }
 }
 
 impl Default for Vram {
     fn default() -> Vram {
-        Vram::new()
+        Vram::new(false)
     }
 }
 
@@ -188,10 +223,10 @@ mod tests {
 
     #[test]
     fn read_8_pixels() {
-        let mut vram = Vram::new();
-        vram.data[42] = 0x33;
-        vram.data[43] = 0x66;
-        let pixels = vram.read_8_pixels(42).unwrap();
+        let mut vram = Vram::default();
+        vram.data[0][42] = 0x33;
+        vram.data[0][43] = 0x66;
+        let pixels = vram.read_8_pixels(42, None).unwrap();
         assert_eq!(pixels[0], 1, "pixel 0 wrong");
         assert_eq!(pixels[1], 3, "pixel 1 wrong");
         assert_eq!(pixels[2], 2, "pixel 2 wrong");
@@ -204,7 +239,7 @@ mod tests {
 
     #[test]
     fn read_pixel_out_of_bound() {
-        let vram = Vram::new();
-        vram.read_8_pixels(0x17FF).unwrap_err();
+        let vram = Vram::default();
+        vram.read_8_pixels(0x17FF, None).unwrap_err();
     }
 }

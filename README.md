@@ -30,24 +30,24 @@ rustup component add clippy rustfmt
 
 ### For Linux
 
-Building this project on linux requires `cmake` and `gtk3`.
+Building this project on linux requires `cmake`.
 
 #### using apt
 
 ```sh
-apt update && apt install cmake libgtk-3-dev
+apt update && apt install cmake
 ```
 
 #### using pacman
 
 ```sh
-pacman -Sy cmake gtk3
+pacman -Sy cmake
 ```
 
 #### using brew
 
 ```sh
-brew install cmake gtk+3
+brew install cmake
 ```
 
 ### For MacOS

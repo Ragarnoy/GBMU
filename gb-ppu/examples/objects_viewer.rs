@@ -53,7 +53,7 @@ pub fn main() {
         render::RenderImage::<SPRITE_LIST_RENDER_WIDTH, SPRITE_LIST_RENDER_HEIGHT>::with_bar_size(
             bar_pixels_size as f32,
         );
-    let ppu = Ppu::new();
+    let ppu = Ppu::default();
     let ppu_mem = ppu.memory();
     let ppu_reg = ppu.registers();
     let dumps = [

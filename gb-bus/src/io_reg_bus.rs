@@ -1,6 +1,12 @@
 use crate::{Addr, Address, Area, Error, FileOperation, IORegArea};
 use std::{cell::RefCell, collections::BTreeMap, rc::Rc};
 
+macro_rules! new_chardev {
+    () => {
+        std::rc::Rc::new(std::cell::RefCell::new(crate::generic::CharDevice(0)))
+    };
+}
+
 type IORegElement = dyn FileOperation<Addr<IORegArea>, IORegArea>;
 type IORegNode = Rc<RefCell<IORegElement>>;
 
@@ -46,23 +52,8 @@ where
     }
 }
 
-macro_rules! new_chardev {
-    () => {
-        std::rc::Rc::new(std::cell::RefCell::new(crate::generic::CharDevice(0)))
-    };
-}
-
-#[derive(Default)]
-pub struct IORegBusBuilder {
-    areas: BTreeMap<IORegArea, IORegNode>,
-}
-
-impl IORegBusBuilder {
-    pub fn with_area(
-        &mut self,
-        area: IORegArea,
-        handler: Rc<RefCell<dyn FileOperation<Addr<IORegArea>, IORegArea>>>,
-    ) -> &mut Self {
+impl IORegBus {
+    pub fn with_area(&mut self, area: IORegArea, handler: IORegNode) -> &mut Self {
         self.areas.insert(area, handler);
         self
     }
@@ -153,15 +144,5 @@ impl IORegBusBuilder {
             .with_area(IORegArea::Hdma3, hdma.clone())
             .with_area(IORegArea::Hdma4, hdma.clone())
             .with_area(IORegArea::Hdma5, hdma)
-    }
-
-    pub fn build(self) -> IORegBus {
-        IORegBus { areas: self.areas }
-    }
-}
-
-impl From<IORegBus> for IORegBusBuilder {
-    fn from(bus: IORegBus) -> Self {
-        Self { areas: bus.areas }
     }
 }
