@@ -196,8 +196,19 @@ impl Game {
                 self.joypad.borrow_mut().deref_mut(),
                 self.dma.borrow_mut().deref_mut()
             );
-            self.cycle_count += 1;
             self.check_scheduled_stop(!frame_not_finished);
+            #[cfg(feature = "cgb")]
+            if self.cpu.io_regs.borrow().fast_mode() {
+                cycles!(
+                    self.clock,
+                    &mut self.addr_bus,
+                    &mut self.cpu,
+                    self.timer.borrow_mut().deref_mut(),
+                    self.dma.borrow_mut().deref_mut()
+                );
+                self.check_scheduled_stop(!frame_not_finished);
+            }
+            self.cycle_count += 1;
             frame_not_finished
         } else {
             false

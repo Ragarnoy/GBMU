@@ -35,10 +35,22 @@ impl IORegisters {
         self.should_handle_interrupt() && self.is_interrupt_ready()
     }
 
-    /// Indicate when we need to switch between `normal speed <=> double speed`
     #[cfg(feature = "cgb")]
+    /// Indicate when we need to switch between `normal speed <=> double speed`
     pub fn need_to_change_speed(&self) -> bool {
         self.current_speed != self.desired_speed
+    }
+
+    #[cfg(feature = "cgb")]
+    /// Switch the current speed of the cpu
+    pub fn switch_speed(&mut self) {
+        self.current_speed = self.desired_speed;
+    }
+
+    #[cfg(feature = "cgb")]
+    /// Determine if we are in the double mode of the gameboy color
+    pub fn fast_mode(&self) -> bool {
+        self.current_speed
     }
 }
 
@@ -74,8 +86,13 @@ where
         }
     }
 
-    fn write(&mut self, v: u8, _addr: A) -> Result<(), gb_bus::Error> {
-        self.flag = v & !(IORegisters::FLAG_MASK);
+    fn write(&mut self, v: u8, addr: A) -> Result<(), gb_bus::Error> {
+        match addr.area_type() {
+            IORegArea::IF => self.flag = v & !(IORegisters::FLAG_MASK),
+            #[cfg(feature = "cgb")]
+            IORegArea::Key1 => self.desired_speed = v & 1 == 1,
+            _ => return Err(gb_bus::Error::bus_error(addr.into())),
+        }
         Ok(())
     }
 }
