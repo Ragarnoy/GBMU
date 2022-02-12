@@ -1,5 +1,5 @@
 use super::{Pixel, PixelFIFO};
-use crate::memory::Vram;
+use crate::memory::{BankSelector, Vram};
 use crate::registers::{LcdReg, Palette};
 use crate::Sprite;
 use crate::TILEMAP_TILE_DIM_COUNT;
@@ -182,17 +182,25 @@ impl PixelFetcher {
         match self.mode {
             FetchMode::Background => {
                 let tile_line = ((line + scy) & 0xff) % 8;
-                self.fetch_bg_win_row(vram, lcd_reg, tile_line)
+                if !self.cgb_enabled {
+                    self.fetch_bg_win_row_dmg(vram, lcd_reg, tile_line)
+                } else {
+                    self.fetch_bg_win_row_cgb(vram, lcd_reg, tile_line)
+                }
             }
             FetchMode::Window => {
                 let tile_line = ((self.win_line_counter - 1) as usize) % 8;
-                self.fetch_bg_win_row(vram, lcd_reg, tile_line)
+                if !self.cgb_enabled {
+                    self.fetch_bg_win_row_dmg(vram, lcd_reg, tile_line)
+                } else {
+                    self.fetch_bg_win_row_cgb(vram, lcd_reg, tile_line)
+                }
             }
             FetchMode::Sprite(sprite) => self.fetch_spr_row(vram, lcd_reg, line, &sprite),
         }
     }
 
-    fn fetch_bg_win_row(
+    fn fetch_bg_win_row_dmg(
         &mut self,
         vram: &dyn Deref<Target = Vram>,
         lcd_reg: &dyn Deref<Target = LcdReg>,
@@ -219,6 +227,33 @@ impl PixelFetcher {
                 }
             }
             Err(err) => log::error!("Failed to fetch background/window row of pixel: {}", err),
+        }
+    }
+
+    fn fetch_bg_win_row_cgb(
+        &mut self,
+        vram: &dyn Deref<Target = Vram>,
+        lcd_reg: &dyn Deref<Target = LcdReg>,
+        line: usize,
+    ) {
+        match (
+            vram.read_tile_line(self.tile, line, Some(BankSelector::Bank0)),
+            vram.read_tile_line(self.tile, line, Some(BankSelector::Bank1)),
+        ) {
+            (Ok(pixel_row), Ok(attributes_row)) => {
+                for color_id in pixel_row {
+                    self.pixels.push_front(Pixel::new(
+                        color_id,
+                        lcd_reg.pal_mono.bg().clone(),
+                        false,
+                    ));
+                }
+            }
+            (Err(err), _) => log::error!("Failed to fetch background/window row of pixel: {}", err),
+            (_, Err(err)) => log::error!(
+                "Failed to fetch background/window row of attributes: {}",
+                err
+            ),
         }
     }
 
