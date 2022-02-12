@@ -10,8 +10,6 @@ use crate::{
     SPRITE_RENDER_HEIGHT, SPRITE_RENDER_WIDTH, TILEMAP_DIM, TILEMAP_TILE_COUNT, TILESHEET_HEIGHT,
     TILESHEET_TILE_COUNT, TILESHEET_WIDTH,
 };
-#[cfg(feature = "serialization")]
-use de_ser::PpuDeSer;
 use gb_bus::{Area, Bus};
 use gb_clock::{Tick, Ticker};
 use gb_lcd::render::{RenderData, SCREEN_HEIGHT, SCREEN_WIDTH};
@@ -45,13 +43,14 @@ macro_rules! view_border {
     derive(serde::Deserialize, serde::Serialize)
 )]
 #[derive(Clone)]
-#[cfg_attr(feature = "serialization", serde(into = "PpuDeSer", from = "PpuDeSer"))]
 pub struct Ppu {
     enabled: bool,
     vram: Rc<RefCell<Vram>>,
     oam: Rc<RefCell<Oam>>,
     lcd_reg: Rc<RefCell<LcdReg>>,
+    #[cfg_attr(feature = "serialization", serde(with = "de_ser::pixel_buffer"))]
     pixels: RenderData<SCREEN_WIDTH, SCREEN_HEIGHT>,
+    #[cfg_attr(feature = "serialization", serde(with = "de_ser::pixel_buffer"))]
     next_pixels: RenderData<SCREEN_WIDTH, SCREEN_HEIGHT>,
     pixel_fifo: PixelFIFO,
     pixel_fetcher: PixelFetcher,

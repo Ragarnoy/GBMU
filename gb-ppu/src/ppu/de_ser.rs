@@ -1,102 +1,72 @@
-use super::Ppu;
-use crate::drawing::{PixelFIFO, PixelFetcher, State};
-use crate::memory::{Oam, Vram};
-use crate::registers::LcdReg;
-use crate::Sprite;
-use gb_lcd::render::{SCREEN_HEIGHT, SCREEN_WIDTH};
+pub mod pixel_buffer {
+    use super::super::Vram;
+    use gb_lcd::render::{SCREEN_HEIGHT, SCREEN_WIDTH};
+    use serde::{
+        de::{Error, Expected, SeqAccess, Visitor},
+        ser::SerializeSeq,
+        Deserializer, Serializer,
+    };
+    use std::fmt;
 
-use std::cell::RefCell;
-use std::rc::Rc;
+    const PIXEL_BUFFER_SIZE: usize = SCREEN_HEIGHT * SCREEN_WIDTH * 3;
 
-serde_big_array::big_array! { PixelBufferSize; SCREEN_HEIGHT * SCREEN_WIDTH * 3 }
+    type PixelsBuffer = [[[u8; 3]; SCREEN_WIDTH]; SCREEN_HEIGHT];
 
-#[derive(Clone, serde::Deserialize, serde::Serialize)]
-pub struct PpuDeSer {
-    enabled: bool,
-    vram: Rc<RefCell<Vram>>,
-    oam: Rc<RefCell<Oam>>,
-    lcd_reg: Rc<RefCell<LcdReg>>,
-    #[serde(with = "PixelBufferSize")]
-    pixels: [u8; SCREEN_WIDTH * SCREEN_HEIGHT * 3],
-    #[serde(with = "PixelBufferSize")]
-    next_pixels: [u8; SCREEN_WIDTH * SCREEN_HEIGHT * 3],
-    pixel_fifo: PixelFIFO,
-    pixel_fetcher: PixelFetcher,
-    state: State,
-    scanline_sprites: Vec<Sprite>,
-    pixel_discarded: u8,
-    scx: u8,
-}
-
-impl PpuDeSer {
-    pub fn flatten(
-        pixels: [[[u8; 3]; SCREEN_WIDTH]; SCREEN_HEIGHT],
-    ) -> [u8; SCREEN_HEIGHT * SCREEN_WIDTH * 3] {
-        let mut pixels_flatten = [0; SCREEN_HEIGHT * SCREEN_WIDTH * 3];
-        for (l, line) in pixels.into_iter().enumerate() {
-            for (p, pixel) in line.into_iter().enumerate() {
-                for (b, byte) in pixel.into_iter().enumerate() {
-                    pixels_flatten[l * SCREEN_WIDTH + p * 3 + b] = byte;
+    pub fn serialize<S>(pixels: &PixelsBuffer, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut seq = serializer.serialize_seq(Some(PIXEL_BUFFER_SIZE))?;
+        for line in pixels.into_iter() {
+            for pixel in line.into_iter() {
+                for byte in pixel.into_iter() {
+                    seq.serialize_element(byte)?;
                 }
             }
         }
-        pixels_flatten
+        seq.end()
     }
 
-    pub fn unflatten(
-        pixels_flat: [u8; SCREEN_HEIGHT * SCREEN_WIDTH * 3],
-    ) -> [[[u8; 3]; SCREEN_WIDTH]; SCREEN_HEIGHT] {
-        let mut pixels = [[[0; 3]; SCREEN_WIDTH]; SCREEN_HEIGHT];
-        for (b, byte) in pixels_flat.into_iter().enumerate() {
-            let p = b / 3;
-            pixels[p / SCREEN_WIDTH][p % SCREEN_WIDTH][b % 3] = byte;
-        }
-        pixels
-    }
-}
-
-impl From<Ppu> for PpuDeSer {
-    fn from(ppu: Ppu) -> PpuDeSer {
-        let pixel_flatten = PpuDeSer::flatten(ppu.pixels);
-        let next_pixel_flatten = PpuDeSer::flatten(ppu.next_pixels);
-        PpuDeSer {
-            enabled: ppu.enabled,
-            vram: ppu.vram,
-            oam: ppu.oam,
-            lcd_reg: ppu.lcd_reg,
-
-            pixels: pixel_flatten,
-            next_pixels: next_pixel_flatten,
-
-            pixel_fifo: ppu.pixel_fifo,
-            pixel_fetcher: ppu.pixel_fetcher,
-            state: ppu.state,
-            scanline_sprites: ppu.scanline_sprites,
-            pixel_discarded: ppu.pixel_discarded,
-            scx: ppu.scx,
+    struct ExpectedPixelBuffer;
+    impl Expected for ExpectedPixelBuffer {
+        fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+            write!(formatter, "a pixel buffer with {} bytes value", Vram::SIZE)
         }
     }
-}
 
-impl From<PpuDeSer> for Ppu {
-    fn from(ppu_flat: PpuDeSer) -> Ppu {
-        let pixel = PpuDeSer::unflatten(ppu_flat.pixels);
-        let next_pixel = PpuDeSer::unflatten(ppu_flat.next_pixels);
-        Ppu {
-            enabled: ppu_flat.enabled,
-            vram: ppu_flat.vram,
-            oam: ppu_flat.oam,
-            lcd_reg: ppu_flat.lcd_reg,
+    struct DataVisitor;
 
-            pixels: pixel,
-            next_pixels: next_pixel,
+    impl<'de> Visitor<'de> for DataVisitor {
+        type Value = PixelsBuffer;
 
-            pixel_fifo: ppu_flat.pixel_fifo,
-            pixel_fetcher: ppu_flat.pixel_fetcher,
-            state: ppu_flat.state,
-            scanline_sprites: ppu_flat.scanline_sprites,
-            pixel_discarded: ppu_flat.pixel_discarded,
-            scx: ppu_flat.scx,
+        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+            formatter.write_str("a pixel buffer")
         }
+
+        fn visit_seq<S>(self, mut access: S) -> Result<PixelsBuffer, S::Error>
+        where
+            S: SeqAccess<'de>,
+        {
+            let mut pixels = [[[0; 3]; SCREEN_WIDTH]; SCREEN_HEIGHT];
+            let mut b = 0;
+            while let Some(byte) = access.next_element::<u8>()? {
+                if b < PIXEL_BUFFER_SIZE {
+                    let p = b / 3;
+                    pixels[p / SCREEN_WIDTH][p % SCREEN_WIDTH][b % 3] = byte;
+                }
+                b += 1;
+            }
+            if b > PIXEL_BUFFER_SIZE {
+                return Err(Error::invalid_length(b, &ExpectedPixelBuffer));
+            }
+            Ok(pixels)
+        }
+    }
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<PixelsBuffer, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        deserializer.deserialize_seq(DataVisitor {})
     }
 }
