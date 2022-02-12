@@ -1,3 +1,6 @@
+#[cfg(feature = "serialization")]
+mod de_ser;
+
 use super::{Lock, Lockable};
 use crate::error::{PPUError, PPUResult};
 
@@ -6,9 +9,6 @@ pub const TILEMAP_POSITION_MAX: usize = 0x3FF;
 pub const TILEMAP_START_0: usize = 0x1800;
 pub const TILEMAP_START_1: usize = 0x1C00;
 pub const TILEDATA_START_1: usize = 0x1000 / 16;
-
-#[cfg(feature = "serialization")]
-serde_big_array::big_array! { VramDataSize; Vram::SIZE }
 
 #[derive(Clone, Copy)]
 pub enum BankSelector {
@@ -37,7 +37,7 @@ impl From<BankSelector> for usize {
     derive(serde::Deserialize, serde::Serialize)
 )]
 pub struct Vram {
-    #[cfg_attr(feature = "serialization", serde(with = "VramDataSize"))]
+    #[cfg_attr(feature = "serialization", serde(with = "de_ser::data"))]
     data: Vec<[u8; Vram::SIZE as usize]>,
     lock: Option<Lock>,
 }
