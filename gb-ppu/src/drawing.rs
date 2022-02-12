@@ -1,3 +1,4 @@
+mod bg_tile_attributes;
 mod mode;
 mod pixel;
 mod pixel_fetcher;
