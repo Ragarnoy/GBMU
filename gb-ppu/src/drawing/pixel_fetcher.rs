@@ -22,6 +22,7 @@ impl Default for FetchMode {
 }
 
 pub struct PixelFetcher {
+    cgb_enabled: bool,
     pixels: VecDeque<Pixel>,
     pixels_sprite: VecDeque<Pixel>,
     mode: FetchMode,
@@ -35,8 +36,9 @@ pub struct PixelFetcher {
 impl PixelFetcher {
     pub const WINDOW_BASE_OFFSET: usize = 7;
 
-    pub fn new() -> Self {
+    pub fn new(cgb_enabled: bool) -> Self {
         PixelFetcher {
+            cgb_enabled,
             pixels: VecDeque::with_capacity(8),
             pixels_sprite: VecDeque::with_capacity(8),
             mode: FetchMode::default(),
@@ -282,5 +284,11 @@ impl PixelFetcher {
         } else {
             false
         }
+    }
+}
+
+impl Default for PixelFetcher {
+    fn default() -> PixelFetcher {
+        PixelFetcher::new(false)
     }
 }
