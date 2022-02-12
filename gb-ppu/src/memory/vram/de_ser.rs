@@ -7,7 +7,9 @@ pub mod data {
     };
     use std::fmt;
 
-    pub fn serialize<S>(field: &Vec<[u8; Vram::SIZE]>, serializer: S) -> Result<S::Ok, S::Error>
+    type DataBuffer = Vec<[u8; Vram::SIZE]>;
+
+    pub fn serialize<S>(field: &DataBuffer, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
@@ -29,17 +31,17 @@ pub mod data {
     struct DataVisitor;
 
     impl<'de> Visitor<'de> for DataVisitor {
-        type Value = Vec<[u8; Vram::SIZE]>;
+        type Value = DataBuffer;
 
         fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
             formatter.write_str("a data buffer")
         }
 
-        fn visit_seq<S>(self, mut access: S) -> Result<Self::Value, S::Error>
+        fn visit_seq<S>(self, mut access: S) -> Result<DataBuffer, S::Error>
         where
             S: SeqAccess<'de>,
         {
-            let mut seq: Vec<[u8; Vram::SIZE]> = Vec::new();
+            let mut seq: DataBuffer = Vec::new();
             while let Some(value) = access.next_element::<Vec<u8>>()? {
                 let len = value.len();
                 let array: [u8; Vram::SIZE] = value
@@ -51,7 +53,7 @@ pub mod data {
         }
     }
 
-    pub fn deserialize<'de, D>(deserializer: D) -> Result<Vec<[u8; Vram::SIZE]>, D::Error>
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<DataBuffer, D::Error>
     where
         D: Deserializer<'de>,
     {
