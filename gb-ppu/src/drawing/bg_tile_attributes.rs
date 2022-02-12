@@ -33,8 +33,8 @@ impl BGTileAttributes {
     }
 }
 
-impl From<u8> for BGTileAttributes {
-    fn from(byte: u8) -> BGTileAttributes {
-        BGTileAttributes { bits: byte }
+impl From<usize> for BGTileAttributes {
+    fn from(byte: usize) -> BGTileAttributes {
+        BGTileAttributes { bits: byte as u8 }
     }
 }
