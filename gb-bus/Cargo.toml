@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 rand = { version = "0.8.4", features = ["small_rng"] }
-serde = { version = "1.0", features = ["std", "derive"], optional = true }
+serde = { version = "1.0", optional = true }
 log = "0.4"
 
 [features]

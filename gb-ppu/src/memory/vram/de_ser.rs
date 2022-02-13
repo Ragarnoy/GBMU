@@ -15,7 +15,7 @@ pub mod data {
     {
         let mut seq = serializer.serialize_seq(Some(field.len()))?;
         for array in field {
-            let vec = Vec::from(array.as_slice());
+            let vec = array.to_vec();
             seq.serialize_element(&vec)?;
         }
         seq.end()
