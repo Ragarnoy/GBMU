@@ -270,21 +270,30 @@ impl PixelFetcher {
         lcd_reg: &dyn Deref<Target = LcdReg>,
         line: usize,
     ) {
-        match (
-            vram.read_tile_line(self.tile, line, Some(BankSelector::Bank0)),
-            self.tile_attributes.take(),
-        ) {
-            (Ok(pixel_row), Some(attributes)) => {
-                for color_id in pixel_row {
-                    self.pixels.push_front(Pixel::new(
-                        color_id,
-                        lcd_reg.pal_mono.bg().clone(),
-                        false,
-                    ));
+        if let Some(attributes) = self.tile_attributes.take() {
+            let tile_bank = Some(attributes.bank_nb());
+            let tile_line = if attributes.v_flip() { 7 - line } else { line };
+            match vram.read_tile_line(self.tile, tile_line, tile_bank) {
+                Ok(pixel_row) => {
+                    let pixel_iter: Vec<u8> = if attributes.h_flip() {
+                        pixel_row.into_iter().rev().collect()
+                    } else {
+                        pixel_row.into_iter().collect()
+                    };
+                    for color_id in pixel_iter {
+                        self.pixels.push_front(Pixel::new(
+                            color_id,
+                            lcd_reg.pal_mono.bg().clone(),
+                            attributes.bg_priority(),
+                        ));
+                    }
+                }
+                Err(err) => {
+                    log::error!("Failed to fetch background/window row of pixel: {}", err)
                 }
             }
-            (Err(err), _) => log::error!("Failed to fetch background/window row of pixel: {}", err),
-            (_, None) => log::error!("Missing background/window tile attributes"),
+        } else {
+            log::error!("Missing background/window tile attributes");
         }
     }
 

@@ -10,7 +10,7 @@ impl BGTileAttributes {
     const H_FLIP: u8 = 0b10_0000;
 
     const VRAM_BANK_NB: u8 = 0b1000;
-    const PALETTE_NB: u8 = 0b111;
+    // const PALETTE_NB: u8 = 0b111;
 
     pub fn bg_priority(&self) -> bool {
         self.bits & Self::BG_TO_OAM_PRIORITY != 0
