@@ -173,7 +173,7 @@ impl PixelFetcher {
                         0xFF
                     });
                 if self.cgb_enabled {
-                    self.get_tile_attributes(vram, lcd_reg, tile_pos_in_vram, false);
+                    self.get_tile_attributes(vram, lcd_reg, tile_pos_in_vram, true);
                 }
             }
             FetchMode::Sprite(_) => {}
