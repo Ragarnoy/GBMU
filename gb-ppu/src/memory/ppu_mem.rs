@@ -2,7 +2,7 @@ use super::{Lock, Lockable, Oam, Vram};
 use crate::error::{PPUError, PPUResult};
 use crate::UNDEFINED_VALUE;
 use gb_bus::{Addr, Address, Area, Error, FileOperation, InternalLock, MemoryLock};
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
 /// Allow external structures to read/write the memory of the ppu.
@@ -11,14 +11,19 @@ use std::rc::Rc;
 pub struct PPUMem {
     vram: Rc<RefCell<Vram>>,
     oam: Rc<RefCell<Oam>>,
+    vbk_ref: Option<Rc<Cell<u8>>>,
 }
 
 impl PPUMem {
     /// Build a PPUMem from references counters of Vram and Oam.
     ///
     /// This function is used by [Ppu.memory()](crate::Ppu::memory), you should not need to call this constructor yourself.
-    pub fn new(vram: Rc<RefCell<Vram>>, oam: Rc<RefCell<Oam>>) -> Self {
-        PPUMem { vram, oam }
+    pub fn new(
+        vram: Rc<RefCell<Vram>>,
+        oam: Rc<RefCell<Oam>>,
+        vbk_ref: Option<Rc<Cell<u8>>>,
+    ) -> Self {
+        PPUMem { vram, oam, vbk_ref }
     }
 
     /// Completely replace the vram of the ppu,if it is not currently using it.
@@ -159,7 +164,7 @@ mod read {
     fn vram() {
         let vram = Rc::new(RefCell::new([0x42; Vram::SIZE].into()));
         let oam = Rc::new(RefCell::new(Oam::default()));
-        let ppu_mem = PPUMem::new(vram, oam);
+        let ppu_mem = PPUMem::new(vram, oam, None);
 
         let res = ppu_mem
             .read(TestAddress::root_vram())
@@ -171,7 +176,7 @@ mod read {
     fn oam() {
         let vram = Rc::new(RefCell::new(Vram::default()));
         let oam = Rc::new(RefCell::new([0x42; Oam::SIZE].into()));
-        let ppu_mem = PPUMem::new(vram, oam);
+        let ppu_mem = PPUMem::new(vram, oam, None);
 
         let res = ppu_mem
             .read(TestAddress::root_oam())
@@ -193,7 +198,7 @@ mod write {
     fn vram() {
         let vram = Rc::new(RefCell::new(Vram::default()));
         let oam = Rc::new(RefCell::new(Oam::default()));
-        let mut ppu_mem = PPUMem::new(vram, oam);
+        let mut ppu_mem = PPUMem::new(vram, oam, None);
 
         ppu_mem
             .write(0x42, TestAddress::root_vram())
@@ -208,7 +213,7 @@ mod write {
     fn oam() {
         let vram = Rc::new(RefCell::new(Vram::default()));
         let oam = Rc::new(RefCell::new(Oam::default()));
-        let mut ppu_mem = PPUMem::new(vram, oam);
+        let mut ppu_mem = PPUMem::new(vram, oam, None);
 
         ppu_mem
             .write(0x42, TestAddress::root_oam())
