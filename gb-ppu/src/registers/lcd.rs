@@ -12,7 +12,9 @@ pub use window_pos::WindowPos;
 
 use super::{Register, RegisterArray};
 use gb_bus::{Address, Error, IORegArea};
+use std::cell::Cell;
 use std::convert::TryInto;
+use std::rc::Rc;
 
 /// Regroup the registers of the Lcd IOregister area.
 #[derive(Default, Debug)]
@@ -22,6 +24,7 @@ pub struct LcdReg {
     pub scrolling: Scrolling,
     pub pal_mono: PalettesMono,
     pub window_pos: WindowPos,
+    pub vbk: Rc<Cell<u8>>,
 }
 
 impl LcdReg {
@@ -101,6 +104,7 @@ impl From<[u8; LcdReg::SIZE]> for LcdReg {
             scrolling: scroll.into(),
             pal_mono: pal.into(),
             window_pos: window.into(),
+            vbk: Rc::new(Cell::new(0)),
         }
     }
 }
