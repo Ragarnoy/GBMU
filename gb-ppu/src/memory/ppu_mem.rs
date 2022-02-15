@@ -104,9 +104,14 @@ where
     fn read(&self, addr: A) -> Result<u8, Error> {
         match addr.area_type() {
             Area::Vram => match self.vram.try_borrow() {
-                Ok(vram) => vram
-                    .read(addr.get_address(), None)
-                    .map_err(|_| Error::SegmentationFault(addr.into())),
+                Ok(vram) => {
+                    let bank_selector = self
+                        .vbk_ref
+                        .as_ref()
+                        .map(|vbk| vbk.get().try_into().unwrap());
+                    vram.read(addr.get_address(), bank_selector)
+                        .map_err(|_| Error::SegmentationFault(addr.into()))
+                }
                 Err(err) => {
                     log::error!("failed vram read: {}", err);
                     Ok(UNDEFINED_VALUE)
@@ -129,9 +134,14 @@ where
     fn write(&mut self, v: u8, addr: A) -> Result<(), Error> {
         match addr.area_type() {
             Area::Vram => match self.vram.try_borrow_mut() {
-                Ok(mut vram) => vram
-                    .write(addr.get_address(), v, None)
-                    .map_err(|_| Error::SegmentationFault(addr.into())),
+                Ok(mut vram) => {
+                    let bank_selector = self
+                        .vbk_ref
+                        .as_ref()
+                        .map(|vbk| vbk.get().try_into().unwrap());
+                    vram.write(addr.get_address(), v, bank_selector)
+                        .map_err(|_| Error::SegmentationFault(addr.into()))
+                }
                 Err(err) => {
                     log::error!("failed vram write: {}", err);
                     Ok(())

@@ -28,6 +28,21 @@ impl From<BankSelector> for usize {
     }
 }
 
+impl TryFrom<u8> for BankSelector {
+    type Error = PPUError;
+    fn try_from(byte: u8) -> PPUResult<BankSelector> {
+        match byte {
+            0 => Ok(BankSelector::Bank0),
+            1 => Ok(BankSelector::Bank1),
+            b => Err(PPUError::OutOfBound {
+                max_bound: 1,
+                min_bound: 0,
+                value: b as usize,
+            }),
+        }
+    }
+}
+
 /// Contains operations to read more easily the differents values of the vram.
 pub struct Vram {
     data: Vec<[u8; Vram::SIZE as usize]>,
