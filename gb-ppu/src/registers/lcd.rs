@@ -16,9 +16,6 @@ use std::cell::Cell;
 use std::convert::TryInto;
 use std::rc::Rc;
 
-const VBK_UNUSED_BITS: u8 = 0b1111_1110;
-const VBK_SIZE: usize = 1;
-
 /// Regroup the registers of the Lcd IOregister area.
 #[derive(Default, Debug)]
 pub struct LcdReg {
@@ -31,12 +28,15 @@ pub struct LcdReg {
 }
 
 impl LcdReg {
+    pub const VBK_UNUSED_BITS: u8 = 0b1111_1110;
+    const VBK_SIZE: usize = 1;
+
     pub const SIZE: usize = Control::SIZE
         + Stat::SIZE
         + Scrolling::SIZE
         + PalettesMono::SIZE
         + WindowPos::SIZE
-        + VBK_SIZE;
+        + Self::VBK_SIZE;
 
     pub fn new() -> Self {
         LcdReg::default()
@@ -102,7 +102,7 @@ impl LcdReg {
             Wx => self.window_pos.wx = v,
 
             #[cfg(feature = "cgb")]
-            Vbk => self.vbk.set(v | VBK_UNUSED_BITS),
+            Vbk => self.vbk.set(v | Self::VBK_UNUSED_BITS),
 
             _ => return Err(Error::SegmentationFault(addr.into())),
         };
@@ -115,7 +115,7 @@ impl From<[u8; LcdReg::SIZE]> for LcdReg {
         let scroll: [u8; 4] = bytes[2..=5].try_into().expect("bad bytes for LcdReg");
         let pal: [u8; 3] = bytes[6..=8].try_into().expect("bad bytes for LcdReg");
         let window: [u8; 2] = bytes[9..=10].try_into().expect("bad bytes for LcdReg");
-        let vbk = Rc::new(Cell::new(bytes[11] | VBK_UNUSED_BITS));
+        let vbk = Rc::new(Cell::new(bytes[11] | Self::VBK_UNUSED_BITS));
         LcdReg {
             control: bytes[0].into(),
             stat: bytes[1].into(),
