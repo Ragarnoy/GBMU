@@ -9,7 +9,7 @@ pub const TILEMAP_START_1: usize = 0x1C00;
 pub const TILEDATA_START_1: usize = 0x1000 / 16;
 
 const VBK_BANK_0: u8 = LcdReg::VBK_UNUSED_BITS;
-const VBK_BANK_1: u8 = LcdReg::VBK_UNUSED_BITS + 1;
+const VBK_BANK_1: u8 = LcdReg::VBK_UNUSED_BITS | 1;
 
 #[derive(Clone, Copy)]
 pub enum BankSelector {
