@@ -5,7 +5,7 @@ mod stat;
 mod window_pos;
 
 pub use control::Control;
-pub use palettes_mono::PalettesMono;
+pub use palettes_mono::{MonoPaletteRef, PalettesMono};
 pub use scrolling::Scrolling;
 pub use stat::Stat;
 pub use window_pos::WindowPos;
@@ -15,6 +15,10 @@ use gb_bus::{Address, Error, IORegArea};
 use std::convert::TryInto;
 
 /// Regroup the registers of the Lcd IOregister area.
+#[cfg_attr(
+    feature = "serialization",
+    derive(serde::Deserialize, serde::Serialize)
+)]
 #[derive(Default, Debug)]
 pub struct LcdReg {
     pub control: Control,

@@ -1,6 +1,10 @@
 use super::RegisterArray;
 use std::ops::{Index, IndexMut};
 
+#[cfg_attr(
+    feature = "serialization",
+    derive(serde::Deserialize, serde::Serialize)
+)]
 #[derive(Default, Clone, Copy, Debug)]
 pub struct WindowPos {
     pub wy: u8,

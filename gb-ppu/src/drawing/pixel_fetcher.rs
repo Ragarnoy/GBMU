@@ -1,13 +1,15 @@
 use super::{Pixel, PixelFIFO};
 use crate::memory::Vram;
-use crate::registers::{LcdReg, Palette};
+use crate::registers::{LcdReg, MonoPaletteRef};
 use crate::Sprite;
 use crate::TILEMAP_TILE_DIM_COUNT;
-use std::cell::Cell;
 use std::collections::VecDeque;
 use std::ops::Deref;
-use std::rc::Rc;
 
+#[cfg_attr(
+    feature = "serialization",
+    derive(serde::Deserialize, serde::Serialize)
+)]
 #[derive(Eq, PartialEq, Clone, Copy, Debug)]
 pub enum FetchMode {
     Background,
@@ -21,6 +23,11 @@ impl Default for FetchMode {
     }
 }
 
+#[cfg_attr(
+    feature = "serialization",
+    derive(serde::Deserialize, serde::Serialize)
+)]
+#[derive(Clone)]
 pub struct PixelFetcher {
     pixels: VecDeque<Pixel>,
     pixels_sprite: VecDeque<Pixel>,
@@ -202,17 +209,13 @@ impl PixelFetcher {
                     for color_id in row {
                         self.pixels.push_front(Pixel::new(
                             color_id,
-                            lcd_reg.pal_mono.bg().clone(),
+                            Some(MonoPaletteRef::BgWin),
                             false,
                         ));
                     }
                 } else {
                     for _ in row {
-                        self.pixels.push_front(Pixel::new(
-                            0,
-                            Rc::new(Cell::new(Palette::new_background())),
-                            false,
-                        ));
+                        self.pixels.push_front(Pixel::new(0, None, false));
                     }
                 }
             }
@@ -237,7 +240,7 @@ impl PixelFetcher {
                 for (color_id, _) in row {
                     self.pixels_sprite.push_front(Pixel::new(
                         color_id,
-                        sprite.get_palette(lcd_reg.pal_mono.obj()).clone(),
+                        Some(sprite.get_palette_ref()),
                         sprite.bg_win_priority(),
                     ));
                 }
