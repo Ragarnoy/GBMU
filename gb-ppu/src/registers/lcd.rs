@@ -12,7 +12,9 @@ pub use window_pos::WindowPos;
 
 use super::{Register, RegisterArray};
 use gb_bus::{Address, Error, IORegArea};
+use std::cell::Cell;
 use std::convert::TryInto;
+use std::rc::Rc;
 
 /// Regroup the registers of the Lcd IOregister area.
 #[cfg_attr(
@@ -26,11 +28,19 @@ pub struct LcdReg {
     pub scrolling: Scrolling,
     pub pal_mono: PalettesMono,
     pub window_pos: WindowPos,
+    pub vbk: Rc<Cell<u8>>,
 }
 
 impl LcdReg {
-    pub const SIZE: usize =
-        Control::SIZE + Stat::SIZE + Scrolling::SIZE + PalettesMono::SIZE + WindowPos::SIZE;
+    pub const VBK_UNUSED_BITS: u8 = 0b1111_1110;
+    const VBK_SIZE: usize = 1;
+
+    pub const SIZE: usize = Control::SIZE
+        + Stat::SIZE
+        + Scrolling::SIZE
+        + PalettesMono::SIZE
+        + WindowPos::SIZE
+        + Self::VBK_SIZE;
 
     pub fn new() -> Self {
         LcdReg::default()
@@ -41,6 +51,8 @@ impl LcdReg {
         u16: From<A>,
         A: Address<IORegArea>,
     {
+        #[cfg(feature = "cgb")]
+        use gb_bus::io_reg_area::IORegArea::Vbk;
         use gb_bus::io_reg_area::IORegArea::{
             Bgp, LcdControl, LcdStat, Ly, Lyc, Obp0, Obp1, Scx, Scy, Wx, Wy,
         };
@@ -60,6 +72,10 @@ impl LcdReg {
 
             Wy => Ok(self.window_pos.wy),
             Wx => Ok(self.window_pos.wx),
+
+            #[cfg(feature = "cgb")]
+            Vbk => Ok(self.vbk.get()),
+
             _ => Err(Error::SegmentationFault(addr.into())),
         }
     }
@@ -88,6 +104,10 @@ impl LcdReg {
 
             Wy => self.window_pos.wy = v,
             Wx => self.window_pos.wx = v,
+
+            #[cfg(feature = "cgb")]
+            Vbk => self.vbk.set(v | Self::VBK_UNUSED_BITS),
+
             _ => return Err(Error::SegmentationFault(addr.into())),
         };
         Ok(())
@@ -99,12 +119,14 @@ impl From<[u8; LcdReg::SIZE]> for LcdReg {
         let scroll: [u8; 4] = bytes[2..=5].try_into().expect("bad bytes for LcdReg");
         let pal: [u8; 3] = bytes[6..=8].try_into().expect("bad bytes for LcdReg");
         let window: [u8; 2] = bytes[9..=10].try_into().expect("bad bytes for LcdReg");
+        let vbk = Rc::new(Cell::new(bytes[11] | Self::VBK_UNUSED_BITS));
         LcdReg {
             control: bytes[0].into(),
             stat: bytes[1].into(),
             scrolling: scroll.into(),
             pal_mono: pal.into(),
             window_pos: window.into(),
+            vbk,
         }
     }
 }
@@ -114,6 +136,7 @@ impl From<LcdReg> for [u8; LcdReg::SIZE] {
         let scrolling: [u8; 4] = register.scrolling.into();
         let pal_mono: [u8; 3] = register.pal_mono.into();
         let window_pos: [u8; 2] = register.window_pos.into();
+        let vbk = register.vbk.get();
         [
             register.control.into(),
             register.stat.into(),
@@ -126,6 +149,7 @@ impl From<LcdReg> for [u8; LcdReg::SIZE] {
             pal_mono[2],
             window_pos[0],
             window_pos[1],
+            vbk,
         ]
     }
 }

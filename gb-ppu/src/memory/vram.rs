@@ -3,12 +3,16 @@ mod de_ser;
 
 use super::{Lock, Lockable};
 use crate::error::{PPUError, PPUResult};
+use crate::registers::LcdReg;
 
 pub const TILEDATA_ADRESS_MAX: usize = 0x17FF;
 pub const TILEMAP_POSITION_MAX: usize = 0x3FF;
 pub const TILEMAP_START_0: usize = 0x1800;
 pub const TILEMAP_START_1: usize = 0x1C00;
 pub const TILEDATA_START_1: usize = 0x1000 / 16;
+
+const VBK_BANK_0: u8 = LcdReg::VBK_UNUSED_BITS;
+const VBK_BANK_1: u8 = LcdReg::VBK_UNUSED_BITS | 1;
 
 #[derive(Clone, Copy)]
 pub enum BankSelector {
@@ -27,6 +31,21 @@ impl From<BankSelector> for usize {
         match bank {
             BankSelector::Bank0 => 0,
             BankSelector::Bank1 => 1,
+        }
+    }
+}
+
+impl TryFrom<u8> for BankSelector {
+    type Error = PPUError;
+    fn try_from(byte: u8) -> PPUResult<BankSelector> {
+        match byte {
+            VBK_BANK_0 => Ok(BankSelector::Bank0),
+            VBK_BANK_1 => Ok(BankSelector::Bank1),
+            b => Err(PPUError::OutOfBound {
+                max_bound: 1,
+                min_bound: 0,
+                value: b as usize,
+            }),
         }
     }
 }

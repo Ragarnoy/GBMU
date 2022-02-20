@@ -45,6 +45,7 @@ macro_rules! view_border {
 #[derive(Clone)]
 pub struct Ppu {
     enabled: bool,
+    cgb_enabled: bool,
     vram: Rc<RefCell<Vram>>,
     oam: Rc<RefCell<Oam>>,
     lcd_reg: Rc<RefCell<LcdReg>>,
@@ -64,6 +65,7 @@ impl Ppu {
     pub fn new(cgb_enabled: bool) -> Self {
         Ppu {
             enabled: false,
+            cgb_enabled,
             vram: Rc::new(RefCell::new(Vram::new(cgb_enabled))),
             oam: Rc::new(RefCell::new(Oam::new())),
             lcd_reg: Rc::new(RefCell::new(LcdReg::new())),
@@ -80,7 +82,15 @@ impl Ppu {
 
     /// Build and return a [PPUMem] struct to access/modify the memory of this ppu instance.
     pub fn memory(&self) -> PPUMem {
-        PPUMem::new(Rc::clone(&self.vram), Rc::clone(&self.oam))
+        PPUMem::new(
+            Rc::clone(&self.vram),
+            Rc::clone(&self.oam),
+            if self.cgb_enabled {
+                Some(Rc::clone(&self.lcd_reg.borrow().vbk))
+            } else {
+                None
+            },
+        )
     }
 
     /// Build and return a [PPURegisters] struct to access/modify the registers of this ppu instance.
