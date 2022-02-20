@@ -1,5 +1,9 @@
 use crate::{file_operation::Address, Area, FileOperation};
 
+#[cfg_attr(
+    feature = "serialization",
+    derive(serde::Deserialize, serde::Serialize)
+)]
 #[derive(Eq, PartialEq, Debug, Clone, Copy, PartialOrd, Ord)]
 pub enum Lock {
     Ppu,

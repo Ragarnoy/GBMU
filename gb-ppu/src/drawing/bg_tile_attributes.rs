@@ -1,5 +1,10 @@
 use crate::memory::BankSelector;
 
+#[cfg_attr(
+    feature = "serialization",
+    derive(serde::Deserialize, serde::Serialize)
+)]
+#[derive(Clone)]
 pub struct BGTileAttributes {
     bits: u8,
 }

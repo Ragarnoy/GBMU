@@ -1,3 +1,6 @@
+#[cfg(feature = "serialization")]
+mod de_ser;
+
 use super::{Lock, Lockable};
 use crate::error::{PPUError, PPUResult};
 
@@ -29,7 +32,12 @@ impl From<BankSelector> for usize {
 }
 
 /// Contains operations to read more easily the differents values of the vram.
+#[cfg_attr(
+    feature = "serialization",
+    derive(serde::Deserialize, serde::Serialize)
+)]
 pub struct Vram {
+    #[cfg_attr(feature = "serialization", serde(with = "de_ser::data"))]
     data: Vec<[u8; Vram::SIZE as usize]>,
     lock: Option<Lock>,
 }
