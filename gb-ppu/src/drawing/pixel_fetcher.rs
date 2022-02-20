@@ -1,5 +1,5 @@
-use super::{Pixel, PixelFIFO};
-use crate::memory::Vram;
+use super::{BGTileAttributes, Pixel, PixelFIFO};
+use crate::memory::{BankSelector, Vram};
 use crate::registers::{LcdReg, MonoPaletteRef};
 use crate::Sprite;
 use crate::TILEMAP_TILE_DIM_COUNT;
@@ -29,6 +29,7 @@ impl Default for FetchMode {
 )]
 #[derive(Clone)]
 pub struct PixelFetcher {
+    cgb_enabled: bool,
     pixels: VecDeque<Pixel>,
     pixels_sprite: VecDeque<Pixel>,
     mode: FetchMode,
@@ -37,13 +38,15 @@ pub struct PixelFetcher {
     internal_tick_sprite: u8,
     win_line_counter: u8,
     tile: usize,
+    tile_attributes: Option<BGTileAttributes>,
 }
 
 impl PixelFetcher {
     pub const WINDOW_BASE_OFFSET: usize = 7;
 
-    pub fn new() -> Self {
+    pub fn new(cgb_enabled: bool) -> Self {
         PixelFetcher {
+            cgb_enabled,
             pixels: VecDeque::with_capacity(8),
             pixels_sprite: VecDeque::with_capacity(8),
             mode: FetchMode::default(),
@@ -52,6 +55,7 @@ impl PixelFetcher {
             internal_tick_sprite: 0,
             win_line_counter: 0,
             tile: 0,
+            tile_attributes: None,
         }
     }
 
@@ -155,6 +159,9 @@ impl PixelFetcher {
                         log::error!("Failed to get background tile index: {}", err);
                         0xFF
                     });
+                if self.cgb_enabled {
+                    self.get_tile_attributes(vram, lcd_reg, tile_pos_in_vram, false);
+                }
             }
             FetchMode::Window => {
                 let wx = lcd_reg.window_pos.wx as usize;
@@ -172,9 +179,38 @@ impl PixelFetcher {
                         log::error!("Failed to get window tile index: {}", err);
                         0xFF
                     });
+                if self.cgb_enabled {
+                    self.get_tile_attributes(vram, lcd_reg, tile_pos_in_vram, true);
+                }
             }
             FetchMode::Sprite(_) => {}
         };
+    }
+
+    fn get_tile_attributes(
+        &mut self,
+        vram: &dyn Deref<Target = Vram>,
+        lcd_reg: &dyn Deref<Target = LcdReg>,
+        tile_pos_in_vram: usize,
+        window: bool,
+    ) {
+        self.tile_attributes = vram
+            .get_map_tile_index(
+                tile_pos_in_vram,
+                if !window {
+                    lcd_reg.control.bg_tilemap_area()
+                } else {
+                    lcd_reg.control.win_tilemap_area()
+                },
+                lcd_reg.control.bg_win_tiledata_area(),
+                Some(BankSelector::Bank1),
+            )
+            .map(|byte| byte.into())
+            .map_err(|err| {
+                log::error!("Failed to get background tile attibutes: {}", err);
+                err
+            })
+            .ok();
     }
 
     fn fetch_full_row(
@@ -187,17 +223,25 @@ impl PixelFetcher {
         match self.mode {
             FetchMode::Background => {
                 let tile_line = ((line + scy) & 0xff) % 8;
-                self.fetch_bg_win_row(vram, lcd_reg, tile_line)
+                if !self.cgb_enabled {
+                    self.fetch_bg_win_row_dmg(vram, lcd_reg, tile_line)
+                } else {
+                    self.fetch_bg_win_row_cgb(vram, lcd_reg, tile_line)
+                }
             }
             FetchMode::Window => {
                 let tile_line = ((self.win_line_counter - 1) as usize) % 8;
-                self.fetch_bg_win_row(vram, lcd_reg, tile_line)
+                if !self.cgb_enabled {
+                    self.fetch_bg_win_row_dmg(vram, lcd_reg, tile_line)
+                } else {
+                    self.fetch_bg_win_row_cgb(vram, lcd_reg, tile_line)
+                }
             }
             FetchMode::Sprite(sprite) => self.fetch_spr_row(vram, lcd_reg, line, &sprite),
         }
     }
 
-    fn fetch_bg_win_row(
+    fn fetch_bg_win_row_dmg(
         &mut self,
         vram: &dyn Deref<Target = Vram>,
         lcd_reg: &dyn Deref<Target = LcdReg>,
@@ -220,6 +264,39 @@ impl PixelFetcher {
                 }
             }
             Err(err) => log::error!("Failed to fetch background/window row of pixel: {}", err),
+        }
+    }
+
+    fn fetch_bg_win_row_cgb(
+        &mut self,
+        vram: &dyn Deref<Target = Vram>,
+        _lcd_reg: &dyn Deref<Target = LcdReg>,
+        line: usize,
+    ) {
+        if let Some(attributes) = self.tile_attributes.take() {
+            let tile_bank = Some(attributes.bank_nb());
+            let tile_line = if attributes.v_flip() { 7 - line } else { line };
+            match vram.read_tile_line(self.tile, tile_line, tile_bank) {
+                Ok(pixel_row) => {
+                    let pixel_iter: Vec<u8> = if attributes.h_flip() {
+                        pixel_row.into_iter().rev().collect()
+                    } else {
+                        pixel_row.into_iter().collect()
+                    };
+                    for color_id in pixel_iter {
+                        self.pixels.push_front(Pixel::new(
+                            color_id,
+                            None,
+                            attributes.bg_priority(),
+                        ));
+                    }
+                }
+                Err(err) => {
+                    log::error!("Failed to fetch background/window row of pixel: {}", err)
+                }
+            }
+        } else {
+            log::error!("Missing background/window tile attributes");
         }
     }
 
@@ -285,5 +362,11 @@ impl PixelFetcher {
         } else {
             false
         }
+    }
+}
+
+impl Default for PixelFetcher {
+    fn default() -> PixelFetcher {
+        PixelFetcher::new(false)
     }
 }

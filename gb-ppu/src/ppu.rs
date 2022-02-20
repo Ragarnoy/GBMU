@@ -72,7 +72,7 @@ impl Ppu {
             pixels: [[[255; 3]; SCREEN_WIDTH]; SCREEN_HEIGHT],
             next_pixels: [[[255; 3]; SCREEN_WIDTH]; SCREEN_HEIGHT],
             pixel_fifo: PixelFIFO::new(),
-            pixel_fetcher: PixelFetcher::new(),
+            pixel_fetcher: PixelFetcher::new(cgb_enabled),
             state: State::new(),
             scanline_sprites: Vec::with_capacity(10),
             pixel_discarded: 0,
