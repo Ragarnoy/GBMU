@@ -22,6 +22,7 @@ use gb_roms::{
     Header,
 };
 use gb_timer::Timer;
+#[cfg(feature = "registers_logs")]
 use std::io::BufWriter;
 use std::{cell::RefCell, collections::BTreeMap, fs::File, ops::DerefMut, path::Path, rc::Rc};
 
@@ -55,6 +56,7 @@ pub struct Game {
     hram: Rc<RefCell<SimpleRW<0x80>>>,
     #[cfg(feature = "save_state")]
     wram: Rc<RefCell<WorkingRam>>,
+    #[cfg(feature = "registers_logs")]
     logs_file: BufWriter<File>,
 }
 
@@ -163,6 +165,7 @@ impl Game {
             ie_reg: cpu_io_reg,
             area_locks: BTreeMap::new(),
         };
+        #[cfg(feature = "registers_logs")]
         let logs_file = Game::create_new_file().unwrap();
 
         Ok(Self {
@@ -185,12 +188,14 @@ impl Game {
             hram,
             #[cfg(feature = "save_state")]
             wram,
+            #[cfg(feature = "registers_logs")]
             logs_file,
         })
     }
 
     pub fn cycle(&mut self) -> bool {
         if !self.emulation_stopped {
+            #[cfg(feature = "registers_logs")]
             if self.cpu.controller.is_instruction_finished {
                 self.log_registers_to_file().unwrap_or_default();
             }
@@ -433,13 +438,16 @@ impl Game {
         Ok(())
     }
 
+    #[cfg(feature = "registers_logs")]
     fn log_registers_to_file(&mut self) -> std::io::Result<()> {
         use gb_cpu::interfaces::{Read8BitsReg, Read8BitsRegExt};
         use std::io::Write;
         let file = &mut self.logs_file;
+        let timer_borrow = self.timer.borrow();
+
         if let Err(e) = writeln!(
             file,
-            "A: {:02X} F: {:02X} B: {:02X} C: {:02X} D: {:02X} E: {:02X} H: {:02X} L: {:02X} SP: {:04X} PC: 00:{:04X} ({:02X} {:02X} {:02X} {:02X})",
+            "A: {:02X} F: {:02X} B: {:02X} C: {:02X} D: {:02X} E: {:02X} H: {:02X} L: {:02X} SP: {:04X} PC: 00:{:04X} ({:02X} {:02X} {:02X} {:02X}) TIMA: {:02X} CLK: {:04X}",
             self.cpu.registers.a(),
             self.cpu.registers.f(),
             self.cpu.registers.b(),
@@ -453,14 +461,17 @@ impl Game {
             <AddressBus as Bus<u8>>::read(&self.addr_bus, self.cpu.registers.pc, None).unwrap_or(0xff),
             <AddressBus as Bus<u8>>::read(&self.addr_bus, self.cpu.registers.pc + 1, None).unwrap_or(0xff),
             <AddressBus as Bus<u8>>::read(&self.addr_bus, self.cpu.registers.pc + 2, None).unwrap_or(0xff),
-            <AddressBus as Bus<u8>>::read(&self.addr_bus, self.cpu.registers.pc + 3 , None).unwrap_or(0xff)
+            <AddressBus as Bus<u8>>::read(&self.addr_bus, self.cpu.registers.pc + 3 , None).unwrap_or(0xff),
+            timer_borrow.tima,
+            timer_borrow.system_clock
         )
         {
             log::error!("Couldn't write to file: {}", e);
+        }
         Ok(())
     }
 
-    // #[cfg(feature = "registers_logs")]
+    #[cfg(feature = "registers_logs")]
     fn create_new_file() -> std::io::Result<BufWriter<File>> {
         use std::{env, fs::OpenOptions};
 
