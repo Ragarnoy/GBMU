@@ -22,7 +22,8 @@ use gb_roms::{
     Header,
 };
 use gb_timer::Timer;
-use std::{cell::RefCell, collections::BTreeMap, ops::DerefMut, path::Path, rc::Rc};
+use std::io::BufWriter;
+use std::{cell::RefCell, collections::BTreeMap, fs::File, ops::DerefMut, path::Path, rc::Rc};
 
 pub struct Context<const WIDTH: usize, const HEIGHT: usize> {
     pub sdl: sdl2::Sdl,
@@ -54,6 +55,7 @@ pub struct Game {
     hram: Rc<RefCell<SimpleRW<0x80>>>,
     #[cfg(feature = "save_state")]
     wram: Rc<RefCell<WorkingRam>>,
+    logs_file: BufWriter<File>,
 }
 
 #[derive(Debug)]
@@ -74,7 +76,7 @@ impl Game {
         joypad: Rc<RefCell<Joypad>>,
         stopped: bool,
     ) -> Result<Game, anyhow::Error> {
-        use std::{fs::File, io::Seek};
+        use std::io::Seek;
 
         let romname = rompath.as_ref().to_string_lossy().to_string();
         let mut file = File::open(rompath)?;
@@ -161,6 +163,7 @@ impl Game {
             ie_reg: cpu_io_reg,
             area_locks: BTreeMap::new(),
         };
+        let logs_file = Game::create_new_file().unwrap();
 
         Ok(Self {
             romname,
@@ -182,11 +185,15 @@ impl Game {
             hram,
             #[cfg(feature = "save_state")]
             wram,
+            logs_file,
         })
     }
 
     pub fn cycle(&mut self) -> bool {
         if !self.emulation_stopped {
+            if self.cpu.controller.is_instruction_finished {
+                self.log_registers_to_file().unwrap_or_default();
+            }
             let frame_not_finished = cycles!(
                 self.clock,
                 &mut self.addr_bus,
@@ -208,6 +215,7 @@ impl Game {
                 );
                 self.check_scheduled_stop(!frame_not_finished);
             }
+
             self.cycle_count += 1;
             frame_not_finished
         } else {
@@ -423,6 +431,53 @@ impl Game {
         self.io_bus.borrow_mut().with_timer(timer.clone());
         self.timer = timer;
         Ok(())
+    }
+
+    fn log_registers_to_file(&mut self) -> std::io::Result<()> {
+        use gb_cpu::interfaces::{Read8BitsReg, Read8BitsRegExt};
+        use std::io::Write;
+        let file = &mut self.logs_file;
+        if let Err(e) = writeln!(
+            file,
+            "A: {:02X} F: {:02X} B: {:02X} C: {:02X} D: {:02X} E: {:02X} H: {:02X} L: {:02X} SP: {:04X} PC: 00:{:04X} ({:02X} {:02X} {:02X} {:02X})",
+            self.cpu.registers.a(),
+            self.cpu.registers.f(),
+            self.cpu.registers.b(),
+            self.cpu.registers.c(),
+            self.cpu.registers.d(),
+            self.cpu.registers.e(),
+            self.cpu.registers.h(),
+            self.cpu.registers.l(),
+            self.cpu.registers.sp,
+            self.cpu.registers.pc,
+            <AddressBus as Bus<u8>>::read(&self.addr_bus, self.cpu.registers.pc, None).unwrap_or(0xff),
+            <AddressBus as Bus<u8>>::read(&self.addr_bus, self.cpu.registers.pc + 1, None).unwrap_or(0xff),
+            <AddressBus as Bus<u8>>::read(&self.addr_bus, self.cpu.registers.pc + 2, None).unwrap_or(0xff),
+            <AddressBus as Bus<u8>>::read(&self.addr_bus, self.cpu.registers.pc + 3 , None).unwrap_or(0xff)
+        )
+        {
+            log::error!("Couldn't write to file: {}", e);
+        Ok(())
+    }
+
+    // #[cfg(feature = "registers_logs")]
+    fn create_new_file() -> std::io::Result<BufWriter<File>> {
+        use std::{env, fs::OpenOptions};
+
+        let registers_logs = {
+            use env::{temp_dir, var};
+            let mut project_path =
+                var("LOG_DIR").map_or_else(|_| temp_dir(), std::path::PathBuf::from);
+            project_path.push("registers.log");
+            project_path
+        };
+
+        log::info!("opening registers log at {}", registers_logs.display());
+        let file = OpenOptions::new()
+            .write(true)
+            .create(true)
+            .open(registers_logs)?;
+        Ok(BufWriter::new(file))
     }
 }
 

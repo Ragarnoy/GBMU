@@ -15,13 +15,17 @@ rust-version = "1.58.0"
 [features]
 default = ["bios"]
 debug_render = ["gb-lcd/debug_render"]
-registers_logs = ["gb-cpu/registers_logs"]
+registers_logs = []
 time_frame = []
 time_stat_samples = []
 debug_fps = ["time_stat_samples"]
 cgb = ["gb-bus/cgb", "gb-ppu/cgb", "gb-cpu/cgb", "gb-dbg/cgb"]
 bios = []
-save_state = ["gb-cpu/serialization", "gb-bus/serialization", "gb-timer/serialization"]
+save_state = [
+  "gb-cpu/serialization",
+  "gb-bus/serialization",
+  "gb-timer/serialization",
+]
 
 [dependencies]
 sdl2 = { version = "0.35", features = ["bundled", "static-link"] }
