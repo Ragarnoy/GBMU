@@ -440,32 +440,25 @@ impl Game {
 
     #[cfg(feature = "registers_logs")]
     fn log_registers_to_file(&mut self) -> std::io::Result<()> {
-        use gb_cpu::interfaces::{Read8BitsReg, Read8BitsRegExt};
         use std::io::Write;
         let file = &mut self.logs_file;
         let timer_borrow = self.timer.borrow();
 
         if let Err(e) = writeln!(
             file,
-            "A: {:02X} F: {:02X} B: {:02X} C: {:02X} D: {:02X} E: {:02X} H: {:02X} L: {:02X} SP: {:04X} PC: 00:{:04X} ({:02X} {:02X} {:02X} {:02X}) TIMA: {:02X} CLK: {:04X}",
-            self.cpu.registers.a(),
-            self.cpu.registers.f(),
-            self.cpu.registers.b(),
-            self.cpu.registers.c(),
-            self.cpu.registers.d(),
-            self.cpu.registers.e(),
-            self.cpu.registers.h(),
-            self.cpu.registers.l(),
-            self.cpu.registers.sp,
-            self.cpu.registers.pc,
-            <AddressBus as Bus<u8>>::read(&self.addr_bus, self.cpu.registers.pc, None).unwrap_or(0xff),
-            <AddressBus as Bus<u8>>::read(&self.addr_bus, self.cpu.registers.pc + 1, None).unwrap_or(0xff),
-            <AddressBus as Bus<u8>>::read(&self.addr_bus, self.cpu.registers.pc + 2, None).unwrap_or(0xff),
-            <AddressBus as Bus<u8>>::read(&self.addr_bus, self.cpu.registers.pc + 3 , None).unwrap_or(0xff),
+            "{} ({:02X} {:02X} {:02X} {:02X}) TIMA: {:02X} CLK: {:04X}",
+            self.cpu.registers,
+            <AddressBus as Bus<u8>>::read(&self.addr_bus, self.cpu.registers.pc, None)
+                .unwrap_or(0xff),
+            <AddressBus as Bus<u8>>::read(&self.addr_bus, self.cpu.registers.pc + 1, None)
+                .unwrap_or(0xff),
+            <AddressBus as Bus<u8>>::read(&self.addr_bus, self.cpu.registers.pc + 2, None)
+                .unwrap_or(0xff),
+            <AddressBus as Bus<u8>>::read(&self.addr_bus, self.cpu.registers.pc + 3, None)
+                .unwrap_or(0xff),
             timer_borrow.tima,
             timer_borrow.system_clock
-        )
-        {
+        ) {
             log::error!("Couldn't write to file: {}", e);
         }
         Ok(())

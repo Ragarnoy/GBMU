@@ -15,7 +15,7 @@ rust-version = "1.58.0"
 [features]
 default = ["bios"]
 debug_render = ["gb-lcd/debug_render"]
-registers_logs = []
+registers_logs = ["gb-cpu/registers_logs"]
 time_frame = []
 time_stat_samples = []
 debug_fps = ["time_stat_samples"]

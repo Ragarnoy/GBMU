@@ -2,6 +2,29 @@ use crate::interfaces::{
     Read8BitsReg, Read8BitsRegExt, ReadFlagReg, Write8BitsReg, Write8BitsRegExt, WriteFlagReg,
 };
 
+#[cfg(feature = "registers_logs")]
+use core::fmt::{self, Display};
+
+#[cfg(feature = "registers_logs")]
+impl Display for Registers {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "A: {:02X} F: {:02X} B: {:02X} C: {:02X} D: {:02X} E: {:02X} H: {:02X} L: {:02X} SP: {:04X} PC: 00:{:04X}",
+            self.a(),
+            self.f(),
+            self.b(),
+            self.c(),
+            self.d(),
+            self.e(),
+            self.h(),
+            self.l(),
+            self.sp,
+            self.pc,
+        )
+    }
+}
+
 #[cfg_attr(
     feature = "serialization",
     derive(serde::Deserialize, serde::Serialize)
