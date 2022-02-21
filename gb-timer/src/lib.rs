@@ -9,8 +9,8 @@ mod test_timer;
 )]
 #[derive(Default, Debug, Clone, Copy)]
 pub struct Timer {
-    system_clock: u16,
-    tima: u8,
+    pub system_clock: u16,
+    pub tima: u8,
     tma: u8,
     tac: u8,
 }

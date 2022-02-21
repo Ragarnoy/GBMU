@@ -8,8 +8,6 @@ use crate::{
 use gb_bus::Bus;
 use std::fmt::{self, Debug, Display};
 use std::{cell::RefCell, rc::Rc};
-#[cfg(feature = "registers_logs")]
-use std::{fs::File, io::BufWriter};
 
 #[derive(Debug, Clone, Copy)]
 pub enum Mode {
@@ -64,9 +62,6 @@ pub struct MicrocodeController {
     cache: Vec<u8>,
     /// Debug helper to catch the event of end of instruction
     pub is_instruction_finished: bool,
-
-    #[cfg(feature = "registers_logs")]
-    file: BufWriter<File>,
 }
 
 impl Debug for MicrocodeController {
@@ -85,17 +80,13 @@ type ActionFn = fn(controller: &mut MicrocodeController, state: &mut State) -> M
 
 impl Default for MicrocodeController {
     fn default() -> Self {
-        #[cfg(feature = "registers_logs")]
-        let file = MicrocodeController::create_new_file().unwrap();
         Self {
             opcode: None,
             cycles: Vec::with_capacity(NB_MAX_CYCLES),
             current_cycle: Vec::with_capacity(NB_MAX_ACTIONS),
             cache: Vec::with_capacity(CACHE_LEN),
             mode: Mode::default(),
-            is_instruction_finished: false,
-            #[cfg(feature = "registers_logs")]
-            file: file,
+            is_instruction_finished: true,
         }
     }
 }
@@ -147,8 +138,6 @@ impl MicrocodeController {
             drop(borrow_int_flags);
             handle_interrupts(self, state);
         } else {
-            #[cfg(feature = "registers_logs")]
-            self.log_registers_to_file(&state).unwrap_or_default();
             fetch(self, state);
         }
     }
@@ -254,36 +243,5 @@ impl MicrocodeController {
     /// Pop the last u16 from the cache.
     pub fn pop_u16(&mut self) -> u16 {
         u16::from_be_bytes([self.pop(), self.pop()])
-    }
-
-    #[cfg(feature = "registers_logs")]
-    fn log_registers_to_file(&mut self, state: &State) -> std::io::Result<()> {
-        use std::io::Write;
-        let file = &mut self.file;
-
-        if let Err(e) = writeln!(file, "{:?}", state) {
-            log::error!("Couldn't write to file: {}", e);
-        }
-        Ok(())
-    }
-
-    #[cfg(feature = "registers_logs")]
-    fn create_new_file() -> std::io::Result<BufWriter<File>> {
-        use std::{env, fs::OpenOptions};
-
-        let registers_logs = {
-            use env::{temp_dir, var};
-            let mut project_path =
-                var("LOG_DIR").map_or_else(|_| temp_dir(), std::path::PathBuf::from);
-            project_path.push("registers.log");
-            project_path
-        };
-
-        log::info!("opening registers log at {}", registers_logs.display());
-        let file = OpenOptions::new()
-            .write(true)
-            .create(true)
-            .open(registers_logs)?;
-        Ok(BufWriter::new(file))
     }
 }
