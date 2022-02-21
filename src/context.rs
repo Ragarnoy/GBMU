@@ -502,7 +502,6 @@ fn mbc_with_save_state(
 
     {
         use rmp_serde::decode::from_read;
-        use std::fs::File;
 
         let filename = game_save_path(romname);
         if let Ok(file) = File::open(&filename) {
