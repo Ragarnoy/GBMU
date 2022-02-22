@@ -132,7 +132,7 @@ mod read {
 
     #[test]
     fn lcd_control() {
-        let data: [u8; LcdReg::SIZE] = [0x42, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        let data: [u8; LcdReg::SIZE] = [0x42, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
         let lcd = Rc::new(RefCell::new(data.into()));
         let ppu_reg = PPURegisters::new(lcd);
 
@@ -144,7 +144,7 @@ mod read {
 
     #[test]
     fn lcd_dma() {
-        let data: [u8; LcdReg::SIZE] = [0, 0x42, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        let data: [u8; LcdReg::SIZE] = [0, 0x42, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
         let lcd = Rc::new(RefCell::new(data.into()));
         let ppu_reg = PPURegisters::new(lcd);
 
@@ -156,7 +156,7 @@ mod read {
 
     #[test]
     fn lcd_window_pos() {
-        let data: [u8; LcdReg::SIZE] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x42, 0];
+        let data: [u8; LcdReg::SIZE] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x42, 0, 0, 0, 0, 0];
         let lcd = Rc::new(RefCell::new(data.into()));
         let ppu_reg = PPURegisters::new(lcd);
 

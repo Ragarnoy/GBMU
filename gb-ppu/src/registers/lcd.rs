@@ -1,10 +1,12 @@
 mod control;
+mod palettes_cgb;
 mod palettes_mono;
 mod scrolling;
 mod stat;
 mod window_pos;
 
 pub use control::Control;
+pub use palettes_cgb::PalettesCGB;
 pub use palettes_mono::{MonoPaletteRef, PalettesMono};
 pub use scrolling::Scrolling;
 pub use stat::Stat;
@@ -29,6 +31,7 @@ pub struct LcdReg {
     pub pal_mono: PalettesMono,
     pub window_pos: WindowPos,
     pub vbk: Rc<Cell<u8>>,
+    pub pal_cgb: PalettesCGB,
 }
 
 impl Default for LcdReg {
@@ -53,7 +56,8 @@ impl LcdReg {
         + Scrolling::SIZE
         + PalettesMono::SIZE
         + WindowPos::SIZE
-        + Self::VBK_SIZE;
+        + Self::VBK_SIZE
+        + PalettesCGB::SIZE;
 
     pub fn new() -> Self {
         LcdReg::default()
@@ -120,7 +124,6 @@ impl LcdReg {
 
             #[cfg(feature = "cgb")]
             Vbk => self.vbk.set(v | Self::VBK_UNUSED_BITS),
-
             _ => return Err(Error::SegmentationFault(addr.into())),
         };
         Ok(())
@@ -130,16 +133,18 @@ impl LcdReg {
 impl From<[u8; LcdReg::SIZE]> for LcdReg {
     fn from(bytes: [u8; LcdReg::SIZE]) -> LcdReg {
         let scroll: [u8; 4] = bytes[2..=5].try_into().expect("bad bytes for LcdReg");
-        let pal: [u8; 3] = bytes[6..=8].try_into().expect("bad bytes for LcdReg");
+        let pal_mono: [u8; 3] = bytes[6..=8].try_into().expect("bad bytes for LcdReg");
         let window: [u8; 2] = bytes[9..=10].try_into().expect("bad bytes for LcdReg");
         let vbk = Rc::new(Cell::new(bytes[11] | Self::VBK_UNUSED_BITS));
+        let pal_cgb: [u8; 4] = bytes[12..=15].try_into().expect("bad bytes for LcdReg");
         LcdReg {
             control: bytes[0].into(),
             stat: bytes[1].into(),
             scrolling: scroll.into(),
-            pal_mono: pal.into(),
+            pal_mono: pal_mono.into(),
             window_pos: window.into(),
             vbk,
+            pal_cgb: pal_cgb.into(),
         }
     }
 }
@@ -150,6 +155,7 @@ impl From<LcdReg> for [u8; LcdReg::SIZE] {
         let pal_mono: [u8; 3] = register.pal_mono.into();
         let window_pos: [u8; 2] = register.window_pos.into();
         let vbk = register.vbk.get();
+        let pal_cgb: [u8; 4] = register.pal_cgb.into();
         [
             register.control.into(),
             register.stat.into(),
@@ -163,6 +169,10 @@ impl From<LcdReg> for [u8; LcdReg::SIZE] {
             window_pos[0],
             window_pos[1],
             vbk,
+            pal_cgb[0],
+            pal_cgb[1],
+            pal_cgb[2],
+            pal_cgb[3],
         ]
     }
 }
