@@ -9,7 +9,7 @@ pub enum Color {
     LightGray,
     DarkGray,
     Black,
-    Rgb555(u16),
+    Rgb555(u8, u8),
 }
 
 impl Color {
@@ -18,7 +18,8 @@ impl Color {
     const BLUE_MASK: u16 = 0b111_1100_0000_0000;
 
     /// Separate each values of the color and scale them from rgb555 to rgb888
-    fn rgb_scale(color_bytes: u16) -> [u8; 3] {
+    fn rgb_scale(byte0: u8, byte1: u8) -> [u8; 3] {
+        let color_bytes = ((byte1 as u16) << 8) | byte0 as u16;
         [
             (color_bytes & Self::RED_MASK) as u8 * 255 / 31,
             (color_bytes & Self::GREEN_MASK >> 5) as u8 * 255 / 31,
@@ -46,7 +47,7 @@ impl TryFrom<u8> for Color {
 
 impl From<[u8; 2]> for Color {
     fn from(value: [u8; 2]) -> Color {
-        Color::Rgb555(((value[1] as u16) << 8) | value[0] as u16)
+        Color::Rgb555(value[0], value[1])
     }
 }
 
@@ -57,7 +58,7 @@ impl From<Color> for [u8; 3] {
             Color::LightGray => [170; 3],
             Color::DarkGray => [85; 3],
             Color::Black => [0; 3],
-            Color::Rgb555(bytes) => Color::rgb_scale(bytes),
+            Color::Rgb555(byte0, byte1) => Color::rgb_scale(byte0, byte1),
         }
     }
 }
