@@ -76,10 +76,13 @@ where
                 Ok(UNDEFINED_VALUE)
             }
             #[cfg(feature = "cgb")]
-            Bcpd | Bcps | Ocpd | Ocps => {
-                log::warn!("missing ppu BgObjPalettes registers write");
-                Ok(UNDEFINED_VALUE)
-            }
+            Bcpd | Bcps | Ocpd | Ocps => match self.lcd.try_borrow() {
+                Ok(lcd) => lcd.read(addr),
+                Err(_) => {
+                    log::warn!("failed ppu BgObjPalettes register read");
+                    Ok(UNDEFINED_VALUE)
+                }
+            },
             _ => Err(Error::SegmentationFault(addr.into())),
         }
     }
@@ -113,10 +116,13 @@ where
                 Ok(())
             }
             #[cfg(feature = "cgb")]
-            Bcpd | Bcps | Ocpd | Ocps => {
-                log::warn!("missing ppu BgObjPalettes registers write");
-                Ok(())
-            }
+            Bcpd | Bcps | Ocpd | Ocps => match self.lcd.try_borrow_mut() {
+                Ok(mut lcd) => lcd.write(addr, v),
+                Err(_) => {
+                    log::warn!("failed BgObjPalettes register write");
+                    Ok(())
+                }
+            },
             _ => Err(Error::SegmentationFault(addr.into())),
         }
     }

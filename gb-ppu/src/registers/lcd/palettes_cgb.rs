@@ -41,6 +41,61 @@ impl PalettesCGB {
     const PALETTES_RAW_SIZE: usize =
         Self::PALETTE_NB * Self::PALETTE_COLOR_NB * Self::PALETTE_COLOR_SIZE;
 
+    const SPEC_AUTO_INCR: u8 = 0b1000_0000;
+    const SPEC_DATA_INDEX: u8 = !Self::SPEC_AUTO_INCR;
+
+    pub fn get_bcps(&self) -> u8 {
+        self.bcps
+    }
+
+    pub fn set_bcps(&mut self, value: u8) {
+        self.bcps = value;
+    }
+
+    pub fn get_bcpd(&self) -> u8 {
+        self.bcpd
+    }
+
+    pub fn set_bcpd(&mut self, value: u8) {
+        self.bcpd = value;
+        let index = (self.bcps & Self::SPEC_DATA_INDEX) as usize;
+        self.bc_values[index] = value;
+
+        if self.bcps & Self::SPEC_AUTO_INCR != 0 {
+            if self.bcps == Self::SPEC_AUTO_INCR | Self::SPEC_DATA_INDEX {
+                self.bcps = Self::SPEC_AUTO_INCR;
+            } else {
+                self.bcps += 1;
+            }
+        }
+    }
+
+    pub fn get_ocps(&self) -> u8 {
+        self.ocps
+    }
+
+    pub fn set_ocps(&mut self, value: u8) {
+        self.ocps = value;
+    }
+
+    pub fn get_ocpd(&self) -> u8 {
+        self.ocpd
+    }
+
+    pub fn set_ocpd(&mut self, value: u8) {
+        self.ocpd = value;
+        let index = (self.ocps & Self::SPEC_DATA_INDEX) as usize;
+        self.oc_values[index] = value;
+
+        if self.ocps & Self::SPEC_AUTO_INCR != 0 {
+            if self.ocps == Self::SPEC_AUTO_INCR | Self::SPEC_DATA_INDEX {
+                self.ocps = Self::SPEC_AUTO_INCR;
+            } else {
+                self.ocps += 1;
+            }
+        }
+    }
+
     pub fn get_color(
         &self,
         color_index: usize,

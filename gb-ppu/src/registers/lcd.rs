@@ -18,6 +18,12 @@ use std::cell::Cell;
 use std::convert::TryInto;
 use std::rc::Rc;
 
+#[cfg(feature = "cgb")]
+use gb_bus::io_reg_area::IORegArea::{Bcpd, Bcps, Ocpd, Ocps, Vbk};
+use gb_bus::io_reg_area::IORegArea::{
+    Bgp, LcdControl, LcdStat, Ly, Lyc, Obp0, Obp1, Scx, Scy, Wx, Wy,
+};
+
 /// Regroup the registers of the Lcd IOregister area.
 #[cfg_attr(
     feature = "serialization",
@@ -68,12 +74,6 @@ impl LcdReg {
         u16: From<A>,
         A: Address<IORegArea>,
     {
-        #[cfg(feature = "cgb")]
-        use gb_bus::io_reg_area::IORegArea::Vbk;
-        use gb_bus::io_reg_area::IORegArea::{
-            Bgp, LcdControl, LcdStat, Ly, Lyc, Obp0, Obp1, Scx, Scy, Wx, Wy,
-        };
-
         match addr.area_type() {
             LcdControl => Ok(self.control.bits),
             LcdStat => Ok(self.stat.read()),
@@ -92,6 +92,14 @@ impl LcdReg {
 
             #[cfg(feature = "cgb")]
             Vbk => Ok(self.vbk.get()),
+            #[cfg(feature = "cgb")]
+            Bcps => Ok(self.pal_cgb.get_bcps()),
+            #[cfg(feature = "cgb")]
+            Bcpd => Ok(self.pal_cgb.get_bcpd()),
+            #[cfg(feature = "cgb")]
+            Ocps => Ok(self.pal_cgb.get_ocps()),
+            #[cfg(feature = "cgb")]
+            Ocpd => Ok(self.pal_cgb.get_ocpd()),
 
             _ => Err(Error::SegmentationFault(addr.into())),
         }
@@ -102,10 +110,6 @@ impl LcdReg {
         u16: From<A>,
         A: Address<IORegArea>,
     {
-        use gb_bus::io_reg_area::IORegArea::{
-            Bgp, LcdControl, LcdStat, Ly, Lyc, Obp0, Obp1, Scx, Scy, Wx, Wy,
-        };
-
         match addr.area_type() {
             LcdControl => self.control.write(v),
             LcdStat => self.stat.write(v),
@@ -124,6 +128,14 @@ impl LcdReg {
 
             #[cfg(feature = "cgb")]
             Vbk => self.vbk.set(v | Self::VBK_UNUSED_BITS),
+            #[cfg(feature = "cgb")]
+            Bcps => self.pal_cgb.set_bcps(v),
+            #[cfg(feature = "cgb")]
+            Bcpd => self.pal_cgb.set_bcpd(v),
+            #[cfg(feature = "cgb")]
+            Ocps => self.pal_cgb.set_ocps(v),
+            #[cfg(feature = "cgb")]
+            Ocpd => self.pal_cgb.set_ocpd(v),
             _ => return Err(Error::SegmentationFault(addr.into())),
         };
         Ok(())
