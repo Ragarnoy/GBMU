@@ -18,7 +18,6 @@ use gb_lcd::{render, window::GBWindow};
 use logger::init_logger;
 use std::cell::RefCell;
 use std::rc::Rc;
-use std::str::FromStr;
 use std::time::{Duration, Instant};
 use windows::Windows;
 
@@ -26,7 +25,7 @@ use windows::Windows;
 const TARGET_FPS_X10: u64 = 600;
 
 #[derive(Parser, Debug)]
-#[clap(version = "0.1")]
+#[clap(version, author, about)]
 struct Opts {
     #[clap(short = 'l', long = "log", help = "change log level", possible_values = &["trace", "debug", "info", "warn", "error", "off"])]
     #[cfg_attr(not(debug_assertions), clap(default_value = "warn"))]
