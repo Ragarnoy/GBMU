@@ -102,13 +102,17 @@ impl Game {
         let mbc = mbc_with_save_state(&romname, &header, file)?;
         let mbc = Rc::new(RefCell::new(mbc));
 
-        let ppu = Ppu::default();
+        let ppu = Ppu::new(cgb_mode);
         let ppu_mem = Rc::new(RefCell::new(ppu.memory()));
         let ppu_reg = Rc::new(RefCell::new(ppu.registers()));
         let (cpu, cpu_io_reg) = if cfg!(feature = "bios") {
             new_cpu()
         } else {
             let (mut cpu, cpu_io_reg) = new_cpu();
+            assert!(
+                !cgb_mode,
+                "we don't have the registers value for color mode"
+            );
             cpu.set_registers(Registers::DMG);
             (cpu, cpu_io_reg)
         };
@@ -135,7 +139,7 @@ impl Game {
         let io_bus = {
             let mut io_bus = IORegBus::default();
             #[cfg(feature = "cgb")]
-            {
+            if cgb_mode {
                 io_bus
                     .with_area(IORegArea::Vbk, ppu_reg.clone())
                     .with_area(IORegArea::Key1, cpu_io_reg.clone())
