@@ -26,6 +26,8 @@ use gb_timer::Timer;
 use std::io::BufWriter;
 use std::{cell::RefCell, collections::BTreeMap, fs::File, ops::DerefMut, path::Path, rc::Rc};
 
+use crate::Mode;
+
 pub struct Context<const WIDTH: usize, const HEIGHT: usize> {
     pub sdl: sdl2::Sdl,
     pub video: sdl2::VideoSubsystem,
@@ -77,12 +79,22 @@ impl Game {
         rompath: &P,
         joypad: Rc<RefCell<Joypad>>,
         stopped: bool,
+        #[cfg(feature = "cgb")] forced_mode: Option<Mode>,
     ) -> Result<Game, anyhow::Error> {
         use std::io::Seek;
 
         let romname = rompath.as_ref().to_string_lossy().to_string();
         let mut file = File::open(rompath)?;
         let header = Header::from_file(&mut file)?;
+
+        #[cfg(not(feature = "cgb"))]
+        let cgb_mode = false;
+        #[cfg(feature = "cgb")]
+        let cgb_mode = if let Some(forced_mode) = forced_mode {
+            forced_mode == Mode::Color
+        } else {
+            header.title.is_cgb_cartridge()
+        };
 
         log::debug!("header: {:?}", header);
 
@@ -100,7 +112,7 @@ impl Game {
             cpu.set_registers(Registers::DMG);
             (cpu, cpu_io_reg)
         };
-        let wram = Rc::new(RefCell::new(WorkingRam::new(false)));
+        let wram = Rc::new(RefCell::new(WorkingRam::new(cgb_mode)));
         let timer = Rc::new(RefCell::new(Timer::default()));
         let bios_wrapper = {
             let bios = Rc::new(RefCell::new(if cfg!(feature = "cgb") {

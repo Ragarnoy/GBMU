@@ -64,8 +64,8 @@ struct Opts {
     mode: Option<Mode>,
 }
 
-#[derive(Debug, clap::ArgEnum, Clone, Copy)]
-enum Mode {
+#[derive(Debug, clap::ArgEnum, Clone, Copy, PartialEq, Eq)]
+pub enum Mode {
     Color,
     Classic,
 }
@@ -140,10 +140,15 @@ fn main() {
             }
         }
         if debugger.reset_triggered {
-            game = opts
-                .rom
-                .as_ref()
-                .and_then(|romname| load_game(romname, context.joypad.clone(), true));
+            game = opts.rom.as_ref().and_then(|romname| {
+                load_game(
+                    romname,
+                    context.joypad.clone(),
+                    true,
+                    #[cfg(feature = "cgb")]
+                    opts.mode,
+                )
+            });
             debugger.reset();
         }
         if let Some(ref mut input_wind) = context.windows.input {
@@ -164,7 +169,13 @@ fn main() {
 
             match event {
                 CustomEvent::LoadFile(file) => {
-                    game = load_game(file, context.joypad.clone(), opts.debug)
+                    game = load_game(
+                        file,
+                        context.joypad.clone(),
+                        opts.debug,
+                        #[cfg(feature = "cgb")]
+                        opts.mode,
+                    )
                 }
                 #[cfg(feature = "save_state")]
                 CustomEvent::SaveState(file) => {
@@ -254,10 +265,15 @@ fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
         }
     }));
 
-    let game_context: Option<Game> = opts
-        .rom
-        .as_ref()
-        .and_then(|romname| load_game(&romname, joypad.clone(), opts.debug));
+    let game_context: Option<Game> = opts.rom.as_ref().and_then(|romname| {
+        load_game(
+            &romname,
+            joypad.clone(),
+            opts.debug,
+            #[cfg(feature = "cgb")]
+            opts.mode,
+        )
+    });
 
     let dbg_options = DebuggerOptions {
         breakpoints: opts.breakpoints.clone(),
@@ -301,8 +317,16 @@ fn load_game<P: AsRef<std::path::Path>>(
     rompath: P,
     joypad: std::rc::Rc<std::cell::RefCell<gb_joypad::Joypad>>,
     stopped: bool,
+    #[cfg(feature = "cgb")] forced_mode: Option<Mode>,
 ) -> Option<Game> {
-    Game::new(&rompath, joypad, stopped).map_or_else(
+    Game::new(
+        &rompath,
+        joypad,
+        stopped,
+        #[cfg(feature = "cgb")]
+        forced_mode,
+    )
+    .map_or_else(
         |e| {
             log::error!(
                 "while creating game context for {:?}: {:?}",
