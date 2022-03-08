@@ -18,6 +18,7 @@ use gb_lcd::{render, window::GBWindow};
 use logger::init_logger;
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::str::FromStr;
 use std::time::{Duration, Instant};
 use windows::Windows;
 
@@ -53,6 +54,21 @@ struct Opts {
         requires = "rom"
     )]
     debug: bool,
+
+    #[cfg(feature = "cgb")]
+    #[clap(
+        arg_enum,
+        short = 'm',
+        long,
+        help = "force gameboy mode between color and mono"
+    )]
+    mode: Option<Mode>,
+}
+
+#[derive(Debug, clap::ArgEnum, Clone, Copy)]
+enum Mode {
+    Color,
+    Classic,
 }
 
 fn main() {
