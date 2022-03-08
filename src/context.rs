@@ -26,6 +26,7 @@ use gb_timer::Timer;
 use std::io::BufWriter;
 use std::{cell::RefCell, collections::BTreeMap, fs::File, ops::DerefMut, path::Path, rc::Rc};
 
+#[cfg(feature = "cgb")]
 use crate::Mode;
 
 pub struct Context<const WIDTH: usize, const HEIGHT: usize> {
