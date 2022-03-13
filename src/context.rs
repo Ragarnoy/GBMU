@@ -61,6 +61,7 @@ pub struct Game {
     wram: Rc<RefCell<WorkingRam>>,
     #[cfg(feature = "registers_logs")]
     logs_file: BufWriter<File>,
+    pub cgb_mode: bool,
 }
 
 #[derive(Debug)]
@@ -207,6 +208,7 @@ impl Game {
             wram,
             #[cfg(feature = "registers_logs")]
             logs_file,
+            cgb_mode,
         })
     }
 

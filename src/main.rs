@@ -16,9 +16,12 @@ use gb_dbg::debugger::options::DebuggerOptions;
 use gb_dbg::debugger::{Debugger, DebuggerBuilder};
 use gb_lcd::{render, window::GBWindow};
 use logger::init_logger;
-use std::cell::RefCell;
-use std::rc::Rc;
-use std::time::{Duration, Instant};
+use std::{
+    cell::RefCell,
+    fmt::{self, Display},
+    rc::Rc,
+    time::{Duration, Instant},
+};
 use windows::Windows;
 
 // const TARGET_FPS_X10: u64 = 597;    // the true value
@@ -26,7 +29,7 @@ const TARGET_FPS_X10: u64 = 600;
 
 #[derive(Parser, Debug)]
 #[clap(version, author, about)]
-struct Opts {
+pub struct Opts {
     #[clap(short = 'l', long = "log", help = "change log level", possible_values = &["trace", "debug", "info", "warn", "error", "off"])]
     #[cfg_attr(not(debug_assertions), clap(default_value = "warn"))]
     #[cfg_attr(debug_assertions, clap(default_value = "debug"))]
@@ -70,8 +73,17 @@ pub enum Mode {
     Classic,
 }
 
+impl Display for Mode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Mode::Color => write!(f, "color"),
+            Mode::Classic => write!(f, "classic"),
+        }
+    }
+}
+
 fn main() {
-    let opts: Opts = Opts::parse();
+    let mut opts: Opts = Opts::parse();
     #[cfg(feature = "time_frame")]
     let mut time_frame_stat = time_frame::TimeStat::default();
     #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
@@ -109,9 +121,9 @@ fn main() {
             game.draw(&mut context);
         }
         #[cfg(not(feature = "debug_fps"))]
-        let events = ui::draw_egui(&mut context);
+        let events = ui::draw_egui(&mut context, &mut opts);
         #[cfg(feature = "debug_fps")]
-        let events = ui::draw_egui(&mut context, render_time_frame.fps());
+        let events = ui::draw_egui(&mut context, &mut opts, render_time_frame.fps());
         context
             .windows
             .main
@@ -191,6 +203,20 @@ fn main() {
                         game.load_save_file(&file);
                     } else {
                         log::warn!("no game context to load the state into");
+                    }
+                }
+                CustomEvent::ChangedMode(wanted_mode) =>
+                {
+                    #[cfg(feature = "cgb")]
+                    if let Some(ref game_ctx) = game {
+                        if (wanted_mode == Mode::Color) != game_ctx.cgb_mode {
+                            game = load_game(
+                                game_ctx.romname.clone(),
+                                context.joypad.clone(),
+                                opts.debug,
+                                Some(wanted_mode),
+                            )
+                        }
                     }
                 }
             }
