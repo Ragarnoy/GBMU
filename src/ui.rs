@@ -1,5 +1,6 @@
 #[cfg(feature = "debug_render")]
 use crate::Game;
+#[cfg(feature = "cgb")]
 use crate::Opts;
 use crate::{custom_event::CustomEvent, Context};
 use egui::Ui;
@@ -62,26 +63,29 @@ macro_rules! ui_settings {
                 );
             }
             ui.separator();
-            ui.radio_value(&mut $opts.mode, None, "auto");
-            if ui
-                .radio_value(
-                    &mut $opts.mode,
-                    Some(crate::Mode::Classic),
-                    crate::Mode::Classic.to_string(),
-                )
-                .clicked()
+            #[cfg(feature = "cgb")]
             {
-                $events.push(CustomEvent::ChangedMode(crate::Mode::Classic));
-            }
-            if ui
-                .radio_value(
-                    &mut $opts.mode,
-                    Some(crate::Mode::Color),
-                    crate::Mode::Color.to_string(),
-                )
-                .clicked()
-            {
-                $events.push(CustomEvent::ChangedMode(crate::Mode::Color));
+                ui.radio_value(&mut $opts.mode, None, "auto");
+                if ui
+                    .radio_value(
+                        &mut $opts.mode,
+                        Some(crate::Mode::Classic),
+                        crate::Mode::Classic.to_string(),
+                    )
+                    .clicked()
+                {
+                    $events.push(CustomEvent::ChangedMode(crate::Mode::Classic));
+                }
+                if ui
+                    .radio_value(
+                        &mut $opts.mode,
+                        Some(crate::Mode::Color),
+                        crate::Mode::Color.to_string(),
+                    )
+                    .clicked()
+                {
+                    $events.push(CustomEvent::ChangedMode(crate::Mode::Color));
+                }
             }
         });
     };
@@ -97,7 +101,7 @@ macro_rules! ui_fps {
 
 pub fn draw_egui<const WIDTH: usize, const HEIGHT: usize>(
     context: &mut Context<WIDTH, HEIGHT>,
-    options: &mut Opts,
+    #[cfg(feature = "cgb")] options: &mut Opts,
     #[cfg(feature = "debug_fps")] fps: f64,
 ) -> Vec<CustomEvent> {
     let mut events = Vec::new();

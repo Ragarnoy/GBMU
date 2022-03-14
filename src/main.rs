@@ -83,7 +83,10 @@ impl Display for Mode {
 }
 
 fn main() {
+    #[cfg(feature = "cgb")]
     let mut opts: Opts = Opts::parse();
+    #[cfg(not(feature = "cgb"))]
+    let opts: Opts = Opts::parse();
     #[cfg(feature = "time_frame")]
     let mut time_frame_stat = time_frame::TimeStat::default();
     #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
@@ -120,10 +123,13 @@ fn main() {
             }
             game.draw(&mut context);
         }
-        #[cfg(not(feature = "debug_fps"))]
-        let events = ui::draw_egui(&mut context, &mut opts);
-        #[cfg(feature = "debug_fps")]
-        let events = ui::draw_egui(&mut context, &mut opts, render_time_frame.fps());
+        let events = ui::draw_egui(
+            &mut context,
+            #[cfg(feature = "cgb")]
+            &mut opts,
+            #[cfg(feature = "debug_fps")]
+            render_time_frame.fps(),
+        );
         context
             .windows
             .main
@@ -205,6 +211,7 @@ fn main() {
                         log::warn!("no game context to load the state into");
                     }
                 }
+                #[cfg(feature = "cgb")]
                 CustomEvent::ChangedMode(wanted_mode) =>
                 {
                     #[cfg(feature = "cgb")]
