@@ -1,3 +1,4 @@
+use crate::custom_event::CustomEvent;
 use crate::{context::Context, settings};
 #[cfg(feature = "debug_render")]
 use sdl2::keyboard::Scancode;
@@ -41,6 +42,13 @@ pub fn process_event<const WIDTH: usize, const HEIGHT: usize>(
                     return res;
                 }
             }
+            Event::DropFile {
+                filename,
+                window_id,
+                ..
+            } if window_id == context.windows.main.sdl_window().id() => context
+                .custom_events
+                .push(CustomEvent::FileDropped(filename)),
             _ => {
                 if !context.windows.main.send_event(&event, &context.sdl) {
                     if let Some(ref mut dbg_wind) = context.windows.debug {
