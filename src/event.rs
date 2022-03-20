@@ -35,101 +35,12 @@ pub fn process_event<const WIDTH: usize, const HEIGHT: usize>(
                 win_event,
                 window_id,
                 ..
-            } => match win_event {
-                sdl2::event::WindowEvent::SizeChanged(_width, _height) => {
-                    if context.windows.main.sdl_window().id() == window_id {
-                        context
-                            .windows
-                            .main
-                            .resize(&context.video)
-                            .expect("Fail to resize GB window");
-                        context
-                            .display
-                            .resize(context.windows.main.sdl_window().size());
-                    }
-                    if let Some(ref mut dbg_wind) = context.windows.debug {
-                        if dbg_wind.sdl_window().id() == window_id {
-                            dbg_wind
-                                .resize(&context.video)
-                                .expect("Fail to resize debug window");
-                        }
-                    }
-                    if let Some(ref mut input_wind) = context.windows.input {
-                        if input_wind.sdl_window().id() == window_id {
-                            input_wind
-                                .resize(&context.video)
-                                .expect("Fail to resize input window");
-                        }
-                    }
-                    #[cfg(feature = "debug_render")]
-                    if let Some((ref mut tilemap_wind, ref mut display, _)) =
-                        context.windows.tilemap
-                    {
-                        if tilemap_wind.sdl_window().id() == window_id {
-                            tilemap_wind
-                                .resize(&context.video)
-                                .expect("Fail to resize tilemap window");
-                            display.resize(tilemap_wind.sdl_window().size());
-                        }
-                    }
-                    #[cfg(feature = "debug_render")]
-                    if let Some((ref mut tilesheet_wind, ref mut display)) =
-                        context.windows.tilesheet
-                    {
-                        if tilesheet_wind.sdl_window().id() == window_id {
-                            tilesheet_wind
-                                .resize(&context.video)
-                                .expect("Fail to resize tilesheet window");
-                            display.resize(tilesheet_wind.sdl_window().size());
-                        }
-                    }
-                    #[cfg(feature = "debug_render")]
-                    if let Some(ref mut cfg) = context.windows.oam {
-                        if cfg.window.sdl_window().id() == window_id {
-                            cfg.window
-                                .resize(&context.video)
-                                .expect("Fail to resize oam window");
-                            cfg.viewport.resize(cfg.window.sdl_window().size());
-                            cfg.list.resize(cfg.window.sdl_window().size());
-                        }
-                    }
+            } => {
+                let res = process_window_event(win_event, window_id, context);
+                if res == std::ops::ControlFlow::Break(()) {
+                    return res;
                 }
-                sdl2::event::WindowEvent::Close => {
-                    if context.windows.main.sdl_window().id() == window_id {
-                        return std::ops::ControlFlow::Break(());
-                    }
-                    if let Some(ref mut dbg_wind) = context.windows.debug {
-                        if dbg_wind.sdl_window().id() == window_id {
-                            context.windows.debug = None;
-                        }
-                    }
-                    if let Some(ref mut input_wind) = context.windows.input {
-                        if input_wind.sdl_window().id() == window_id {
-                            settings::save(context.joypad.borrow().get_config());
-                            context.windows.input = None;
-                        }
-                    }
-                    #[cfg(feature = "debug_render")]
-                    if let Some((ref mut tilemap_wind, _, _)) = context.windows.tilemap {
-                        if tilemap_wind.sdl_window().id() == window_id {
-                            context.windows.tilemap = None;
-                        }
-                    }
-                    #[cfg(feature = "debug_render")]
-                    if let Some((ref mut tilesheet_wind, _)) = context.windows.tilesheet {
-                        if tilesheet_wind.sdl_window().id() == window_id {
-                            context.windows.tilesheet = None;
-                        }
-                    }
-                    #[cfg(feature = "debug_render")]
-                    if let Some(ref mut cfg) = context.windows.oam {
-                        if cfg.window.sdl_window().id() == window_id {
-                            context.windows.oam = None;
-                        }
-                    }
-                }
-                _ => {}
-            },
+            }
             _ => {
                 if !context.windows.main.send_event(&event, &context.sdl) {
                     if let Some(ref mut dbg_wind) = context.windows.debug {
@@ -153,6 +64,105 @@ pub fn process_event<const WIDTH: usize, const HEIGHT: usize>(
                 }
             }
         }
+    }
+    std::ops::ControlFlow::Continue(())
+}
+
+fn process_window_event<const WIDTH: usize, const HEIGHT: usize>(
+    event: sdl2::event::WindowEvent,
+    window_id: u32,
+    context: &mut Context<WIDTH, HEIGHT>,
+) -> std::ops::ControlFlow<()> {
+    match event {
+        sdl2::event::WindowEvent::SizeChanged(_width, _height) => {
+            if context.windows.main.sdl_window().id() == window_id {
+                context
+                    .windows
+                    .main
+                    .resize(&context.video)
+                    .expect("Fail to resize GB window");
+                context
+                    .display
+                    .resize(context.windows.main.sdl_window().size());
+            }
+            if let Some(ref mut dbg_wind) = context.windows.debug {
+                if dbg_wind.sdl_window().id() == window_id {
+                    dbg_wind
+                        .resize(&context.video)
+                        .expect("Fail to resize debug window");
+                }
+            }
+            if let Some(ref mut input_wind) = context.windows.input {
+                if input_wind.sdl_window().id() == window_id {
+                    input_wind
+                        .resize(&context.video)
+                        .expect("Fail to resize input window");
+                }
+            }
+            #[cfg(feature = "debug_render")]
+            if let Some((ref mut tilemap_wind, ref mut display, _)) = context.windows.tilemap {
+                if tilemap_wind.sdl_window().id() == window_id {
+                    tilemap_wind
+                        .resize(&context.video)
+                        .expect("Fail to resize tilemap window");
+                    display.resize(tilemap_wind.sdl_window().size());
+                }
+            }
+            #[cfg(feature = "debug_render")]
+            if let Some((ref mut tilesheet_wind, ref mut display)) = context.windows.tilesheet {
+                if tilesheet_wind.sdl_window().id() == window_id {
+                    tilesheet_wind
+                        .resize(&context.video)
+                        .expect("Fail to resize tilesheet window");
+                    display.resize(tilesheet_wind.sdl_window().size());
+                }
+            }
+            #[cfg(feature = "debug_render")]
+            if let Some(ref mut cfg) = context.windows.oam {
+                if cfg.window.sdl_window().id() == window_id {
+                    cfg.window
+                        .resize(&context.video)
+                        .expect("Fail to resize oam window");
+                    cfg.viewport.resize(cfg.window.sdl_window().size());
+                    cfg.list.resize(cfg.window.sdl_window().size());
+                }
+            }
+        }
+        sdl2::event::WindowEvent::Close => {
+            if context.windows.main.sdl_window().id() == window_id {
+                return std::ops::ControlFlow::Break(());
+            }
+            if let Some(ref mut dbg_wind) = context.windows.debug {
+                if dbg_wind.sdl_window().id() == window_id {
+                    context.windows.debug = None;
+                }
+            }
+            if let Some(ref mut input_wind) = context.windows.input {
+                if input_wind.sdl_window().id() == window_id {
+                    settings::save(context.joypad.borrow().get_config());
+                    context.windows.input = None;
+                }
+            }
+            #[cfg(feature = "debug_render")]
+            if let Some((ref mut tilemap_wind, _, _)) = context.windows.tilemap {
+                if tilemap_wind.sdl_window().id() == window_id {
+                    context.windows.tilemap = None;
+                }
+            }
+            #[cfg(feature = "debug_render")]
+            if let Some((ref mut tilesheet_wind, _)) = context.windows.tilesheet {
+                if tilesheet_wind.sdl_window().id() == window_id {
+                    context.windows.tilesheet = None;
+                }
+            }
+            #[cfg(feature = "debug_render")]
+            if let Some(ref mut cfg) = context.windows.oam {
+                if cfg.window.sdl_window().id() == window_id {
+                    context.windows.oam = None;
+                }
+            }
+        }
+        _ => {}
     }
     std::ops::ControlFlow::Continue(())
 }
