@@ -94,9 +94,9 @@ fn main() {
             game.draw(&mut context);
         }
         #[cfg(not(feature = "debug_fps"))]
-        let events = ui::draw_egui(&mut context);
+        ui::draw_egui(&mut context);
         #[cfg(feature = "debug_fps")]
-        let events = ui::draw_egui(&mut context, render_time_frame.fps());
+        ui::draw_egui(&mut context, render_time_frame.fps());
         context
             .windows
             .main
@@ -144,10 +144,13 @@ fn main() {
         #[cfg(feature = "debug_render")]
         ui::draw_ppu_debug_ui(&mut context, &mut game);
 
-        for event in events.into_iter() {
+        for event in &context.custom_events {
             use custom_event::CustomEvent;
 
             match event {
+                CustomEvent::FileDropped(filename) => {
+                    game = load_game(filename, context.joypad.clone(), opts.debug)
+                }
                 CustomEvent::LoadFile(file) => {
                     game = load_game(file, context.joypad.clone(), opts.debug)
                 }
@@ -169,6 +172,7 @@ fn main() {
                 }
             }
         }
+        context.custom_events.clear();
 
         if std::ops::ControlFlow::Break(()) == event::process_event(&mut context, &mut event_pump) {
             break 'running;
@@ -275,6 +279,7 @@ fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
             windows,
             #[cfg(feature = "debug_render")]
             debug_render: false,
+            custom_events: Vec::with_capacity(5),
         },
         game_context,
         dbg,
