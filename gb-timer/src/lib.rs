@@ -13,7 +13,7 @@ pub struct Timer {
     pub system_clock: u16,
     pub tima: u8,
     tma: u8,
-    tac: u8,
+    pub tac: u8,
     last_and_result: bool,
     tima_overflow: bool,
     reload_counter: u8,
