@@ -26,6 +26,9 @@ use gb_timer::Timer;
 use std::io::BufWriter;
 use std::{cell::RefCell, collections::BTreeMap, fs::File, ops::DerefMut, path::Path, rc::Rc};
 
+#[cfg(feature = "cgb")]
+use crate::Mode;
+
 pub struct Context<const WIDTH: usize, const HEIGHT: usize> {
     pub sdl: sdl2::Sdl,
     pub video: sdl2::VideoSubsystem,
@@ -77,6 +80,7 @@ impl Game {
         rompath: &P,
         joypad: Rc<RefCell<Joypad>>,
         stopped: bool,
+        #[cfg(feature = "cgb")] forced_mode: Option<Mode>,
     ) -> Result<Game, anyhow::Error> {
         use std::io::Seek;
 
@@ -84,23 +88,36 @@ impl Game {
         let mut file = File::open(rompath)?;
         let header = Header::from_file(&mut file)?;
 
+        #[cfg(not(feature = "cgb"))]
+        let cgb_mode = false;
+        #[cfg(feature = "cgb")]
+        let cgb_mode = if let Some(forced_mode) = forced_mode {
+            forced_mode == Mode::Color
+        } else {
+            header.title.is_cgb_cartridge()
+        };
+
         log::debug!("header: {:?}", header);
 
         file.rewind()?;
         let mbc = mbc_with_save_state(&romname, &header, file)?;
         let mbc = Rc::new(RefCell::new(mbc));
 
-        let ppu = Ppu::default();
+        let ppu = Ppu::new(cgb_mode);
         let ppu_mem = Rc::new(RefCell::new(ppu.memory()));
         let ppu_reg = Rc::new(RefCell::new(ppu.registers()));
         let (cpu, cpu_io_reg) = if cfg!(feature = "bios") {
             new_cpu()
         } else {
             let (mut cpu, cpu_io_reg) = new_cpu();
+            assert!(
+                !cgb_mode,
+                "we don't have the registers value for color mode"
+            );
             cpu.set_registers(Registers::DMG);
             (cpu, cpu_io_reg)
         };
-        let wram = Rc::new(RefCell::new(WorkingRam::new(false)));
+        let wram = Rc::new(RefCell::new(WorkingRam::new(cgb_mode)));
         let timer = Rc::new(RefCell::new(Timer::default()));
         let bios_wrapper = {
             let bios = Rc::new(RefCell::new(if cfg!(feature = "cgb") {
@@ -123,7 +140,7 @@ impl Game {
         let io_bus = {
             let mut io_bus = IORegBus::default();
             #[cfg(feature = "cgb")]
-            {
+            if cgb_mode {
                 io_bus
                     .with_area(IORegArea::Vbk, ppu_reg.clone())
                     .with_area(IORegArea::Key1, cpu_io_reg.clone())
