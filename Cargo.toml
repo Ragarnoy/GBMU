@@ -26,6 +26,7 @@ save_state = [
   "gb-cpu/serialization",
   "gb-bus/serialization",
   "gb-timer/serialization",
+  "gb-ppu/serialization",
 ]
 
 [dependencies]

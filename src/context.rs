@@ -374,7 +374,6 @@ impl Game {
     pub fn load_save_file(&mut self, filename: &Path) {
         use anyhow::Error;
         use rmp_serde::decode::from_read;
-        use std::fs::File;
 
         match File::open(&filename)
             .map_err(Error::from)
@@ -831,7 +830,7 @@ impl RegisterDebugOperations for Game {
 }
 
 #[cfg(feature = "save_state")]
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(serde::Serialize, serde::Deserialize)]
 struct SaveState {
     pub romname: String,
     pub cpu_regs: gb_cpu::registers::Registers,
@@ -840,6 +839,7 @@ struct SaveState {
     pub working_ram: WorkingRam,
     pub timer: Timer,
     pub hram: Vec<u8>,
+    pub ppu: Ppu,
 }
 
 #[cfg(feature = "save_state")]
@@ -853,6 +853,7 @@ impl From<&Game> for SaveState {
             working_ram: context.wram.borrow().clone(),
             timer: *context.timer.borrow(),
             hram: context.hram.borrow().save(),
+            ppu: context.ppu.clone(),
         }
     }
 }
