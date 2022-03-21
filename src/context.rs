@@ -202,11 +202,11 @@ impl Game {
             let frame_not_finished = cycles!(
                 self.clock,
                 &mut self.addr_bus,
-                &mut self.cpu,
-                &mut self.ppu,
                 self.timer.borrow_mut().deref_mut(),
+                &mut self.ppu,
                 self.joypad.borrow_mut().deref_mut(),
-                self.dma.borrow_mut().deref_mut()
+                self.dma.borrow_mut().deref_mut(),
+                &mut self.cpu
             );
             self.check_scheduled_stop(!frame_not_finished);
             #[cfg(feature = "cgb")]
