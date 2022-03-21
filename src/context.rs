@@ -446,7 +446,7 @@ impl Game {
 
         if let Err(e) = writeln!(
             file,
-            "{} ({:02X} {:02X} {:02X} {:02X}) TIMA: {:02X} CLK: {:04X}",
+            "{} ({:02X} {:02X} {:02X} {:02X}) TIMA: {:02X} TAC: {:02X} CLK: {:04X}",
             self.cpu.registers,
             <AddressBus as Bus<u8>>::read(&self.addr_bus, self.cpu.registers.pc, None)
                 .unwrap_or(0xff),
@@ -457,6 +457,7 @@ impl Game {
             <AddressBus as Bus<u8>>::read(&self.addr_bus, self.cpu.registers.pc + 3, None)
                 .unwrap_or(0xff),
             timer_borrow.tima,
+            <AddressBus as Bus<u8>>::read(&self.addr_bus, 0xff07, None).unwrap_or(0xff),
             timer_borrow.system_clock
         ) {
             log::error!("Couldn't write to file: {}", e);
