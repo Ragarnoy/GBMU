@@ -101,7 +101,14 @@ impl Game {
             (cpu, cpu_io_reg)
         };
         let wram = Rc::new(RefCell::new(WorkingRam::new(false)));
-        let timer = Rc::new(RefCell::new(Timer::default()));
+        let timer = if !cfg!(feature = "bios") {
+            let mut timer = Timer::default();
+            timer.system_clock = 0xAC00;
+            timer
+        } else {
+            Timer::default()
+        };
+        let timer = Rc::new(RefCell::new(timer));
         let bios_wrapper = {
             let bios = Rc::new(RefCell::new(if cfg!(feature = "cgb") {
                 bios::cgb()
