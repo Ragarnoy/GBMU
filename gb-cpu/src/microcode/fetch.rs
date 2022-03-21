@@ -331,7 +331,7 @@ fn config_actions_for_opcode(opcode: Opcode, ctl: &mut MicrocodeController) {
         Opcode::LdHLL => ctl.push_cycle(&[read::l, read::hl, write::ind]),
 
         Opcode::LdhAC => ctl.push_cycle(&[read::c, read::hram, write::a]),
-        Opcode::LdhA8 => ctl.push_cycles(&[&[read::byte, read::hram], &[write::a]]),
+        Opcode::LdhA8 => ctl.push_cycles(&[&[read::byte], &[read::hram, write::a]]),
 
         Opcode::LdhCA => ctl.push_cycle(&[read::a, read::c, write::hram]),
         Opcode::Ldh8A => ctl.push_cycles(&[&[read::a, read::byte], &[write::hram]]),
