@@ -107,6 +107,9 @@ impl Game {
         let ppu = Ppu::new(cgb_mode);
         let ppu_mem = Rc::new(RefCell::new(ppu.memory()));
         let ppu_reg = Rc::new(RefCell::new(ppu.registers()));
+        if !cfg!(feature = "bios") {
+            ppu_reg.borrow_mut().overwrite_lcd_control(0x91_u8);
+        }
         let (cpu, cpu_io_reg) = if cfg!(feature = "bios") {
             new_cpu()
         } else {
