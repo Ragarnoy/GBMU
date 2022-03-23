@@ -119,7 +119,14 @@ impl Game {
             (cpu, cpu_io_reg)
         };
         let wram = Rc::new(RefCell::new(WorkingRam::new(cgb_mode)));
-        let timer = Rc::new(RefCell::new(Timer::default()));
+        let timer = if !cfg!(feature = "bios") {
+            let mut timer = Timer::default();
+            timer.system_clock = 0xAC00;
+            timer
+        } else {
+            Timer::default()
+        };
+        let timer = Rc::new(RefCell::new(timer));
         let bios_wrapper = {
             let bios = Rc::new(RefCell::new(if cfg!(feature = "cgb") {
                 bios::cgb()
@@ -221,11 +228,11 @@ impl Game {
             let frame_not_finished = cycles!(
                 self.clock,
                 &mut self.addr_bus,
-                &mut self.cpu,
-                &mut self.ppu,
                 self.timer.borrow_mut().deref_mut(),
+                &mut self.ppu,
                 self.joypad.borrow_mut().deref_mut(),
-                self.dma.borrow_mut().deref_mut()
+                self.dma.borrow_mut().deref_mut(),
+                &mut self.cpu
             );
             self.check_scheduled_stop(!frame_not_finished);
             #[cfg(feature = "cgb")]
@@ -464,7 +471,7 @@ impl Game {
 
         if let Err(e) = writeln!(
             file,
-            "{} ({:02X} {:02X} {:02X} {:02X}) TIMA: {:02X} CLK: {:04X}",
+            "{} ({:02X} {:02X} {:02X} {:02X}) TIMA: {:02X} TAC: {:02X} CLK: {:04X}",
             self.cpu.registers,
             <AddressBus as Bus<u8>>::read(&self.addr_bus, self.cpu.registers.pc, None)
                 .unwrap_or(0xff),
@@ -475,6 +482,7 @@ impl Game {
             <AddressBus as Bus<u8>>::read(&self.addr_bus, self.cpu.registers.pc + 3, None)
                 .unwrap_or(0xff),
             timer_borrow.tima,
+            <AddressBus as Bus<u8>>::read(&self.addr_bus, 0xff07, None).unwrap_or(0xff),
             timer_borrow.system_clock
         ) {
             log::error!("Couldn't write to file: {}", e);
