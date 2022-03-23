@@ -9,6 +9,7 @@ authors = [
 ]
 edition = "2021"
 rust-version = "1.58.0"
+description = "A gameboy emulator"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -25,6 +26,7 @@ save_state = [
   "gb-cpu/serialization",
   "gb-bus/serialization",
   "gb-timer/serialization",
+  "gb-ppu/serialization",
 ]
 
 [dependencies]

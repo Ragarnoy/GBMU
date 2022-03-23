@@ -1,5 +1,7 @@
 #[cfg(feature = "debug_render")]
 use crate::Game;
+#[cfg(feature = "cgb")]
+use crate::Opts;
 use crate::{custom_event::CustomEvent, Context};
 use egui::Ui;
 use gb_dbg::{DEBUGGER_HEIGHT, DEBUGGER_WIDTH};
@@ -41,7 +43,7 @@ macro_rules! ui_debug {
 }
 
 macro_rules! ui_settings {
-    ($ui:expr, $context:expr) => {
+    ($ui:expr, $context:expr, $opts:expr, $events:expr) => {
         $ui.menu_button("⚙", |ui| {
             ui.style_mut().override_text_style = None;
             if ui.button("Input").clicked() && $context.windows.input.is_none() {
@@ -60,6 +62,31 @@ macro_rules! ui_settings {
                     .expect("Error while building input window"),
                 );
             }
+            ui.separator();
+            #[cfg(feature = "cgb")]
+            {
+                ui.radio_value(&mut $opts.mode, None, "auto");
+                if ui
+                    .radio_value(
+                        &mut $opts.mode,
+                        Some(crate::Mode::Classic),
+                        crate::Mode::Classic.to_string(),
+                    )
+                    .clicked()
+                {
+                    $events.push(CustomEvent::ChangedMode(crate::Mode::Classic));
+                }
+                if ui
+                    .radio_value(
+                        &mut $opts.mode,
+                        Some(crate::Mode::Color),
+                        crate::Mode::Color.to_string(),
+                    )
+                    .clicked()
+                {
+                    $events.push(CustomEvent::ChangedMode(crate::Mode::Color));
+                }
+            }
         });
     };
 }
@@ -74,6 +101,7 @@ macro_rules! ui_fps {
 
 pub fn draw_egui<const WIDTH: usize, const HEIGHT: usize>(
     context: &mut Context<WIDTH, HEIGHT>,
+    #[cfg(feature = "cgb")] options: &mut Opts,
     #[cfg(feature = "debug_fps")] fps: f64,
 ) {
     egui::containers::TopBottomPanel::top("Top menu").show(context.windows.main.egui_ctx(), |ui| {
@@ -82,7 +110,7 @@ pub fn draw_egui<const WIDTH: usize, const HEIGHT: usize>(
             ui.style_mut().override_text_style = Some(egui::TextStyle::Heading);
             ui_file(ui, &mut context.custom_events);
             ui_debug!(ui, context);
-            ui_settings!(ui, context);
+            ui_settings!(ui, context, options, &mut context.custom_events);
             ui.style_mut().override_text_style = None;
             #[cfg(feature = "debug_fps")]
             ui_fps!(ui, context, fps);

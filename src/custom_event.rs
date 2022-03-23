@@ -1,5 +1,8 @@
 use std::path::PathBuf;
 
+#[cfg(feature = "cgb")]
+use crate::Mode;
+
 #[derive(Debug, Clone)]
 pub enum CustomEvent {
     /// Event that will load a ROM file
@@ -12,4 +15,8 @@ pub enum CustomEvent {
     LoadState(PathBuf),
     /// Event when user drop a file to the main window
     FileDropped(String),
+
+    #[cfg(feature = "cgb")]
+    /// Event when we want to force a gameboy mode
+    ChangedMode(Mode),
 }

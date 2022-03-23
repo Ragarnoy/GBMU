@@ -7,8 +7,8 @@ macro_rules! test_tima {
     ($name:ident, $tac:literal, $step:literal) => {
         #[test]
         fn $name() {
+            const TIME_TO_UPDATE: usize = 4;
             const INC_INTERVAL: u16 = $step;
-            assert_eq!(INC_INTERVAL % Timer::INC_PER_TICK, 0);
             const STEPS: u16 = INC_INTERVAL / Timer::INC_PER_TICK;
 
             let mut fake_bus = MockBus::default();
@@ -27,6 +27,13 @@ macro_rules! test_tima {
                     i, $step, int_flag, timer
                 );
                 timer.tick(&mut fake_bus);
+            }
+            for i in 0..TIME_TO_UPDATE {
+                let int_flag: u8 = fake_bus
+                    .read(0xff0f, Some(Lock::Debugger))
+                    .unwrap_or_default();
+                timer.tick(&mut fake_bus);
+                assert_eq!(int_flag, 0, "expect flag to be 0, at step {}", i);
             }
             let int_flag: u8 = fake_bus
                 .read(0xff0f, Some(Lock::Debugger))
@@ -53,7 +60,6 @@ fn div() {
     let mut fake_bus = MockBus::default();
     let mut timer = Timer::default();
 
-    assert_eq!(DIV_INC_INTERVAL % Timer::INC_PER_TICK, 0);
     const STEPS: u16 = DIV_INC_INTERVAL / Timer::INC_PER_TICK;
     for i in 0..STEPS {
         assert_eq!(
