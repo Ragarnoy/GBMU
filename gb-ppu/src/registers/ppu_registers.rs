@@ -34,6 +34,12 @@ impl PPURegisters {
             }),
         }
     }
+
+    pub fn overwrite_lcd_control(&self, data: u8) {
+        if let Ok(mut lcd) = self.lcd.try_borrow_mut() {
+            (*lcd).control.bits = data;
+        }
+    }
 }
 
 impl<A> FileOperation<A, IORegArea> for PPURegisters
