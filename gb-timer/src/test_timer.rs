@@ -9,7 +9,6 @@ macro_rules! test_tima {
         fn $name() {
             const TIME_TO_UPDATE: usize = 4;
             const INC_INTERVAL: u16 = $step;
-            assert_eq!(INC_INTERVAL % Timer::INC_PER_TICK, 0);
             const STEPS: u16 = INC_INTERVAL / Timer::INC_PER_TICK;
 
             let mut fake_bus = MockBus::default();
@@ -61,7 +60,6 @@ fn div() {
     let mut fake_bus = MockBus::default();
     let mut timer = Timer::default();
 
-    assert_eq!(DIV_INC_INTERVAL % Timer::INC_PER_TICK, 0);
     const STEPS: u16 = DIV_INC_INTERVAL / Timer::INC_PER_TICK;
     for i in 0..STEPS {
         assert_eq!(
