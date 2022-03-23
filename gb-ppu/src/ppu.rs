@@ -64,7 +64,7 @@ pub struct Ppu {
 impl Ppu {
     pub fn new(cgb_enabled: bool) -> Self {
         Ppu {
-            enabled: false,
+            enabled: true,
             cgb_enabled,
             vram: Rc::new(RefCell::new(Vram::new(cgb_enabled))),
             oam: Rc::new(RefCell::new(Oam::new())),
@@ -540,12 +540,6 @@ impl Ppu {
             }
         }
     }
-
-    fn pixel_drawing_disabled(&mut self) {
-        if self.state.pixel_drawn() < 160 {
-            self.state.draw_pixel();
-        }
-    }
 }
 
 impl Default for Ppu {
@@ -563,35 +557,29 @@ impl Ticker for Ppu {
         let enable = self.lcd_reg.borrow().control.ppu_enable();
         if self.enabled && !enable {
             log::info!("disabling lcd");
+            self.state.set_step(0);
+            {
+                let mut lcd_reg_borrowed = self.lcd_reg.borrow_mut();
+                lcd_reg_borrowed.scrolling.ly = 0;
+                lcd_reg_borrowed.stat.set_mode(Mode::HBlank);
+            }
             self.unlock_mem(adr_bus);
             self.enabled = false;
-        }
-        if !self.enabled && enable && self.state.mode() == Mode::VBlank {
+        } else if !self.enabled && enable {
             log::info!("enabling lcd");
             self.enabled = true;
         }
+        if !enable {
+            return;
+        }
 
         match self.state.mode() {
-            Mode::OAMFetch => {
-                if self.enabled {
-                    self.oam_fetch(adr_bus)
-                }
-            }
-            Mode::PixelDrawing => {
-                if self.enabled {
-                    self.pixel_drawing(adr_bus)
-                } else {
-                    self.pixel_drawing_disabled()
-                }
-            }
-            Mode::HBlank => {
-                if self.enabled {
-                    self.hblank(adr_bus)
-                }
-            }
+            Mode::OAMFetch => self.oam_fetch(adr_bus),
+            Mode::PixelDrawing => self.pixel_drawing(adr_bus),
+            Mode::HBlank => self.hblank(adr_bus),
             Mode::VBlank => self.vblank(adr_bus),
         }
-        // update state after executing tick
+
         let lcd_reg = self.lcd_reg.try_borrow_mut().ok();
         self.state.update(lcd_reg, adr_bus);
     }
