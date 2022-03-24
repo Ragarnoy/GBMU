@@ -10,7 +10,7 @@ use gb_dbg::{
     },
     until::Until,
 };
-use gb_dma::Dma;
+use gb_dma::dma::Dma;
 use gb_joypad::Joypad;
 use gb_lcd::render::{RenderImage, SCREEN_HEIGHT, SCREEN_WIDTH};
 use gb_ppu::Ppu;
