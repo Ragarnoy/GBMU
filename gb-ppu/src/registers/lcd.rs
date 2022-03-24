@@ -21,7 +21,7 @@ use std::rc::Rc;
     feature = "serialization",
     derive(serde::Deserialize, serde::Serialize)
 )]
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct LcdReg {
     pub control: Control,
     pub stat: Stat,
@@ -29,6 +29,20 @@ pub struct LcdReg {
     pub pal_mono: PalettesMono,
     pub window_pos: WindowPos,
     pub vbk: Rc<Cell<u8>>,
+}
+
+impl Default for LcdReg {
+    fn default() -> LcdReg {
+        LcdReg {
+            control: Control::default(),
+            stat: Stat::default(),
+            scrolling: Scrolling::default(),
+            pal_mono: PalettesMono::default(),
+            window_pos: WindowPos::default(),
+            vbk: Rc::new(Cell::new(Self::VBK_UNUSED_BITS)),
+            pal_cgb: PalettesCGB::default(),
+        }
+    }
 }
 
 impl LcdReg {

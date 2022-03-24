@@ -42,8 +42,8 @@ impl TryFrom<u8> for BankSelector {
             VBK_BANK_0 => Ok(BankSelector::Bank0),
             VBK_BANK_1 => Ok(BankSelector::Bank1),
             b => Err(PPUError::OutOfBound {
-                max_bound: 1,
-                min_bound: 0,
+                max_bound: VBK_BANK_1 as usize,
+                min_bound: VBK_BANK_0 as usize,
                 value: b as usize,
             }),
         }
