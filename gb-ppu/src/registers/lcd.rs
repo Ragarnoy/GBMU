@@ -7,7 +7,7 @@ mod window_pos;
 
 pub use control::Control;
 pub use palettes_cgb::PalettesCGB;
-pub use palettes_mono::{MonoPaletteRef, PalettesMono};
+pub use palettes_mono::{PaletteRef, PalettesMono};
 pub use scrolling::Scrolling;
 pub use stat::Stat;
 pub use window_pos::WindowPos;

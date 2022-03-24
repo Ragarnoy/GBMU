@@ -65,31 +65,31 @@ impl PixelFIFO {
 #[cfg(test)]
 mod tests {
     use super::{Pixel, PixelFIFO};
-    use crate::registers::MonoPaletteRef;
+    use crate::registers::PaletteRef;
     use std::collections::VecDeque;
     use std::iter::FromIterator;
 
     #[test]
     fn mix() {
         let mut pixels_0 = VecDeque::from_iter([
-            Pixel::new(1, Some(MonoPaletteRef::BgWin), false),
-            Pixel::new(1, Some(MonoPaletteRef::BgWin), false),
-            Pixel::new(1, Some(MonoPaletteRef::BgWin), false),
-            Pixel::new(1, Some(MonoPaletteRef::BgWin), false),
-            Pixel::new(1, Some(MonoPaletteRef::BgWin), false),
-            Pixel::new(1, Some(MonoPaletteRef::BgWin), false),
-            Pixel::new(1, Some(MonoPaletteRef::BgWin), false),
-            Pixel::new(1, Some(MonoPaletteRef::BgWin), false),
+            Pixel::new(1, Some(PaletteRef::MonoBgWin), false),
+            Pixel::new(1, Some(PaletteRef::MonoBgWin), false),
+            Pixel::new(1, Some(PaletteRef::MonoBgWin), false),
+            Pixel::new(1, Some(PaletteRef::MonoBgWin), false),
+            Pixel::new(1, Some(PaletteRef::MonoBgWin), false),
+            Pixel::new(1, Some(PaletteRef::MonoBgWin), false),
+            Pixel::new(1, Some(PaletteRef::MonoBgWin), false),
+            Pixel::new(1, Some(PaletteRef::MonoBgWin), false),
         ]);
         let pixels_1 = VecDeque::from_iter([
-            Pixel::new(2, Some(MonoPaletteRef::Sprite0), false),
-            Pixel::new(0, Some(MonoPaletteRef::Sprite0), false),
-            Pixel::new(2, Some(MonoPaletteRef::Sprite0), false),
-            Pixel::new(0, Some(MonoPaletteRef::Sprite0), false),
-            Pixel::new(2, Some(MonoPaletteRef::Sprite0), false),
-            Pixel::new(0, Some(MonoPaletteRef::Sprite0), false),
-            Pixel::new(2, Some(MonoPaletteRef::Sprite0), false),
-            Pixel::new(0, Some(MonoPaletteRef::Sprite0), false),
+            Pixel::new(2, Some(PaletteRef::MonoSprite0), false),
+            Pixel::new(0, Some(PaletteRef::MonoSprite0), false),
+            Pixel::new(2, Some(PaletteRef::MonoSprite0), false),
+            Pixel::new(0, Some(PaletteRef::MonoSprite0), false),
+            Pixel::new(2, Some(PaletteRef::MonoSprite0), false),
+            Pixel::new(0, Some(PaletteRef::MonoSprite0), false),
+            Pixel::new(2, Some(PaletteRef::MonoSprite0), false),
+            Pixel::new(0, Some(PaletteRef::MonoSprite0), false),
         ]);
         let mut fifo = PixelFIFO::new();
 
@@ -114,14 +114,14 @@ mod tests {
     #[test]
     fn append() {
         let mut pixels = VecDeque::from_iter([
-            Pixel::new(0, Some(MonoPaletteRef::BgWin), false),
-            Pixel::new(1, Some(MonoPaletteRef::BgWin), false),
-            Pixel::new(2, Some(MonoPaletteRef::BgWin), false),
-            Pixel::new(3, Some(MonoPaletteRef::BgWin), false),
-            Pixel::new(0, Some(MonoPaletteRef::BgWin), false),
-            Pixel::new(1, Some(MonoPaletteRef::BgWin), false),
-            Pixel::new(2, Some(MonoPaletteRef::BgWin), false),
-            Pixel::new(3, Some(MonoPaletteRef::BgWin), false),
+            Pixel::new(0, Some(PaletteRef::MonoBgWin), false),
+            Pixel::new(1, Some(PaletteRef::MonoBgWin), false),
+            Pixel::new(2, Some(PaletteRef::MonoBgWin), false),
+            Pixel::new(3, Some(PaletteRef::MonoBgWin), false),
+            Pixel::new(0, Some(PaletteRef::MonoBgWin), false),
+            Pixel::new(1, Some(PaletteRef::MonoBgWin), false),
+            Pixel::new(2, Some(PaletteRef::MonoBgWin), false),
+            Pixel::new(3, Some(PaletteRef::MonoBgWin), false),
         ]);
         let mut fifo = PixelFIFO::new();
 
@@ -135,24 +135,24 @@ mod tests {
     #[test]
     fn pop() {
         let mut pixels_0 = VecDeque::from_iter([
-            Pixel::new(0, Some(MonoPaletteRef::BgWin), false),
-            Pixel::new(1, Some(MonoPaletteRef::BgWin), false),
-            Pixel::new(0, Some(MonoPaletteRef::BgWin), false),
-            Pixel::new(1, Some(MonoPaletteRef::BgWin), false),
-            Pixel::new(0, Some(MonoPaletteRef::BgWin), false),
-            Pixel::new(1, Some(MonoPaletteRef::BgWin), false),
-            Pixel::new(0, Some(MonoPaletteRef::BgWin), false),
-            Pixel::new(1, Some(MonoPaletteRef::BgWin), false),
+            Pixel::new(0, Some(PaletteRef::MonoBgWin), false),
+            Pixel::new(1, Some(PaletteRef::MonoBgWin), false),
+            Pixel::new(0, Some(PaletteRef::MonoBgWin), false),
+            Pixel::new(1, Some(PaletteRef::MonoBgWin), false),
+            Pixel::new(0, Some(PaletteRef::MonoBgWin), false),
+            Pixel::new(1, Some(PaletteRef::MonoBgWin), false),
+            Pixel::new(0, Some(PaletteRef::MonoBgWin), false),
+            Pixel::new(1, Some(PaletteRef::MonoBgWin), false),
         ]);
         let mut pixels_1 = VecDeque::from_iter([
-            Pixel::new(2, Some(MonoPaletteRef::BgWin), false),
-            Pixel::new(3, Some(MonoPaletteRef::BgWin), false),
-            Pixel::new(2, Some(MonoPaletteRef::BgWin), false),
-            Pixel::new(3, Some(MonoPaletteRef::BgWin), false),
-            Pixel::new(2, Some(MonoPaletteRef::BgWin), false),
-            Pixel::new(3, Some(MonoPaletteRef::BgWin), false),
-            Pixel::new(2, Some(MonoPaletteRef::BgWin), false),
-            Pixel::new(3, Some(MonoPaletteRef::BgWin), false),
+            Pixel::new(2, Some(PaletteRef::MonoBgWin), false),
+            Pixel::new(3, Some(PaletteRef::MonoBgWin), false),
+            Pixel::new(2, Some(PaletteRef::MonoBgWin), false),
+            Pixel::new(3, Some(PaletteRef::MonoBgWin), false),
+            Pixel::new(2, Some(PaletteRef::MonoBgWin), false),
+            Pixel::new(3, Some(PaletteRef::MonoBgWin), false),
+            Pixel::new(2, Some(PaletteRef::MonoBgWin), false),
+            Pixel::new(3, Some(PaletteRef::MonoBgWin), false),
         ]);
         let mut fifo = PixelFIFO::new();
 

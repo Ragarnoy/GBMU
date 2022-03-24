@@ -1,6 +1,6 @@
 use super::{BGTileAttributes, Pixel, PixelFIFO};
 use crate::memory::{BankSelector, Vram};
-use crate::registers::{LcdReg, MonoPaletteRef};
+use crate::registers::{LcdReg, PaletteRef};
 use crate::Sprite;
 use crate::TILEMAP_TILE_DIM_COUNT;
 use std::collections::VecDeque;
@@ -253,7 +253,7 @@ impl PixelFetcher {
                     for color_id in row {
                         self.pixels.push_front(Pixel::new(
                             color_id,
-                            Some(MonoPaletteRef::BgWin),
+                            Some(PaletteRef::MonoBgWin),
                             false,
                         ));
                     }
