@@ -40,7 +40,6 @@ impl Default for LcdReg {
             pal_mono: PalettesMono::default(),
             window_pos: WindowPos::default(),
             vbk: Rc::new(Cell::new(Self::VBK_UNUSED_BITS)),
-            pal_cgb: PalettesCGB::default(),
         }
     }
 }
