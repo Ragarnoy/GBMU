@@ -10,10 +10,13 @@ use gb_dbg::{
     },
     until::Until,
 };
-use gb_dma::{dma::Dma, hdma::Hdma};
+use gb_dma::{
+    dma::Dma,
+    hdma::{Hdma, HdmaMode},
+};
 use gb_joypad::Joypad;
 use gb_lcd::render::{RenderImage, SCREEN_HEIGHT, SCREEN_WIDTH};
-use gb_ppu::Ppu;
+use gb_ppu::{drawing, drawing::State, Ppu};
 #[cfg(feature = "save_state")]
 use gb_roms::controllers::Full;
 use gb_roms::{
@@ -236,9 +239,7 @@ impl Game {
                 self.log_registers_to_file().unwrap_or_default();
             }
             #[cfg(feature = "cgb")]
-            {
-                self.cpu.halted = self.hdma.borrow().active;
-            }
+            self.check_hdma_status();
 
             let frame_not_finished = cycles!(
                 self.clock,
@@ -247,9 +248,9 @@ impl Game {
                 &mut self.ppu,
                 self.joypad.borrow_mut().deref_mut(),
                 self.dma.borrow_mut().deref_mut(),
+                &mut self.cpu,
                 #[cfg(feature = "cgb")]
-                self.hdma.borrow_mut().deref_mut(),
-                &mut self.cpu
+                self.hdma.borrow_mut().deref_mut()
             );
             self.check_scheduled_stop(!frame_not_finished);
             #[cfg(feature = "cgb")]
@@ -268,6 +269,27 @@ impl Game {
             frame_not_finished
         } else {
             false
+        }
+    }
+
+    #[cfg(feature = "cgb")]
+    fn check_hdma_status(&mut self) {
+        if self.hdma.borrow().active() {
+            self.cpu.halted = match *self.hdma.borrow().mode() {
+                Some(HdmaMode::Gdma) => true,
+                Some(HdmaMode::Hdma) => {
+                    let ly = self.ppu.lcd_reg.borrow().scrolling.ly;
+                    let ppu_mode = self.ppu.lcd_reg.borrow().stat.mode().unwrap();
+                    if ly < State::VBLANK_START && ppu_mode == drawing::Mode::HBlank {
+                        true
+                    } else {
+                        false
+                    }
+                }
+                None => false,
+            }
+        } else {
+            self.cpu.halted = false;
         }
     }
 

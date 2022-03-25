@@ -23,7 +23,7 @@ const INTERRUPT_VBLANK_BIT: u8 = 0b01;
 impl State {
     const LINE_COUNT: u8 = 154;
     pub const LAST_LINE: u8 = Self::LINE_COUNT - 1;
-    const VBLANK_START: u8 = 144;
+    pub const VBLANK_START: u8 = 144;
 
     const PIXEL_DRAWING_START: u16 = 80;
     const LAST_OAM_FETCH_STEP: u16 = Self::PIXEL_DRAWING_START - 1;
