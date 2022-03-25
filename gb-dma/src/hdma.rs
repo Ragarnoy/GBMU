@@ -2,7 +2,7 @@ use gb_bus::{Address, Bus, Error, FileOperation, IORegArea};
 use gb_clock::{Tick, Ticker};
 
 #[derive(PartialEq)]
-enum Mode {
+pub enum HdmaMode {
     Gdma,
     Hdma,
 }
@@ -11,15 +11,20 @@ enum Mode {
 pub struct Hdma {
     src: u16,
     dest: u16,
-    pub active: bool,
+    active: bool,
     len: u8,
-    mode: Option<Mode>,
+    mode: Option<HdmaMode>,
 }
 
 impl Hdma {
     pub fn active(&self) -> bool {
         self.active
     }
+    pub fn mode(&self) -> &Option<HdmaMode> {
+        &self.mode
+    }
+
+    fn data_transfer(&mut self, adr_bus: &mut dyn Bus<u8>) {}
 }
 
 impl<A> FileOperation<A, IORegArea> for Hdma
@@ -56,7 +61,7 @@ where
                 Ok(())
             }
             IORegArea::Hdma5 => {
-                if self.active && self.mode == Some(Mode::Hdma) {
+                if self.active && self.mode == Some(HdmaMode::Hdma) {
                     if v & 0x80 == 0 {
                         self.active = false;
                     };
@@ -65,8 +70,8 @@ where
                 self.active = true;
                 self.len = v & 0x7F;
                 self.mode = match v & 0x80 {
-                    0 => Some(Mode::Gdma),
-                    _ => Some(Mode::Hdma),
+                    0 => Some(HdmaMode::Gdma),
+                    _ => Some(HdmaMode::Hdma),
                 };
                 Ok(())
             }
@@ -84,5 +89,6 @@ impl Ticker for Hdma {
         if !self.active {
             return;
         }
+        self.data_transfer(adr_bus);
     }
 }

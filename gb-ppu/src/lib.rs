@@ -1,5 +1,5 @@
 mod color;
-mod drawing;
+pub mod drawing;
 mod error;
 mod memory;
 mod ppu;
