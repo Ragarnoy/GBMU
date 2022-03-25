@@ -10,7 +10,7 @@ use gb_dbg::{
     },
     until::Until,
 };
-use gb_dma::dma::Dma;
+use gb_dma::{dma::Dma, hdma::Hdma};
 use gb_joypad::Joypad;
 use gb_lcd::render::{RenderImage, SCREEN_HEIGHT, SCREEN_WIDTH};
 use gb_ppu::Ppu;
@@ -51,6 +51,7 @@ pub struct Game {
     pub clock: Clock,
     pub io_bus: Rc<RefCell<IORegBus>>,
     pub timer: Rc<RefCell<Timer>>,
+    pub hdma: Rc<RefCell<Hdma>>,
     pub dma: Rc<RefCell<Dma>>,
     pub joypad: Rc<RefCell<Joypad>>,
     pub addr_bus: AddressBus,
@@ -148,6 +149,7 @@ impl Game {
             Rc::new(RefCell::new(wrapper))
         };
         let dma = Rc::new(RefCell::new(Dma::new()));
+        let hdma = Rc::new(RefCell::new(Hdma::default()));
         let serial = Rc::new(RefCell::new(gb_bus::Serial::default()));
 
         let io_bus = {
@@ -167,6 +169,7 @@ impl Game {
                 .with_ppu(ppu_reg)
                 .with_area(IORegArea::IF, cpu_io_reg.clone())
                 .with_area(IORegArea::Dma, dma.clone())
+                .with_hdma(hdma.clone())
                 .with_area(IORegArea::BootRom, bios_wrapper.clone())
                 .with_serial(serial)
                 .with_default_sound()
@@ -209,6 +212,8 @@ impl Game {
             io_bus,
             timer,
             dma,
+            #[cfg(feature = "cgb")]
+            hdma,
             joypad,
             addr_bus: bus,
             scheduled_stop: None,
@@ -230,6 +235,11 @@ impl Game {
             if self.cpu.controller.is_instruction_finished {
                 self.log_registers_to_file().unwrap_or_default();
             }
+            #[cfg(feature = "cgb")]
+            {
+                self.cpu.halted = self.hdma.borrow().active;
+            }
+
             let frame_not_finished = cycles!(
                 self.clock,
                 &mut self.addr_bus,
@@ -237,6 +247,8 @@ impl Game {
                 &mut self.ppu,
                 self.joypad.borrow_mut().deref_mut(),
                 self.dma.borrow_mut().deref_mut(),
+                #[cfg(feature = "cgb")]
+                self.hdma.borrow_mut().deref_mut(),
                 &mut self.cpu
             );
             self.check_scheduled_stop(!frame_not_finished);
@@ -247,7 +259,7 @@ impl Game {
                     &mut self.addr_bus,
                     &mut self.cpu,
                     self.timer.borrow_mut().deref_mut(),
-                    self.dma.borrow_mut().deref_mut()
+                    self.dma.borrow_mut().deref_mut() // TODO check with team if hdma should cycle twice in double speed https://gbdev.io/pandocs/CGB_Registers.html#transfer-timings
                 );
                 self.check_scheduled_stop(!frame_not_finished);
             }
