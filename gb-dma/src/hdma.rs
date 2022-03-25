@@ -1,4 +1,5 @@
-use gb_bus::{Address, Error, FileOperation, IORegArea};
+use gb_bus::{Address, Bus, Error, FileOperation, IORegArea};
+use gb_clock::{Tick, Ticker};
 
 enum Mode {
     Gdma,
@@ -9,12 +10,16 @@ enum Mode {
 pub struct Hdma {
     src: u16,
     dest: u16,
-    active: bool,
+    pub active: bool,
     len: u8,
     mode: Option<Mode>,
 }
 
-impl Hdma {}
+impl Hdma {
+    pub fn active(&self) -> bool {
+        self.active
+    }
+}
 
 impl<A> FileOperation<A, IORegArea> for Hdma
 where
@@ -33,5 +38,17 @@ where
     }
     fn write(&mut self, v: u8, addr: A) -> Result<(), gb_bus::Error> {
         Ok(())
+    }
+}
+
+impl Ticker for Hdma {
+    fn cycle_count(&self) -> Tick {
+        Tick::MCycle
+    }
+
+    fn tick(&mut self, adr_bus: &mut dyn Bus<u8>) {
+        if !self.active {
+            return;
+        }
     }
 }
