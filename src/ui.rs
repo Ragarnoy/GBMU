@@ -103,21 +103,19 @@ pub fn draw_egui<const WIDTH: usize, const HEIGHT: usize>(
     context: &mut Context<WIDTH, HEIGHT>,
     #[cfg(feature = "cgb")] options: &mut Opts,
     #[cfg(feature = "debug_fps")] fps: f64,
-) -> Vec<CustomEvent> {
-    let mut events = Vec::new();
+) {
     egui::containers::TopBottomPanel::top("Top menu").show(context.windows.main.egui_ctx(), |ui| {
         egui::menu::bar(ui, |ui| {
             ui.set_height(render::MENU_BAR_SIZE);
             ui.style_mut().override_text_style = Some(egui::TextStyle::Heading);
-            ui_file(ui, &mut events);
+            ui_file(ui, &mut context.custom_events);
             ui_debug!(ui, context);
-            ui_settings!(ui, context, options, events);
+            ui_settings!(ui, context, options, &mut context.custom_events);
             ui.style_mut().override_text_style = None;
             #[cfg(feature = "debug_fps")]
             ui_fps!(ui, context, fps);
         });
     });
-    events
 }
 
 #[cfg(feature = "debug_render")]
