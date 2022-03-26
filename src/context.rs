@@ -10,13 +10,10 @@ use gb_dbg::{
     },
     until::Until,
 };
-use gb_dma::{
-    dma::Dma,
-    hdma::{Hdma, HdmaMode},
-};
+use gb_dma::{dma::Dma, hdma::Hdma};
 use gb_joypad::Joypad;
 use gb_lcd::render::{RenderImage, SCREEN_HEIGHT, SCREEN_WIDTH};
-use gb_ppu::{drawing, drawing::State, Ppu};
+use gb_ppu::Ppu;
 #[cfg(feature = "save_state")]
 use gb_roms::controllers::Full;
 use gb_roms::{
@@ -215,7 +212,6 @@ impl Game {
             io_bus,
             timer,
             dma,
-            #[cfg(feature = "cgb")]
             hdma,
             joypad,
             addr_bus: bus,
@@ -238,7 +234,6 @@ impl Game {
             if self.cpu.controller.is_instruction_finished {
                 self.log_registers_to_file().unwrap_or_default();
             }
-            #[cfg(feature = "cgb")]
             self.hdma
                 .borrow_mut()
                 .check_hdma_state(&mut self.cpu, &self.ppu);
@@ -251,7 +246,6 @@ impl Game {
                 self.joypad.borrow_mut().deref_mut(),
                 self.dma.borrow_mut().deref_mut(),
                 &mut self.cpu,
-                #[cfg(feature = "cgb")]
                 self.hdma.borrow_mut().deref_mut()
             );
             self.check_scheduled_stop(!frame_not_finished);
