@@ -239,7 +239,9 @@ impl Game {
                 self.log_registers_to_file().unwrap_or_default();
             }
             #[cfg(feature = "cgb")]
-            self.check_hdma_status();
+            self.hdma
+                .borrow_mut()
+                .check_hdma_state(&mut self.cpu, &self.ppu);
 
             let frame_not_finished = cycles!(
                 self.clock,
@@ -269,27 +271,6 @@ impl Game {
             frame_not_finished
         } else {
             false
-        }
-    }
-
-    #[cfg(feature = "cgb")]
-    fn check_hdma_status(&mut self) {
-        if self.hdma.borrow().active() {
-            self.cpu.halted = match *self.hdma.borrow().mode() {
-                Some(HdmaMode::Gdma) => true,
-                Some(HdmaMode::Hdma) => {
-                    let ly = self.ppu.lcd_reg.borrow().scrolling.ly;
-                    let ppu_mode = self.ppu.lcd_reg.borrow().stat.mode().unwrap();
-                    if ly < State::VBLANK_START && ppu_mode == drawing::Mode::HBlank {
-                        true
-                    } else {
-                        false
-                    }
-                }
-                None => false,
-            }
-        } else {
-            self.cpu.halted = false;
         }
     }
 
