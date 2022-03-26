@@ -49,7 +49,7 @@ where
 {
     fn read(&self, addr: A) -> Result<u8, Error> {
         #[cfg(feature = "cgb")]
-        use IORegArea::{Bcpd, Bcps, Hdma1, Hdma2, Hdma3, Hdma4, Hdma5, Ocpd, Ocps, Vbk};
+        use IORegArea::{Bcpd, Bcps, Hdma1, Hdma2, Hdma3, Hdma4, Hdma5, Ocpd, Ocps, Opri, Vbk};
         use IORegArea::{Bgp, Dma, LcdControl, LcdStat, Ly, Lyc, Obp0, Obp1, Scx, Scy, Wx, Wy};
 
         match addr.area_type() {
@@ -63,7 +63,7 @@ where
                 }
             }
             #[cfg(feature = "cgb")]
-            Vbk => match self.lcd.try_borrow() {
+            Vbk | Opri => match self.lcd.try_borrow() {
                 Ok(lcd) => lcd.read(addr),
                 Err(_) => {
                     log::warn!("failed ppu vbk register read");
@@ -86,7 +86,7 @@ where
 
     fn write(&mut self, v: u8, addr: A) -> Result<(), Error> {
         #[cfg(feature = "cgb")]
-        use IORegArea::{Bcpd, Bcps, Hdma1, Hdma2, Hdma3, Hdma4, Hdma5, Ocpd, Ocps, Vbk};
+        use IORegArea::{Bcpd, Bcps, Hdma1, Hdma2, Hdma3, Hdma4, Hdma5, Ocpd, Ocps, Opri, Vbk};
         use IORegArea::{Bgp, Dma, LcdControl, LcdStat, Ly, Lyc, Obp0, Obp1, Scx, Scy, Wx, Wy};
 
         match addr.area_type() {
@@ -100,7 +100,7 @@ where
                 }
             }
             #[cfg(feature = "cgb")]
-            Vbk => match self.lcd.try_borrow_mut() {
+            Vbk | Opri => match self.lcd.try_borrow_mut() {
                 Ok(mut lcd) => lcd.write(addr, v),
                 Err(_) => {
                     log::warn!("failed vbk register write");
@@ -132,7 +132,7 @@ mod read {
 
     #[test]
     fn lcd_control() {
-        let data: [u8; LcdReg::SIZE] = [0x42, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        let data: [u8; LcdReg::SIZE] = [0x42, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
         let lcd = Rc::new(RefCell::new(data.into()));
         let ppu_reg = PPURegisters::new(lcd);
 
@@ -144,7 +144,7 @@ mod read {
 
     #[test]
     fn lcd_dma() {
-        let data: [u8; LcdReg::SIZE] = [0, 0x42, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        let data: [u8; LcdReg::SIZE] = [0, 0x42, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
         let lcd = Rc::new(RefCell::new(data.into()));
         let ppu_reg = PPURegisters::new(lcd);
 
@@ -156,7 +156,7 @@ mod read {
 
     #[test]
     fn lcd_window_pos() {
-        let data: [u8; LcdReg::SIZE] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x42, 0];
+        let data: [u8; LcdReg::SIZE] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x42, 0, 0];
         let lcd = Rc::new(RefCell::new(data.into()));
         let ppu_reg = PPURegisters::new(lcd);
 

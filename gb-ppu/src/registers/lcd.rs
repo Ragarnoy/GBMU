@@ -29,6 +29,7 @@ pub struct LcdReg {
     pub pal_mono: PalettesMono,
     pub window_pos: WindowPos,
     pub vbk: Rc<Cell<u8>>,
+    pub opri: Rc<Cell<u8>>,
 }
 
 impl Default for LcdReg {
@@ -40,20 +41,24 @@ impl Default for LcdReg {
             pal_mono: PalettesMono::default(),
             window_pos: WindowPos::default(),
             vbk: Rc::new(Cell::new(Self::VBK_UNUSED_BITS)),
+            opri: Rc::new(Cell::new(Self::OPRI_UNUSED_BITS)),
         }
     }
 }
 
 impl LcdReg {
     pub const VBK_UNUSED_BITS: u8 = 0b1111_1110;
+    pub const OPRI_UNUSED_BITS: u8 = 0b1111_1110;
     const VBK_SIZE: usize = 1;
+    const OPRI_SIZE: usize = 1;
 
     pub const SIZE: usize = Control::SIZE
         + Stat::SIZE
         + Scrolling::SIZE
         + PalettesMono::SIZE
         + WindowPos::SIZE
-        + Self::VBK_SIZE;
+        + Self::VBK_SIZE
+        + Self::OPRI_SIZE;
 
     pub fn new() -> Self {
         LcdReg::default()
@@ -64,11 +69,11 @@ impl LcdReg {
         u16: From<A>,
         A: Address<IORegArea>,
     {
-        #[cfg(feature = "cgb")]
-        use gb_bus::io_reg_area::IORegArea::Vbk;
         use gb_bus::io_reg_area::IORegArea::{
             Bgp, LcdControl, LcdStat, Ly, Lyc, Obp0, Obp1, Scx, Scy, Wx, Wy,
         };
+        #[cfg(feature = "cgb")]
+        use gb_bus::io_reg_area::IORegArea::{Opri, Vbk};
 
         match addr.area_type() {
             LcdControl => Ok(self.control.bits),
@@ -88,6 +93,8 @@ impl LcdReg {
 
             #[cfg(feature = "cgb")]
             Vbk => Ok(self.vbk.get()),
+            #[cfg(feature = "cgb")]
+            Opri => Ok(self.opri.get()),
 
             _ => Err(Error::SegmentationFault(addr.into())),
         }
@@ -101,6 +108,8 @@ impl LcdReg {
         use gb_bus::io_reg_area::IORegArea::{
             Bgp, LcdControl, LcdStat, Ly, Lyc, Obp0, Obp1, Scx, Scy, Wx, Wy,
         };
+        #[cfg(feature = "cgb")]
+        use gb_bus::io_reg_area::IORegArea::{Opri, Vbk};
 
         match addr.area_type() {
             LcdControl => self.control.write(v),
@@ -120,6 +129,8 @@ impl LcdReg {
 
             #[cfg(feature = "cgb")]
             Vbk => self.vbk.set(v | Self::VBK_UNUSED_BITS),
+            #[cfg(feature = "cgb")]
+            Opri => self.opri.set(v | Self::OPRI_UNUSED_BITS),
 
             _ => return Err(Error::SegmentationFault(addr.into())),
         };
@@ -133,6 +144,7 @@ impl From<[u8; LcdReg::SIZE]> for LcdReg {
         let pal: [u8; 3] = bytes[6..=8].try_into().expect("bad bytes for LcdReg");
         let window: [u8; 2] = bytes[9..=10].try_into().expect("bad bytes for LcdReg");
         let vbk = Rc::new(Cell::new(bytes[11] | Self::VBK_UNUSED_BITS));
+        let opri = Rc::new(Cell::new(bytes[12] | Self::OPRI_UNUSED_BITS));
         LcdReg {
             control: bytes[0].into(),
             stat: bytes[1].into(),
@@ -140,6 +152,7 @@ impl From<[u8; LcdReg::SIZE]> for LcdReg {
             pal_mono: pal.into(),
             window_pos: window.into(),
             vbk,
+            opri,
         }
     }
 }
@@ -150,6 +163,7 @@ impl From<LcdReg> for [u8; LcdReg::SIZE] {
         let pal_mono: [u8; 3] = register.pal_mono.into();
         let window_pos: [u8; 2] = register.window_pos.into();
         let vbk = register.vbk.get();
+        let opri = register.opri.get();
         [
             register.control.into(),
             register.stat.into(),
@@ -163,6 +177,7 @@ impl From<LcdReg> for [u8; LcdReg::SIZE] {
             window_pos[0],
             window_pos[1],
             vbk,
+            opri,
         ]
     }
 }
