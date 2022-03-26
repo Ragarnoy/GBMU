@@ -42,6 +42,8 @@ impl Hdma {
                 self.dest
             );
         }
+        self.src += 1;
+        self.dest += 1;
     }
 
     // Method used before each machine cycle to check hdma status
@@ -49,7 +51,7 @@ impl Hdma {
         if self.active {
             cpu.halted = match self.mode {
                 Some(HdmaMode::Gdma) => {
-                    if self.current_chunk_len <= 0 {
+                    if self.current_chunk_len == 0 {
                         self.new_data_chunk();
                     }
                     true
@@ -58,18 +60,12 @@ impl Hdma {
                     let current_ppu_mode = ppu.lcd_reg.borrow().stat.mode().unwrap();
                     let is_new_hblank = current_ppu_mode == drawing::Mode::HBlank
                         && Some(current_ppu_mode) != self.last_ppu_mode;
-                    if self.current_chunk_len <= 0 && is_new_hblank {
+                    if self.current_chunk_len == 0 && is_new_hblank {
                         self.new_data_chunk();
                     }
                     self.last_ppu_mode = Some(current_ppu_mode);
 
-                    let processing_transfer =
-                        current_ppu_mode == drawing::Mode::HBlank && self.current_chunk_len > 0;
-                    if processing_transfer {
-                        true
-                    } else {
-                        false
-                    }
+                    current_ppu_mode == drawing::Mode::HBlank && self.current_chunk_len > 0
                 }
                 None => false,
             }
@@ -145,19 +141,19 @@ impl Ticker for Hdma {
     }
 
     fn tick(&mut self, adr_bus: &mut dyn Bus<u8>) {
-        if !self.active || self.current_chunk_len <= 0 {
+        if !self.active || self.current_chunk_len == 0 {
             return;
         }
         for _ in 0..Self::BYTES_PER_CYCLE {
             self.data_transfer(adr_bus);
-            self.src += 1;
-            self.dest += 1;
+
             self.current_chunk_len -= 1;
-            if self.current_chunk_len <= 0 {
-                self.data_chunks_len -= 1;
-                if self.data_chunks_len + 1 <= 0 {
+            if self.current_chunk_len == 0 {
+                if self.data_chunks_len == 0 {
                     self.active = false;
                     self.data_chunks_len = Self::MAX_DATA_CHUNKS_LEN;
+                } else {
+                    self.data_chunks_len -= 1;
                 }
                 return;
             }
