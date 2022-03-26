@@ -12,11 +12,17 @@ pub struct Hdma {
     src: u16,
     dest: u16,
     active: bool,
-    len: u8,
+    data_chunks_len: u8,
+    current_chunk_len: u8,
+    current_ly: u8,
     mode: Option<HdmaMode>,
 }
 
 impl Hdma {
+    const DEST_STARTING_ADDR: u16 = 0x8000;
+    const DATA_CHUNK_SIZE: u8 = 0x10;
+    const MAX_DATA_CHUNKS_LEN: u8 = 0x7F;
+    const HDMA_MODE_BIT: u8 = 0x80;
     pub fn active(&self) -> bool {
         self.active
     }
@@ -38,7 +44,12 @@ where
             IORegArea::Hdma2 => Ok(self.src as u8),
             IORegArea::Hdma3 => Ok((self.dest >> 8) as u8),
             IORegArea::Hdma4 => Ok(self.dest as u8),
-            IORegArea::Hdma5 => Ok(self.len | if self.active { 0x00 } else { 0x80 }),
+            IORegArea::Hdma5 => Ok(self.data_chunks_len
+                | if self.active {
+                    0x00
+                } else {
+                    Self::HDMA_MODE_BIT
+                }),
             _ => Err(Error::SegmentationFault(addr.into())),
         }
     }
@@ -53,7 +64,8 @@ where
                 Ok(())
             }
             IORegArea::Hdma3 => {
-                self.dest = 0x8000 | (((v & 0x1f) as u16) << 8) | (self.dest & 0xFF);
+                self.dest =
+                    Self::DEST_STARTING_ADDR | (((v & 0x1f) as u16) << 8) | (self.dest & 0xFF);
                 Ok(())
             }
             IORegArea::Hdma4 => {
@@ -62,14 +74,15 @@ where
             }
             IORegArea::Hdma5 => {
                 if self.active && self.mode == Some(HdmaMode::Hdma) {
-                    if v & 0x80 == 0 {
+                    if v & Self::HDMA_MODE_BIT == 0 {
                         self.active = false;
                     };
                     return Ok(());
                 }
                 self.active = true;
-                self.len = v & 0x7F;
-                self.mode = match v & 0x80 {
+                self.data_chunks_len = v & Self::MAX_DATA_CHUNKS_LEN;
+                self.current_chunk_len = Self::DATA_CHUNK_SIZE;
+                self.mode = match v & Self::HDMA_MODE_BIT {
                     0 => Some(HdmaMode::Gdma),
                     _ => Some(HdmaMode::Hdma),
                 };
