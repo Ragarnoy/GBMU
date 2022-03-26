@@ -15,6 +15,11 @@ pub struct State {
     step: u16,
     pixel_drawn: u8,
 }
+impl Default for State {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 const INTERRUPT_FLAG: u16 = 0xFF0F;
 const INTERRUPT_STAT_BIT: u8 = 0b10;
@@ -23,7 +28,7 @@ const INTERRUPT_VBLANK_BIT: u8 = 0b01;
 impl State {
     const LINE_COUNT: u8 = 154;
     pub const LAST_LINE: u8 = Self::LINE_COUNT - 1;
-    pub const VBLANK_START: u8 = 144;
+    const VBLANK_START: u8 = 144;
 
     const PIXEL_DRAWING_START: u16 = 80;
     const LAST_OAM_FETCH_STEP: u16 = Self::PIXEL_DRAWING_START - 1;
