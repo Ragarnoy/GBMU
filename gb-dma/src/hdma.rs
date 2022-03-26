@@ -1,5 +1,7 @@
-use gb_bus::{Address, Bus, Error, FileOperation, IORegArea};
+use gb_bus::{Address, Bus, Error, FileOperation, IORegArea, Lock};
 use gb_clock::{Tick, Ticker};
+use gb_cpu::cpu::Cpu;
+use gb_ppu::{drawing, Ppu};
 
 #[derive(PartialEq)]
 pub enum HdmaMode {
@@ -14,7 +16,7 @@ pub struct Hdma {
     active: bool,
     data_chunks_len: u8,
     current_chunk_len: u8,
-    current_ly: u8,
+    last_ppu_mode: Option<drawing::Mode>,
     mode: Option<HdmaMode>,
 }
 
@@ -23,14 +25,58 @@ impl Hdma {
     const DATA_CHUNK_SIZE: u8 = 0x10;
     const MAX_DATA_CHUNKS_LEN: u8 = 0x7F;
     const HDMA_MODE_BIT: u8 = 0x80;
-    pub fn active(&self) -> bool {
-        self.active
-    }
-    pub fn mode(&self) -> &Option<HdmaMode> {
-        &self.mode
+    const BYTES_PER_CYCLE: u8 = 2;
+
+    pub fn new_data_chunk(&mut self) {
+        self.current_chunk_len = Self::DATA_CHUNK_SIZE;
     }
 
-    fn data_transfer(&mut self, adr_bus: &mut dyn Bus<u8>) {}
+    fn data_transfer(&mut self, adr_bus: &mut dyn Bus<u8>) {
+        let v = adr_bus
+            .read(self.src, Some(Lock::Dma))
+            .expect("memory unavailable during HDMA");
+        if adr_bus.write(self.dest, v, Some(Lock::Dma)).is_err() {
+            log::error!(
+                "failed to write data '{:x}' at '{:x}' during HDMA",
+                v,
+                self.dest
+            );
+        }
+    }
+
+    // Method used before each machine cycle to check hdma status
+    pub fn check_hdma_state(&mut self, mut cpu: &mut Cpu, ppu: &Ppu) {
+        if self.active {
+            cpu.halted = match self.mode {
+                Some(HdmaMode::Gdma) => {
+                    if self.current_chunk_len <= 0 {
+                        self.new_data_chunk();
+                    }
+                    true
+                }
+                Some(HdmaMode::Hdma) => {
+                    let current_ppu_mode = ppu.lcd_reg.borrow().stat.mode().unwrap();
+                    let is_new_hblank = current_ppu_mode == drawing::Mode::HBlank
+                        && Some(current_ppu_mode) != self.last_ppu_mode;
+                    if self.current_chunk_len <= 0 && is_new_hblank {
+                        self.new_data_chunk();
+                    }
+                    self.last_ppu_mode = Some(current_ppu_mode);
+
+                    let processing_transfer =
+                        current_ppu_mode == drawing::Mode::HBlank && self.current_chunk_len > 0;
+                    if processing_transfer {
+                        true
+                    } else {
+                        false
+                    }
+                }
+                None => false,
+            }
+        } else {
+            cpu.halted = false;
+        }
+    }
 }
 
 impl<A> FileOperation<A, IORegArea> for Hdma
@@ -99,9 +145,22 @@ impl Ticker for Hdma {
     }
 
     fn tick(&mut self, adr_bus: &mut dyn Bus<u8>) {
-        if !self.active {
+        if !self.active || self.current_chunk_len <= 0 {
             return;
         }
-        self.data_transfer(adr_bus);
+        for _ in 0..Self::BYTES_PER_CYCLE {
+            self.data_transfer(adr_bus);
+            self.src += 1;
+            self.dest += 1;
+            self.current_chunk_len -= 1;
+            if self.current_chunk_len <= 0 {
+                self.data_chunks_len -= 1;
+                if self.data_chunks_len + 1 <= 0 {
+                    self.active = false;
+                    self.data_chunks_len = Self::MAX_DATA_CHUNKS_LEN;
+                }
+                return;
+            }
+        }
     }
 }
