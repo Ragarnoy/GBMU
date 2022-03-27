@@ -15,7 +15,7 @@ serde = { version = "1.0", features = ["std", "derive", "rc"], optional = true }
 serde-big-array = { version = "0.3", optional = true }
 
 [dev-dependencies]
-sdl2 = { version = "0.35", features = ["bundled", "static-link"] }
+sdl2 = { version = "0.35.0", features = ["bundled", "static-link"] }
 egui = "0.16"
 
 [features]
