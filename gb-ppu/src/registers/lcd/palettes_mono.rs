@@ -1,30 +1,4 @@
 use super::super::Palette;
-use std::ops::Deref;
-
-#[cfg_attr(
-    feature = "serialization",
-    derive(serde::Deserialize, serde::Serialize)
-)]
-#[derive(PartialEq, Eq, Clone, Debug)]
-pub enum MonoPaletteRef {
-    BgWin,
-    Sprite0,
-    Sprite1,
-}
-
-impl MonoPaletteRef {
-    pub fn is_sprite(&self) -> bool {
-        MonoPaletteRef::BgWin != *self
-    }
-
-    pub fn deref_palette(self, pal_mono: impl Deref<Target = PalettesMono>) -> Palette {
-        match self {
-            MonoPaletteRef::BgWin => *pal_mono.bg(),
-            MonoPaletteRef::Sprite0 => *pal_mono.obj().0,
-            MonoPaletteRef::Sprite1 => *pal_mono.obj().1,
-        }
-    }
-}
 
 #[cfg_attr(
     feature = "serialization",

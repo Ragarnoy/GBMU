@@ -26,6 +26,7 @@ use gb_timer::Timer;
 use std::io::BufWriter;
 use std::{cell::RefCell, collections::BTreeMap, fs::File, ops::DerefMut, path::Path, rc::Rc};
 
+use crate::custom_event::CustomEvent;
 #[cfg(feature = "cgb")]
 use crate::Mode;
 
@@ -37,6 +38,7 @@ pub struct Context<const WIDTH: usize, const HEIGHT: usize> {
     pub joypad: Rc<RefCell<Joypad>>,
     #[cfg(feature = "debug_render")]
     pub debug_render: bool,
+    pub custom_events: Vec<CustomEvent>,
 }
 
 pub struct Game {
