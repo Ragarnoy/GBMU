@@ -839,6 +839,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "gb-apu"
+version = "0.1.0"
+
+[[package]]
 name = "gb-breakpoint"
 version = "0.1.0"
 dependencies = [
@@ -989,6 +993,7 @@ dependencies = [
  "anyhow",
  "clap 3.0.7",
  "egui",
+ "gb-apu",
  "gb-bus",
  "gb-clock",
  "gb-cpu",

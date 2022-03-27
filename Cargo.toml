@@ -50,9 +50,11 @@ gb-roms = { path = "./gb-roms" }
 gb-clock = { path = "./gb-clock" }
 gb-timer = { path = "./gb-timer" }
 gb-dma = { path = "./gb-dma" }
+gb-apu = { path = "./gb-apu" }
 
 [workspace]
 members = [
+  "gb-apu",
   "gb-dma",
   "gb-clock",
   "gb-roms",
