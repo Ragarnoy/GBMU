@@ -103,23 +103,15 @@ where
                 }
             }
             #[cfg(feature = "cgb")]
-            Vbk => match self.lcd.try_borrow_mut() {
-                Ok(mut lcd) => lcd.write(addr, v),
-                Err(_) => {
-                    log::warn!("failed vbk register write");
-                    Ok(())
-                }
-            },
-            #[cfg(feature = "cgb")]
             Hdma1 | Hdma2 | Hdma3 | Hdma4 | Hdma5 => {
                 log::warn!("missing ppu VRamDma registers write");
                 Ok(())
             }
             #[cfg(feature = "cgb")]
-            Bcpd | Bcps | Ocpd | Ocps => match self.lcd.try_borrow_mut() {
+            Vbk | Bcpd | Bcps | Ocpd | Ocps => match self.lcd.try_borrow_mut() {
                 Ok(mut lcd) => lcd.write(addr, v),
                 Err(_) => {
-                    log::warn!("failed BgObjPalettes register write");
+                    log::warn!("failed {} register write", addr.area_type());
                     Ok(())
                 }
             },
