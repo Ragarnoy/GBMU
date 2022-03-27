@@ -47,6 +47,7 @@ impl Hdma {
     }
 
     // Method used before each machine cycle to check hdma status
+    // For reference [General Purpose DMA](https://gbdev.io/pandocs/CGB_Registers.html#bit-7--0---general-purpose-dma)
     pub fn check_hdma_state(&mut self, mut cpu: &mut Cpu, ppu: &Ppu) {
         if self.active {
             cpu.halted_dma = match self.mode {
