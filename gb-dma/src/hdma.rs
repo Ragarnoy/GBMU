@@ -82,9 +82,9 @@ where
 {
     fn read(&self, addr: A) -> Result<u8, gb_bus::Error> {
         match addr.area_type() {
-            IORegArea::Hdma1 => Ok((self.src >> 8) as u8),
+            IORegArea::Hdma1 => Ok(self.src.to_be_bytes()[1]),
             IORegArea::Hdma2 => Ok(self.src as u8),
-            IORegArea::Hdma3 => Ok((self.dest >> 8) as u8),
+            IORegArea::Hdma3 => Ok(self.dest.to_be_bytes()[1]),
             IORegArea::Hdma4 => Ok(self.dest as u8),
             IORegArea::Hdma5 => Ok(self.data_chunks_len
                 | if self.active {
