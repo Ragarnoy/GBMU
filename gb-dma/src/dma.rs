@@ -21,22 +21,14 @@ where
     u16: From<A>,
     A: Address<IORegArea>,
 {
-    fn read(&self, addr: A) -> Result<u8, Error> {
-        if IORegArea::Dma == addr.area_type() {
-            Ok(self.oam_register)
-        } else {
-            Err(Error::SegmentationFault(addr.into()))
-        }
+    fn read(&self, _addr: A) -> Result<u8, Error> {
+        Ok(self.oam_register)
     }
 
-    fn write(&mut self, v: u8, addr: A) -> Result<(), Error> {
-        if IORegArea::Dma == addr.area_type() {
-            self.oam_register = v;
-            self.oam_transfer = Some(0);
-            Ok(())
-        } else {
-            Err(Error::SegmentationFault(addr.into()))
-        }
+    fn write(&mut self, v: u8, _addr: A) -> Result<(), Error> {
+        self.oam_register = v;
+        self.oam_transfer = Some(0);
+        Ok(())
     }
 }
 
