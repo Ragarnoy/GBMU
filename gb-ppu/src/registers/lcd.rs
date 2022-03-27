@@ -1,4 +1,5 @@
 mod control;
+mod palette_ref;
 mod palettes_cgb;
 mod palettes_mono;
 mod scrolling;
@@ -6,8 +7,9 @@ mod stat;
 mod window_pos;
 
 pub use control::Control;
+pub use palette_ref::PaletteRef;
 pub use palettes_cgb::PalettesCGB;
-pub use palettes_mono::{PaletteRef, PalettesMono};
+pub use palettes_mono::PalettesMono;
 pub use scrolling::Scrolling;
 pub use stat::Stat;
 pub use window_pos::WindowPos;
