@@ -49,7 +49,7 @@ impl Hdma {
     // Method used before each machine cycle to check hdma status
     pub fn check_hdma_state(&mut self, mut cpu: &mut Cpu, ppu: &Ppu) {
         if self.active {
-            cpu.halted = match self.mode {
+            cpu.halted_dma = match self.mode {
                 Some(HdmaMode::Gdma) => {
                     if self.current_chunk_len == 0 {
                         self.new_data_chunk();
@@ -70,7 +70,7 @@ impl Hdma {
                 None => false,
             }
         } else {
-            cpu.halted = false;
+            cpu.halted_dma = false;
         }
     }
 }

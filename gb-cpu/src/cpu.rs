@@ -10,7 +10,7 @@ pub struct Cpu {
     pub registers: Registers,
     pub controller: MicrocodeController,
     pub io_regs: Rc<RefCell<IORegisters>>,
-    pub halted: bool,
+    pub halted_dma: bool,
 }
 
 impl Cpu {
@@ -25,7 +25,7 @@ impl Ticker for Cpu {
     }
 
     fn tick(&mut self, addr_bus: &mut dyn Bus<u8>) {
-        if self.halted {
+        if self.halted_dma {
             return;
         }
         self.controller
