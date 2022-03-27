@@ -256,7 +256,7 @@ impl Game {
                     &mut self.addr_bus,
                     &mut self.cpu,
                     self.timer.borrow_mut().deref_mut(),
-                    self.dma.borrow_mut().deref_mut() // TODO check with team if hdma should cycle twice in double speed https://gbdev.io/pandocs/CGB_Registers.html#transfer-timings
+                    self.dma.borrow_mut().deref_mut()
                 );
                 self.check_scheduled_stop(!frame_not_finished);
             }
