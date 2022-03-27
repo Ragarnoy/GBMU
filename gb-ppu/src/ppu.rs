@@ -381,15 +381,19 @@ impl Ppu {
                                 let bot = top + if lcd_reg.control.obj_size() { 16 } else { 8 };
 
                                 if scanline >= top && scanline < bot {
-                                    for i in 0..self.scanline_sprites.len() {
-                                        let scan_sprite = self.scanline_sprites[i];
+                                    if !self.cgb_enabled
+                                        || !self.lcd_reg.borrow().object_priority_cgb()
+                                    {
+                                        for i in 0..self.scanline_sprites.len() {
+                                            let scan_sprite = self.scanline_sprites[i];
 
-                                        if sprite.x_pos() < scan_sprite.x_pos() {
-                                            self.scanline_sprites.insert(i, sprite);
-                                            if self.scanline_sprites.len() > 10 {
-                                                self.scanline_sprites.pop();
+                                            if sprite.x_pos() < scan_sprite.x_pos() {
+                                                self.scanline_sprites.insert(i, sprite);
+                                                if self.scanline_sprites.len() > 10 {
+                                                    self.scanline_sprites.pop();
+                                                }
+                                                return;
                                             }
-                                            return;
                                         }
                                     }
                                     if self.scanline_sprites.len() < 10 {

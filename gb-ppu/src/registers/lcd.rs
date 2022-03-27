@@ -64,6 +64,10 @@ impl LcdReg {
         LcdReg::default()
     }
 
+    pub fn object_priority_cgb(&self) -> bool {
+        self.opri.get() & !Self::OPRI_UNUSED_BITS == 0
+    }
+
     pub fn read<A>(&self, addr: A) -> Result<u8, Error>
     where
         u16: From<A>,
