@@ -56,19 +56,6 @@ impl Default for LcdReg {
     }
 }
 
-impl Default for LcdReg {
-    fn default() -> LcdReg {
-        LcdReg {
-            control: Control::default(),
-            stat: Stat::default(),
-            scrolling: Scrolling::default(),
-            pal_mono: PalettesMono::default(),
-            window_pos: WindowPos::default(),
-            vbk: Rc::new(Cell::new(Self::VBK_UNUSED_BITS)),
-        }
-    }
-}
-
 impl LcdReg {
     pub const VBK_UNUSED_BITS: u8 = 0b1111_1110;
     const VBK_SIZE: usize = 1;
