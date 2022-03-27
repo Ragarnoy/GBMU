@@ -1,6 +1,6 @@
 use crate::error::{PPUError, PPUResult};
 use crate::memory::Vram;
-use crate::registers::{MonoPaletteRef, Palette};
+use crate::registers::{Palette, PaletteRef};
 use crate::Color;
 use std::ops::Deref;
 
@@ -70,11 +70,11 @@ impl<'r> Sprite {
         }
     }
 
-    pub fn get_palette_ref(&self) -> MonoPaletteRef {
+    pub fn get_palette_ref(&self) -> PaletteRef {
         if self.attributes & PALETTE_NB == 0 {
-            MonoPaletteRef::Sprite0
+            PaletteRef::MonoSprite0
         } else {
-            MonoPaletteRef::Sprite1
+            PaletteRef::MonoSprite1
         }
     }
 
