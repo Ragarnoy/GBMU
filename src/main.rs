@@ -16,6 +16,7 @@ use gb_dbg::debugger::options::DebuggerOptions;
 use gb_dbg::debugger::{Debugger, DebuggerBuilder};
 use gb_lcd::{render, window::GBWindow};
 use logger::init_logger;
+use sdl2::audio::{AudioQueue, AudioSpecDesired};
 use std::{
     cell::RefCell,
     fmt::{self, Display},
@@ -163,6 +164,7 @@ fn main() {
                     romname,
                     context.joypad.clone(),
                     true,
+                    context.audio_queue.clone(),
                     #[cfg(feature = "cgb")]
                     opts.mode,
                 )
@@ -191,6 +193,7 @@ fn main() {
                         filename,
                         context.joypad.clone(),
                         opts.debug,
+                        context.audio_queue.clone(),
                         #[cfg(feature = "cgb")]
                         opts.mode,
                     )
@@ -200,6 +203,7 @@ fn main() {
                         file,
                         context.joypad.clone(),
                         opts.debug,
+                        context.audio_queue.clone(),
                         #[cfg(feature = "cgb")]
                         opts.mode,
                     )
@@ -263,6 +267,8 @@ fn main() {
             );
         }
     }
+    context.audio_queue.borrow().pause();
+    context.audio_queue.borrow().clear();
     log::info!("quitting");
 }
 
@@ -308,11 +314,26 @@ fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
         }
     }));
 
+    let audio_subsystem = sdl_context.audio().expect("Failed to init audio subsystem");
+
+    let desired_spec = AudioSpecDesired {
+        freq: Some(41_000),
+        channels: Some(2),
+        samples: None, // default sample size
+    };
+
+    let audio_queue = audio_subsystem
+        .open_queue::<i16, _>(None, &desired_spec)
+        .expect("Failed to init audio queue");
+    audio_queue.resume();
+    let audio_queue = Rc::new(RefCell::new(audio_queue));
+
     let game_context: Option<Game> = opts.rom.as_ref().and_then(|romname| {
         load_game(
             &romname,
             joypad.clone(),
             opts.debug,
+            audio_queue.clone(),
             #[cfg(feature = "cgb")]
             opts.mode,
         )
@@ -347,6 +368,7 @@ fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
             display,
             joypad,
             windows,
+            audio_queue,
             #[cfg(feature = "debug_render")]
             debug_render: false,
             custom_events: Vec::with_capacity(5),
@@ -361,12 +383,14 @@ fn load_game<P: AsRef<std::path::Path>>(
     rompath: P,
     joypad: std::rc::Rc<std::cell::RefCell<gb_joypad::Joypad>>,
     stopped: bool,
+    audio_queue: Rc<RefCell<AudioQueue<i16>>>,
     #[cfg(feature = "cgb")] forced_mode: Option<Mode>,
 ) -> Option<Game> {
     Game::new(
         &rompath,
         joypad,
         stopped,
+        audio_queue,
         #[cfg(feature = "cgb")]
         forced_mode,
     )

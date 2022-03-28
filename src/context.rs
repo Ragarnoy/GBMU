@@ -22,6 +22,7 @@ use gb_roms::{
     Header,
 };
 use gb_timer::Timer;
+use sdl2::audio::AudioQueue;
 #[cfg(feature = "registers_logs")]
 use std::io::BufWriter;
 use std::{cell::RefCell, collections::BTreeMap, fs::File, ops::DerefMut, path::Path, rc::Rc};
@@ -36,6 +37,7 @@ pub struct Context<const WIDTH: usize, const HEIGHT: usize> {
     pub windows: crate::windows::Windows,
     pub display: RenderImage<WIDTH, HEIGHT>,
     pub joypad: Rc<RefCell<Joypad>>,
+    pub audio_queue: Rc<RefCell<AudioQueue<i16>>>,
     #[cfg(feature = "debug_render")]
     pub debug_render: bool,
     pub custom_events: Vec<CustomEvent>,
@@ -83,6 +85,7 @@ impl Game {
         rompath: &P,
         joypad: Rc<RefCell<Joypad>>,
         stopped: bool,
+        audio_queue: Rc<RefCell<AudioQueue<i16>>>,
         #[cfg(feature = "cgb")] forced_mode: Option<Mode>,
     ) -> Result<Game, anyhow::Error> {
         use std::io::Seek;
