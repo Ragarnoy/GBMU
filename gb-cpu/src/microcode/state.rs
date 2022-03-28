@@ -26,7 +26,7 @@ impl<'a> State<'a> {
         let res = self.read_bus(self.regs.pc);
         let (new_pc, overflowing) = self.regs.pc.overflowing_add(1);
         if overflowing {
-            panic!("pc should not overflow")
+            log::warn!("pc should not overflow")
         }
         self.regs.pc = new_pc;
         res
