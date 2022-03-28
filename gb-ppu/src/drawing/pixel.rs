@@ -1,4 +1,4 @@
-use crate::registers::{LcdReg, MonoPaletteRef};
+use crate::registers::{LcdReg, PaletteRef};
 use crate::Color;
 use std::ops::Deref;
 
@@ -9,13 +9,13 @@ use std::ops::Deref;
 #[derive(Clone, Debug)]
 pub struct Pixel {
     pub color: u8,
-    pub palette: Option<MonoPaletteRef>,
+    pub palette: Option<PaletteRef>,
     _sprite_priority: Option<u8>,
     background_priority: bool,
 }
 
 impl Pixel {
-    pub fn new(color: u8, palette: Option<MonoPaletteRef>, background_priority: bool) -> Self {
+    pub fn new(color: u8, palette: Option<PaletteRef>, background_priority: bool) -> Self {
         Pixel {
             color,
             palette,
@@ -43,8 +43,7 @@ impl Pixel {
     pub fn into_color(self, lcd_reg: &dyn Deref<Target = LcdReg>) -> Color {
         if let Some(self_palette) = self.palette {
             self_palette
-                .deref_palette(&lcd_reg.pal_mono)
-                .get_color(self.color)
+                .get_color(lcd_reg, self.color)
                 .unwrap_or_default()
         } else {
             Color::default()

@@ -11,7 +11,7 @@ use gb_dbg::{
     },
     until::Until,
 };
-use gb_dma::Dma;
+use gb_dma::{dma::Dma, hdma::Hdma};
 use gb_joypad::Joypad;
 use gb_lcd::render::{RenderImage, SCREEN_HEIGHT, SCREEN_WIDTH};
 use gb_ppu::Ppu;
@@ -54,6 +54,7 @@ pub struct Game {
     pub clock: Clock,
     pub io_bus: Rc<RefCell<IORegBus>>,
     pub timer: Rc<RefCell<Timer>>,
+    pub hdma: Rc<RefCell<Hdma>>,
     pub dma: Rc<RefCell<Dma>>,
     pub joypad: Rc<RefCell<Joypad>>,
     pub apu: Rc<RefCell<Apu>>,
@@ -153,6 +154,7 @@ impl Game {
             Rc::new(RefCell::new(wrapper))
         };
         let dma = Rc::new(RefCell::new(Dma::new()));
+        let hdma = Rc::new(RefCell::new(Hdma::default()));
         let serial = Rc::new(RefCell::new(gb_bus::Serial::default()));
 
         let apu = Rc::new(RefCell::new(Apu::new(audio_queue)));
@@ -174,6 +176,7 @@ impl Game {
                 .with_ppu(ppu_reg)
                 .with_area(IORegArea::IF, cpu_io_reg.clone())
                 .with_area(IORegArea::Dma, dma.clone())
+                .with_hdma(hdma.clone())
                 .with_area(IORegArea::BootRom, bios_wrapper.clone())
                 .with_serial(serial)
                 .with_default_sound()
@@ -216,6 +219,7 @@ impl Game {
             io_bus,
             timer,
             dma,
+            hdma,
             joypad,
             apu,
             addr_bus: bus,
@@ -238,6 +242,10 @@ impl Game {
             if self.cpu.controller.is_instruction_finished {
                 self.log_registers_to_file().unwrap_or_default();
             }
+            self.hdma
+                .borrow_mut()
+                .check_hdma_state(&mut self.cpu, &self.ppu);
+
             let frame_not_finished = cycles!(
                 self.clock,
                 &mut self.addr_bus,
@@ -246,6 +254,7 @@ impl Game {
                 self.joypad.borrow_mut().deref_mut(),
                 self.dma.borrow_mut().deref_mut(),
                 &mut self.cpu,
+                self.hdma.borrow_mut().deref_mut(),
                 self.apu.borrow_mut().deref_mut()
             );
             self.check_scheduled_stop(!frame_not_finished);

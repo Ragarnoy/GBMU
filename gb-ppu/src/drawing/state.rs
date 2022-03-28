@@ -15,6 +15,11 @@ pub struct State {
     step: u16,
     pixel_drawn: u8,
 }
+impl Default for State {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 const INTERRUPT_FLAG: u16 = 0xFF0F;
 const INTERRUPT_STAT_BIT: u8 = 0b10;

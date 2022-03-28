@@ -48,7 +48,7 @@ pub struct Ppu {
     cgb_enabled: bool,
     vram: Rc<RefCell<Vram>>,
     oam: Rc<RefCell<Oam>>,
-    lcd_reg: Rc<RefCell<LcdReg>>,
+    pub lcd_reg: Rc<RefCell<LcdReg>>,
     #[cfg_attr(feature = "serialization", serde(with = "de_ser::pixel_buffer"))]
     pixels: RenderData<SCREEN_WIDTH, SCREEN_HEIGHT>,
     #[cfg_attr(feature = "serialization", serde(with = "de_ser::pixel_buffer"))]

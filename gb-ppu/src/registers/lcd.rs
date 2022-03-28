@@ -1,11 +1,15 @@
 mod control;
+mod palette_ref;
+mod palettes_cgb;
 mod palettes_mono;
 mod scrolling;
 mod stat;
 mod window_pos;
 
 pub use control::Control;
-pub use palettes_mono::{MonoPaletteRef, PalettesMono};
+pub use palette_ref::PaletteRef;
+pub use palettes_cgb::PalettesCGB;
+pub use palettes_mono::PalettesMono;
 pub use scrolling::Scrolling;
 pub use stat::Stat;
 pub use window_pos::WindowPos;
@@ -15,6 +19,12 @@ use gb_bus::{Address, Error, IORegArea};
 use std::cell::Cell;
 use std::convert::TryInto;
 use std::rc::Rc;
+
+#[cfg(feature = "cgb")]
+use gb_bus::io_reg_area::IORegArea::{Bcpd, Bcps, Ocpd, Ocps, Vbk};
+use gb_bus::io_reg_area::IORegArea::{
+    Bgp, LcdControl, LcdStat, Ly, Lyc, Obp0, Obp1, Scx, Scy, Wx, Wy,
+};
 
 /// Regroup the registers of the Lcd IOregister area.
 #[cfg_attr(
@@ -29,6 +39,7 @@ pub struct LcdReg {
     pub pal_mono: PalettesMono,
     pub window_pos: WindowPos,
     pub vbk: Rc<Cell<u8>>,
+    pub pal_cgb: PalettesCGB,
 }
 
 impl Default for LcdReg {
@@ -40,6 +51,7 @@ impl Default for LcdReg {
             pal_mono: PalettesMono::default(),
             window_pos: WindowPos::default(),
             vbk: Rc::new(Cell::new(Self::VBK_UNUSED_BITS)),
+            pal_cgb: PalettesCGB::default(),
         }
     }
 }
@@ -53,7 +65,8 @@ impl LcdReg {
         + Scrolling::SIZE
         + PalettesMono::SIZE
         + WindowPos::SIZE
-        + Self::VBK_SIZE;
+        + Self::VBK_SIZE
+        + PalettesCGB::SIZE;
 
     pub fn new() -> Self {
         LcdReg::default()
@@ -64,12 +77,6 @@ impl LcdReg {
         u16: From<A>,
         A: Address<IORegArea>,
     {
-        #[cfg(feature = "cgb")]
-        use gb_bus::io_reg_area::IORegArea::Vbk;
-        use gb_bus::io_reg_area::IORegArea::{
-            Bgp, LcdControl, LcdStat, Ly, Lyc, Obp0, Obp1, Scx, Scy, Wx, Wy,
-        };
-
         match addr.area_type() {
             LcdControl => Ok(self.control.bits),
             LcdStat => Ok(self.stat.read()),
@@ -88,6 +95,14 @@ impl LcdReg {
 
             #[cfg(feature = "cgb")]
             Vbk => Ok(self.vbk.get()),
+            #[cfg(feature = "cgb")]
+            Bcps => Ok(self.pal_cgb.get_bcps()),
+            #[cfg(feature = "cgb")]
+            Bcpd => Ok(self.pal_cgb.get_bcpd()),
+            #[cfg(feature = "cgb")]
+            Ocps => Ok(self.pal_cgb.get_ocps()),
+            #[cfg(feature = "cgb")]
+            Ocpd => Ok(self.pal_cgb.get_ocpd()),
 
             _ => Err(Error::SegmentationFault(addr.into())),
         }
@@ -98,10 +113,6 @@ impl LcdReg {
         u16: From<A>,
         A: Address<IORegArea>,
     {
-        use gb_bus::io_reg_area::IORegArea::{
-            Bgp, LcdControl, LcdStat, Ly, Lyc, Obp0, Obp1, Scx, Scy, Wx, Wy,
-        };
-
         match addr.area_type() {
             LcdControl => self.control.write(v),
             LcdStat => self.stat.write(v),
@@ -120,7 +131,14 @@ impl LcdReg {
 
             #[cfg(feature = "cgb")]
             Vbk => self.vbk.set(v | Self::VBK_UNUSED_BITS),
-
+            #[cfg(feature = "cgb")]
+            Bcps => self.pal_cgb.set_bcps(v),
+            #[cfg(feature = "cgb")]
+            Bcpd => self.pal_cgb.set_bcpd(v),
+            #[cfg(feature = "cgb")]
+            Ocps => self.pal_cgb.set_ocps(v),
+            #[cfg(feature = "cgb")]
+            Ocpd => self.pal_cgb.set_ocpd(v),
             _ => return Err(Error::SegmentationFault(addr.into())),
         };
         Ok(())
@@ -130,16 +148,18 @@ impl LcdReg {
 impl From<[u8; LcdReg::SIZE]> for LcdReg {
     fn from(bytes: [u8; LcdReg::SIZE]) -> LcdReg {
         let scroll: [u8; 4] = bytes[2..=5].try_into().expect("bad bytes for LcdReg");
-        let pal: [u8; 3] = bytes[6..=8].try_into().expect("bad bytes for LcdReg");
+        let pal_mono: [u8; 3] = bytes[6..=8].try_into().expect("bad bytes for LcdReg");
         let window: [u8; 2] = bytes[9..=10].try_into().expect("bad bytes for LcdReg");
         let vbk = Rc::new(Cell::new(bytes[11] | Self::VBK_UNUSED_BITS));
+        let pal_cgb: [u8; 4] = bytes[12..=15].try_into().expect("bad bytes for LcdReg");
         LcdReg {
             control: bytes[0].into(),
             stat: bytes[1].into(),
             scrolling: scroll.into(),
-            pal_mono: pal.into(),
+            pal_mono: pal_mono.into(),
             window_pos: window.into(),
             vbk,
+            pal_cgb: pal_cgb.into(),
         }
     }
 }
@@ -150,6 +170,7 @@ impl From<LcdReg> for [u8; LcdReg::SIZE] {
         let pal_mono: [u8; 3] = register.pal_mono.into();
         let window_pos: [u8; 2] = register.window_pos.into();
         let vbk = register.vbk.get();
+        let pal_cgb: [u8; 4] = register.pal_cgb.into();
         [
             register.control.into(),
             register.stat.into(),
@@ -163,6 +184,10 @@ impl From<LcdReg> for [u8; LcdReg::SIZE] {
             window_pos[0],
             window_pos[1],
             vbk,
+            pal_cgb[0],
+            pal_cgb[1],
+            pal_cgb[2],
+            pal_cgb[3],
         ]
     }
 }

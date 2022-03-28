@@ -10,7 +10,7 @@ edition = "2021"
 debug_render = []
 
 [dependencies]
-sdl2 = { version = "0.35", features = ["bundled", "static-link"] }
+sdl2 = { version = "0.35.2" }
 egui = "0.16"
 gl = { version = "0.14" }
-egui_sdl2_gl = { git = "https://github.com/FirelightFlagboy/egui_sdl2_gl", default-features = false, rev = "14f97af830a58088c2a1e54ca2b123dbb7caf992"  }
+egui_sdl2_gl = { git = "https://github.com/FirelightFlagboy/egui_sdl2_gl", default-features = false, rev = "14f97af830a58088c2a1e54ca2b123dbb7caf992" }
