@@ -30,7 +30,7 @@ save_state = [
 ]
 
 [dependencies]
-sdl2 = { version = "0.35.2", features = ["bundled", "static-link"] }
+sdl2 = { version = "0.35.2" }
 egui = "0.16"
 native-dialog = { version = "0.6" }
 log = { version = "0.4", features = ["std"] }
