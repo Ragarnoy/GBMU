@@ -1,7 +1,7 @@
 use gb_bus::{Address, Bus, Error, FileOperation, IORegArea, Lock};
 use gb_clock::{Tick, Ticker};
 use gb_cpu::cpu::Cpu;
-use gb_ppu::{drawing, Ppu};
+use gb_ppu::{Mode, Ppu};
 
 #[derive(PartialEq)]
 pub enum HdmaMode {
@@ -16,7 +16,7 @@ pub struct Hdma {
     active: bool,
     data_chunks_len: u8,
     current_chunk_len: u8,
-    last_ppu_mode: Option<drawing::Mode>,
+    last_ppu_mode: Option<Mode>,
     mode: Option<HdmaMode>,
 }
 
@@ -59,14 +59,14 @@ impl Hdma {
                 }
                 Some(HdmaMode::Hdma) => {
                     let current_ppu_mode = ppu.lcd_reg.borrow().stat.mode().unwrap();
-                    let is_new_hblank = current_ppu_mode == drawing::Mode::HBlank
+                    let is_new_hblank = current_ppu_mode == Mode::HBlank
                         && Some(current_ppu_mode) != self.last_ppu_mode;
                     if self.current_chunk_len == 0 && is_new_hblank {
                         self.new_data_chunk();
                     }
                     self.last_ppu_mode = Some(current_ppu_mode);
 
-                    current_ppu_mode == drawing::Mode::HBlank && self.current_chunk_len > 0
+                    current_ppu_mode == Mode::HBlank && self.current_chunk_len > 0
                 }
                 None => false,
             }

@@ -1,5 +1,5 @@
 mod color;
-pub mod drawing;
+mod drawing;
 mod error;
 mod memory;
 mod ppu;
@@ -10,6 +10,7 @@ mod sprite;
 mod test_tools;
 
 use color::Color;
+pub use drawing::Mode;
 pub use memory::PPUMem;
 pub use ppu::Ppu;
 pub use registers::PPURegisters;
