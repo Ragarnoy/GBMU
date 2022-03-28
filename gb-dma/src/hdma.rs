@@ -14,8 +14,8 @@ pub struct Hdma {
     src: u16,
     dest: u16,
     active: bool,
-    data_chunks_len: u8,
-    current_chunk_len: u8,
+    remaining_data_chunks: u8,
+    remaining_in_current_chunk: u8,
     last_ppu_mode: Option<Mode>,
     mode: Option<HdmaMode>,
 }
@@ -28,7 +28,7 @@ impl Hdma {
     const BYTES_PER_CYCLE: u8 = 2;
 
     pub fn new_data_chunk(&mut self) {
-        self.current_chunk_len = Self::DATA_CHUNK_SIZE;
+        self.remaining_in_current_chunk = Self::DATA_CHUNK_SIZE;
     }
 
     fn data_transfer(&mut self, adr_bus: &mut dyn Bus<u8>) {
@@ -52,7 +52,7 @@ impl Hdma {
         if self.active {
             cpu.halted_dma = match self.mode {
                 Some(HdmaMode::Gdma) => {
-                    if self.current_chunk_len == 0 {
+                    if self.remaining_in_current_chunk == 0 {
                         self.new_data_chunk();
                     }
                     true
@@ -61,12 +61,12 @@ impl Hdma {
                     let current_ppu_mode = ppu.lcd_reg.borrow().stat.mode().unwrap();
                     let is_new_hblank = current_ppu_mode == Mode::HBlank
                         && Some(current_ppu_mode) != self.last_ppu_mode;
-                    if self.current_chunk_len == 0 && is_new_hblank {
+                    if self.remaining_in_current_chunk == 0 && is_new_hblank {
                         self.new_data_chunk();
                     }
                     self.last_ppu_mode = Some(current_ppu_mode);
 
-                    current_ppu_mode == Mode::HBlank && self.current_chunk_len > 0
+                    current_ppu_mode == Mode::HBlank && self.remaining_in_current_chunk > 0
                 }
                 None => false,
             }
@@ -87,7 +87,7 @@ where
             IORegArea::Hdma2 => Ok(self.src.to_be_bytes()[0]),
             IORegArea::Hdma3 => Ok(self.dest.to_be_bytes()[1]),
             IORegArea::Hdma4 => Ok(self.dest.to_be_bytes()[0]),
-            IORegArea::Hdma5 => Ok(self.data_chunks_len
+            IORegArea::Hdma5 => Ok(self.remaining_data_chunks
                 | if self.active {
                     0x00
                 } else {
@@ -123,8 +123,8 @@ where
                     return Ok(());
                 }
                 self.active = true;
-                self.data_chunks_len = v & Self::MAX_DATA_CHUNKS_LEN;
-                self.current_chunk_len = Self::DATA_CHUNK_SIZE;
+                self.remaining_data_chunks = v & Self::MAX_DATA_CHUNKS_LEN;
+                self.remaining_in_current_chunk = Self::DATA_CHUNK_SIZE;
                 self.mode = match v & Self::HDMA_MODE_BIT {
                     0 => Some(HdmaMode::Gdma),
                     _ => Some(HdmaMode::Hdma),
@@ -142,19 +142,19 @@ impl Ticker for Hdma {
     }
 
     fn tick(&mut self, adr_bus: &mut dyn Bus<u8>) {
-        if !self.active || self.current_chunk_len == 0 {
+        if !self.active || self.remaining_in_current_chunk == 0 {
             return;
         }
         for _ in 0..Self::BYTES_PER_CYCLE {
             self.data_transfer(adr_bus);
 
-            self.current_chunk_len -= 1;
-            if self.current_chunk_len == 0 {
-                if self.data_chunks_len == 0 {
+            self.remaining_in_current_chunk -= 1;
+            if self.remaining_in_current_chunk == 0 {
+                if self.remaining_data_chunks == 0 {
                     self.active = false;
-                    self.data_chunks_len = Self::MAX_DATA_CHUNKS_LEN;
+                    self.remaining_data_chunks = Self::MAX_DATA_CHUNKS_LEN;
                 } else {
-                    self.data_chunks_len -= 1;
+                    self.remaining_data_chunks -= 1;
                 }
                 return;
             }
