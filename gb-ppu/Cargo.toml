@@ -15,9 +15,15 @@ serde = { version = "1.0", features = ["std", "derive", "rc"], optional = true }
 serde-big-array = { version = "0.3", optional = true }
 
 [dev-dependencies]
-sdl2 = { version = "0.35.0", features = ["bundled", "static-link"] }
+sdl2 = { version = "0.35.2" }
 egui = "0.16"
 
 [features]
 cgb = ["gb-bus/cgb"]
-serialization = ["serde", "serde/std", "serde/derive", "serde/rc", "serde-big-array"]
+serialization = [
+  "serde",
+  "serde/std",
+  "serde/derive",
+  "serde/rc",
+  "serde-big-array",
+]
