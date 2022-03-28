@@ -133,19 +133,14 @@ pub enum IORegArea {
 
     BootRom = BOOTROM,
 
-    #[cfg(feature = "cgb")]
     /// New DMA source high
     Hdma1 = HDMA1,
-    #[cfg(feature = "cgb")]
     /// New DMA source low
     Hdma2 = HDMA2,
-    #[cfg(feature = "cgb")]
     /// New DMA destination high
     Hdma3 = HDMA3,
-    #[cfg(feature = "cgb")]
     /// New DMA destination low
     Hdma4 = HDMA4,
-    #[cfg(feature = "cgb")]
     /// New DMA Length/Mode/Start
     Hdma5 = HDMA5,
     #[cfg(feature = "cgb")]
@@ -245,15 +240,10 @@ impl TryFrom<u16> for IORegArea {
             #[cfg(feature = "cgb")]
             VBK => Self::Vbk,
             BOOTROM => Self::BootRom,
-            #[cfg(feature = "cgb")]
             HDMA1 => Self::Hdma1,
-            #[cfg(feature = "cgb")]
             HDMA2 => Self::Hdma2,
-            #[cfg(feature = "cgb")]
             HDMA3 => Self::Hdma3,
-            #[cfg(feature = "cgb")]
             HDMA4 => Self::Hdma4,
-            #[cfg(feature = "cgb")]
             HDMA5 => Self::Hdma5,
             #[cfg(feature = "cgb")]
             RP => Self::RP,
