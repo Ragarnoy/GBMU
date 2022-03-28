@@ -1,3 +1,4 @@
+use gb_apu::apu::Apu;
 #[cfg(feature = "cgb")]
 use gb_bus::generic::{CharDevice, PanicDevice};
 use gb_bus::{generic::SimpleRW, AddressBus, Bus, IORegArea, IORegBus, Lock, WorkingRam};
@@ -55,6 +56,7 @@ pub struct Game {
     pub timer: Rc<RefCell<Timer>>,
     pub dma: Rc<RefCell<Dma>>,
     pub joypad: Rc<RefCell<Joypad>>,
+    pub apu: Rc<RefCell<Apu>>,
     pub addr_bus: AddressBus,
     scheduled_stop: Option<ScheduledStop>,
     emulation_stopped: bool,
@@ -153,6 +155,8 @@ impl Game {
         let dma = Rc::new(RefCell::new(Dma::new()));
         let serial = Rc::new(RefCell::new(gb_bus::Serial::default()));
 
+        let apu = Rc::new(RefCell::new(Apu::new(audio_queue)));
+
         let io_bus = {
             let mut io_bus = IORegBus::default();
             #[cfg(feature = "cgb")]
@@ -213,6 +217,7 @@ impl Game {
             timer,
             dma,
             joypad,
+            apu,
             addr_bus: bus,
             scheduled_stop: None,
             emulation_stopped: stopped,
@@ -240,7 +245,8 @@ impl Game {
                 &mut self.ppu,
                 self.joypad.borrow_mut().deref_mut(),
                 self.dma.borrow_mut().deref_mut(),
-                &mut self.cpu
+                &mut self.cpu,
+                self.apu.borrow_mut().deref_mut()
             );
             self.check_scheduled_stop(!frame_not_finished);
             #[cfg(feature = "cgb")]
