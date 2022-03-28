@@ -137,7 +137,6 @@ impl IORegBus {
             .with_area(Wx, ppu)
     }
 
-    #[cfg(feature = "cgb")]
     pub fn with_hdma(&mut self, hdma: IORegNode) -> &mut Self {
         self.with_area(IORegArea::Hdma1, hdma.clone())
             .with_area(IORegArea::Hdma2, hdma.clone())
