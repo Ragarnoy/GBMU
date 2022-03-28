@@ -101,7 +101,7 @@ where
             Vbk | Bcpd | Bcps | Ocpd | Ocps => match self.lcd.try_borrow_mut() {
                 Ok(mut lcd) => lcd.write(addr, v),
                 Err(_) => {
-                    log::warn!("failed {} register write", addr.area_type());
+                    log::warn!("failed {:?} register write", addr.area_type());
                     Ok(())
                 }
             },
