@@ -4,48 +4,70 @@ use gb_bus::Bus;
 use gb_clock::{Tick, Ticker};
 use sdl2::audio::AudioQueue;
 
+enum ChannelType {
+    SquareWave,
+    WaveForm,
+    Noise,
+}
+
+#[derive(Default)]
+struct Sweep {
+    bits: u8,
+}
+
+impl Sweep {
+    fn sweep_period() {}
+    fn negate() {}
+    fn shift() {}
+}
+
+struct SoundChannel {
+    buffer: Vec<i16>,
+    channel_type: ChannelType,
+    sweep: Option<Sweep>,
+}
+
+impl SoundChannel {
+    pub fn new(channel_type: ChannelType, sweep: Option<Sweep>) -> Self {
+        SoundChannel {
+            buffer: Vec::new(),
+            channel_type,
+            sweep,
+        }
+    }
+}
+
 pub struct Apu {
     audio_queue: Rc<RefCell<AudioQueue<i16>>>,
-    step: usize,
+    mix_buffer: Vec<i16>,
+    sound_channels: Vec<SoundChannel>,
 }
 
 impl Apu {
     pub fn new(audio_queue: Rc<RefCell<AudioQueue<i16>>>) -> Apu {
+        let sound_channels = vec![
+            SoundChannel::new(ChannelType::SquareWave, Some(Sweep::default())),
+            SoundChannel::new(ChannelType::SquareWave, None),
+            SoundChannel::new(ChannelType::WaveForm, None),
+            SoundChannel::new(ChannelType::Noise, None),
+        ];
         Self {
             audio_queue,
-            step: 0,
+            mix_buffer: Vec::new(),
+            sound_channels,
         }
-    }
-    fn gen_wave(bytes_to_write: i32) -> Vec<i16> {
-        // Generate a square wave
-        let tone_volume = 1_000i16;
-        let period = 41_000 / 440;
-        let sample_count = bytes_to_write;
-        let mut result = Vec::new();
-
-        for x in 0..sample_count {
-            result.push(if (x / period) % 2 == 0 {
-                tone_volume
-            } else {
-                -tone_volume
-            });
-        }
-        result
     }
 }
 
 impl Ticker for Apu {
     fn cycle_count(&self) -> Tick {
-        Tick::MCycle
+        Tick::TCycle
     }
 
     fn tick(&mut self, _addr_bus: &mut dyn Bus<u8>) {
-        if self.step % 1000000 == 0 {
-            self.audio_queue
-                .borrow()
-                .queue_audio(&Apu::gen_wave(41_000))
-                .expect("failed to queue audio");
-        }
-        self.step += 1;
+        self.audio_queue
+            .borrow()
+            .queue_audio(&self.mix_buffer)
+            .expect("failed to queue audio");
     }
 }
