@@ -1,5 +1,5 @@
 use crate::Timer;
-use gb_bus::{Bus, Lock};
+use gb_bus::{Bus, Source};
 use gb_clock::Ticker;
 use gb_test::MockBus;
 

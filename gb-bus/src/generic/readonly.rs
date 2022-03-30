@@ -1,4 +1,4 @@
-use crate::{Address, Area, Error, FileOperation, IORegArea, InternalLock, Lock, MemoryLock};
+use crate::{Address, Area, Error, FileOperation, IORegArea, InternalLock, MemoryLock, Source};
 
 /// A Char Device yield current setted byte
 #[derive(Default)]
@@ -33,11 +33,11 @@ where
 }
 
 impl MemoryLock for ReadOnly {
-    fn lock(&mut self, _area: Area, _lock: Lock) {}
+    fn lock(&mut self, _area: Area, _lock: Source) {}
 
     fn unlock(&mut self, _area: Area) {}
 
-    fn is_available(&self, _area: Area, _lock_key: Option<Lock>) -> bool {
+    fn is_available(&self, _area: Area, _lock_key: Option<Source>) -> bool {
         true
     }
 }

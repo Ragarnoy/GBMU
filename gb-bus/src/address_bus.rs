@@ -10,7 +10,7 @@ use crate::{
         IO_REG_START, IO_REG_STOP, OAM_START, OAM_STOP, RAM_START, RAM_STOP, ROM_START, ROM_STOP,
         UNDEFINED_VALUE, VRAM_START, VRAM_STOP,
     },
-    Addr, Area, Error, FileOperation, InternalLock, Lock, MemoryLock,
+    Addr, Area, Error, FileOperation, InternalLock, MemoryLock, Source,
 };
 
 use std::{cell::RefCell, rc::Rc};
@@ -82,7 +82,7 @@ pub struct AddressBus {
     /// register to enable/disable all interrupts
     pub ie_reg: Rc<RefCell<dyn FileOperation<Addr<Area>, Area>>>,
     /// map a memory area to its current lock status
-    pub area_locks: BTreeMap<Area, Lock>,
+    pub area_locks: BTreeMap<Area, Source>,
 }
 
 impl AddressBus {
@@ -100,7 +100,7 @@ impl AddressBus {
 }
 
 impl MemoryLock for AddressBus {
-    fn lock(&mut self, area: Area, lock: Lock) {
+    fn lock(&mut self, area: Area, lock: Source) {
         self.area_locks.insert(area, lock);
         match area {
             Area::Vram => self.vram.borrow_mut().lock(area, lock),
@@ -118,7 +118,7 @@ impl MemoryLock for AddressBus {
         }
     }
 
-    fn is_available(&self, area: Area, lock_key: Option<Lock>) -> bool {
+    fn is_available(&self, area: Area, lock_key: Option<Source>) -> bool {
         if let Some(lock) = self.area_locks.get(&area) {
             if let Some(key) = lock_key {
                 return *lock <= key;
@@ -131,7 +131,7 @@ impl MemoryLock for AddressBus {
 }
 
 impl crate::Bus<u8> for AddressBus {
-    fn read(&self, address: u16, lock_key: Option<Lock>) -> Result<u8, Error> {
+    fn read(&self, address: u16, lock_key: Option<Source>) -> Result<u8, Error> {
         if self.is_available(address.into(), lock_key) {
             self.read_byte(address)
         } else {
@@ -139,7 +139,7 @@ impl crate::Bus<u8> for AddressBus {
         }
     }
 
-    fn write(&mut self, address: u16, data: u8, lock_key: Option<Lock>) -> Result<(), Error> {
+    fn write(&mut self, address: u16, data: u8, lock_key: Option<Source>) -> Result<(), Error> {
         if self.is_available(address.into(), lock_key) {
             self.write_byte(address, data)
         } else {
@@ -149,7 +149,7 @@ impl crate::Bus<u8> for AddressBus {
 }
 
 impl crate::Bus<u16> for AddressBus {
-    fn read(&self, address: u16, lock_key: Option<Lock>) -> Result<u16, Error> {
+    fn read(&self, address: u16, lock_key: Option<Source>) -> Result<u16, Error> {
         if self.is_available(address.into(), lock_key) {
             let lower = self.read_byte(address)?;
             let upper = self.read_byte(address + 1)?;
@@ -160,7 +160,7 @@ impl crate::Bus<u16> for AddressBus {
         }
     }
 
-    fn write(&mut self, address: u16, data: u16, lock_key: Option<Lock>) -> Result<(), Error> {
+    fn write(&mut self, address: u16, data: u16, lock_key: Option<Source>) -> Result<(), Error> {
         if self.is_available(address.into(), lock_key) {
             let [lower, upper] = data.to_le_bytes();
 
@@ -244,7 +244,7 @@ mod test_address_bus {
 
 #[cfg(test)]
 mod memory_locking {
-    use super::{AddressBus, Area, Lock, MemoryLock};
+    use super::{AddressBus, Area, MemoryLock, Source};
     use crate::generic::CharDevice;
     use std::collections::BTreeMap;
     use std::{cell::RefCell, rc::Rc};
@@ -265,27 +265,27 @@ mod memory_locking {
         };
 
         assert!(addr_bus.is_available(Area::Vram, None));
-        assert!(addr_bus.is_available(Area::Vram, Some(Lock::Ppu)));
-        assert!(addr_bus.is_available(Area::Vram, Some(Lock::Dma)));
-        assert!(addr_bus.is_available(Area::Vram, Some(Lock::Debugger)));
+        assert!(addr_bus.is_available(Area::Vram, Some(Source::Ppu)));
+        assert!(addr_bus.is_available(Area::Vram, Some(Source::Dma)));
+        assert!(addr_bus.is_available(Area::Vram, Some(Source::Debugger)));
 
-        addr_bus.lock(Area::Vram, Lock::Ppu);
+        addr_bus.lock(Area::Vram, Source::Ppu);
         assert!(!addr_bus.is_available(Area::Vram, None));
-        assert!(addr_bus.is_available(Area::Vram, Some(Lock::Ppu)));
-        assert!(addr_bus.is_available(Area::Vram, Some(Lock::Dma)));
-        assert!(addr_bus.is_available(Area::Vram, Some(Lock::Debugger)));
+        assert!(addr_bus.is_available(Area::Vram, Some(Source::Ppu)));
+        assert!(addr_bus.is_available(Area::Vram, Some(Source::Dma)));
+        assert!(addr_bus.is_available(Area::Vram, Some(Source::Debugger)));
 
-        addr_bus.lock(Area::Vram, Lock::Dma);
+        addr_bus.lock(Area::Vram, Source::Dma);
         assert!(!addr_bus.is_available(Area::Vram, None));
-        assert!(!addr_bus.is_available(Area::Vram, Some(Lock::Ppu)));
-        assert!(addr_bus.is_available(Area::Vram, Some(Lock::Dma)));
-        assert!(addr_bus.is_available(Area::Vram, Some(Lock::Debugger)));
+        assert!(!addr_bus.is_available(Area::Vram, Some(Source::Ppu)));
+        assert!(addr_bus.is_available(Area::Vram, Some(Source::Dma)));
+        assert!(addr_bus.is_available(Area::Vram, Some(Source::Debugger)));
 
-        addr_bus.lock(Area::Vram, Lock::Debugger);
+        addr_bus.lock(Area::Vram, Source::Debugger);
         assert!(!addr_bus.is_available(Area::Vram, None));
-        assert!(!addr_bus.is_available(Area::Vram, Some(Lock::Ppu)));
-        assert!(!addr_bus.is_available(Area::Vram, Some(Lock::Dma)));
-        assert!(addr_bus.is_available(Area::Vram, Some(Lock::Debugger)));
+        assert!(!addr_bus.is_available(Area::Vram, Some(Source::Ppu)));
+        assert!(!addr_bus.is_available(Area::Vram, Some(Source::Dma)));
+        assert!(addr_bus.is_available(Area::Vram, Some(Source::Debugger)));
     }
 
     #[test]
@@ -305,7 +305,7 @@ mod memory_locking {
 
         assert!(addr_bus.is_available(Area::Vram, None));
 
-        addr_bus.lock(Area::Vram, Lock::Ppu);
+        addr_bus.lock(Area::Vram, Source::Ppu);
         assert!(!addr_bus.is_available(Area::Vram, None));
 
         addr_bus.unlock(Area::Vram);

@@ -1,6 +1,6 @@
 #[cfg(feature = "cgb")]
 use gb_bus::generic::{CharDevice, PanicDevice};
-use gb_bus::{generic::SimpleRW, AddressBus, Bus, IORegArea, IORegBus, Lock, WorkingRam};
+use gb_bus::{generic::SimpleRW, AddressBus, Bus, IORegArea, IORegBus, Source, WorkingRam};
 use gb_clock::{cycles, Clock};
 use gb_cpu::{cpu::Cpu, new_cpu, registers::Registers};
 use gb_dbg::{
@@ -619,7 +619,7 @@ impl DebugOperations for Game {
 impl MemoryDebugOperations for Game {
     fn read(&self, index: u16) -> u8 {
         self.addr_bus
-            .read(index, Some(Lock::Debugger))
+            .read(index, Some(Source::Debugger))
             .unwrap_or_else(|err| {
                 log::trace!("[DBG-OPS] bus read error at {}: {:?}", index, err);
                 0xff

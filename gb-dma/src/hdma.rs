@@ -1,4 +1,4 @@
-use gb_bus::{Address, Bus, Error, FileOperation, IORegArea, Lock};
+use gb_bus::{Address, Bus, Error, FileOperation, IORegArea, Source};
 use gb_clock::{Tick, Ticker};
 use gb_cpu::cpu::Cpu;
 use gb_ppu::{Mode, Ppu};
@@ -33,9 +33,9 @@ impl Hdma {
 
     fn data_transfer(&mut self, adr_bus: &mut dyn Bus<u8>) {
         let v = adr_bus
-            .read(self.src, Some(Lock::Dma))
+            .read(self.src, Some(Source::Dma))
             .expect("memory unavailable during HDMA");
-        if adr_bus.write(self.dest, v, Some(Lock::Dma)).is_err() {
+        if adr_bus.write(self.dest, v, Some(Source::Dma)).is_err() {
             log::error!(
                 "failed to write data '{:x}' at '{:x}' during HDMA",
                 v,

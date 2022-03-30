@@ -15,7 +15,7 @@ pub use address::Addr;
 pub use address_bus::AddressBus;
 pub use area::Area;
 pub use error::Error;
-pub use file_operation::{Address, FileOperation, InternalLock, Lock, MemoryLock};
+pub use file_operation::{Address, FileOperation, InternalLock, MemoryLock, Source};
 pub use io_reg_area::IORegArea;
 pub use io_reg_bus::IORegBus;
 pub use serial::Serial;
@@ -23,7 +23,7 @@ pub use working_ram::WorkingRam;
 
 pub trait Bus<N>: MemoryLock {
     /// read `N` into the bus
-    fn read(&self, address: u16, lock_key: Option<Lock>) -> Result<N, Error>;
+    fn read(&self, address: u16, lock_key: Option<Source>) -> Result<N, Error>;
     /// write `N` into the bus
-    fn write(&mut self, address: u16, data: N, lock_key: Option<Lock>) -> Result<(), Error>;
+    fn write(&mut self, address: u16, data: N, lock_key: Option<Source>) -> Result<(), Error>;
 }

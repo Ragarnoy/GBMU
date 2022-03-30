@@ -1,4 +1,4 @@
-use gb_bus::{Address, Area, Bus, Error, FileOperation, IORegArea, Lock};
+use gb_bus::{Address, Area, Bus, Error, FileOperation, IORegArea, Source};
 use gb_clock::{Tick, Ticker};
 
 #[derive(Default)]
@@ -40,12 +40,15 @@ impl Ticker for Dma {
     fn tick(&mut self, adr_bus: &mut dyn Bus<u8>) {
         if let Some(step) = self.oam_transfer {
             if step == 0 {
-                adr_bus.lock(Area::Oam, Lock::Dma);
+                adr_bus.lock(Area::Oam, Source::Dma);
             }
             let src: u8 = adr_bus
-                .read(((self.oam_register as u16) << 8) + step, Some(Lock::Dma))
+                .read(((self.oam_register as u16) << 8) + step, Some(Source::Dma))
                 .expect("memory unavailable during OAM DMA");
-            if adr_bus.write(0xFE00 + step, src, Some(Lock::Dma)).is_err() {
+            if adr_bus
+                .write(0xFE00 + step, src, Some(Source::Dma))
+                .is_err()
+            {
                 log::error!(
                     "failed to write data '{:x}' at '{:x}' during OAM DMA",
                     src,

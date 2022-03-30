@@ -34,7 +34,7 @@ impl<A: PartialEq + Eq> PartialEq for dyn Address<A> {
     derive(serde::Deserialize, serde::Serialize)
 )]
 #[derive(Eq, PartialEq, Debug, Clone, Copy, PartialOrd, Ord)]
-pub enum Lock {
+pub enum Source {
     Ppu,
     Dma,
     Debugger,
@@ -42,11 +42,11 @@ pub enum Lock {
 
 pub trait MemoryLock {
     /// Lock a memory area for exclusive access
-    fn lock(&mut self, area: Area, lock: Lock);
+    fn lock(&mut self, area: Area, lock: Source);
     /// unlock a memory area to restore universal access
     fn unlock(&mut self, area: Area);
     /// Detect if area is locked from an address
-    fn is_available(&self, area: Area, lock_key: Option<Lock>) -> bool;
+    fn is_available(&self, area: Area, lock_key: Option<Source>) -> bool;
 }
 
 pub trait InternalLock<A, T>: MemoryLock + FileOperation<A, T>
@@ -59,7 +59,7 @@ where
 
 #[test]
 fn test_comparing_lock_order() {
-    assert!(Lock::Ppu < Lock::Dma);
-    assert!(Lock::Dma < Lock::Debugger);
-    assert!(Lock::Ppu < Lock::Debugger);
+    assert!(Source::Ppu < Source::Dma);
+    assert!(Source::Dma < Source::Debugger);
+    assert!(Source::Ppu < Source::Debugger);
 }
