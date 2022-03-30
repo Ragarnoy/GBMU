@@ -8,11 +8,20 @@ where
     A: Address<T>,
 {
     fn write(&mut self, v: u8, addr: A) -> Result<(), Error> {
-        let _v = v;
+        self.write_source(v, addr, None)
+    }
+
+    fn write_source(&mut self, v: u8, addr: A, source: Option<Source>) -> Result<(), Error> {
+        drop(v);
+        drop(source);
         Err(Error::new_segfault(addr.into()))
     }
 
-    fn read(&self, addr: A) -> Result<u8, Error>;
+    fn read(&self, addr: A) -> Result<u8, Error> {
+        self.read_source(addr, None)
+    }
+
+    fn read_source(&self, addr: A, source: Option<Source>) -> Result<u8, Error>;
 }
 
 pub trait Address<A> {
@@ -35,6 +44,7 @@ impl<A: PartialEq + Eq> PartialEq for dyn Address<A> {
 )]
 #[derive(Eq, PartialEq, Debug, Clone, Copy, PartialOrd, Ord)]
 pub enum Source {
+    Cpu,
     Ppu,
     Dma,
     Debugger,
@@ -59,7 +69,7 @@ where
 
 #[test]
 fn test_comparing_lock_order() {
+    assert!(Source::Cpu < Source::Ppu);
     assert!(Source::Ppu < Source::Dma);
     assert!(Source::Dma < Source::Debugger);
-    assert!(Source::Ppu < Source::Debugger);
 }
