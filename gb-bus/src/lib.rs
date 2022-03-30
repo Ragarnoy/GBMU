@@ -21,7 +21,7 @@ pub use io_reg_bus::IORegBus;
 pub use serial::Serial;
 pub use working_ram::WorkingRam;
 
-pub trait Bus<N>: MemoryLock {
+pub trait Bus<N> {
     /// read `N` into the bus
     fn read(&self, address: u16, lock_key: Option<Source>) -> Result<N, Error>;
     /// write `N` into the bus

@@ -7,21 +7,13 @@ where
     T: Into<u16>,
     A: Address<T>,
 {
-    fn write(&mut self, v: u8, addr: A) -> Result<(), Error> {
-        self.write_source(v, addr, None)
-    }
-
-    fn write_source(&mut self, v: u8, addr: A, source: Option<Source>) -> Result<(), Error> {
+    fn write(&mut self, v: u8, addr: A, source: Option<Source>) -> Result<(), Error> {
         drop(v);
         drop(source);
         Err(Error::new_segfault(addr.into()))
     }
 
-    fn read(&self, addr: A) -> Result<u8, Error> {
-        self.read_source(addr, None)
-    }
-
-    fn read_source(&self, addr: A, source: Option<Source>) -> Result<u8, Error>;
+    fn read(&self, addr: A, source: Option<Source>) -> Result<u8, Error>;
 }
 
 pub trait Address<A> {
