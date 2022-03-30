@@ -8,7 +8,6 @@ pub mod generic;
 pub mod io_reg_area;
 mod io_reg_bus;
 pub mod io_reg_constant;
-mod lock;
 mod serial;
 mod working_ram;
 
@@ -16,10 +15,9 @@ pub use address::Addr;
 pub use address_bus::AddressBus;
 pub use area::Area;
 pub use error::Error;
-pub use file_operation::{Address, FileOperation};
+pub use file_operation::{Address, FileOperation, InternalLock, Lock, MemoryLock};
 pub use io_reg_area::IORegArea;
 pub use io_reg_bus::IORegBus;
-pub use lock::{InternalLock, Lock, MemoryLock};
 pub use serial::Serial;
 pub use working_ram::WorkingRam;
 
