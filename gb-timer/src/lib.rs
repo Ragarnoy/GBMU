@@ -1,5 +1,5 @@
 use gb_bus::io_reg_constant::IF;
-use gb_bus::{Address, Bus, Error, FileOperation, IORegArea};
+use gb_bus::{Address, Bus, Error, FileOperation, IORegArea, Source};
 use gb_clock::Ticker;
 #[cfg(test)]
 mod test_timer;
@@ -102,7 +102,7 @@ where
     u16: From<A>,
     A: Address<IORegArea>,
 {
-    fn read(&self, addr: A) -> Result<u8, Error> {
+    fn read(&self, addr: A, _source: Option<Source>) -> Result<u8, Error> {
         match addr.area_type() {
             IORegArea::Div => Ok(self.div()),
             IORegArea::Tima => Ok(self.tima),
@@ -112,7 +112,7 @@ where
         }
     }
 
-    fn write(&mut self, v: u8, addr: A) -> Result<(), Error> {
+    fn write(&mut self, v: u8, addr: A, _source: Option<Source>) -> Result<(), Error> {
         match addr.area_type() {
             IORegArea::Div => self.system_clock = 0,
             IORegArea::Tima => self.tima = v,
