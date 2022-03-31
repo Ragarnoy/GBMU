@@ -1,4 +1,4 @@
-use crate::{Address, Area, Error, FileOperation, IORegArea, InternalLock, MemoryLock, Source};
+use crate::{Address, Area, Error, FileOperation, IORegArea, Source};
 
 /// A Char Device yield current setted byte
 #[derive(Default)]
@@ -32,23 +32,6 @@ where
     fn read(&self, _addr: A, _source: Option<Source>) -> Result<u8, Error> {
         Ok(self.0)
     }
-}
-
-impl MemoryLock for CharDevice {
-    fn lock(&mut self, _area: Area, _lock: Source) {}
-
-    fn unlock(&mut self, _area: Area) {}
-
-    fn is_available(&self, _area: Area, _lock_key: Option<Source>) -> bool {
-        true
-    }
-}
-
-impl<A> InternalLock<A, Area> for CharDevice
-where
-    u16: From<A>,
-    A: Address<Area>,
-{
 }
 
 #[test]

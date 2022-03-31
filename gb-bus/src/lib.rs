@@ -15,7 +15,7 @@ pub use address::Addr;
 pub use address_bus::AddressBus;
 pub use area::Area;
 pub use error::Error;
-pub use file_operation::{Address, FileOperation, InternalLock, MemoryLock, Source};
+pub use file_operation::{Address, FileOperation, Source};
 pub use io_reg_area::IORegArea;
 pub use io_reg_bus::IORegBus;
 pub use serial::Serial;

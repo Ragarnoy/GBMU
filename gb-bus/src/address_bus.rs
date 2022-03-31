@@ -8,7 +8,7 @@ use crate::{
         IO_REG_START, IO_REG_STOP, OAM_START, OAM_STOP, RAM_START, RAM_STOP, ROM_START, ROM_STOP,
         VRAM_START, VRAM_STOP,
     },
-    Addr, Area, Error, FileOperation, InternalLock, Source,
+    Addr, Area, Error, FileOperation, Source,
 };
 
 use std::{cell::RefCell, rc::Rc};
@@ -65,7 +65,7 @@ pub struct AddressBus {
     /// Rom from the cartridge
     pub rom: Rc<RefCell<dyn FileOperation<Addr<Area>, Area>>>,
     /// Video Ram
-    pub vram: Rc<RefCell<dyn InternalLock<Addr<Area>, Area>>>,
+    pub vram: Rc<RefCell<dyn FileOperation<Addr<Area>, Area>>>,
     /// Ram from the cartridge
     pub ext_ram: Rc<RefCell<dyn FileOperation<Addr<Area>, Area>>>,
     /// Internal gameboy ram

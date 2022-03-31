@@ -1,4 +1,4 @@
-use crate::{Address, Area, Error, FileOperation, IORegArea, InternalLock, MemoryLock, Source};
+use crate::{Address, Area, Error, FileOperation, IORegArea, Source};
 
 /// A device that always panic when interracting with it
 #[derive(Default)]
@@ -38,23 +38,6 @@ where
     fn read(&self, addr: A, _source: Option<Source>) -> Result<u8, Error> {
         panic!("reading to a panic device, addr={:?}", u16::from(addr));
     }
-}
-
-impl MemoryLock for PanicDevice {
-    fn lock(&mut self, _area: Area, _lock: Source) {}
-
-    fn unlock(&mut self, _area: Area) {}
-
-    fn is_available(&self, _area: Area, _lock_key: Option<Source>) -> bool {
-        true
-    }
-}
-
-impl<A> InternalLock<A, Area> for PanicDevice
-where
-    u16: From<A>,
-    A: Address<Area>,
-{
 }
 
 #[test]

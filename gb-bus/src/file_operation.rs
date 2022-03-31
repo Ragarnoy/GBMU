@@ -1,4 +1,4 @@
-use crate::{Area, Error};
+use crate::Error;
 
 /// FileOperation basic trait to implement for a RAM Emulator or other area.
 pub trait FileOperation<A, T>
@@ -40,23 +40,6 @@ pub enum Source {
     Ppu,
     Dma,
     Debugger,
-}
-
-pub trait MemoryLock {
-    /// Lock a memory area for exclusive access
-    fn lock(&mut self, area: Area, lock: Source);
-    /// unlock a memory area to restore universal access
-    fn unlock(&mut self, area: Area);
-    /// Detect if area is locked from an address
-    fn is_available(&self, area: Area, lock_key: Option<Source>) -> bool;
-}
-
-pub trait InternalLock<A, T>: MemoryLock + FileOperation<A, T>
-where
-    u16: From<A>,
-    A: Address<T>,
-    T: Into<u16>,
-{
 }
 
 #[test]
