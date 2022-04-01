@@ -1,5 +1,5 @@
 pub mod apu;
-pub mod channels;
+pub mod channel;
 pub mod control;
 
 #[derive(PartialEq, Clone, Copy)]

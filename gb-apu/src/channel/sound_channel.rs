@@ -1,8 +1,8 @@
 use crate::{
-    channels::duty::Duty,
-    channels::length_counter::LengthCounter,
-    channels::sweep::Sweep,
-    channels::volume_envelope::{Direction, VolumeEnvelope},
+    channel::duty::Duty,
+    channel::length_counter::LengthCounter,
+    channel::sweep::Sweep,
+    channel::volume_envelope::{Direction, VolumeEnvelope},
     ChannelType,
 };
 use gb_bus::{Address, Error, FileOperation, IORegArea};

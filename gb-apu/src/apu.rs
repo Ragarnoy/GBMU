@@ -4,7 +4,7 @@ use sdl2::audio::AudioQueue;
 use std::{cell::RefCell, rc::Rc};
 
 use crate::{
-    channels::sound_channel::SoundChannel, control::frame_sequencer::FrameSequencer, ChannelType,
+    channel::sound_channel::SoundChannel, control::frame_sequencer::FrameSequencer, ChannelType,
 };
 
 pub struct Apu {
