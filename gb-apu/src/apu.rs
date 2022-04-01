@@ -87,24 +87,52 @@ enum Direction {
     Inc,
     Dec,
 }
-#[derive(Default)]
 struct VolumeEnvelope {
-    bits: u8,
+    initial_volume: u8,
+    envelope_direction: Direction,
+    period: u8,
+    volume: u8,
+    counter: u8,
+}
+
+impl Default for VolumeEnvelope {
+    fn default() -> Self {
+        Self {
+            initial_volume: 0,
+            envelope_direction: Direction::Dec,
+            period: 0,
+            volume: 0,
+            counter: 0,
+        }
+    }
 }
 
 impl VolumeEnvelope {
-    fn initial_volume(&self) -> u8 {
-        self.bits >> 4
-    }
-    fn envelope_direction(&self) -> Direction {
-        if self.bits & 0x8 == 1 {
-            Direction::Inc
+    fn step(&mut self) {
+        if self.period == 0 {
+            return;
+        }
+        if self.counter == 0 {
+            self.counter = self.period;
+            self.update_volume();
         } else {
-            Direction::Dec
+            self.counter -= 1;
         }
     }
-    fn envelope_sweep_nb(&self) -> u8 {
-        self.bits & 0x7
+
+    fn update_volume(&mut self) {
+        let next_volume = match self.envelope_direction {
+            Direction::Inc => self.volume.wrapping_add(1),
+            Direction::Dec => self.volume.wrapping_sub(1),
+        };
+        if next_volume <= 0xF {
+            self.volume = next_volume;
+        }
+    }
+
+    fn reload(&mut self) {
+        self.volume = self.initial_volume;
+        self.counter = self.period;
     }
 }
 
@@ -116,7 +144,6 @@ struct SoundChannel {
     length_counter: LengthCounter,
     volume_envelope: Option<VolumeEnvelope>,
     enabled: bool,
-    length_enabled: bool,
     frequency: Option<u16>,
 }
 
@@ -143,7 +170,6 @@ impl SoundChannel {
                 None
             },
             enabled: false,
-            length_enabled: false,
             frequency: if channel_type == ChannelType::SquareWave
                 || channel_type == ChannelType::WaveForm
             {
@@ -180,8 +206,15 @@ where
                 Ok(res)
             }
             Nr22 => {
-                if let Some(volume_envelope) = &self.volume_envelope {
-                    Ok(volume_envelope.bits)
+                if let Some(ve) = &self.volume_envelope {
+                    let mut res = 0;
+                    res |= ve.initial_volume << 4;
+                    res |= match ve.envelope_direction {
+                        Direction::Inc => 1,
+                        Direction::Dec => 0,
+                    };
+                    res |= ve.period & 0x7;
+                    Ok(res)
                 } else {
                     Ok(0)
                 }
@@ -196,7 +229,7 @@ where
             Nr24 => {
                 let mut res = 0;
                 res |= if self.enabled { 0x80 } else { 0 };
-                res |= if self.length_enabled { 0x40 } else { 0 };
+                res |= if self.length_counter.enabled { 0x40 } else { 0 };
                 if let Some(frequency) = self.frequency {
                     res |= ((frequency >> 8) & 0x07) as u8;
                 }
@@ -229,7 +262,13 @@ where
             }
             Nr22 => {
                 if let Some(ve) = &mut self.volume_envelope {
-                    (*ve).bits = v;
+                    (*ve).initial_volume = v >> 4;
+                    (*ve).envelope_direction = if v & 0x8 == 1 {
+                        Direction::Inc
+                    } else {
+                        Direction::Dec
+                    };
+                    (*ve).period = v & 0x7;
                 }
             }
             Nr23 => {
@@ -243,7 +282,7 @@ where
             }
             Nr24 => {
                 self.enabled = v & 0x80 != 0;
-                self.length_enabled = v & 0x40 != 0;
+                self.length_counter.enabled = v & 0x40 != 0;
                 if self.channel_type == ChannelType::SquareWave
                     || self.channel_type == ChannelType::WaveForm
                 {
@@ -285,10 +324,10 @@ impl Apu {
     pub fn new(audio_queue: Rc<RefCell<AudioQueue<i16>>>) -> Apu {
         // Channels order in vector is important !
         let sound_channels = vec![
-            SoundChannel::new(ChannelType::SquareWave, true),
+            // SoundChannel::new(ChannelType::SquareWave, true),
             SoundChannel::new(ChannelType::SquareWave, false),
-            SoundChannel::new(ChannelType::WaveForm, false),
-            SoundChannel::new(ChannelType::Noise, false),
+            // SoundChannel::new(ChannelType::WaveForm, false),
+            // SoundChannel::new(ChannelType::Noise, false),
         ];
         Self {
             cycle_counter: 0,
@@ -324,6 +363,13 @@ impl Ticker for Apu {
         if step == 0 || step == 2 || step == 4 || step == 6 {
             for i in 0..self.sound_channels.len() {
                 self.sound_channels[i].length_counter_step();
+            }
+        }
+        if step == 2 || step == 6 {
+            for i in 0..self.sound_channels.len() {
+                if let Some(ve) = &mut self.sound_channels[i].volume_envelope {
+                    (*ve).step();
+                }
             }
         }
     }
