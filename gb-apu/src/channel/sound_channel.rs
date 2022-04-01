@@ -2,6 +2,7 @@ use crate::{
     channel::duty::Duty,
     channel::length_counter::LengthCounter,
     channel::sweep::Sweep,
+    channel::timer::Timer,
     channel::volume_envelope::{Direction, VolumeEnvelope},
     ChannelType,
 };
@@ -15,7 +16,7 @@ pub struct SoundChannel {
     pub length_counter: LengthCounter,
     pub volume_envelope: Option<VolumeEnvelope>,
     pub enabled: bool,
-    pub frequency: Option<u16>,
+    pub timer: Option<Timer>,
 }
 
 impl SoundChannel {
@@ -41,16 +42,28 @@ impl SoundChannel {
                 None
             },
             enabled: false,
-            frequency: if channel_type == ChannelType::SquareWave
+            timer: if channel_type == ChannelType::SquareWave
                 || channel_type == ChannelType::WaveForm
             {
-                Some(0)
+                Some(Timer::new(channel_type))
             } else {
                 None
             },
             channel_type,
         }
     }
+
+    pub fn step(&mut self) {
+        if let Some(timer) = &mut self.timer {
+            if let Some(duty) = &mut self.duty {
+                let reached_zero = timer.step();
+                if reached_zero {
+                    duty.step()
+                }
+            }
+        }
+    }
+
     pub fn disable(&mut self) {
         self.enabled = false;
     }
@@ -91,8 +104,8 @@ where
                 }
             }
             Nr23 => {
-                if let Some(frequency) = self.frequency {
-                    Ok(frequency as u8)
+                if let Some(timer) = &self.timer {
+                    Ok(timer.frequency as u8)
                 } else {
                     Ok(0)
                 }
@@ -101,8 +114,8 @@ where
                 let mut res = 0;
                 res |= if self.enabled { 0x80 } else { 0 };
                 res |= if self.length_counter.enabled { 0x40 } else { 0 };
-                if let Some(frequency) = self.frequency {
-                    res |= ((frequency >> 8) & 0x07) as u8;
+                if let Some(timer) = &self.timer {
+                    res |= ((timer.frequency >> 8) & 0x07) as u8;
                 }
 
                 Ok(res)
@@ -145,8 +158,8 @@ where
                 if self.channel_type == ChannelType::SquareWave
                     || self.channel_type == ChannelType::WaveForm
                 {
-                    if let Some(frequency) = &mut self.frequency {
-                        *frequency &= v as u16;
+                    if let Some(timer) = &mut self.timer {
+                        (*timer).frequency &= v as u16;
                     }
                 }
             }
@@ -156,8 +169,8 @@ where
                 if self.channel_type == ChannelType::SquareWave
                     || self.channel_type == ChannelType::WaveForm
                 {
-                    if let Some(frequency) = &mut self.frequency {
-                        *frequency &= ((v & 0x07) as u16) << 8;
+                    if let Some(timer) = &mut self.timer {
+                        (*timer).frequency &= ((v & 0x07) as u16) << 8;
                     }
                 }
             }
