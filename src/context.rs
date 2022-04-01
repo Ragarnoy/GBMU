@@ -179,7 +179,7 @@ impl Game {
                 .with_hdma(hdma.clone())
                 .with_area(IORegArea::BootRom, bios_wrapper.clone())
                 .with_serial(serial)
-                .with_default_sound()
+                .with_sound(apu.clone())
                 .with_default_waveform_ram();
             io_bus
         };

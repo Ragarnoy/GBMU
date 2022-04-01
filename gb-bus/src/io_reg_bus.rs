@@ -58,28 +58,32 @@ impl IORegBus {
         self
     }
 
-    pub fn with_default_sound(&mut self) -> &mut Self {
-        self.with_area(IORegArea::Nr10, new_chardev!())
-            .with_area(IORegArea::Nr11, new_chardev!())
-            .with_area(IORegArea::Nr12, new_chardev!())
-            .with_area(IORegArea::Nr13, new_chardev!())
-            .with_area(IORegArea::Nr14, new_chardev!())
-            .with_area(IORegArea::Nr21, new_chardev!())
-            .with_area(IORegArea::Nr22, new_chardev!())
-            .with_area(IORegArea::Nr23, new_chardev!())
-            .with_area(IORegArea::Nr24, new_chardev!())
-            .with_area(IORegArea::Nr30, new_chardev!())
-            .with_area(IORegArea::Nr31, new_chardev!())
-            .with_area(IORegArea::Nr32, new_chardev!())
-            .with_area(IORegArea::Nr33, new_chardev!())
-            .with_area(IORegArea::Nr34, new_chardev!())
-            .with_area(IORegArea::Nr41, new_chardev!())
-            .with_area(IORegArea::Nr42, new_chardev!())
-            .with_area(IORegArea::Nr43, new_chardev!())
-            .with_area(IORegArea::Nr44, new_chardev!())
-            .with_area(IORegArea::Nr50, new_chardev!())
-            .with_area(IORegArea::Nr51, new_chardev!())
-            .with_area(IORegArea::Nr52, new_chardev!())
+    pub fn with_sound(&mut self, apu: IORegNode) -> &mut Self {
+        use IORegArea::{
+            Nr10, Nr11, Nr12, Nr13, Nr14, Nr21, Nr22, Nr23, Nr24, Nr30, Nr31, Nr32, Nr33, Nr34,
+            Nr41, Nr42, Nr43, Nr44, Nr50, Nr51, Nr52,
+        };
+        self.with_area(Nr10, apu.clone())
+            .with_area(Nr11, apu.clone())
+            .with_area(Nr12, apu.clone())
+            .with_area(Nr13, apu.clone())
+            .with_area(Nr14, apu.clone())
+            .with_area(Nr21, apu.clone())
+            .with_area(Nr22, apu.clone())
+            .with_area(Nr23, apu.clone())
+            .with_area(Nr24, apu.clone())
+            .with_area(Nr30, apu.clone())
+            .with_area(Nr31, apu.clone())
+            .with_area(Nr32, apu.clone())
+            .with_area(Nr33, apu.clone())
+            .with_area(Nr34, apu.clone())
+            .with_area(Nr41, apu.clone())
+            .with_area(Nr42, apu.clone())
+            .with_area(Nr43, apu.clone())
+            .with_area(Nr44, apu.clone())
+            .with_area(Nr50, apu.clone())
+            .with_area(Nr51, apu.clone())
+            .with_area(Nr52, apu.clone())
     }
 
     pub fn with_default_waveform_ram(&mut self) -> &mut Self {
