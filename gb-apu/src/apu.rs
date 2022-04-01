@@ -5,19 +5,21 @@ use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     channel::sound_channel::SoundChannel, control::frame_sequencer::FrameSequencer, ChannelType,
+    BUFFER_SIZE,
 };
 
 pub struct Apu {
     cycle_counter: u16,
     enabled: bool,
-    audio_queue: Rc<RefCell<AudioQueue<i16>>>,
-    mix_buffer: Vec<i16>,
+    audio_queue: Rc<RefCell<AudioQueue<f32>>>,
+    buffer: [f32; BUFFER_SIZE],
+    buffer_i: usize,
     sound_channels: Vec<SoundChannel>,
     frame_sequencer: FrameSequencer,
 }
 
 impl Apu {
-    pub fn new(audio_queue: Rc<RefCell<AudioQueue<i16>>>) -> Apu {
+    pub fn new(audio_queue: Rc<RefCell<AudioQueue<f32>>>) -> Apu {
         // Channels order in vector is important !
         let sound_channels = vec![
             // SoundChannel::new(ChannelType::SquareWave, true),
@@ -29,16 +31,24 @@ impl Apu {
             cycle_counter: 0,
             enabled: false,
             audio_queue,
-            mix_buffer: Vec::new(),
+            buffer: [0.0; BUFFER_SIZE],
+            buffer_i: 0,
             sound_channels,
             frame_sequencer: FrameSequencer::default(),
         }
+    }
+    fn add_sample(&mut self) {
+        let sample = self.sound_channels[1].get_dac_output();
+        self.buffer[self.buffer_i] = sample;
+        self.buffer_i += 1;
+        self.buffer[self.buffer_i] = sample;
+        self.buffer_i += 1;
     }
 
     fn queue_audio(&self) {
         self.audio_queue
             .borrow()
-            .queue_audio(&self.mix_buffer)
+            .queue_audio(&self.buffer)
             .expect("failed to queue audio");
     }
 }
@@ -71,6 +81,14 @@ impl Ticker for Apu {
                     (*ve).step();
                 }
             }
+        }
+
+        if self.cycle_counter % 0x5F == 0 {
+            self.add_sample();
+        }
+        if self.buffer_i >= BUFFER_SIZE {
+            self.queue_audio();
+            self.buffer_i = 0;
         }
     }
 }

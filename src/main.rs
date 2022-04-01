@@ -323,7 +323,7 @@ fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
     };
 
     let audio_queue = audio_subsystem
-        .open_queue::<i16, _>(None, &desired_spec)
+        .open_queue::<f32, _>(None, &desired_spec)
         .expect("Failed to init audio queue");
     audio_queue.resume();
     let audio_queue = Rc::new(RefCell::new(audio_queue));
@@ -383,7 +383,7 @@ fn load_game<P: AsRef<std::path::Path>>(
     rompath: P,
     joypad: std::rc::Rc<std::cell::RefCell<gb_joypad::Joypad>>,
     stopped: bool,
-    audio_queue: Rc<RefCell<AudioQueue<i16>>>,
+    audio_queue: Rc<RefCell<AudioQueue<f32>>>,
     #[cfg(feature = "cgb")] forced_mode: Option<Mode>,
 ) -> Option<Game> {
     Game::new(

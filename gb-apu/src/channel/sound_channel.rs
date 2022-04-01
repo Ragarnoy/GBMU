@@ -9,7 +9,6 @@ use crate::{
 use gb_bus::{Address, Error, FileOperation, IORegArea};
 
 pub struct SoundChannel {
-    pub buffer: Vec<i16>,
     pub channel_type: ChannelType,
     pub sweep: Option<Sweep>,
     pub duty: Option<Duty>,
@@ -22,7 +21,6 @@ pub struct SoundChannel {
 impl SoundChannel {
     pub fn new(channel_type: ChannelType, handles_sweep: bool) -> Self {
         SoundChannel {
-            buffer: Vec::new(),
             sweep: if handles_sweep && channel_type == ChannelType::SquareWave {
                 Some(Sweep::default())
             } else {
@@ -70,6 +68,17 @@ impl SoundChannel {
 
     pub fn length_counter_step(&mut self) {
         self.enabled = self.length_counter.step();
+    }
+
+    pub fn get_dac_output(&self) -> f32 {
+        if let Some(duty) = &self.duty {
+            if let Some(volume_envelope) = &self.volume_envelope {
+                let dac_input = duty.get_amplitude() * volume_envelope.volume;
+                let dac_output = (dac_input as f32 / 7.5) - 1.0;
+                return dac_output;
+            }
+        }
+        0.0
     }
 }
 

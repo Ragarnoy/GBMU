@@ -8,3 +8,5 @@ pub enum ChannelType {
     WaveForm,
     Noise,
 }
+
+pub const BUFFER_SIZE: usize = 2048;

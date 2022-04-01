@@ -38,7 +38,7 @@ pub struct Context<const WIDTH: usize, const HEIGHT: usize> {
     pub windows: crate::windows::Windows,
     pub display: RenderImage<WIDTH, HEIGHT>,
     pub joypad: Rc<RefCell<Joypad>>,
-    pub audio_queue: Rc<RefCell<AudioQueue<i16>>>,
+    pub audio_queue: Rc<RefCell<AudioQueue<f32>>>,
     #[cfg(feature = "debug_render")]
     pub debug_render: bool,
     pub custom_events: Vec<CustomEvent>,
@@ -88,7 +88,7 @@ impl Game {
         rompath: &P,
         joypad: Rc<RefCell<Joypad>>,
         stopped: bool,
-        audio_queue: Rc<RefCell<AudioQueue<i16>>>,
+        audio_queue: Rc<RefCell<AudioQueue<f32>>>,
         #[cfg(feature = "cgb")] forced_mode: Option<Mode>,
     ) -> Result<Game, anyhow::Error> {
         use std::io::Seek;
