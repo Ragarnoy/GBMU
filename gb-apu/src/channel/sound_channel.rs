@@ -71,8 +71,13 @@ impl SoundChannel {
     }
 
     pub fn get_dac_output(&self) -> f32 {
-        if let Some(duty) = &self.duty {
-            if let Some(volume_envelope) = &self.volume_envelope {
+        if let Some(volume_envelope) = &self.volume_envelope {
+            if volume_envelope.initial_volume == 0
+                && volume_envelope.envelope_direction == Direction::Dec
+            {
+                return 0.0;
+            }
+            if let Some(duty) = &self.duty {
                 let dac_input = duty.get_amplitude() * volume_envelope.volume;
                 let dac_output = (dac_input as f32 / 7.5) - 1.0;
                 return dac_output;
