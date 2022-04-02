@@ -286,7 +286,7 @@ impl PixelFetcher {
                     for color_id in pixel_iter {
                         self.pixels.push_front(Pixel::new(
                             color_id,
-                            None,
+                            Some(attributes.palette_ref()),
                             attributes.bg_priority(),
                         ));
                     }
