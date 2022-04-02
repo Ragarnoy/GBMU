@@ -25,7 +25,6 @@ impl LengthCounter {
     pub fn step(&mut self) -> bool {
         if self.counter > 0 && self.enabled {
             self.counter -= 1;
-
             if self.counter == 0 {
                 return true;
             }
@@ -42,5 +41,7 @@ impl LengthCounter {
         } else {
             0x40
         }
+
+        //TODO impl next step will not count (obscure behavior)
     }
 }

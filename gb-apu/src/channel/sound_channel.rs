@@ -57,7 +57,7 @@ impl SoundChannel {
             if let Some(duty) = &mut self.duty {
                 let reached_zero = timer.step();
                 if reached_zero {
-                    duty.step()
+                    duty.step();
                 }
             }
         }
@@ -174,7 +174,8 @@ where
                     || self.channel_type == ChannelType::WaveForm
                 {
                     if let Some(timer) = &mut self.timer {
-                        (*timer).frequency &= v as u16;
+                        let high_byte = (*timer).frequency.to_le_bytes()[1];
+                        (*timer).frequency = (high_byte as u16 & 0x7) << 8 | v as u16;
                     }
                 }
             }
@@ -185,7 +186,8 @@ where
                     || self.channel_type == ChannelType::WaveForm
                 {
                     if let Some(timer) = &mut self.timer {
-                        (*timer).frequency &= ((v & 0x07) as u16) << 8;
+                        let low_byte = (*timer).frequency.to_le_bytes()[0];
+                        (*timer).frequency = (v as u16 & 0x07) << 8 | low_byte as u16;
                     }
                 }
 
