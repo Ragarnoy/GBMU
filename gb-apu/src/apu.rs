@@ -144,7 +144,19 @@ where
             Nr21 | Nr22 | Nr23 | Nr24 => return self.sound_channels[1].write(v, addr),
             Nr30 | Nr31 | Nr32 | Nr33 | Nr34 => return self.sound_channels[2].write(v, addr),
             Nr41 | Nr42 | Nr43 | Nr44 => return self.sound_channels[3].write(v, addr),
-            Nr52 => self.enabled = v & 0x80 != 0x00,
+            Nr52 => {
+                let was_enabled = self.enabled;
+                let enabled = v & 0x80 != 0x00;
+                if was_enabled && !enabled {
+                    self.sound_channels = vec![
+                        SoundChannel::new(ChannelType::SquareWave, true),
+                        SoundChannel::new(ChannelType::SquareWave, false),
+                        SoundChannel::new(ChannelType::WaveForm, false),
+                        SoundChannel::new(ChannelType::Noise, false),
+                    ];
+                }
+                self.enabled = enabled;
+            }
             _ => return Err(Error::SegmentationFault(addr.into())),
         };
         Ok(())
