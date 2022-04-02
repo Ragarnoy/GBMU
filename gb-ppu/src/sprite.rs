@@ -1,11 +1,12 @@
 use crate::error::{PPUError, PPUResult};
-use crate::memory::Vram;
-use crate::registers::{Palette, PaletteRef};
+use crate::memory::{BankSelector, Vram};
+use crate::registers::{LcdReg, Palette, PaletteRef};
 use crate::Color;
 use std::ops::Deref;
 
 const PALETTE_CGB_NB: u8 = 0b111;
-const _TILE_BANK: u8 = 0b1000;
+const TILE_BANK: u8 = 0b1000;
+const TILE_BANK_OFFSET: u8 = 3;
 
 const PALETTE_NB: u8 = 0b1_0000;
 const X_FLIP: u8 = 0b10_0000;
@@ -59,6 +60,13 @@ impl<'r> Sprite {
 
     pub fn tile_index(&self) -> u8 {
         self.tile_index
+    }
+
+    fn get_bank_selector(&self) -> BankSelector {
+        BankSelector::try_from(
+            ((self.attributes & TILE_BANK) >> TILE_BANK_OFFSET) | LcdReg::VBK_UNUSED_BITS,
+        )
+        .expect("Corrupted sprite data for bank selector")
     }
 
     pub fn get_palette(&self, palettes: (&'r Palette, &'r Palette)) -> &'r Palette {
