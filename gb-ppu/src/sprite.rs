@@ -75,7 +75,7 @@ impl<'r> Sprite {
     }
 
     fn get_palette_ref(&self, cgb_enabled: bool) -> PaletteRef {
-        if cgb_enabled {
+        if !cgb_enabled {
             if self.attributes & PALETTE_NB == 0 {
                 PaletteRef::MonoSprite0
             } else {
