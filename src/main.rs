@@ -12,6 +12,7 @@ mod windows;
 use clap::Parser;
 
 use context::{Context, Game};
+use gb_apu::BUFFER_SIZE;
 use gb_dbg::debugger::options::DebuggerOptions;
 use gb_dbg::debugger::{Debugger, DebuggerBuilder};
 use gb_lcd::{render, window::GBWindow};
@@ -317,9 +318,9 @@ fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
     let audio_subsystem = sdl_context.audio().expect("Failed to init audio subsystem");
 
     let desired_spec = AudioSpecDesired {
-        freq: Some(41_000),
+        freq: Some(44_100),
         channels: Some(2),
-        samples: None, // default sample size
+        samples: Some(BUFFER_SIZE as u16),
     };
 
     let audio_queue = audio_subsystem
