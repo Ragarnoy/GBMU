@@ -33,6 +33,9 @@ impl LengthCounter {
     }
 
     pub fn reload(&mut self) {
+        if self.counter != 0 {
+            return;
+        }
         self.counter = if self.channel_type == ChannelType::WaveForm {
             0x100
         } else {
