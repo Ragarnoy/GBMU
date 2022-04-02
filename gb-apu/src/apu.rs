@@ -38,11 +38,21 @@ impl Apu {
         }
     }
     fn add_sample(&mut self) {
-        let sample = self.sound_channels[1].get_dac_output();
-        self.buffer[self.buffer_i] = sample;
+        let (left_sample, right_sample) = self.mix();
+        self.buffer[self.buffer_i] = left_sample;
         self.buffer_i += 1;
-        self.buffer[self.buffer_i] = sample;
+        self.buffer[self.buffer_i] = right_sample;
         self.buffer_i += 1;
+    }
+
+    fn mix(&self) -> (f32, f32) {
+        let mut sample = 0.0;
+
+        for i in 0..self.sound_channels.len() {
+            sample += self.sound_channels[i].get_dac_output();
+        }
+        sample /= self.sound_channels.len() as f32;
+        (sample, sample)
     }
 
     fn queue_audio(&self) {

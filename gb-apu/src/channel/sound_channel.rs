@@ -94,9 +94,12 @@ where
     u16: From<A>,
 {
     fn read(&self, addr: A) -> Result<u8, Error> {
-        use IORegArea::{Nr21, Nr22, Nr23, Nr24};
+        use IORegArea::{
+            Nr10, Nr11, Nr12, Nr13, Nr14, Nr21, Nr22, Nr23, Nr24, Nr30, Nr31, Nr32, Nr33, Nr34,
+            Nr41, Nr42, Nr43, Nr44,
+        };
         match addr.area_type() {
-            Nr21 => {
+            Nr11 | Nr21 => {
                 let mut res = 0;
                 if let Some(duty) = &self.duty {
                     res = duty.pattern_index << 6;
@@ -104,7 +107,7 @@ where
                 res |= self.length_counter.length_load;
                 Ok(res)
             }
-            Nr22 => {
+            Nr12 | Nr22 => {
                 if let Some(ve) = &self.volume_envelope {
                     let mut res = 0;
                     res |= ve.initial_volume << 4;
@@ -118,14 +121,14 @@ where
                     Ok(0)
                 }
             }
-            Nr23 => {
+            Nr13 | Nr23 => {
                 if let Some(timer) = &self.timer {
                     Ok(timer.frequency as u8)
                 } else {
                     Ok(0)
                 }
             }
-            Nr24 => {
+            Nr14 | Nr24 => {
                 let mut res = 0;
                 res |= if self.enabled { 0x80 } else { 0 };
                 res |= if self.length_counter.enabled { 0x40 } else { 0 };
@@ -140,9 +143,12 @@ where
         }
     }
     fn write(&mut self, v: u8, addr: A) -> Result<(), Error> {
-        use IORegArea::{Nr21, Nr22, Nr23, Nr24};
+        use IORegArea::{
+            Nr10, Nr11, Nr12, Nr13, Nr14, Nr21, Nr22, Nr23, Nr24, Nr30, Nr31, Nr32, Nr33, Nr34,
+            Nr41, Nr42, Nr43, Nr44,
+        };
         match addr.area_type() {
-            Nr21 => {
+            Nr11 | Nr21 => {
                 if self.channel_type == ChannelType::SquareWave {
                     if let Some(duty) = &mut self.duty {
                         (*duty).pattern_index = v >> 6;
@@ -158,7 +164,7 @@ where
                     self.length_counter.counter = 0x100 - v as u16;
                 }
             }
-            Nr22 => {
+            Nr12 | Nr22 => {
                 if let Some(ve) = &mut self.volume_envelope {
                     (*ve).initial_volume = v >> 4;
                     (*ve).envelope_direction = if v & 0x8 == 1 {
@@ -169,7 +175,7 @@ where
                     (*ve).period = v & 0x7;
                 }
             }
-            Nr23 => {
+            Nr13 | Nr23 => {
                 if self.channel_type == ChannelType::SquareWave
                     || self.channel_type == ChannelType::WaveForm
                 {
@@ -179,7 +185,7 @@ where
                     }
                 }
             }
-            Nr24 => {
+            Nr14 | Nr24 => {
                 self.enabled = v & 0x80 != 0;
                 self.length_counter.enabled = v & 0x40 != 0;
                 if self.channel_type == ChannelType::SquareWave
