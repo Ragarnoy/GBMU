@@ -187,6 +187,13 @@ where
                         (*timer).frequency &= ((v & 0x07) as u16) << 8;
                     }
                 }
+
+                if self.enabled {
+                    self.length_counter.reload();
+                    if let Some(ve) = &mut self.volume_envelope {
+                        (*ve).reload();
+                    }
+                }
             }
 
             _ => return Err(Error::SegmentationFault(addr.into())),
