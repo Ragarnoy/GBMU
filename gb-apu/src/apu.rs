@@ -22,10 +22,10 @@ impl Apu {
     pub fn new(audio_queue: Rc<RefCell<AudioQueue<f32>>>) -> Apu {
         // Channels order in vector is important !
         let sound_channels = vec![
-            // SoundChannel::new(ChannelType::SquareWave, true),
+            SoundChannel::new(ChannelType::SquareWave, true),
             SoundChannel::new(ChannelType::SquareWave, false),
-            // SoundChannel::new(ChannelType::WaveForm, false),
-            // SoundChannel::new(ChannelType::Noise, false),
+            SoundChannel::new(ChannelType::WaveForm, false),
+            SoundChannel::new(ChannelType::Noise, false),
         ];
         Self {
             cycle_counter: 0,
@@ -59,26 +59,28 @@ impl Ticker for Apu {
     }
 
     fn tick(&mut self, _addr_bus: &mut dyn Bus<u8>) {
-        if !self.enabled || self.cycle_counter < 0x2000 {
-            self.cycle_counter += 1;
+        if !self.enabled {
             return;
         }
-        self.cycle_counter = 0;
-
+        self.cycle_counter += 1;
         for i in 0..self.sound_channels.len() {
             self.sound_channels[i].step();
         }
 
-        let step = self.frame_sequencer.next();
-        if step == 0 || step == 2 || step == 4 || step == 6 {
-            for i in 0..self.sound_channels.len() {
-                self.sound_channels[i].length_counter_step();
+        if self.cycle_counter >= 0x2000 {
+            self.cycle_counter %= 0x2000;
+
+            let step = self.frame_sequencer.next();
+            if step == 0 || step == 2 || step == 4 || step == 6 {
+                for i in 0..self.sound_channels.len() {
+                    self.sound_channels[i].length_counter_step();
+                }
             }
-        }
-        if step == 2 || step == 6 {
-            for i in 0..self.sound_channels.len() {
-                if let Some(ve) = &mut self.sound_channels[i].volume_envelope {
-                    (*ve).step();
+            if step == 2 || step == 6 {
+                for i in 0..self.sound_channels.len() {
+                    if let Some(ve) = &mut self.sound_channels[i].volume_envelope {
+                        (*ve).step();
+                    }
                 }
             }
         }
