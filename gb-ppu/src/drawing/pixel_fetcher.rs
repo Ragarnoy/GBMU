@@ -317,7 +317,7 @@ impl PixelFetcher {
                 for (color_id, _) in row {
                     self.pixels_sprite.push_front(Pixel::new(
                         color_id,
-                        Some(sprite.get_palette_ref()),
+                        Some(sprite.get_palette_ref(self.cgb_enabled)),
                         sprite.bg_win_priority(),
                     ));
                 }

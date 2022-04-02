@@ -4,8 +4,7 @@ use crate::registers::{Palette, PaletteRef};
 use crate::Color;
 use std::ops::Deref;
 
-// CGB bits, unused yet
-const _PALETTE_CGB_NB: u8 = 0b111;
+const PALETTE_CGB_NB: u8 = 0b111;
 const _TILE_BANK: u8 = 0b1000;
 
 const PALETTE_NB: u8 = 0b1_0000;
@@ -70,11 +69,15 @@ impl<'r> Sprite {
         }
     }
 
-    pub fn get_palette_ref(&self) -> PaletteRef {
-        if self.attributes & PALETTE_NB == 0 {
-            PaletteRef::MonoSprite0
+    pub fn get_palette_ref(&self, cgb_enabled: bool) -> PaletteRef {
+        if cgb_enabled {
+            if self.attributes & PALETTE_NB == 0 {
+                PaletteRef::MonoSprite0
+            } else {
+                PaletteRef::MonoSprite1
+            }
         } else {
-            PaletteRef::MonoSprite1
+            PaletteRef::CgbSprite(self.attributes & PALETTE_CGB_NB)
         }
     }
 
