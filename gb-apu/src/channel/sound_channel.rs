@@ -8,6 +8,7 @@ use crate::{
 };
 use gb_bus::{Address, Error, FileOperation, IORegArea};
 
+#[derive(Debug)]
 pub struct SoundChannel {
     pub channel_type: ChannelType,
     pub sweep: Option<Sweep>,

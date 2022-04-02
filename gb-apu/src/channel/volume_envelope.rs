@@ -1,8 +1,9 @@
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub enum Direction {
     Inc,
     Dec,
 }
+#[derive(Debug)]
 pub struct VolumeEnvelope {
     pub initial_volume: u8,
     pub envelope_direction: Direction,
@@ -46,7 +47,7 @@ impl VolumeEnvelope {
         }
     }
 
-    fn reload(&mut self) {
+    pub fn reload(&mut self) {
         self.volume = self.initial_volume;
         self.counter = self.period;
     }

@@ -5,7 +5,7 @@ const DUTY_CYCLES: [[u8; 8]; 4] = [
     [0, 1, 1, 1, 1, 1, 1, 0],
 ];
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Duty {
     pub pattern_index: u8,
     step: u8,

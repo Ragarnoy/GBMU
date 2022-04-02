@@ -1,5 +1,6 @@
 use crate::ChannelType;
 
+#[derive(Debug)]
 pub struct LengthCounter {
     channel_type: ChannelType,
     pub enabled: bool,

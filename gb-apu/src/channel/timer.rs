@@ -1,4 +1,5 @@
 use crate::ChannelType;
+#[derive(Debug)]
 pub struct Timer {
     channel_type: ChannelType,
     pub frequency: u16,
