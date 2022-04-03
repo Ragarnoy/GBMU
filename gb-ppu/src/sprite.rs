@@ -1,12 +1,11 @@
 use crate::error::{PPUError, PPUResult};
-use crate::memory::Vram;
-use crate::registers::{Palette, PaletteRef};
-use crate::Color;
+use crate::memory::{BankSelector, Vram};
+use crate::registers::{LcdReg, PaletteRef};
 use std::ops::Deref;
 
-// CGB bits, unused yet
-const _PALETTE_CGB_NB: u8 = 0b111;
-const _TILE_BANK: u8 = 0b1000;
+const PALETTE_CGB_NB: u8 = 0b111;
+const TILE_BANK: u8 = 0b1000;
+const TILE_BANK_OFFSET: u8 = 3;
 
 const PALETTE_NB: u8 = 0b1_0000;
 const X_FLIP: u8 = 0b10_0000;
@@ -62,19 +61,28 @@ impl<'r> Sprite {
         self.tile_index
     }
 
-    pub fn get_palette(&self, palettes: (&'r Palette, &'r Palette)) -> &'r Palette {
-        if self.attributes & PALETTE_NB == 0 {
-            palettes.0
+    fn bank_selector(&self, cgb_enabled: bool) -> Option<BankSelector> {
+        if cgb_enabled {
+            Some(
+                BankSelector::try_from(
+                    ((self.attributes & TILE_BANK) >> TILE_BANK_OFFSET) | LcdReg::VBK_UNUSED_BITS,
+                )
+                .expect("Corrupted sprite data for bank selector"),
+            )
         } else {
-            palettes.1
+            None
         }
     }
 
-    pub fn get_palette_ref(&self) -> PaletteRef {
-        if self.attributes & PALETTE_NB == 0 {
-            PaletteRef::MonoSprite0
+    fn get_palette_ref(&self, cgb_enabled: bool) -> PaletteRef {
+        if !cgb_enabled {
+            if self.attributes & PALETTE_NB == 0 {
+                PaletteRef::MonoSprite0
+            } else {
+                PaletteRef::MonoSprite1
+            }
         } else {
-            PaletteRef::MonoSprite1
+            PaletteRef::CgbSprite(self.attributes & PALETTE_CGB_NB)
         }
     }
 
@@ -87,20 +95,23 @@ impl<'r> Sprite {
     /// ### Parameters
     ///  - **line**: The index of the row of pixel to return. Should be below 8 or 16 depending of the size_16 flag.
     ///  - **vram**: A reference to the vram to read the pixel values from.
-    ///  - **size_16**: the bit 2 flag from Control indicating if the sprite is 8(*false*) or 16(*true*) pixels high.
+    ///  - **lcd_reg**: A reference to the lcd registers.
+    ///  - **cgb_enabled**: indicate if we are in cgb display mode.
     pub fn get_pixels_row(
         &self,
         line: usize,
         vram: &dyn Deref<Target = Vram>,
-        size_16: bool,
-        palettes: (&Palette, &Palette),
-    ) -> PPUResult<[(u8, Color); 8]> {
-        let palette = self.get_palette(palettes);
-        if !size_16 {
-            self.get_pixels_row_8x8(line, vram, palette)
+        lcd_reg: &dyn Deref<Target = LcdReg>,
+        cgb_enabled: bool,
+    ) -> PPUResult<([u8; 8], PaletteRef)> {
+        let size_16 = lcd_reg.control.obj_size();
+        let palette = self.get_palette_ref(cgb_enabled);
+        let row = if !size_16 {
+            self.get_pixels_row_8x8(line, vram, cgb_enabled)?
         } else {
-            self.get_pixels_row_8x16(line, vram, palette)
-        }
+            self.get_pixels_row_8x16(line, vram, cgb_enabled)?
+        };
+        Ok((row, palette))
     }
 
     /// Read the row of 8 pixels values for this sprite in 8x8 pixels mode.
@@ -108,13 +119,14 @@ impl<'r> Sprite {
     /// ### Parameters
     ///  - **line**: The index of the row of pixel to return. Should be below 8.
     ///  - **vram**: A reference to the vram to read the pixel values from.
+    ///  - **cgb_enabled**: indicate if we are in cgb display mode.
     fn get_pixels_row_8x8(
         &self,
         line: usize,
         vram: &Vram,
-        palette: &Palette,
-    ) -> PPUResult<[(u8, Color); 8]> {
-        let mut row = [(0, Color::default()); 8];
+        cgb_enabled: bool,
+    ) -> PPUResult<[u8; 8]> {
+        let mut row = [0; 8];
         if line > 8 {
             return Err(PPUError::OutOfBound {
                 value: line,
@@ -123,12 +135,11 @@ impl<'r> Sprite {
             });
         }
         let y = if self.y_flip() { 7 - line } else { line };
-        let tile_row = vram.read_tile_line(self.tile_index as usize, y, None)?;
+        let vram_bank = self.bank_selector(cgb_enabled);
+        let tile_row = vram.read_tile_line(self.tile_index as usize, y, vram_bank)?;
         for (i, pixel) in row.iter_mut().enumerate() {
             let x = if self.x_flip() { 7 - i } else { i };
-            let value = tile_row[x];
-            let color = palette.get_color(tile_row[x])?;
-            *pixel = (value, color);
+            *pixel = tile_row[x];
         }
         Ok(row)
     }
@@ -138,13 +149,14 @@ impl<'r> Sprite {
     /// ### Parameters
     ///  - **line**: The index of the row of pixel to return. Should be below 16.
     ///  - **vram**: A reference to the vram to read the pixel values from.
+    ///  - **cgb_enabled**: indicate if we are in cgb display mode.
     fn get_pixels_row_8x16(
         &self,
         mut line: usize,
         vram: &Vram,
-        palette: &Palette,
-    ) -> PPUResult<[(u8, Color); 8]> {
-        let mut row = [(0, Color::default()); 8];
+        cgb_enabled: bool,
+    ) -> PPUResult<[u8; 8]> {
+        let mut row = [0; 8];
         if line > 15 {
             return Err(PPUError::OutOfBound {
                 value: line,
@@ -161,12 +173,11 @@ impl<'r> Sprite {
             line -= 8
         }
         let y = if self.y_flip() { 7 - line } else { line };
-        let tile_line = vram.read_tile_line(index, y, None).unwrap();
+        let vram_bank = self.bank_selector(cgb_enabled);
+        let tile_line = vram.read_tile_line(index, y, vram_bank)?;
         for (i, pixel) in row.iter_mut().enumerate() {
             let x = if self.x_flip() { 7 - i } else { i };
-            let value = tile_line[x];
-            let color = palette.get_color(tile_line[x])?;
-            *pixel = (value, color);
+            *pixel = tile_line[x];
         }
         Ok(row)
     }

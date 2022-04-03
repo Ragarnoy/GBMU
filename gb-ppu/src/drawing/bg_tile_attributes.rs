@@ -1,4 +1,5 @@
 use crate::memory::BankSelector;
+use crate::registers::PaletteRef;
 
 #[cfg_attr(
     feature = "serialization",
@@ -15,7 +16,7 @@ impl BGTileAttributes {
     const H_FLIP: u8 = 0b10_0000;
 
     const VRAM_BANK_NB: u8 = 0b1000;
-    // const PALETTE_NB: u8 = 0b111;
+    const PALETTE_NB: u8 = 0b111;
 
     pub fn bg_priority(&self) -> bool {
         self.bits & Self::BG_TO_OAM_PRIORITY != 0
@@ -35,6 +36,10 @@ impl BGTileAttributes {
         } else {
             BankSelector::Bank0
         }
+    }
+
+    pub fn palette_ref(&self) -> PaletteRef {
+        PaletteRef::CgbBGWin(self.bits & Self::PALETTE_NB)
     }
 }
 
