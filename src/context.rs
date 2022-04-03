@@ -421,6 +421,7 @@ impl Game {
         self.load_wram(state.working_ram)?;
         self.load_timer(state.timer)?;
         self.load_hram(state.hram)?;
+        self.load_dma(state.dma)?;
 
         self.mbc.borrow_mut().load(state.mbcs)?;
         Ok(())
@@ -434,6 +435,12 @@ impl Game {
         self.addr_bus.hram = hram.clone();
         self.hram = hram;
 
+        Ok(())
+    }
+
+    #[cfg(feature = "save_state")]
+    fn load_dma(&mut self, dma: Dma) -> anyhow::Result<()> {
+        self.dma = Rc::new(RefCell::new(dma));
         Ok(())
     }
 
@@ -862,6 +869,7 @@ struct SaveState {
     pub timer: Timer,
     pub hram: Vec<u8>,
     pub ppu: Ppu,
+    pub dma: Dma,
 }
 
 #[cfg(feature = "save_state")]
@@ -876,6 +884,7 @@ impl From<&Game> for SaveState {
             timer: *context.timer.borrow(),
             hram: context.hram.borrow().save(),
             ppu: context.ppu.clone(),
+            dma: *context.dma.borrow(),
         }
     }
 }
