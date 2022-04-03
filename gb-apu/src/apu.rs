@@ -118,12 +118,18 @@ where
     fn read(&self, addr: A) -> Result<u8, Error> {
         use IORegArea::{
             Nr10, Nr11, Nr12, Nr13, Nr14, Nr21, Nr22, Nr23, Nr24, Nr30, Nr31, Nr32, Nr33, Nr34,
-            Nr41, Nr42, Nr43, Nr44, Nr50, Nr51, Nr52,
+            Nr41, Nr42, Nr43, Nr44, Nr50, Nr51, Nr52, WaveRam0, WaveRam1, WaveRam2, WaveRam3,
+            WaveRam4, WaveRam5, WaveRam6, WaveRam7, WaveRam8, WaveRam9, WaveRamA, WaveRamB,
+            WaveRamC, WaveRamD, WaveRamE, WaveRamF,
         };
         match addr.area_type() {
             Nr10 | Nr11 | Nr12 | Nr13 | Nr14 => self.sound_channels[0].read(addr),
             Nr21 | Nr22 | Nr23 | Nr24 => self.sound_channels[1].read(addr),
-            Nr30 | Nr31 | Nr32 | Nr33 | Nr34 => self.sound_channels[2].read(addr),
+            Nr30 | Nr31 | Nr32 | Nr33 | Nr34 | WaveRam0 | WaveRam1 | WaveRam2 | WaveRam3
+            | WaveRam4 | WaveRam5 | WaveRam6 | WaveRam7 | WaveRam8 | WaveRam9 | WaveRamA
+            | WaveRamB | WaveRamC | WaveRamD | WaveRamE | WaveRamF => {
+                self.sound_channels[2].read(addr)
+            }
             Nr41 | Nr42 | Nr43 | Nr44 => self.sound_channels[3].read(addr),
             Nr52 => Ok(if self.enabled { 0x80 } else { 0 }
                 | if self.sound_channels[3].enabled {
@@ -152,12 +158,18 @@ where
     fn write(&mut self, v: u8, addr: A) -> Result<(), Error> {
         use IORegArea::{
             Nr10, Nr11, Nr12, Nr13, Nr14, Nr21, Nr22, Nr23, Nr24, Nr30, Nr31, Nr32, Nr33, Nr34,
-            Nr41, Nr42, Nr43, Nr44, Nr50, Nr51, Nr52,
+            Nr41, Nr42, Nr43, Nr44, Nr50, Nr51, Nr52, WaveRam0, WaveRam1, WaveRam2, WaveRam3,
+            WaveRam4, WaveRam5, WaveRam6, WaveRam7, WaveRam8, WaveRam9, WaveRamA, WaveRamB,
+            WaveRamC, WaveRamD, WaveRamE, WaveRamF,
         };
         match addr.area_type() {
             Nr10 | Nr11 | Nr12 | Nr13 | Nr14 => return self.sound_channels[0].write(v, addr),
             Nr21 | Nr22 | Nr23 | Nr24 => return self.sound_channels[1].write(v, addr),
-            Nr30 | Nr31 | Nr32 | Nr33 | Nr34 => return self.sound_channels[2].write(v, addr),
+            Nr30 | Nr31 | Nr32 | Nr33 | Nr34 | WaveRam0 | WaveRam1 | WaveRam2 | WaveRam3
+            | WaveRam4 | WaveRam5 | WaveRam6 | WaveRam7 | WaveRam8 | WaveRam9 | WaveRamA
+            | WaveRamB | WaveRamC | WaveRamD | WaveRamE | WaveRamF => {
+                return self.sound_channels[2].write(v, addr)
+            }
             Nr41 | Nr42 | Nr43 | Nr44 => return self.sound_channels[3].write(v, addr),
             Nr52 => {
                 let was_enabled = self.enabled;

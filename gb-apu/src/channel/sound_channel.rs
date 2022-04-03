@@ -111,7 +111,9 @@ where
     fn read(&self, addr: A) -> Result<u8, Error> {
         use IORegArea::{
             Nr10, Nr11, Nr12, Nr13, Nr14, Nr21, Nr22, Nr23, Nr24, Nr30, Nr31, Nr32, Nr33, Nr34,
-            Nr41, Nr42, Nr43, Nr44,
+            Nr41, Nr42, Nr43, Nr44, WaveRam0, WaveRam1, WaveRam2, WaveRam3, WaveRam4, WaveRam5,
+            WaveRam6, WaveRam7, WaveRam8, WaveRam9, WaveRamA, WaveRamB, WaveRamC, WaveRamD,
+            WaveRamE, WaveRamF,
         };
         match addr.area_type() {
             Nr10 => {
@@ -167,6 +169,9 @@ where
 
                 Ok(res)
             }
+            WaveRam0 | WaveRam1 | WaveRam2 | WaveRam3 | WaveRam4 | WaveRam5 | WaveRam6
+            | WaveRam7 | WaveRam8 | WaveRam9 | WaveRamA | WaveRamB | WaveRamC | WaveRamD
+            | WaveRamE | WaveRamF => Ok(0),
 
             _ => Err(Error::SegmentationFault(addr.into())),
         }
@@ -174,7 +179,9 @@ where
     fn write(&mut self, v: u8, addr: A) -> Result<(), Error> {
         use IORegArea::{
             Nr10, Nr11, Nr12, Nr13, Nr14, Nr21, Nr22, Nr23, Nr24, Nr30, Nr31, Nr32, Nr33, Nr34,
-            Nr41, Nr42, Nr43, Nr44,
+            Nr41, Nr42, Nr43, Nr44, WaveRam0, WaveRam1, WaveRam2, WaveRam3, WaveRam4, WaveRam5,
+            WaveRam6, WaveRam7, WaveRam8, WaveRam9, WaveRamA, WaveRamB, WaveRamC, WaveRamD,
+            WaveRamE, WaveRamF,
         };
         match addr.area_type() {
             Nr10 => {
@@ -247,6 +254,9 @@ where
                     }
                 }
             }
+            WaveRam0 | WaveRam1 | WaveRam2 | WaveRam3 | WaveRam4 | WaveRam5 | WaveRam6
+            | WaveRam7 | WaveRam8 | WaveRam9 | WaveRamA | WaveRamB | WaveRamC | WaveRamD
+            | WaveRamE | WaveRamF => {}
 
             _ => return Err(Error::SegmentationFault(addr.into())),
         };
