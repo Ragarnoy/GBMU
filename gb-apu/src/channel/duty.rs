@@ -17,8 +17,7 @@ impl Duty {
     }
 
     pub fn step(&mut self) {
-        self.step += 1;
-        self.step %= 8;
+        self.step = (self.step + 1) % 8;
     }
 
     pub fn get_amplitude(&self) -> u8 {

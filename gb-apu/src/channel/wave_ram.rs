@@ -8,15 +8,10 @@ pub struct ProgrammableWave {
 
 impl ProgrammableWave {
     pub fn step(&mut self) {
-        if self.volume_shift != 0 {
-            // dbg!(self.volume_shift);
-        }
-        self.step += 1;
-        self.step %= SAMPLES_NB;
+        self.step = (self.step + 1) % SAMPLES_NB;
     }
 
     pub fn get_dac_input(&self) -> f32 {
-        // dbg!(self.samples[self.step]);
         (self.samples[self.step] >> self.volume_shift) as f32
     }
 
