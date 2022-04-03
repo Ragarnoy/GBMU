@@ -41,9 +41,8 @@ impl Apu {
     fn add_sample(&mut self) {
         let (left_sample, right_sample) = self.mix();
         self.buffer[self.buffer_i] = left_sample;
-        self.buffer_i += 1;
-        self.buffer[self.buffer_i] = right_sample;
-        self.buffer_i += 1;
+        self.buffer[self.buffer_i + 1] = right_sample;
+        self.buffer_i += 2;
     }
 
     fn mix(&self) -> (f32, f32) {
