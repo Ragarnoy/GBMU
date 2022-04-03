@@ -18,10 +18,6 @@ impl LengthCounter {
         }
     }
 
-    pub fn reached_zero(&self) -> bool {
-        self.counter == 0
-    }
-
     pub fn step(&mut self) {
         if self.counter > 0 && self.enabled {
             self.counter -= 1;

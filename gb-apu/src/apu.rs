@@ -81,21 +81,15 @@ impl Ticker for Apu {
             self.cycle_counter %= 0x2000;
 
             let step = self.frame_sequencer.next();
-            if step == 0 || step == 2 || step == 4 || step == 6 {
-                for i in 0..self.sound_channels.len() {
+            for i in 0..self.sound_channels.len() {
+                if step == 0 || step == 2 || step == 4 || step == 6 {
                     self.sound_channels[i].length_counter_step();
                 }
-            }
-            if step == 2 || step == 6 {
-                for i in 0..self.sound_channels.len() {
+                if step == 2 || step == 6 {
                     self.sound_channels[i].sweep_step();
                 }
-            }
-            if step == 7 {
-                for i in 0..self.sound_channels.len() {
-                    if let Some(ve) = &mut self.sound_channels[i].volume_envelope {
-                        (*ve).step();
-                    }
+                if step == 7 {
+                    self.sound_channels[i].volume_envelope_step();
                 }
             }
         }

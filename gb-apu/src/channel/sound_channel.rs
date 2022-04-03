@@ -6,22 +6,26 @@ use crate::{
     channel::volume_envelope::{Direction, VolumeEnvelope},
     ChannelType,
 };
-use gb_bus::{Address, Error, FileOperation, IORegArea};
+use gb_bus::{io_reg_constant::WAVE_RAM_0, Address, Error, FileOperation, IORegArea};
+
+use super::wave_ram::ProgrammableWave;
 
 #[derive(Debug)]
 pub struct SoundChannel {
-    pub channel_type: ChannelType,
-    pub sweep: Option<Sweep>,
-    pub duty: Option<Duty>,
-    pub length_counter: LengthCounter,
-    pub volume_envelope: Option<VolumeEnvelope>,
     pub enabled: bool,
-    pub timer: Option<Timer>,
+    pub channel_type: ChannelType,
+    sweep: Option<Sweep>,
+    duty: Option<Duty>,
+    length_counter: LengthCounter,
+    volume_envelope: Option<VolumeEnvelope>,
+    timer: Option<Timer>,
+    programmable_wave: Option<ProgrammableWave>,
 }
 
 impl SoundChannel {
     pub fn new(channel_type: ChannelType, handles_sweep: bool) -> Self {
         SoundChannel {
+            enabled: false,
             sweep: if handles_sweep && channel_type == ChannelType::SquareWave {
                 Some(Sweep::default())
             } else {
@@ -40,11 +44,15 @@ impl SoundChannel {
             } else {
                 None
             },
-            enabled: false,
             timer: if channel_type == ChannelType::SquareWave
                 || channel_type == ChannelType::WaveForm
             {
                 Some(Timer::new(channel_type))
+            } else {
+                None
+            },
+            programmable_wave: if channel_type == ChannelType::WaveForm {
+                Some(ProgrammableWave::default())
             } else {
                 None
             },
@@ -54,10 +62,13 @@ impl SoundChannel {
 
     pub fn step(&mut self) {
         if let Some(timer) = &mut self.timer {
-            if let Some(duty) = &mut self.duty {
-                let reached_zero = timer.step();
-                if reached_zero {
+            let reached_zero = timer.step();
+            if reached_zero {
+                if let Some(duty) = &mut self.duty {
                     duty.step();
+                }
+                if let Some(programmable_wave) = &mut self.programmable_wave {
+                    programmable_wave.step();
                 }
             }
         }
@@ -66,6 +77,12 @@ impl SoundChannel {
     pub fn length_counter_step(&mut self) {
         self.length_counter.step();
         self.enabled = !self.length_counter.should_disabled_channel();
+    }
+
+    pub fn volume_envelope_step(&mut self) {
+        if let Some(ve) = &mut self.volume_envelope {
+            (*ve).step();
+        }
     }
 
     pub fn sweep_step(&mut self) {
@@ -91,14 +108,19 @@ impl SoundChannel {
         if !self.enabled {
             return 0.0;
         }
-        if let Some(volume_envelope) = &self.volume_envelope {
+        let dac_input = if let Some(volume_envelope) = &self.volume_envelope {
             if let Some(duty) = &self.duty {
-                let dac_input = duty.get_amplitude() * volume_envelope.volume;
-                let dac_output = (dac_input as f32 / 7.5) - 1.0;
-                return dac_output;
+                (duty.get_amplitude() * volume_envelope.volume) as f32
+            } else {
+                0.0
             }
-        }
-        0.0
+        } else if let Some(programmable_wave) = &self.programmable_wave {
+            programmable_wave.get_dac_input()
+        } else {
+            0.0
+        };
+
+        (dac_input as f32 / 7.5) - 1.0
     }
 }
 
@@ -115,7 +137,7 @@ where
             WaveRamE, WaveRamF,
         };
         match addr.area_type() {
-            Nr10 => {
+            Nr10 | Nr30 => {
                 if let Some(sweep) = &self.sweep {
                     let mut res = 0;
                     res |= (sweep.period & 0x7) << 4;
@@ -124,12 +146,13 @@ where
                         Direction::Inc => 0,
                     };
                     res |= sweep.shift_nb & 0x7;
-                    Ok(res)
-                } else {
-                    Ok(0)
+                    return Ok(res);
+                } else if self.channel_type == ChannelType::WaveForm {
+                    return Ok(if self.enabled { 0x80 } else { 0 });
                 }
+                Ok(0)
             }
-            Nr11 | Nr21 => {
+            Nr11 | Nr21 | Nr31 => {
                 let mut res = 0;
                 if let Some(duty) = &self.duty {
                     res = duty.pattern_index << 6;
@@ -137,7 +160,7 @@ where
                 res |= self.length_counter.length_load;
                 Ok(res)
             }
-            Nr12 | Nr22 => {
+            Nr12 | Nr22 | Nr32 => {
                 if let Some(ve) = &self.volume_envelope {
                     let mut res = 0;
                     res |= ve.initial_volume << 4;
@@ -146,19 +169,28 @@ where
                         Direction::Dec => 0,
                     };
                     res |= ve.period & 0x7;
-                    Ok(res)
-                } else {
-                    Ok(0)
+                    return Ok(res);
                 }
+                if let Some(pw) = &self.programmable_wave {
+                    let res = match pw.volume_shift {
+                        4 => 0b00, // mute
+                        0 => 0b01, // 100%
+                        1 => 0b10, // 50%
+                        2 => 0b11, // 25%
+                        _ => unreachable!(),
+                    };
+                    return Ok((res << 5) & 0b0110_0000);
+                }
+                Ok(0)
             }
-            Nr13 | Nr23 => {
+            Nr13 | Nr23 | Nr33 => {
                 if let Some(timer) = &self.timer {
                     Ok(timer.frequency as u8)
                 } else {
                     Ok(0)
                 }
             }
-            Nr14 | Nr24 => {
+            Nr14 | Nr24 | Nr34 => {
                 let mut res = 0;
                 res |= if self.enabled { 0x80 } else { 0 };
                 res |= if self.length_counter.enabled { 0x40 } else { 0 };
@@ -170,7 +202,15 @@ where
             }
             WaveRam0 | WaveRam1 | WaveRam2 | WaveRam3 | WaveRam4 | WaveRam5 | WaveRam6
             | WaveRam7 | WaveRam8 | WaveRam9 | WaveRamA | WaveRamB | WaveRamC | WaveRamD
-            | WaveRamE | WaveRamF => Ok(0),
+            | WaveRamE | WaveRamF => {
+                let index = (u16::from(addr) - WAVE_RAM_0) * 2;
+
+                Ok(self
+                    .programmable_wave
+                    .as_ref()
+                    .unwrap()
+                    .get_samples_at_index(index as usize))
+            }
 
             _ => Err(Error::SegmentationFault(addr.into())),
         }
@@ -183,7 +223,7 @@ where
             WaveRamE, WaveRamF,
         };
         match addr.area_type() {
-            Nr10 => {
+            Nr10 | Nr30 => {
                 if let Some(sweep) = &mut self.sweep {
                     (*sweep).period = (v >> 4) & 0x7;
                     (*sweep).direction = if v & 0b1000 != 0 {
@@ -193,8 +233,11 @@ where
                     };
                     (*sweep).shift_nb = v & 0x7;
                 }
+                if self.channel_type == ChannelType::WaveForm {
+                    self.enabled = v & 0x80 != 0;
+                }
             }
-            Nr11 | Nr21 => {
+            Nr11 | Nr21 | Nr31 => {
                 if self.channel_type == ChannelType::SquareWave {
                     if let Some(duty) = &mut self.duty {
                         (*duty).pattern_index = v >> 6;
@@ -210,7 +253,7 @@ where
                     self.length_counter.counter = 0x100 - v as u16;
                 }
             }
-            Nr12 | Nr22 => {
+            Nr12 | Nr22 | Nr32 => {
                 if let Some(ve) = &mut self.volume_envelope {
                     (*ve).initial_volume = v >> 4;
                     (*ve).envelope_direction = if v & 0b1000 != 0 {
@@ -222,8 +265,17 @@ where
                     self.enabled =
                         (*ve).initial_volume > 0 || (*ve).envelope_direction == Direction::Inc;
                 }
+                if let Some(pw) = &mut self.programmable_wave {
+                    (*pw).volume_shift = match (v & 0b0110_0000) >> 5 {
+                        0b00 => 4, // mute
+                        0b01 => 0, // 100%
+                        0b10 => 1, // 50%
+                        0b11 => 2, // 25%
+                        _ => unreachable!(),
+                    };
+                }
             }
-            Nr13 | Nr23 => {
+            Nr13 | Nr23 | Nr33 => {
                 if self.channel_type == ChannelType::SquareWave
                     || self.channel_type == ChannelType::WaveForm
                 {
@@ -233,7 +285,7 @@ where
                     }
                 }
             }
-            Nr14 | Nr24 => {
+            Nr14 | Nr24 | Nr34 => {
                 self.enabled = v & 0x80 != 0;
                 self.length_counter.enabled = v & 0x40 != 0;
                 if self.channel_type == ChannelType::SquareWave
@@ -257,7 +309,14 @@ where
             }
             WaveRam0 | WaveRam1 | WaveRam2 | WaveRam3 | WaveRam4 | WaveRam5 | WaveRam6
             | WaveRam7 | WaveRam8 | WaveRam9 | WaveRamA | WaveRamB | WaveRamC | WaveRamD
-            | WaveRamE | WaveRamF => {}
+            | WaveRamE | WaveRamF => {
+                let index = (u16::from(addr) - WAVE_RAM_0) * 2;
+
+                self.programmable_wave
+                    .as_mut()
+                    .unwrap()
+                    .set_samples_at_index(index as usize, v);
+            }
 
             _ => return Err(Error::SegmentationFault(addr.into())),
         };
