@@ -15,6 +15,7 @@ impl Duty {
     pub fn reset(&mut self) {
         self.step = 0;
     }
+
     pub fn step(&mut self) {
         self.step += 1;
         self.step %= 8;

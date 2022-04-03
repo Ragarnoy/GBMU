@@ -9,6 +9,7 @@ pub struct Sweep {
     pub shadow_frequency: u16,
     counter: u8,
 }
+
 impl Default for Sweep {
     fn default() -> Self {
         Self {
