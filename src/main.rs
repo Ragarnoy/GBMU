@@ -12,11 +12,13 @@ mod windows;
 use clap::Parser;
 
 use context::{Context, Game};
+#[cfg(feature = "audio")]
 use gb_apu::BUFFER_SIZE;
 use gb_dbg::debugger::options::DebuggerOptions;
 use gb_dbg::debugger::{Debugger, DebuggerBuilder};
 use gb_lcd::{render, window::GBWindow};
 use logger::init_logger;
+#[cfg(feature = "audio")]
 use sdl2::audio::{AudioQueue, AudioSpecDesired};
 use std::{
     cell::RefCell,
@@ -335,6 +337,7 @@ fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
     let audio_queue = audio_subsystem
         .open_queue::<f32, _>(None, &desired_spec)
         .expect("Failed to init audio queue");
+    #[cfg(feature = "audio")]
     audio_queue.resume();
     #[cfg(feature = "audio")]
     let audio_queue = Rc::new(RefCell::new(audio_queue));

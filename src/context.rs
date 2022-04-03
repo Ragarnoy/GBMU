@@ -26,6 +26,7 @@ use gb_roms::{
     Header,
 };
 use gb_timer::Timer;
+#[cfg(feature = "audio")]
 use sdl2::audio::AudioQueue;
 #[cfg(feature = "registers_logs")]
 use std::io::BufWriter;
