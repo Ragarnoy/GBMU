@@ -15,6 +15,11 @@ pub struct State {
     step: u16,
     pixel_drawn: u8,
 }
+impl Default for State {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 const INTERRUPT_FLAG: u16 = 0xFF0F;
 const INTERRUPT_STAT_BIT: u8 = 0b10;
@@ -34,7 +39,7 @@ impl State {
 
     pub fn new() -> Self {
         State {
-            mode: Mode::OAMFetch,
+            mode: Mode::HBlank,
             line: 0,
             step: 0,
             pixel_drawn: 0,
@@ -51,6 +56,9 @@ impl State {
 
     pub fn step(&self) -> u16 {
         self.step
+    }
+    pub fn set_step(&mut self, v: u16) {
+        self.step = v;
     }
 
     pub fn pixel_drawn(&self) -> u8 {
@@ -86,14 +94,16 @@ impl State {
 
     fn update_hblank(&mut self) -> bool {
         match (self.line, self.step) {
-            (line, _) if line >= Self::VBLANK_START => {
+            (line, step)
+                if line > Self::VBLANK_START || (line == Self::VBLANK_START && step > 0) =>
+            {
                 log::error!("HBlank reached on VBlank period")
             }
-            (_, step) if step < Self::HBLANK_MIN_START => {
+            (_, step) if step < Self::HBLANK_MIN_START && step > 0 => {
                 log::error!("HBlank reached on OAMFetch/PixelDrawing period")
             }
-            (line, Self::LAST_STEP) => {
-                if line == Self::VBLANK_START - 1 {
+            (line, 0) => {
+                if line == Self::VBLANK_START {
                     self.mode = Mode::VBlank;
                     log::trace!(
                         "start VBlank (mode 1) at line {}, step {}, {} pixel drawn",

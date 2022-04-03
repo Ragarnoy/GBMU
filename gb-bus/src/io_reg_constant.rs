@@ -128,19 +128,14 @@ pub const VBK: u16 = 0xff4f;
 
 pub const BOOTROM: u16 = 0xff50;
 
-#[cfg(feature = "cgb")]
 /// New DMA source high
 pub const HDMA1: u16 = 0xff51;
-#[cfg(feature = "cgb")]
 /// New DMA source low
 pub const HDMA2: u16 = 0xff52;
-#[cfg(feature = "cgb")]
 /// New DMA destination high
 pub const HDMA3: u16 = 0xff53;
-#[cfg(feature = "cgb")]
 /// New DMA destination low
 pub const HDMA4: u16 = 0xff54;
-#[cfg(feature = "cgb")]
 /// New DMA Length/Mode/Start
 pub const HDMA5: u16 = 0xff55;
 #[cfg(feature = "cgb")]

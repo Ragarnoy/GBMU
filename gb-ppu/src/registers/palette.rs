@@ -64,7 +64,7 @@ impl Palette {
 
     /// Get the color for the value associated to the given index.
     pub fn get_color(&self, index: u8) -> PPUResult<Color> {
-        Color::from_value(self.get_value(index)?)
+        self.get_value(index)?.try_into()
     }
 }
 

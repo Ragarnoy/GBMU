@@ -10,7 +10,7 @@ use gb_dbg::{
     },
     until::Until,
 };
-use gb_dma::Dma;
+use gb_dma::{dma::Dma, hdma::Hdma};
 use gb_joypad::Joypad;
 use gb_lcd::render::{RenderImage, SCREEN_HEIGHT, SCREEN_WIDTH};
 use gb_ppu::Ppu;
@@ -26,6 +26,7 @@ use gb_timer::Timer;
 use std::io::BufWriter;
 use std::{cell::RefCell, collections::BTreeMap, fs::File, ops::DerefMut, path::Path, rc::Rc};
 
+use crate::custom_event::CustomEvent;
 #[cfg(feature = "cgb")]
 use crate::Mode;
 
@@ -37,6 +38,7 @@ pub struct Context<const WIDTH: usize, const HEIGHT: usize> {
     pub joypad: Rc<RefCell<Joypad>>,
     #[cfg(feature = "debug_render")]
     pub debug_render: bool,
+    pub custom_events: Vec<CustomEvent>,
 }
 
 pub struct Game {
@@ -49,6 +51,7 @@ pub struct Game {
     pub clock: Clock,
     pub io_bus: Rc<RefCell<IORegBus>>,
     pub timer: Rc<RefCell<Timer>>,
+    pub hdma: Rc<RefCell<Hdma>>,
     pub dma: Rc<RefCell<Dma>>,
     pub joypad: Rc<RefCell<Joypad>>,
     pub addr_bus: AddressBus,
@@ -107,6 +110,9 @@ impl Game {
         let ppu = Ppu::new(cgb_mode);
         let ppu_mem = Rc::new(RefCell::new(ppu.memory()));
         let ppu_reg = Rc::new(RefCell::new(ppu.registers()));
+        if !cfg!(feature = "bios") {
+            ppu_reg.borrow_mut().overwrite_lcd_control(0x91_u8);
+        }
         let (cpu, cpu_io_reg) = if cfg!(feature = "bios") {
             new_cpu()
         } else {
@@ -119,7 +125,14 @@ impl Game {
             (cpu, cpu_io_reg)
         };
         let wram = Rc::new(RefCell::new(WorkingRam::new(cgb_mode)));
-        let timer = Rc::new(RefCell::new(Timer::default()));
+        let timer = if !cfg!(feature = "bios") {
+            let mut timer = Timer::default();
+            timer.system_clock = 0xAC00;
+            timer
+        } else {
+            Timer::default()
+        };
+        let timer = Rc::new(RefCell::new(timer));
         let bios_wrapper = {
             let bios = Rc::new(RefCell::new(if cfg!(feature = "cgb") {
                 bios::cgb()
@@ -136,6 +149,7 @@ impl Game {
             Rc::new(RefCell::new(wrapper))
         };
         let dma = Rc::new(RefCell::new(Dma::new()));
+        let hdma = Rc::new(RefCell::new(Hdma::default()));
         let serial = Rc::new(RefCell::new(gb_bus::Serial::default()));
 
         let io_bus = {
@@ -155,6 +169,7 @@ impl Game {
                 .with_ppu(ppu_reg)
                 .with_area(IORegArea::IF, cpu_io_reg.clone())
                 .with_area(IORegArea::Dma, dma.clone())
+                .with_hdma(hdma.clone())
                 .with_area(IORegArea::BootRom, bios_wrapper.clone())
                 .with_serial(serial)
                 .with_default_sound()
@@ -197,6 +212,7 @@ impl Game {
             io_bus,
             timer,
             dma,
+            hdma,
             joypad,
             addr_bus: bus,
             scheduled_stop: None,
@@ -218,14 +234,19 @@ impl Game {
             if self.cpu.controller.is_instruction_finished {
                 self.log_registers_to_file().unwrap_or_default();
             }
+            self.hdma
+                .borrow_mut()
+                .check_hdma_state(&mut self.cpu, &self.ppu);
+
             let frame_not_finished = cycles!(
                 self.clock,
                 &mut self.addr_bus,
-                &mut self.cpu,
-                &mut self.ppu,
                 self.timer.borrow_mut().deref_mut(),
+                &mut self.ppu,
                 self.joypad.borrow_mut().deref_mut(),
-                self.dma.borrow_mut().deref_mut()
+                self.dma.borrow_mut().deref_mut(),
+                &mut self.cpu,
+                self.hdma.borrow_mut().deref_mut()
             );
             self.check_scheduled_stop(!frame_not_finished);
             #[cfg(feature = "cgb")]
@@ -464,7 +485,7 @@ impl Game {
 
         if let Err(e) = writeln!(
             file,
-            "{} ({:02X} {:02X} {:02X} {:02X}) TIMA: {:02X} CLK: {:04X}",
+            "{} ({:02X} {:02X} {:02X} {:02X}) TIMA: {:02X} TAC: {:02X} CLK: {:04X}",
             self.cpu.registers,
             <AddressBus as Bus<u8>>::read(&self.addr_bus, self.cpu.registers.pc, None)
                 .unwrap_or(0xff),
@@ -475,6 +496,7 @@ impl Game {
             <AddressBus as Bus<u8>>::read(&self.addr_bus, self.cpu.registers.pc + 3, None)
                 .unwrap_or(0xff),
             timer_borrow.tima,
+            <AddressBus as Bus<u8>>::read(&self.addr_bus, 0xff07, None).unwrap_or(0xff),
             timer_borrow.system_clock
         ) {
             log::error!("Couldn't write to file: {}", e);
