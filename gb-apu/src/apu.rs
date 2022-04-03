@@ -61,6 +61,37 @@ impl Apu {
             .queue_audio(&self.buffer)
             .expect("failed to queue audio");
     }
+
+    fn get_power_channels_statuses_byte(&self) -> u8 {
+        let mut res = 0;
+        res |= if self.enabled { 0x80 } else { 0 };
+        res |= if self.sound_channels[3].enabled {
+            0x8
+        } else {
+            0
+        };
+        res |= if self.sound_channels[3].enabled {
+            0x8
+        } else {
+            0
+        };
+        res |= if self.sound_channels[2].enabled {
+            0x4
+        } else {
+            0
+        };
+        res |= if self.sound_channels[1].enabled {
+            0x2
+        } else {
+            0
+        };
+        res |= if self.sound_channels[0].enabled {
+            0x1
+        } else {
+            0
+        };
+        res
+    }
 }
 
 impl Ticker for Apu {
@@ -125,27 +156,7 @@ where
                 self.sound_channels[2].read(addr)
             }
             Nr41 | Nr42 | Nr43 | Nr44 => self.sound_channels[3].read(addr),
-            Nr52 => Ok(if self.enabled { 0x80 } else { 0 }
-                | if self.sound_channels[3].enabled {
-                    0x8
-                } else {
-                    0
-                }
-                | if self.sound_channels[2].enabled {
-                    0x4
-                } else {
-                    0
-                }
-                | if self.sound_channels[1].enabled {
-                    0x2
-                } else {
-                    0
-                }
-                | if self.sound_channels[0].enabled {
-                    0x1
-                } else {
-                    0
-                }),
+            Nr52 => Ok(self.get_power_channels_statuses_byte()),
             _ => Err(Error::SegmentationFault(addr.into())),
         }
     }
