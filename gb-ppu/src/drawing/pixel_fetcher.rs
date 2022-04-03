@@ -310,14 +310,14 @@ impl PixelFetcher {
         match sprite.get_pixels_row(
             line + Sprite::VERTICAL_OFFSET as usize - sprite.y_pos() as usize,
             vram,
-            lcd_reg.control.obj_size(),
-            lcd_reg.pal_mono.obj(),
+            lcd_reg,
+            self.cgb_enabled,
         ) {
-            Ok(row) => {
-                for (color_id, _) in row {
+            Ok((row, palette_ref)) => {
+                for color_id in row {
                     self.pixels_sprite.push_front(Pixel::new(
                         color_id,
-                        Some(sprite.get_palette_ref()),
+                        Some(palette_ref.clone()),
                         sprite.bg_win_priority(),
                     ));
                 }

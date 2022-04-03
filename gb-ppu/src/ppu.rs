@@ -1,7 +1,7 @@
 #[cfg(feature = "serialization")]
 pub mod de_ser;
 
-use crate::drawing::{FetchMode, Mode, PixelFIFO, PixelFetcher, State};
+use crate::drawing::{FetchMode, Mode, Pixel, PixelFIFO, PixelFetcher, State};
 use crate::memory::{Lock, Lockable, Oam, PPUMem, Vram};
 use crate::registers::{LcdReg, PPURegisters};
 use crate::Sprite;
@@ -229,14 +229,19 @@ impl Ppu {
             let x = sprite.x_pos().min(SPRITE_RENDER_WIDTH as u8 - 8) as usize;
             let y = sprite.y_pos().min(SPRITE_RENDER_HEIGHT as u8 - 16) as usize;
             for j in 0..height {
-                let pixels_values = sprite
-                    .get_pixels_row(j, &vram, lcd_reg.control.obj_size(), lcd_reg.pal_mono.obj())
+                let (pixels_values, palette) = sprite
+                    .get_pixels_row(j, &vram, &lcd_reg, self.cgb_enabled)
                     .expect("invalid line passed");
                 let y_img = y + j;
-                for (i, (pixel_value, pixel_color)) in pixels_values.iter().rev().enumerate() {
+                for (i, pixel_value) in pixels_values.iter().rev().enumerate() {
                     if *pixel_value != 0 {
                         let x_img = x + i;
-                        let mut rgb: [u8; 3] = (*pixel_color).into();
+                        let pixel = Pixel::new(
+                            *pixel_value,
+                            Some(palette.clone()),
+                            sprite.bg_win_priority(),
+                        );
+                        let mut rgb: [u8; 3] = pixel.into_color(&lcd_reg).into();
                         if invert_pixel {
                             rgb[0] = 255 - rgb[0];
                             rgb[1] = 255 - rgb[1];
@@ -284,14 +289,19 @@ impl Ppu {
             let x = (r % SPRITE_LIST_PER_LINE) * 8;
             let y = (r / SPRITE_LIST_PER_LINE) * 16;
             for j in 0..height {
-                let pixels_values = sprite
-                    .get_pixels_row(j, &vram, lcd_reg.control.obj_size(), lcd_reg.pal_mono.obj())
+                let (pixels_values, palette) = sprite
+                    .get_pixels_row(j, &vram, &lcd_reg, self.cgb_enabled)
                     .expect("invalid line passed");
                 let y_img = y + j;
-                for (i, (pixel_value, pixel_color)) in pixels_values.iter().rev().enumerate() {
+                for (i, pixel_value) in pixels_values.iter().rev().enumerate() {
                     if *pixel_value != 0 {
                         let x_img = x + i;
-                        let mut rgb: [u8; 3] = (*pixel_color).into();
+                        let pixel = Pixel::new(
+                            *pixel_value,
+                            Some(palette.clone()),
+                            sprite.bg_win_priority(),
+                        );
+                        let mut rgb: [u8; 3] = pixel.into_color(&lcd_reg).into();
                         if invert_pixel {
                             rgb[0] = 255 - rgb[0];
                             rgb[1] = 255 - rgb[1];
