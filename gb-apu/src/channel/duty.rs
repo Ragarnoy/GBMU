@@ -1,4 +1,5 @@
-const DUTY_CYCLES: [[u8; 8]; 4] = [
+const DUTY_CYCLES_SIZE: usize = 8;
+const DUTY_CYCLES: [[u8; DUTY_CYCLES_SIZE]; 4] = [
     [0, 0, 0, 0, 0, 0, 0, 1],
     [1, 0, 0, 0, 0, 0, 0, 1],
     [1, 0, 0, 0, 0, 1, 1, 1],
@@ -17,7 +18,7 @@ impl Duty {
     }
 
     pub fn step(&mut self) {
-        self.step = (self.step + 1) % 8;
+        self.step = (self.step + 1) % DUTY_CYCLES_SIZE as u8;
     }
 
     pub fn get_amplitude(&self) -> u8 {
