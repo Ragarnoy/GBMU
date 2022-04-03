@@ -35,7 +35,7 @@ impl Sweep {
             self.reload_counter();
             return true;
         }
-        return false;
+        false
     }
 
     fn reload_counter(&mut self) {

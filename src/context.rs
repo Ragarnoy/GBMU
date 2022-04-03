@@ -1,4 +1,7 @@
-use gb_apu::apu::{Apu, DummyApu};
+#[cfg(feature = "audio")]
+use gb_apu::apu::Apu;
+#[cfg(not(feature = "audio"))]
+use gb_apu::apu::DummyApu;
 #[cfg(feature = "cgb")]
 use gb_bus::generic::{CharDevice, PanicDevice};
 use gb_bus::{generic::SimpleRW, AddressBus, Bus, IORegArea, IORegBus, Lock, WorkingRam};

@@ -111,7 +111,7 @@ impl Ticker for Apu {
         if self.cycle_counter >= 0x2000 {
             self.cycle_counter %= 0x2000;
 
-            let step = self.frame_sequencer.next();
+            let step = self.frame_sequencer.step();
             for i in 0..self.sound_channels.len() {
                 if step == 0 || step == 2 || step == 4 || step == 6 {
                     self.sound_channels[i].length_counter_step();
@@ -156,6 +156,8 @@ where
                 self.sound_channels[2].read(addr)
             }
             Nr41 | Nr42 | Nr43 | Nr44 => self.sound_channels[3].read(addr),
+            Nr50 => Ok(0),
+            Nr51 => Ok(0),
             Nr52 => Ok(self.get_power_channels_statuses_byte()),
             _ => Err(Error::SegmentationFault(addr.into())),
         }
@@ -176,6 +178,8 @@ where
                 return self.sound_channels[2].write(v, addr)
             }
             Nr41 | Nr42 | Nr43 | Nr44 => return self.sound_channels[3].write(v, addr),
+            Nr50 => {}
+            Nr51 => {}
             Nr52 => {
                 let was_enabled = self.enabled;
                 let enabled = v & 0x80 != 0x00;
@@ -213,7 +217,7 @@ where
     fn read(&self, _addr: A) -> Result<u8, Error> {
         Ok(0xFF)
     }
-    fn write(&mut self, v: u8, _addr: A) -> Result<(), Error> {
+    fn write(&mut self, _v: u8, _addr: A) -> Result<(), Error> {
         Ok(())
     }
 }

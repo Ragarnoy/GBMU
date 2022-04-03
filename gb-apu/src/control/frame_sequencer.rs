@@ -4,7 +4,7 @@ pub struct FrameSequencer {
 }
 
 impl FrameSequencer {
-    pub fn next(&mut self) -> u8 {
+    pub fn step(&mut self) -> u8 {
         self.step = (self.step + 1) % 8;
         self.step
     }
