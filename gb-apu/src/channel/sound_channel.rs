@@ -63,12 +63,27 @@ impl SoundChannel {
         }
     }
 
-    pub fn disable(&mut self) {
-        self.enabled = false;
-    }
-
     pub fn length_counter_step(&mut self) {
         self.enabled = self.length_counter.step();
+    }
+
+    pub fn sweep_step(&mut self) {
+        if let Some(sweep) = &mut self.sweep {
+            let reached_zero = sweep.step();
+            if reached_zero && sweep.enabled && sweep.period > 0 {
+                let new_frequency = sweep.calculate_frequency();
+                if sweep.is_overflowing(new_frequency) {
+                    self.enabled = false;
+                } else if sweep.shift_nb > 0 {
+                    if let Some(timer) = &mut self.timer {
+                        (*timer).frequency = new_frequency;
+                    }
+                    sweep.shadow_frequency = new_frequency;
+                    let new_frequency = sweep.calculate_frequency();
+                    self.enabled = sweep.is_overflowing(new_frequency);
+                };
+            }
+        }
     }
 
     pub fn get_dac_output(&self) -> f32 {
@@ -99,6 +114,20 @@ where
             Nr41, Nr42, Nr43, Nr44,
         };
         match addr.area_type() {
+            Nr10 => {
+                if let Some(sweep) = &self.sweep {
+                    let mut res = 0;
+                    res |= (sweep.period & 0x7) << 4;
+                    res |= match sweep.direction {
+                        Direction::Dec => 0b1000,
+                        Direction::Inc => 0,
+                    };
+                    res |= sweep.shift_nb & 0x7;
+                    Ok(res)
+                } else {
+                    Ok(0)
+                }
+            }
             Nr11 | Nr21 => {
                 let mut res = 0;
                 if let Some(duty) = &self.duty {
@@ -112,7 +141,7 @@ where
                     let mut res = 0;
                     res |= ve.initial_volume << 4;
                     res |= match ve.envelope_direction {
-                        Direction::Inc => 1,
+                        Direction::Inc => 0b1000,
                         Direction::Dec => 0,
                     };
                     res |= ve.period & 0x7;
@@ -148,6 +177,17 @@ where
             Nr41, Nr42, Nr43, Nr44,
         };
         match addr.area_type() {
+            Nr10 => {
+                if let Some(sweep) = &mut self.sweep {
+                    (*sweep).period = (v >> 4) & 0x7;
+                    (*sweep).direction = if v & 0b1000 != 0 {
+                        Direction::Dec
+                    } else {
+                        Direction::Inc
+                    };
+                    (*sweep).shift_nb = v & 0x7;
+                }
+            }
             Nr11 | Nr21 => {
                 if self.channel_type == ChannelType::SquareWave {
                     if let Some(duty) = &mut self.duty {
@@ -167,7 +207,7 @@ where
             Nr12 | Nr22 => {
                 if let Some(ve) = &mut self.volume_envelope {
                     (*ve).initial_volume = v >> 4;
-                    (*ve).envelope_direction = if v & 0x8 == 1 {
+                    (*ve).envelope_direction = if v & 0b1000 != 0 {
                         Direction::Inc
                     } else {
                         Direction::Dec
@@ -201,6 +241,9 @@ where
                     self.length_counter.reload();
                     if let Some(ve) = &mut self.volume_envelope {
                         (*ve).reload();
+                    }
+                    if let Some(sweep) = &mut self.sweep {
+                        self.enabled = (*sweep).reload(self.timer.as_ref().unwrap().frequency);
                     }
                 }
             }

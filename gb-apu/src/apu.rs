@@ -88,6 +88,11 @@ impl Ticker for Apu {
             }
             if step == 2 || step == 6 {
                 for i in 0..self.sound_channels.len() {
+                    self.sound_channels[i].sweep_step();
+                }
+            }
+            if step == 7 {
+                for i in 0..self.sound_channels.len() {
                     if let Some(ve) = &mut self.sound_channels[i].volume_envelope {
                         (*ve).step();
                     }
