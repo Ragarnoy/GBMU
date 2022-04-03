@@ -12,3 +12,7 @@ gb-bus = { path = "../gb-bus" }
 gb-cpu = { path = "../gb-cpu" }
 gb-ppu = { path = "../gb-ppu" }
 log = "0.4"
+serde = { version = "1.0", optional = true }
+
+[features]
+serialization = ["serde", "serde/std", "serde/derive"]
