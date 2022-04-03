@@ -37,6 +37,7 @@ impl Apu {
             frame_sequencer: FrameSequencer::default(),
         }
     }
+
     fn add_sample(&mut self) {
         let (left_sample, right_sample) = self.mix();
         self.buffer[self.buffer_i] = left_sample;

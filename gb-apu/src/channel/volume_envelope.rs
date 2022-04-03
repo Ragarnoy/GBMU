@@ -3,6 +3,7 @@ pub enum Direction {
     Inc,
     Dec,
 }
+
 #[derive(Debug)]
 pub struct VolumeEnvelope {
     pub initial_volume: u8,

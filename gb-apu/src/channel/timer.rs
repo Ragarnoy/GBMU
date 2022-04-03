@@ -14,6 +14,7 @@ impl Timer {
             counter: 0,
         }
     }
+
     pub fn step(&mut self) -> bool {
         if self.counter > 0 {
             self.counter -= 1;

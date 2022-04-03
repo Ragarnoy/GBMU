@@ -51,6 +51,7 @@ impl Sweep {
         }
         true
     }
+
     pub fn calculate_frequency(&self) -> u16 {
         let mut new_frequency = self.shadow_frequency >> self.shift_nb;
         match self.direction {
@@ -59,6 +60,7 @@ impl Sweep {
         };
         new_frequency
     }
+
     pub fn is_overflowing(&self, frequency: u16) -> bool {
         frequency >= 2048
     }
