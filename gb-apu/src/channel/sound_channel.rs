@@ -64,7 +64,8 @@ impl SoundChannel {
     }
 
     pub fn length_counter_step(&mut self) {
-        self.enabled = self.length_counter.step();
+        self.length_counter.step();
+        self.enabled = !self.length_counter.should_disabled_channel();
     }
 
     pub fn sweep_step(&mut self) {
@@ -80,19 +81,17 @@ impl SoundChannel {
                     }
                     sweep.shadow_frequency = new_frequency;
                     let new_frequency = sweep.calculate_frequency();
-                    self.enabled = sweep.is_overflowing(new_frequency);
+                    self.enabled = !sweep.is_overflowing(new_frequency);
                 };
             }
         }
     }
 
     pub fn get_dac_output(&self) -> f32 {
+        if !self.enabled {
+            return 0.0;
+        }
         if let Some(volume_envelope) = &self.volume_envelope {
-            if volume_envelope.initial_volume == 0
-                && volume_envelope.envelope_direction == Direction::Dec
-            {
-                return 0.0;
-            }
             if let Some(duty) = &self.duty {
                 let dac_input = duty.get_amplitude() * volume_envelope.volume;
                 let dac_output = (dac_input as f32 / 7.5) - 1.0;
@@ -220,6 +219,8 @@ where
                         Direction::Dec
                     };
                     (*ve).period = v & 0x7;
+                    self.enabled =
+                        (*ve).initial_volume > 0 || (*ve).envelope_direction == Direction::Inc;
                 }
             }
             Nr13 | Nr23 => {

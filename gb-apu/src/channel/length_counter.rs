@@ -22,14 +22,14 @@ impl LengthCounter {
         self.counter == 0
     }
 
-    pub fn step(&mut self) -> bool {
+    pub fn step(&mut self) {
         if self.counter > 0 && self.enabled {
             self.counter -= 1;
-            if self.counter == 0 {
-                return true;
-            }
         }
-        false
+    }
+
+    pub fn should_disabled_channel(&self) -> bool {
+        self.counter == 0
     }
 
     pub fn reload(&mut self) {

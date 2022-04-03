@@ -47,10 +47,9 @@ impl Sweep {
         self.reload_counter();
         if self.shift_nb > 0 {
             let new_frequency = self.calculate_frequency();
-            self.is_overflowing(new_frequency)
-        } else {
-            false
+            return !self.is_overflowing(new_frequency);
         }
+        true
     }
     pub fn calculate_frequency(&self) -> u16 {
         let mut new_frequency = self.shadow_frequency >> self.shift_nb;
