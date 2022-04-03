@@ -61,13 +61,13 @@ impl SoundChannel {
     }
 
     pub fn step(&mut self) {
-        if let Some(timer) = &mut self.timer {
+        if let Some(ref mut timer) = self.timer {
             let reached_zero = timer.step();
             if reached_zero {
-                if let Some(duty) = &mut self.duty {
+                if let Some(ref mut duty) = self.duty {
                     duty.step();
                 }
-                if let Some(programmable_wave) = &mut self.programmable_wave {
+                if let Some(ref mut programmable_wave) = self.programmable_wave {
                     programmable_wave.step();
                 }
             }
@@ -80,20 +80,20 @@ impl SoundChannel {
     }
 
     pub fn volume_envelope_step(&mut self) {
-        if let Some(ve) = &mut self.volume_envelope {
+        if let Some(ref mut ve) = self.volume_envelope {
             (*ve).step();
         }
     }
 
     pub fn sweep_step(&mut self) {
-        if let Some(sweep) = &mut self.sweep {
+        if let Some(ref mut sweep) = self.sweep {
             let reached_zero = sweep.step();
             if reached_zero && sweep.enabled && sweep.period > 0 {
                 let new_frequency = sweep.calculate_frequency();
                 if sweep.is_overflowing(new_frequency) {
                     self.enabled = false;
                 } else if sweep.shift_nb > 0 {
-                    if let Some(timer) = &mut self.timer {
+                    if let Some(ref mut timer) = self.timer {
                         (*timer).frequency = new_frequency;
                     }
                     sweep.shadow_frequency = new_frequency;
@@ -224,7 +224,7 @@ where
         };
         match addr.area_type() {
             Nr10 | Nr30 => {
-                if let Some(sweep) = &mut self.sweep {
+                if let Some(ref mut sweep) = self.sweep {
                     (*sweep).period = (v >> 4) & 0x7;
                     (*sweep).direction = if v & 0b1000 != 0 {
                         Direction::Dec
@@ -239,7 +239,7 @@ where
             }
             Nr11 | Nr21 | Nr31 => {
                 if self.channel_type == ChannelType::SquareWave {
-                    if let Some(duty) = &mut self.duty {
+                    if let Some(ref mut duty) = self.duty {
                         (*duty).pattern_index = v >> 6;
                     }
                 }
@@ -254,7 +254,7 @@ where
                 }
             }
             Nr12 | Nr22 | Nr32 => {
-                if let Some(ve) = &mut self.volume_envelope {
+                if let Some(ref mut ve) = self.volume_envelope {
                     (*ve).initial_volume = v >> 4;
                     (*ve).envelope_direction = if v & 0b1000 != 0 {
                         Direction::Inc
@@ -265,7 +265,7 @@ where
                     self.enabled =
                         (*ve).initial_volume > 0 || (*ve).envelope_direction == Direction::Inc;
                 }
-                if let Some(pw) = &mut self.programmable_wave {
+                if let Some(ref mut pw) = self.programmable_wave {
                     (*pw).volume_shift = match (v & 0b0110_0000) >> 5 {
                         0b00 => 4, // mute
                         0b01 => 0, // 100%
@@ -279,7 +279,7 @@ where
                 if self.channel_type == ChannelType::SquareWave
                     || self.channel_type == ChannelType::WaveForm
                 {
-                    if let Some(timer) = &mut self.timer {
+                    if let Some(ref mut timer) = self.timer {
                         let high_byte = (*timer).frequency.to_le_bytes()[1];
                         (*timer).frequency = (high_byte as u16 & 0x7) << 8 | v as u16;
                     }
@@ -291,7 +291,7 @@ where
                 if self.channel_type == ChannelType::SquareWave
                     || self.channel_type == ChannelType::WaveForm
                 {
-                    if let Some(timer) = &mut self.timer {
+                    if let Some(ref mut timer) = self.timer {
                         let low_byte = (*timer).frequency.to_le_bytes()[0];
                         (*timer).frequency = (v as u16 & 0x07) << 8 | low_byte as u16;
                     }
@@ -299,10 +299,10 @@ where
 
                 if self.enabled {
                     self.length_counter.reload();
-                    if let Some(ve) = &mut self.volume_envelope {
+                    if let Some(ref mut ve) = self.volume_envelope {
                         (*ve).reload();
                     }
-                    if let Some(sweep) = &mut self.sweep {
+                    if let Some(ref mut sweep) = self.sweep {
                         self.enabled = (*sweep).reload(self.timer.as_ref().unwrap().frequency);
                     }
                 }
