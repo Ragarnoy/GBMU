@@ -1,4 +1,4 @@
-use gb_apu::apu::Apu;
+use gb_apu::apu::{Apu, DummyApu};
 #[cfg(feature = "cgb")]
 use gb_bus::generic::{CharDevice, PanicDevice};
 use gb_bus::{generic::SimpleRW, AddressBus, Bus, IORegArea, IORegBus, Lock, WorkingRam};
@@ -38,6 +38,7 @@ pub struct Context<const WIDTH: usize, const HEIGHT: usize> {
     pub windows: crate::windows::Windows,
     pub display: RenderImage<WIDTH, HEIGHT>,
     pub joypad: Rc<RefCell<Joypad>>,
+    #[cfg(feature = "audio")]
     pub audio_queue: Rc<RefCell<AudioQueue<f32>>>,
     #[cfg(feature = "debug_render")]
     pub debug_render: bool,
@@ -57,6 +58,9 @@ pub struct Game {
     pub hdma: Rc<RefCell<Hdma>>,
     pub dma: Rc<RefCell<Dma>>,
     pub joypad: Rc<RefCell<Joypad>>,
+    #[cfg(not(feature = "audio"))]
+    pub apu: Rc<RefCell<DummyApu>>,
+    #[cfg(feature = "audio")]
     pub apu: Rc<RefCell<Apu>>,
     pub addr_bus: AddressBus,
     scheduled_stop: Option<ScheduledStop>,
@@ -88,7 +92,7 @@ impl Game {
         rompath: &P,
         joypad: Rc<RefCell<Joypad>>,
         stopped: bool,
-        audio_queue: Rc<RefCell<AudioQueue<f32>>>,
+        #[cfg(feature = "audio")] audio_queue: Rc<RefCell<AudioQueue<f32>>>,
         #[cfg(feature = "cgb")] forced_mode: Option<Mode>,
     ) -> Result<Game, anyhow::Error> {
         use std::io::Seek;
@@ -156,7 +160,9 @@ impl Game {
         let dma = Rc::new(RefCell::new(Dma::new()));
         let hdma = Rc::new(RefCell::new(Hdma::default()));
         let serial = Rc::new(RefCell::new(gb_bus::Serial::default()));
-
+        #[cfg(not(feature = "audio"))]
+        let apu = Rc::new(RefCell::new(DummyApu::default()));
+        #[cfg(feature = "audio")]
         let apu = Rc::new(RefCell::new(Apu::new(audio_queue)));
 
         let io_bus = {

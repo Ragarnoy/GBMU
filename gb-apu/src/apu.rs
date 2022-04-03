@@ -194,3 +194,26 @@ where
         Ok(())
     }
 }
+
+#[derive(Default)]
+pub struct DummyApu {}
+
+impl Ticker for DummyApu {
+    fn cycle_count(&self) -> Tick {
+        Tick::TCycle
+    }
+    fn tick(&mut self, _adr_bus: &mut dyn Bus<u8>) {}
+}
+
+impl<A> FileOperation<A, IORegArea> for DummyApu
+where
+    A: Address<IORegArea>,
+    u16: From<A>,
+{
+    fn read(&self, _addr: A) -> Result<u8, Error> {
+        Ok(0xFF)
+    }
+    fn write(&mut self, v: u8, _addr: A) -> Result<(), Error> {
+        Ok(())
+    }
+}
