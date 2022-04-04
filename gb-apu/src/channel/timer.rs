@@ -3,7 +3,9 @@ use crate::ChannelType;
 pub struct Timer {
     channel_type: ChannelType,
     pub frequency: u16,
-    counter: u16,
+    counter: u32,
+    pub divisor_code: u8,
+    pub shift_amout: u8,
 }
 
 impl Timer {
@@ -12,6 +14,8 @@ impl Timer {
             channel_type,
             frequency: 0,
             counter: 0,
+            divisor_code: 0,
+            shift_amout: 0,
         }
     }
 
@@ -25,11 +29,18 @@ impl Timer {
         }
     }
 
+    fn divisor(&self) -> u32 {
+        match self.divisor_code {
+            0 => 8,
+            n => (n << 4) as u32,
+        }
+    }
+
     pub fn reload(&mut self) {
         self.counter = match self.channel_type {
-            ChannelType::SquareWave => (2048 - self.frequency) * 4,
-            ChannelType::WaveForm => (2048 - self.frequency) * 2,
-            _ => 0,
+            ChannelType::SquareWave => ((2048 - self.frequency) * 4) as u32,
+            ChannelType::WaveForm => ((2048 - self.frequency) * 2) as u32,
+            ChannelType::Noise => self.divisor() << self.shift_amout,
         }
     }
 }

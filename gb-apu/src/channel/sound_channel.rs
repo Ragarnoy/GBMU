@@ -144,8 +144,9 @@ where
     fn read(&self, addr: A) -> Result<u8, Error> {
         use IORegArea::{
             Nr10, Nr11, Nr12, Nr13, Nr14, Nr21, Nr22, Nr23, Nr24, Nr30, Nr31, Nr32, Nr33, Nr34,
-            WaveRam0, WaveRam1, WaveRam2, WaveRam3, WaveRam4, WaveRam5, WaveRam6, WaveRam7,
-            WaveRam8, WaveRam9, WaveRamA, WaveRamB, WaveRamC, WaveRamD, WaveRamE, WaveRamF,
+            Nr41, Nr42, Nr43, Nr44, WaveRam0, WaveRam1, WaveRam2, WaveRam3, WaveRam4, WaveRam5,
+            WaveRam6, WaveRam7, WaveRam8, WaveRam9, WaveRamA, WaveRamB, WaveRamC, WaveRamD,
+            WaveRamE, WaveRamF,
         };
         match addr.area_type() {
             Nr10 | Nr30 => {
@@ -163,7 +164,7 @@ where
                 }
                 Ok(0)
             }
-            Nr11 | Nr21 | Nr31 => {
+            Nr11 | Nr21 | Nr31 | Nr41 => {
                 let mut res = 0;
                 if let Some(duty) = &self.duty {
                     res = duty.pattern_index << 6;
@@ -171,7 +172,7 @@ where
                 res |= self.length_counter.length_load;
                 Ok(res)
             }
-            Nr12 | Nr22 | Nr32 => {
+            Nr12 | Nr22 | Nr32 | Nr42 => {
                 if let Some(ve) = &self.volume_envelope {
                     let mut res = 0;
                     res |= ve.initial_volume << 4;
@@ -194,19 +195,30 @@ where
                 }
                 Ok(0)
             }
-            Nr13 | Nr23 | Nr33 => {
+            Nr13 | Nr23 | Nr33 | Nr43 => {
                 if let Some(timer) = &self.timer {
-                    Ok(timer.frequency as u8)
-                } else {
-                    Ok(0)
+                    if self.channel_type == ChannelType::Noise {
+                        let mut res = 0;
+                        res |= timer.shift_amout << 4;
+                        res |= timer.divisor_code & 0x7;
+                        return Ok(res);
+                    } else {
+                        return Ok(timer.frequency as u8);
+                    }
                 }
+                Ok(0)
             }
-            Nr14 | Nr24 | Nr34 => {
+            Nr14 | Nr24 | Nr34 | Nr44 => {
                 let mut res = 0;
                 res |= if self.enabled { 0x80 } else { 0 };
                 res |= if self.length_counter.enabled { 0x40 } else { 0 };
-                if let Some(timer) = &self.timer {
-                    res |= ((timer.frequency >> 8) & 0x07) as u8;
+
+                if self.channel_type == ChannelType::SquareWave
+                    || self.channel_type == ChannelType::WaveForm
+                {
+                    if let Some(timer) = &self.timer {
+                        res |= ((timer.frequency >> 8) & 0x07) as u8;
+                    }
                 }
 
                 Ok(res)
@@ -229,8 +241,9 @@ where
     fn write(&mut self, v: u8, addr: A) -> Result<(), Error> {
         use IORegArea::{
             Nr10, Nr11, Nr12, Nr13, Nr14, Nr21, Nr22, Nr23, Nr24, Nr30, Nr31, Nr32, Nr33, Nr34,
-            WaveRam0, WaveRam1, WaveRam2, WaveRam3, WaveRam4, WaveRam5, WaveRam6, WaveRam7,
-            WaveRam8, WaveRam9, WaveRamA, WaveRamB, WaveRamC, WaveRamD, WaveRamE, WaveRamF,
+            Nr41, Nr42, Nr43, Nr44, WaveRam0, WaveRam1, WaveRam2, WaveRam3, WaveRam4, WaveRam5,
+            WaveRam6, WaveRam7, WaveRam8, WaveRam9, WaveRamA, WaveRamB, WaveRamC, WaveRamD,
+            WaveRamE, WaveRamF,
         };
         match addr.area_type() {
             Nr10 | Nr30 => {
@@ -247,7 +260,7 @@ where
                     self.enabled = v & 0x80 != 0;
                 }
             }
-            Nr11 | Nr21 | Nr31 => {
+            Nr11 | Nr21 | Nr31 | Nr41 => {
                 if self.channel_type == ChannelType::SquareWave {
                     if let Some(ref mut duty) = self.duty {
                         (*duty).pattern_index = v >> 6;
@@ -263,7 +276,7 @@ where
                     self.length_counter.counter = 0x100 - v as u16;
                 }
             }
-            Nr12 | Nr22 | Nr32 => {
+            Nr12 | Nr22 | Nr32 | Nr42 => {
                 if let Some(ref mut ve) = self.volume_envelope {
                     (*ve).initial_volume = v >> 4;
                     (*ve).envelope_direction = if v & 0b1000 != 0 {
@@ -285,19 +298,21 @@ where
                     };
                 }
             }
-            Nr13 | Nr23 | Nr33 => {
-                if self.channel_type == ChannelType::SquareWave
-                    || self.channel_type == ChannelType::WaveForm
-                {
-                    if let Some(ref mut timer) = self.timer {
+            Nr13 | Nr23 | Nr33 | Nr43 => {
+                if let Some(ref mut timer) = self.timer {
+                    if self.channel_type == ChannelType::Noise {
+                        (*timer).shift_amout = v >> 4;
+                        (*timer).divisor_code = v & 0x7;
+                    } else {
                         let high_byte = (*timer).frequency.to_le_bytes()[1];
                         (*timer).frequency = (high_byte as u16 & 0x7) << 8 | v as u16;
                     }
                 }
             }
-            Nr14 | Nr24 | Nr34 => {
+            Nr14 | Nr24 | Nr34 | Nr44 => {
                 self.enabled = v & 0x80 != 0;
                 self.length_counter.enabled = v & 0x40 != 0;
+
                 if self.channel_type == ChannelType::SquareWave
                     || self.channel_type == ChannelType::WaveForm
                 {
