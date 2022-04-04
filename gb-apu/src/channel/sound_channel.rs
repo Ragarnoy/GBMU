@@ -74,6 +74,18 @@ impl SoundChannel {
         }
     }
 
+    pub fn frame_sequencer(&mut self, step: u8) {
+        if step == 0 || step == 2 || step == 4 || step == 6 {
+            self.length_counter_step();
+        }
+        if self.sweep.is_some() && (step == 2 || step == 6) {
+            self.sweep_step();
+        }
+        if self.volume_envelope.is_some() && step == 7 {
+            self.volume_envelope_step();
+        }
+    }
+
     pub fn length_counter_step(&mut self) {
         self.length_counter.step();
         self.enabled = !self.length_counter.should_disabled_channel();
