@@ -73,11 +73,6 @@ impl Apu {
         } else {
             0
         };
-        res |= if self.sound_channels[3].enabled {
-            0x8
-        } else {
-            0
-        };
         res |= if self.sound_channels[2].enabled {
             0x4
         } else {
