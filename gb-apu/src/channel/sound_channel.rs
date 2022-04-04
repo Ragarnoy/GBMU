@@ -1,6 +1,7 @@
 use crate::{
     channel::duty::Duty,
     channel::length_counter::LengthCounter,
+    channel::lfsr::{Lfsr, WidthMode},
     channel::sweep::Sweep,
     channel::timer::Timer,
     channel::volume_envelope::{Direction, VolumeEnvelope},
@@ -18,8 +19,9 @@ pub struct SoundChannel {
     duty: Option<Duty>,
     length_counter: LengthCounter,
     volume_envelope: Option<VolumeEnvelope>,
-    timer: Option<Timer>,
+    timer: Timer,
     programmable_wave: Option<ProgrammableWave>,
+    lfsr: Option<Lfsr>,
 }
 
 impl SoundChannel {
@@ -44,15 +46,14 @@ impl SoundChannel {
             } else {
                 None
             },
-            timer: if channel_type == ChannelType::SquareWave
-                || channel_type == ChannelType::WaveForm
-            {
-                Some(Timer::new(channel_type))
+            timer: Timer::new(channel_type),
+            programmable_wave: if channel_type == ChannelType::WaveForm {
+                Some(ProgrammableWave::default())
             } else {
                 None
             },
-            programmable_wave: if channel_type == ChannelType::WaveForm {
-                Some(ProgrammableWave::default())
+            lfsr: if channel_type == ChannelType::Noise {
+                Some(Lfsr::default())
             } else {
                 None
             },
@@ -61,15 +62,14 @@ impl SoundChannel {
     }
 
     pub fn step(&mut self) {
-        if let Some(ref mut timer) = self.timer {
-            let reached_zero = timer.step();
-            if reached_zero {
-                if let Some(ref mut duty) = self.duty {
-                    duty.step();
-                }
-                if let Some(ref mut programmable_wave) = self.programmable_wave {
-                    programmable_wave.step();
-                }
+        let reached_zero = self.timer.step();
+        if reached_zero {
+            if let Some(ref mut duty) = self.duty {
+                duty.step();
+            } else if let Some(ref mut lfsr) = self.lfsr {
+                lfsr.step()
+            } else if let Some(ref mut programmable_wave) = self.programmable_wave {
+                programmable_wave.step();
             }
         }
     }
@@ -105,9 +105,7 @@ impl SoundChannel {
                 if sweep.is_overflowing(new_frequency) {
                     self.enabled = false;
                 } else if sweep.shift_nb > 0 {
-                    if let Some(ref mut timer) = self.timer {
-                        (*timer).frequency = new_frequency;
-                    }
+                    self.timer.frequency = new_frequency;
                     sweep.shadow_frequency = new_frequency;
                     let new_frequency = sweep.calculate_frequency();
                     self.enabled = !sweep.is_overflowing(new_frequency);
@@ -123,6 +121,8 @@ impl SoundChannel {
         let dac_input = if let Some(volume_envelope) = &self.volume_envelope {
             if let Some(duty) = &self.duty {
                 (duty.get_amplitude() * volume_envelope.volume) as f32
+            } else if let Some(ref lfsr) = self.lfsr {
+                (lfsr.get_amplitude() * volume_envelope.volume) as f32
             } else {
                 0.0
             }
@@ -196,17 +196,18 @@ where
                 Ok(0)
             }
             Nr13 | Nr23 | Nr33 | Nr43 => {
-                if let Some(timer) = &self.timer {
-                    if self.channel_type == ChannelType::Noise {
-                        let mut res = 0;
-                        res |= timer.shift_amout << 4;
-                        res |= timer.divisor_code & 0x7;
-                        return Ok(res);
-                    } else {
-                        return Ok(timer.frequency as u8);
-                    }
+                if self.channel_type == ChannelType::Noise {
+                    let mut res = 0;
+                    res |= self.timer.shift_amout << 4;
+                    res |= match self.lfsr.as_ref().unwrap().width_mode {
+                        WidthMode::Width7Bits => 0x8,
+                        WidthMode::Width14Bits => 0,
+                    };
+                    res |= self.timer.divisor_code & 0x7;
+                    return Ok(res);
+                } else {
+                    return Ok(self.timer.frequency as u8);
                 }
-                Ok(0)
             }
             Nr14 | Nr24 | Nr34 | Nr44 => {
                 let mut res = 0;
@@ -216,9 +217,7 @@ where
                 if self.channel_type == ChannelType::SquareWave
                     || self.channel_type == ChannelType::WaveForm
                 {
-                    if let Some(timer) = &self.timer {
-                        res |= ((timer.frequency >> 8) & 0x07) as u8;
-                    }
+                    res |= ((self.timer.frequency >> 8) & 0x07) as u8;
                 }
 
                 Ok(res)
@@ -299,14 +298,16 @@ where
                 }
             }
             Nr13 | Nr23 | Nr33 | Nr43 => {
-                if let Some(ref mut timer) = self.timer {
-                    if self.channel_type == ChannelType::Noise {
-                        (*timer).shift_amout = v >> 4;
-                        (*timer).divisor_code = v & 0x7;
-                    } else {
-                        let high_byte = (*timer).frequency.to_le_bytes()[1];
-                        (*timer).frequency = (high_byte as u16 & 0x7) << 8 | v as u16;
-                    }
+                if self.channel_type == ChannelType::Noise {
+                    self.timer.shift_amout = v >> 4;
+                    self.lfsr.as_mut().unwrap().width_mode = match v & 0x8 != 0 {
+                        true => WidthMode::Width7Bits,
+                        false => WidthMode::Width14Bits,
+                    };
+                    self.timer.divisor_code = v & 0x7;
+                } else {
+                    let high_byte = self.timer.frequency.to_le_bytes()[1];
+                    self.timer.frequency = (high_byte as u16 & 0x7) << 8 | v as u16;
                 }
             }
             Nr14 | Nr24 | Nr34 | Nr44 => {
@@ -316,10 +317,8 @@ where
                 if self.channel_type == ChannelType::SquareWave
                     || self.channel_type == ChannelType::WaveForm
                 {
-                    if let Some(ref mut timer) = self.timer {
-                        let low_byte = (*timer).frequency.to_le_bytes()[0];
-                        (*timer).frequency = (v as u16 & 0x07) << 8 | low_byte as u16;
-                    }
+                    let low_byte = self.timer.frequency.to_le_bytes()[0];
+                    self.timer.frequency = (v as u16 & 0x07) << 8 | low_byte as u16;
                 }
 
                 if self.enabled {
@@ -328,7 +327,10 @@ where
                         (*ve).reload();
                     }
                     if let Some(ref mut sweep) = self.sweep {
-                        self.enabled = (*sweep).reload(self.timer.as_ref().unwrap().frequency);
+                        self.enabled = (*sweep).reload(self.timer.frequency);
+                    }
+                    if let Some(ref mut lfsr) = self.lfsr {
+                        (*lfsr).reload();
                     }
                 }
             }
