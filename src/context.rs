@@ -1,5 +1,5 @@
 #[cfg(feature = "cgb")]
-use gb_bus::generic::{CharDevice, PanicDevice};
+use gb_bus::generic::CharDevice;
 use gb_bus::{generic::SimpleRW, AddressBus, Bus, IORegArea, IORegBus, Lock, WorkingRam};
 use gb_clock::{cycles, Clock};
 use gb_cpu::{cpu::Cpu, new_cpu, registers::Registers};
@@ -157,9 +157,9 @@ impl Game {
             #[cfg(feature = "cgb")]
             if cgb_mode {
                 io_bus
-                    .with_area(IORegArea::Vbk, ppu_reg.clone())
+                    .with_ppu_cgb(ppu_reg.clone())
                     .with_area(IORegArea::Key1, cpu_io_reg.clone())
-                    .with_hdma(Rc::new(RefCell::new(PanicDevice::default())))
+                    .with_hdma(hdma.clone())
                     .with_area(IORegArea::RP, Rc::new(RefCell::new(CharDevice(0))))
                     .with_area(IORegArea::Svbk, wram.clone());
             }
@@ -169,7 +169,6 @@ impl Game {
                 .with_ppu(ppu_reg)
                 .with_area(IORegArea::IF, cpu_io_reg.clone())
                 .with_area(IORegArea::Dma, dma.clone())
-                .with_hdma(hdma.clone())
                 .with_area(IORegArea::BootRom, bios_wrapper.clone())
                 .with_serial(serial)
                 .with_default_sound()
