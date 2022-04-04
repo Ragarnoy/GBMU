@@ -895,6 +895,7 @@ dependencies = [
  "gb-cpu",
  "gb-ppu",
  "log",
+ "serde",
 ]
 
 [[package]]

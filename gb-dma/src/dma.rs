@@ -1,7 +1,11 @@
 use gb_bus::{Address, Area, Bus, Error, FileOperation, IORegArea, Lock};
 use gb_clock::{Tick, Ticker};
 
-#[derive(Default)]
+#[cfg_attr(
+    feature = "serialization",
+    derive(serde::Serialize, serde::Deserialize)
+)]
+#[derive(Default, Clone, Copy)]
 pub struct Dma {
     oam_register: u8,
     oam_transfer: Option<u16>,
