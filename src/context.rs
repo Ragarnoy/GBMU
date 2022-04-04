@@ -422,8 +422,15 @@ impl Game {
         self.load_timer(state.timer)?;
         self.load_hram(state.hram)?;
         self.load_dma(state.dma)?;
+        self.load_hdma(state.hdma)?;
 
         self.mbc.borrow_mut().load(state.mbcs)?;
+        Ok(())
+    }
+
+    #[cfg(feature = "save_state")]
+    fn load_hdma(&mut self, hdma: Hdma) -> anyhow::Result<()> {
+        self.hdma = Rc::new(RefCell::new(hdma));
         Ok(())
     }
 
@@ -870,6 +877,7 @@ struct SaveState {
     pub hram: Vec<u8>,
     pub ppu: Ppu,
     pub dma: Dma,
+    pub hdma: Hdma,
 }
 
 #[cfg(feature = "save_state")]
@@ -885,6 +893,7 @@ impl From<&Game> for SaveState {
             hram: context.hram.borrow().save(),
             ppu: context.ppu.clone(),
             dma: *context.dma.borrow(),
+            hdma: *context.hdma.borrow(),
         }
     }
 }

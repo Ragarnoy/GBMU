@@ -3,13 +3,21 @@ use gb_clock::{Tick, Ticker};
 use gb_cpu::cpu::Cpu;
 use gb_ppu::{Mode, Ppu};
 
-#[derive(PartialEq)]
+#[cfg_attr(
+    feature = "serialization",
+    derive(serde::Serialize, serde::Deserialize)
+)]
+#[derive(PartialEq, Clone, Copy)]
 pub enum HdmaMode {
     Gdma,
     Hdma,
 }
 
-#[derive(Default)]
+#[cfg_attr(
+    feature = "serialization",
+    derive(serde::Serialize, serde::Deserialize)
+)]
+#[derive(Default, Clone, Copy)]
 pub struct Hdma {
     src: u16,
     dest: u16,
