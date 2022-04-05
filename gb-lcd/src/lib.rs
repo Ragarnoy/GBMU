@@ -6,7 +6,7 @@ pub mod window;
 
 pub use crate::pixels::GBPixels;
 pub use window::GBWindow;
-use winit::{dpi::PhysicalSize, platform::unix::x11::WindowId};
+use winit::{dpi::PhysicalSize, window::WindowId};
 
 // use error::Error;
 // use sdl2::{video::GLProfile, EventPump, Sdl, VideoSubsystem};

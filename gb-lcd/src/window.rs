@@ -26,7 +26,7 @@ impl PseudoWindow for GBWindow {
         self.window.inner_size()
     }
 
-    fn id(&self) -> winit::platform::unix::x11::WindowId {
+    fn id(&self) -> winit::window::WindowId {
         self.window.id()
     }
 }
