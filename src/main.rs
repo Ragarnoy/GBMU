@@ -9,16 +9,11 @@ use clap::StructOpt;
 use config::Config;
 use constant::{GB_SCREEN_HEIGHT, GB_SCREEN_WIDTH, TARGET_FPS_X10};
 use custom_event::CustomEvent;
-use gb_lcd::{GBPixels, GBWindow};
+use gb_lcd::{EventProcessing, GBPixels, GBWindow, PseudoWindow};
 use logger::init_logger;
-use pixels::{Error, Pixels, SurfaceTexture};
+use pixels::Error;
 use std::time::Duration;
-use winit::{
-    dpi::LogicalSize,
-    event::Event,
-    event_loop::EventLoop,
-    window::{Window, WindowBuilder},
-};
+use winit::{dpi::LogicalSize, event::Event, event_loop::EventLoop, window::WindowBuilder};
 use winit_input_helper::WinitInputHelper;
 
 fn main() -> Result<(), Error> {
@@ -35,13 +30,15 @@ fn main() -> Result<(), Error> {
     let mut input = WinitInputHelper::new();
 
     let (event_loop, main_window) = init::<GB_SCREEN_WIDTH, GB_SCREEN_HEIGHT>(&opts)?;
+    let event_loop_proxy = event_loop.create_proxy();
 
-    event_loop.run(move |event, event_loop, control_flow| match event {
+    event_loop.run(move |event, _event_loop, control_flow| match event {
         Event::WindowEvent { window_id, event } => {
             if window_id == main_window.id() {
                 main_window.process_window_event(event)
             }
         }
+        _ => todo!("unhandled event {event:?}"),
     })
 }
 
@@ -60,7 +57,7 @@ fn init<const WIDTH: u32, const HEIGHT: u32>(
         GBWindow::new(window)
     };
 
-    let main_window = GBPixels::from_window::<WIDTH, HEIGHT>(window)?;
+    let main_window = GBPixels::from_window::<WIDTH, HEIGHT>(main_window)?;
 
     Ok((event_loop, main_window))
 }
