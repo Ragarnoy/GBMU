@@ -25,4 +25,8 @@ impl PseudoWindow for GBWindow {
     fn inner_size(&self) -> winit::dpi::PhysicalSize<u32> {
         self.window.inner_size()
     }
+
+    fn id(&self) -> winit::platform::unix::x11::WindowId {
+        self.window.id()
+    }
 }

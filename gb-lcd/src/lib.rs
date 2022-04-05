@@ -6,7 +6,7 @@ pub mod window;
 
 pub use crate::pixels::GBPixels;
 pub use window::GBWindow;
-use winit::dpi::PhysicalSize;
+use winit::{dpi::PhysicalSize, platform::unix::x11::WindowId};
 
 // use error::Error;
 // use sdl2::{video::GLProfile, EventPump, Sdl, VideoSubsystem};
@@ -26,6 +26,20 @@ use winit::dpi::PhysicalSize;
 // }
 
 pub trait PseudoWindow {
+    /// Returns the scale factor that can be used to map logical pixels to physical pixels, and vice versa.
+    ///
+    /// See the [`dpi`](winit::dpi) module for more information.
+    ///
+    /// Note that this value can change depending on user action (for example if the window is
+    /// moved to another screen); as such, tracking `WindowEvent::ScaleFactorChanged` events is
+    /// the most robust way to track the DPI you need to use to draw.
     fn scale_factor(&self) -> f64;
+
+    /// Returns the physical size of the window's client area.
+    ///
+    /// The client area is the content of the window, excluding the title bar and borders.
     fn inner_size(&self) -> PhysicalSize<u32>;
+
+    /// Returns an identifier unique to the window.
+    fn id(&self) -> WindowId;
 }
