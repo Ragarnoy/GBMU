@@ -996,7 +996,6 @@ dependencies = [
  "log",
  "native-dialog",
  "rmp-serde",
- "sdl2",
  "serde",
  "serde_yaml",
  "simplelog",
