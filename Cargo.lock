@@ -996,7 +996,10 @@ dependencies = [
  "egui",
  "egui_sdl2_gl",
  "gl",
+ "pixels",
  "sdl2",
+ "winit",
+ "winit_input_helper",
 ]
 
 [[package]]

@@ -1,21 +1,31 @@
-pub mod error;
-pub mod render;
-mod shader;
+// pub mod error;
+// pub mod render;
+// mod shader;
+pub mod pixels;
 pub mod window;
 
-use error::Error;
-use sdl2::{video::GLProfile, EventPump, Sdl, VideoSubsystem};
+pub use pixels::GBPixels;
+pub use window::GBWindow;
+use winit::dpi::PhysicalSize;
 
-pub fn init() -> Result<(Sdl, VideoSubsystem, EventPump), Error> {
-    let sdl_context = sdl2::init().map_err(Error::MainSys)?;
-    let video_subsystem = sdl_context.video().map_err(Error::MainSys)?;
+// use error::Error;
+// use sdl2::{video::GLProfile, EventPump, Sdl, VideoSubsystem};
 
-    let event_pump = sdl_context.event_pump().map_err(Error::MainSys)?;
+// pub fn init() -> Result<(Sdl, VideoSubsystem, EventPump), Error> {
+//     let sdl_context = sdl2::init().map_err(Error::MainSys)?;
+//     let video_subsystem = sdl_context.video().map_err(Error::MainSys)?;
 
-    let gl_attr = video_subsystem.gl_attr();
-    gl_attr.set_context_profile(GLProfile::Core);
-    // OpenGL 3.3 is the minimum that we will support.
-    gl_attr.set_context_version(3, 3);
+//     let event_pump = sdl_context.event_pump().map_err(Error::MainSys)?;
 
-    Ok((sdl_context, video_subsystem, event_pump))
+//     let gl_attr = video_subsystem.gl_attr();
+//     gl_attr.set_context_profile(GLProfile::Core);
+//     // OpenGL 3.3 is the minimum that we will support.
+//     gl_attr.set_context_version(3, 3);
+
+//     Ok((sdl_context, video_subsystem, event_pump))
+// }
+
+pub trait PseudoWindow {
+    fn scale_factor(&self) -> f64;
+    fn inner_size(&self) -> PhysicalSize<u32>;
 }
