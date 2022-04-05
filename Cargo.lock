@@ -713,16 +713,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "egui_sdl2_gl"
-version = "0.16.0"
-source = "git+https://github.com/FirelightFlagboy/egui_sdl2_gl?rev=14f97af830a58088c2a1e54ca2b123dbb7caf992#14f97af830a58088c2a1e54ca2b123dbb7caf992"
-dependencies = [
- "egui",
- "gl",
- "sdl2",
-]
-
-[[package]]
 name = "egui_web"
 version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -982,10 +972,7 @@ name = "gb-lcd"
 version = "0.1.0"
 dependencies = [
  "egui",
- "egui_sdl2_gl",
- "gl",
  "pixels",
- "sdl2",
  "winit",
  "winit_input_helper",
 ]
@@ -1101,15 +1088,6 @@ name = "gimli"
 version = "0.26.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "78cc372d058dcf6d5ecd98510e7fbc9e5aec4d21de70f65fea8fecebcd881bd4"
-
-[[package]]
-name = "gl"
-version = "0.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a94edab108827d67608095e269cf862e60d920f144a5026d3dbcfd8b877fb404"
-dependencies = [
- "gl_generator",
-]
 
 [[package]]
 name = "gl_generator"

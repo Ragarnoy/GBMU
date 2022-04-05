@@ -1,8 +1,8 @@
 use pixels::{Error, Pixels, SurfaceTexture};
-use winit::window::Window;
+use winit::{event::WindowEvent, window::Window};
 use winit_input_helper::WinitInputHelper;
 
-use crate::{GBWindow, PseudoWindow};
+use crate::{EventProcessing, GBWindow, PseudoWindow};
 
 pub struct GBPixels {
     pub window: Window,
@@ -48,5 +48,13 @@ impl PseudoWindow for GBPixels {
 
     fn id(&self) -> winit::window::WindowId {
         self.window.id()
+    }
+}
+
+impl EventProcessing for GBPixels {
+    fn process_window_event(&self, event: WindowEvent) {
+        match event {
+            _ => todo!("process window event {event:?}"),
+        }
     }
 }
