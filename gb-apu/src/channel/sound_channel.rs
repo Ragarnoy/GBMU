@@ -200,7 +200,7 @@ where
                     let mut res = 0;
                     res |= self.timer.shift_amout << 4;
                     res |= match self.lfsr.as_ref().unwrap().width_mode {
-                        WidthMode::Width7Bits => 0x8,
+                        WidthMode::Width7Bits => 0b1000,
                         WidthMode::Width14Bits => 0,
                     };
                     res |= self.timer.divisor_code & 0x7;
@@ -300,9 +300,10 @@ where
             Nr13 | Nr23 | Nr33 | Nr43 => {
                 if self.channel_type == ChannelType::Noise {
                     self.timer.shift_amout = v >> 4;
-                    self.lfsr.as_mut().unwrap().width_mode = match v & 0x8 != 0 {
-                        true => WidthMode::Width7Bits,
-                        false => WidthMode::Width14Bits,
+                    self.lfsr.as_mut().unwrap().width_mode = if v & 0b1000 != 0 {
+                        WidthMode::Width7Bits
+                    } else {
+                        WidthMode::Width14Bits
                     };
                     self.timer.divisor_code = v & 0x7;
                 } else {
