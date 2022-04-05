@@ -4,7 +4,7 @@
 pub mod pixels;
 pub mod window;
 
-pub use pixels::GBPixels;
+pub use crate::pixels::GBPixels;
 pub use window::GBWindow;
 use winit::dpi::PhysicalSize;
 

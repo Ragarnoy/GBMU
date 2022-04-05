@@ -9,6 +9,7 @@ use clap::StructOpt;
 use config::Config;
 use constant::{GB_SCREEN_HEIGHT, GB_SCREEN_WIDTH, TARGET_FPS_X10};
 use custom_event::CustomEvent;
+use gb_lcd::{GBPixels, GBWindow};
 use logger::init_logger;
 use pixels::{Error, Pixels, SurfaceTexture};
 use std::time::Duration;
@@ -33,36 +34,29 @@ fn main() -> Result<(), Error> {
     init_logger(opts.log_level);
     let mut input = WinitInputHelper::new();
 
-    let (event_loop, main_window, pixels) = init::<GB_SCREEN_WIDTH, GB_SCREEN_HEIGHT>(&opts)?;
+    let (event_loop, main_window) = init::<GB_SCREEN_WIDTH, GB_SCREEN_HEIGHT>(&opts)?;
 
     event_loop.run(move |event, event_loop, control_flow| handle_input_event(&mut input, &event))
 }
 
 fn init<const WIDTH: u32, const HEIGHT: u32>(
     config: &Config,
-) -> Result<(EventLoop<CustomEvent>, Window, Pixels), Error> {
+) -> Result<(EventLoop<CustomEvent>, GBPixels), Error> {
     let event_loop = EventLoop::with_user_event();
     let main_window = {
         let size = LogicalSize::new(WIDTH as f64, HEIGHT as f64);
-        WindowBuilder::new()
+        let window = WindowBuilder::new()
             .with_title(constant::APP_NAME)
             .with_inner_size(size)
             .with_min_inner_size(size)
             .build(&event_loop)
-            .expect("cannot build main window")
+            .expect("cannot build main window");
+        GBWindow::new(window)
     };
 
-    let (pixels) = {
-        let window_size = main_window.inner_size();
-        let scale_factor = main_window.scale_factor();
-        let surface_texture =
-            SurfaceTexture::new(window_size.width, window_size.height, &main_window);
-        let pixels = Pixels::new(WIDTH, HEIGHT, surface_texture)?;
+    let main_window = GBPixels::from_window::<WIDTH, HEIGHT>(window)?;
 
-        (pixels)
-    };
-
-    Ok((event_loop, main_window, pixels))
+    Ok((event_loop, main_window))
 }
 
 fn handle_input_event(input: &mut WinitInputHelper, event: &Event<CustomEvent>) {
