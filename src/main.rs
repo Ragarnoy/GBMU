@@ -36,7 +36,13 @@ fn main() -> Result<(), Error> {
 
     let (event_loop, main_window) = init::<GB_SCREEN_WIDTH, GB_SCREEN_HEIGHT>(&opts)?;
 
-    event_loop.run(move |event, event_loop, control_flow| handle_input_event(&mut input, &event))
+    event_loop.run(move |event, event_loop, control_flow| match event {
+        Event::WindowEvent { window_id, event } => {
+            if window_id == main_window.id() {
+                main_window.process_window_event(event)
+            }
+        }
+    })
 }
 
 fn init<const WIDTH: u32, const HEIGHT: u32>(
@@ -57,8 +63,4 @@ fn init<const WIDTH: u32, const HEIGHT: u32>(
     let main_window = GBPixels::from_window::<WIDTH, HEIGHT>(window)?;
 
     Ok((event_loop, main_window))
-}
-
-fn handle_input_event(input: &mut WinitInputHelper, event: &Event<CustomEvent>) {
-    if input.update(event) {}
 }
