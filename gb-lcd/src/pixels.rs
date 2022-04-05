@@ -24,7 +24,6 @@ impl GBPixels {
     ) -> Result<Self, Error> {
         let pixels = {
             let window_size = window.inner_size();
-            let scale_factor = window.scale_factor();
             let surface_texture =
                 SurfaceTexture::new(window_size.width, window_size.height, &window.window);
             Pixels::new(WIDTH, HEIGHT, surface_texture)?
