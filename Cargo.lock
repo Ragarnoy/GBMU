@@ -965,18 +965,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "gb-dma"
-version = "0.1.0"
-dependencies = [
- "gb-bus",
- "gb-clock",
- "gb-cpu",
- "gb-ppu",
- "log",
- "serde",
-]
-
-[[package]]
 name = "gb-joypad"
 version = "0.0.0"
 dependencies = [
@@ -1000,20 +988,6 @@ dependencies = [
  "sdl2",
  "winit",
  "winit_input_helper",
-]
-
-[[package]]
-name = "gb-ppu"
-version = "0.1.0"
-dependencies = [
- "egui",
- "gb-bus",
- "gb-clock",
- "gb-lcd",
- "log",
- "sdl2",
- "serde",
- "serde-big-array",
 ]
 
 [[package]]
@@ -1068,10 +1042,8 @@ dependencies = [
  "gb-clock",
  "gb-cpu",
  "gb-dbg",
- "gb-dma",
  "gb-joypad",
  "gb-lcd",
- "gb-ppu",
  "gb-roms",
  "gb-timer",
  "log",
@@ -2259,16 +2231,6 @@ version = "1.0.133"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97565067517b60e2d1ea8b268e59ce036de907ac523ad83a0475da04e818989a"
 dependencies = [
- "serde_derive",
-]
-
-[[package]]
-name = "serde-big-array"
-version = "0.3.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "18b20e7752957bbe9661cff4e0bb04d183d0948cdab2ea58cdb9df36a61dfe62"
-dependencies = [
- "serde",
  "serde_derive",
 ]
 
