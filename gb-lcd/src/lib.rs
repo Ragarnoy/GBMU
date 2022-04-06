@@ -6,7 +6,7 @@ pub mod window;
 
 pub use crate::pixels::GBPixels;
 pub use window::GBWindow;
-use winit::{dpi::PhysicalSize, event::WindowEvent, window::WindowId};
+use winit::{dpi::PhysicalSize, event::WindowEvent, event_loop::EventLoopProxy, window::WindowId};
 
 // use error::Error;
 // use sdl2::{video::GLProfile, EventPump, Sdl, VideoSubsystem};
@@ -45,6 +45,6 @@ pub trait PseudoWindow {
 }
 
 pub trait EventProcessing {
-    /// Process a single window event
-    fn process_window_event(&self, event: WindowEvent);
+    /// Add a event to be processed
+    fn process_window_event(&mut self, event: WindowEvent);
 }
