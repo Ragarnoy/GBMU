@@ -19,4 +19,7 @@ pub enum CustomEvent {
     #[cfg(feature = "cgb")]
     /// Event when we want to force a gameboy mode
     ChangedMode(Mode),
+
+    /// Exit the emulator
+    Quit,
 }
