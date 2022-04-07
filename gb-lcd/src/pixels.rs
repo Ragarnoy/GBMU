@@ -1,5 +1,5 @@
 use pixels::{Error, Pixels, SurfaceTexture};
-use winit::{event::WindowEvent, event_loop::EventLoopProxy, window::Window};
+use winit::{event::WindowEvent, window::Window};
 use winit_input_helper::WinitInputHelper;
 
 use crate::{EventProcessing, GBWindow, PseudoWindow};
