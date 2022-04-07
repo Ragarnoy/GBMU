@@ -3,6 +3,7 @@ mod constant;
 mod context;
 mod custom_event;
 mod event;
+mod game;
 mod logger;
 mod settings;
 #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
@@ -12,7 +13,8 @@ mod windows;
 
 use clap::Parser;
 
-use context::{Context, Game};
+use context::Context;
+use game::Game;
 use gb_dbg::debugger::options::DebuggerOptions;
 use gb_dbg::debugger::{Debugger, DebuggerBuilder};
 use gb_lcd::{render, window::GBWindow};
