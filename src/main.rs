@@ -1,19 +1,23 @@
 mod config;
 mod constant;
+mod context;
 mod custom_event;
 mod logger;
 #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
 mod time_frame;
+mod windows;
 
 use clap::StructOpt;
 use config::Config;
 use constant::{GB_SCREEN_HEIGHT, GB_SCREEN_WIDTH, TARGET_FPS_X10};
+use context::Context;
 use custom_event::CustomEvent;
 use egui::panel;
 use gb_lcd::{EventProcessing, GBPixels, GBWindow, PseudoWindow};
 use logger::init_logger;
 use pixels::Error;
 use std::time::Duration;
+use windows::Windows;
 use winit::{
     dpi::LogicalSize,
     event::Event,
@@ -34,14 +38,16 @@ fn main() -> Result<(), Error> {
     // let frame_duration_target = Duration::from_nanos(10_000_000_000 / TARGET_FPS_X10);
     init_logger(opts.log_level);
 
-    let (event_loop, mut main_window) = init::<GB_SCREEN_WIDTH, GB_SCREEN_HEIGHT>(&opts)?;
+    let (event_loop, main_window) = init::<GB_SCREEN_WIDTH, GB_SCREEN_HEIGHT>(&opts)?;
     let event_loop_proxy = event_loop.create_proxy();
+    let windows = Windows::new(main_window);
+    let mut context = Context::new(windows);
 
     event_loop.run(move |event, _event_loop, control_flow| match event {
         Event::WindowEvent { window_id, event } => {
-            if window_id == main_window.id() {
-                main_window.process_window_event(event);
-                if main_window.closed() {
+            if window_id == context.windows.main.id() {
+                context.windows.main.process_window_event(event);
+                if context.windows.main.closed() {
                     event_loop_proxy
                         .send_event(CustomEvent::Quit)
                         .expect("cannot send quit event");
@@ -49,13 +55,7 @@ fn main() -> Result<(), Error> {
             }
         }
         Event::UserEvent(event) => handle_custom_event(event, control_flow),
-        Event::RedrawRequested(window_id) => {
-            if window_id == main_window.id() {
-                todo!("draw main window");
-            } else {
-                panic!("unexpected window id {window_id:?}")
-            }
-        }
+        Event::RedrawRequested(window_id) => context.redraw(window_id),
         Event::LoopDestroyed => {
             log::info!("bye bye");
         }
