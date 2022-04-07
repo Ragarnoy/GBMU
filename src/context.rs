@@ -1,17 +1,26 @@
-use gb_joypad::Joypad;
-use gb_lcd::render::RenderImage;
+use crate::windows::Windows;
+use egui::Window;
+use gb_lcd::PseudoWindow;
+use winit::window::WindowId;
 
-use std::{cell::RefCell, rc::Rc};
+pub struct Context {
+    pub windows: Windows,
+}
 
-use crate::custom_event::CustomEvent;
+impl Context {
+    pub fn new(windows: Windows) -> Self {
+        Self { windows }
+    }
 
-pub struct Context<const WIDTH: usize, const HEIGHT: usize> {
-    pub sdl: sdl2::Sdl,
-    pub video: sdl2::VideoSubsystem,
-    pub windows: crate::windows::Windows,
-    pub display: RenderImage<WIDTH, HEIGHT>,
-    pub joypad: Rc<RefCell<Joypad>>,
-    #[cfg(feature = "debug_render")]
-    pub debug_render: bool,
-    pub custom_events: Vec<CustomEvent>,
+    pub fn redraw(&self, window_id: WindowId) {
+        if window_id == self.windows.main.id() {
+            self.redraw_main_window()
+        } else {
+            panic!("unexpected window id {window_id:?}")
+        }
+    }
+
+    pub fn redraw_main_window(&self) {
+        todo!("redraw main window")
+    }
 }
