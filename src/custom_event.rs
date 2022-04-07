@@ -13,8 +13,6 @@ pub enum CustomEvent {
     #[cfg(feature = "save_state")]
     /// Event that will load a `save state` save
     LoadState(PathBuf),
-    /// Event when user drop a file to the main window
-    FileDropped(String),
 
     #[cfg(feature = "cgb")]
     /// Event when we want to force a gameboy mode
