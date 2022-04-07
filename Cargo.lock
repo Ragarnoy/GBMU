@@ -972,6 +972,7 @@ name = "gb-lcd"
 version = "0.1.0"
 dependencies = [
  "egui",
+ "log",
  "pixels",
  "winit",
  "winit_input_helper",

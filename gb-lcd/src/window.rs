@@ -29,4 +29,8 @@ impl PseudoWindow for GBWindow {
     fn id(&self) -> winit::window::WindowId {
         self.window.id()
     }
+
+    fn request_redraw(&self) {
+        self.window.request_redraw()
+    }
 }

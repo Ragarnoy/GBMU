@@ -14,3 +14,4 @@ egui = "0.16"
 winit = "0.26.1"
 winit_input_helper = "0.11.1"
 pixels = "0.9.0"
+log = { version = "0.4", features = ["std"] }

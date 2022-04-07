@@ -2,6 +2,7 @@
 // pub mod render;
 // mod shader;
 pub mod pixels;
+mod state;
 pub mod window;
 
 pub use crate::pixels::GBPixels;
@@ -42,6 +43,14 @@ pub trait PseudoWindow {
 
     /// Returns an identifier unique to the window.
     fn id(&self) -> WindowId;
+
+    /// Request to redraw this window
+    fn request_redraw(&self);
+}
+
+pub trait PseudoPixels {
+    /// Resize the pixels surface
+    fn resize_surface(&mut self, size: PhysicalSize<u32>);
 }
 
 pub trait EventProcessing {
