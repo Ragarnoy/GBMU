@@ -55,7 +55,15 @@ fn main() -> Result<(), Error> {
             }
         }
         Event::UserEvent(event) => handle_custom_event(event, control_flow),
-        Event::RedrawRequested(window_id) => context.redraw(window_id),
+        Event::RedrawRequested(window_id) => {
+            if context
+                .redraw(window_id)
+                .map_err(|e| log::error!("fail to redraw window {window_id:?}: {e}"))
+                .is_err()
+            {
+                *control_flow = ControlFlow::Exit;
+            }
+        }
         Event::LoopDestroyed => {
             log::info!("bye bye");
         }
