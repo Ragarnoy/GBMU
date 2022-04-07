@@ -1,5 +1,4 @@
 use crate::windows::Windows;
-use egui::Window;
 use gb_lcd::PseudoWindow;
 use winit::window::WindowId;
 
@@ -12,7 +11,7 @@ impl Context {
         Self { windows }
     }
 
-    pub fn redraw(&self, window_id: WindowId) {
+    pub fn redraw(&self, window_id: WindowId) -> anyhow::Result<()> {
         if window_id == self.windows.main.id() {
             self.redraw_main_window()
         } else {
@@ -20,7 +19,17 @@ impl Context {
         }
     }
 
-    pub fn redraw_main_window(&self) {
-        todo!("redraw main window")
+    pub fn redraw_main_window(&self) -> anyhow::Result<()> {
+        self.windows
+            .main
+            .pixels
+            .render_with(|encoder, render_target, context| {
+                // Render pixels buffer
+                context.scaling_renderer.render(encoder, render_target);
+
+                Ok(())
+            })?;
+
+        Ok(())
     }
 }
