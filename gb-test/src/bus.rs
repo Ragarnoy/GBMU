@@ -1,5 +1,5 @@
 pub mod array {
-    use gb_bus::{Area, Bus, Error, MemoryLock, Source};
+    use gb_bus::{Bus, Error, Source};
 
     #[derive(Clone, Debug)]
     pub struct Mock {
@@ -44,20 +44,10 @@ pub mod array {
             unimplemented!();
         }
     }
-
-    impl MemoryLock for Mock {
-        fn lock(&mut self, _area: Area, _lock: Source) {}
-
-        fn unlock(&mut self, _area: Area) {}
-
-        fn is_available(&self, _area: Area, _lock_key: Option<Source>) -> bool {
-            true
-        }
-    }
 }
 
 pub mod binary {
-    use gb_bus::{Area, Bus, Error, MemoryLock, Source};
+    use gb_bus::{Bus, Error, Source};
     use std::collections::BTreeMap;
 
     #[derive(Clone, Debug, Default)]
@@ -99,16 +89,6 @@ pub mod binary {
             _lock_key: Option<Source>,
         ) -> Result<(), Error> {
             unimplemented!();
-        }
-    }
-
-    impl MemoryLock for Mock {
-        fn lock(&mut self, _area: Area, _lock: Source) {}
-
-        fn unlock(&mut self, _area: Area) {}
-
-        fn is_available(&self, _area: Area, _lock_key: Option<Source>) -> bool {
-            true
         }
     }
 }
