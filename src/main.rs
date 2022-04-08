@@ -45,14 +45,7 @@ fn main() -> Result<(), Error> {
 
     event_loop.run(move |event, _event_loop, control_flow| match event {
         Event::WindowEvent { window_id, event } => {
-            if window_id == context.windows.main.id() {
-                context.windows.main.process_window_event(event);
-                if context.windows.main.closed() {
-                    event_loop_proxy
-                        .send_event(CustomEvent::Quit)
-                        .expect("cannot send quit event");
-                }
-            }
+            context.process_window_event(window_id, event, &event_loop_proxy);
         }
         Event::UserEvent(event) => handle_custom_event(event, control_flow),
         Event::RedrawRequested(window_id) => {
