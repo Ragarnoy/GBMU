@@ -24,7 +24,7 @@ use gb_roms::{
 use gb_timer::Timer;
 #[cfg(feature = "registers_logs")]
 use std::io::BufWriter;
-use std::{cell::RefCell, collections::BTreeMap, fs::File, ops::DerefMut, path::Path, rc::Rc};
+use std::{cell::RefCell, fs::File, ops::DerefMut, path::Path, rc::Rc};
 
 use crate::custom_event::CustomEvent;
 #[cfg(feature = "cgb")]
@@ -148,7 +148,7 @@ impl Game {
             };
             Rc::new(RefCell::new(wrapper))
         };
-        let dma = Rc::new(RefCell::new(Dma::new()));
+        let dma = Rc::new(RefCell::new(Dma::new(ppu.memory())));
         let hdma = Rc::new(RefCell::new(Hdma::default()));
         let serial = Rc::new(RefCell::new(gb_bus::Serial::default()));
 
@@ -196,7 +196,6 @@ impl Game {
             hram,
 
             ie_reg: cpu_io_reg,
-            area_locks: BTreeMap::new(),
         };
         #[cfg(feature = "registers_logs")]
         let logs_file = Game::create_new_file().unwrap();
@@ -633,7 +632,7 @@ macro_rules! read_bus_reg {
     };
 
     ($bus:expr, $addr:expr) => {
-        $bus.read(u16::from($addr), Some(Lock::Debugger))
+        $bus.read(u16::from($addr), Some(Source::Debugger))
             .unwrap_or(0xffu8)
             .into()
     };
