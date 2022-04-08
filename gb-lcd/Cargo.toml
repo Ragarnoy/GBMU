@@ -11,7 +11,8 @@ debug_render = []
 
 [dependencies]
 egui = "0.16"
+egui_wgpu_backend = "0.16"
+egui-winit = { version = "0.16", default-features = false }
 winit = "0.26.1"
-winit_input_helper = "0.11.1"
 pixels = "0.9.0"
 log = { version = "0.4", features = ["std"] }

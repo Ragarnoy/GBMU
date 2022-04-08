@@ -727,6 +727,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "egui_wgpu_backend"
+version = "0.16.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e59185e6e0ba5691235434f3eef768dcbcbdf3322055819435a1697ebd8facff"
+dependencies = [
+ "bytemuck",
+ "egui",
+ "wgpu",
+]
+
+[[package]]
 name = "either"
 version = "1.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -972,10 +983,11 @@ name = "gb-lcd"
 version = "0.1.0"
 dependencies = [
  "egui",
+ "egui-winit",
+ "egui_wgpu_backend",
  "log",
  "pixels",
  "winit",
- "winit_input_helper",
 ]
 
 [[package]]
