@@ -50,7 +50,7 @@ pub trait PseudoWindow {
 
 pub trait PseudoPixels {
     /// Resize the pixels surface
-    fn resize_surface(&mut self, size: PhysicalSize<u32>);
+    fn resize(&mut self, size: PhysicalSize<u32>);
 }
 
 pub trait EventProcessing {

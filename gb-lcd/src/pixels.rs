@@ -1,23 +1,18 @@
 use pixels::{Error, Pixels, SurfaceTexture};
 use winit::{dpi::PhysicalSize, event::WindowEvent, window::Window};
-use winit_input_helper::WinitInputHelper;
 
-use crate::{state::State, EventProcessing, GBWindow, PseudoPixels, PseudoWindow};
+use crate::{EventProcessing, GBWindow, PseudoPixels, PseudoWindow};
 
 pub struct GBPixels {
-    pub window: Window,
-    pub input: WinitInputHelper,
+    pub window: GBWindow,
     pub pixels: Pixels,
-    state: State,
 }
 
 impl GBPixels {
-    pub fn new(window: Window, input: WinitInputHelper, pixels: Pixels) -> Self {
+    pub fn new(window: Window, pixels: Pixels) -> Self {
         Self {
-            window,
-            input,
+            window: GBWindow::new(window),
             pixels,
-            state: State::default(),
         }
     }
 
@@ -31,12 +26,15 @@ impl GBPixels {
             Pixels::new(WIDTH, HEIGHT, surface_texture)?
         };
 
-        Ok(Self::new(window.window, window.input, pixels))
+        Ok(Self {
+            window: window,
+            pixels,
+        })
     }
 
     /// When the window is requested to closed
     pub fn closed(&self) -> bool {
-        self.state.closed
+        self.window.state.closed
     }
 }
 
@@ -59,24 +57,18 @@ impl PseudoWindow for GBPixels {
 }
 
 impl PseudoPixels for GBPixels {
-    fn resize_surface(&mut self, size: PhysicalSize<u32>) {
+    fn resize(&mut self, size: PhysicalSize<u32>) {
+        self.window.resize(size);
         self.pixels.resize_surface(size.width, size.height)
     }
 }
 
 impl EventProcessing for GBPixels {
     fn process_window_event(&mut self, event: WindowEvent) {
-        match event {
-            WindowEvent::CloseRequested => self.state.closed = true,
-            WindowEvent::Focused(focused) => self.state.focused = focused,
-            WindowEvent::CursorMoved { .. }
-            | WindowEvent::Moved(_)
-            | WindowEvent::ModifiersChanged(_) => log::debug!("ignore event {event:?}"),
-            WindowEvent::Resized(new_size) => {
-                self.resize_surface(new_size);
-                self.request_redraw();
-            }
-            _ => todo!("process window event {event:?}"),
+        if let WindowEvent::Resized(new_size) = event {
+            self.resize(new_size);
+        } else {
+            self.window.process_window_event(event);
         }
     }
 }
