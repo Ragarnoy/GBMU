@@ -987,6 +987,8 @@ dependencies = [
  "egui_wgpu_backend",
  "log",
  "pixels",
+ "pollster",
+ "wgpu",
  "winit",
 ]
 
