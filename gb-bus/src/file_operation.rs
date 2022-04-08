@@ -8,6 +8,7 @@ where
     A: Address<T>,
 {
     fn write(&mut self, v: u8, addr: A, source: Option<Source>) -> Result<(), Error> {
+        let _ = (v, source);
         Err(Error::new_segfault(addr.into()))
     }
 
