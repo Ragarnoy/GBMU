@@ -1,6 +1,6 @@
 use simplelog::{ColorChoice, Config, LevelFilter, TermLogger, TerminalMode};
 
-use gb_bus::{Area, Bus, MemoryLock, Source};
+use gb_bus::{Bus, Source};
 use gb_clock::{cycles, Clock, Tick, Ticker};
 
 use std::cell::RefCell;
@@ -22,16 +22,6 @@ impl Bus<u8> for FakeBus {
         _lock_key: Option<Source>,
     ) -> Result<(), gb_bus::Error> {
         Ok(())
-    }
-}
-
-impl MemoryLock for FakeBus {
-    fn lock(&mut self, _area: Area, _lock: Source) {}
-
-    fn unlock(&mut self, _area: Area) {}
-
-    fn is_available(&self, _area: Area, _lock_key: Option<Source>) -> bool {
-        true
     }
 }
 
