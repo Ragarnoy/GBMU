@@ -19,7 +19,7 @@ macro_rules! test_tima {
 
             for i in 0..STEPS {
                 let int_flag: u8 = fake_bus
-                    .read(0xff0f, Some(Lock::Debugger))
+                    .read(0xff0f, Some(Source::Debugger))
                     .unwrap_or_default();
                 assert_eq!(
                     int_flag, 0,
@@ -30,13 +30,13 @@ macro_rules! test_tima {
             }
             for i in 0..TIME_TO_UPDATE {
                 let int_flag: u8 = fake_bus
-                    .read(0xff0f, Some(Lock::Debugger))
+                    .read(0xff0f, Some(Source::Debugger))
                     .unwrap_or_default();
                 timer.tick(&mut fake_bus);
                 assert_eq!(int_flag, 0, "expect flag to be 0, at step {}", i);
             }
             let int_flag: u8 = fake_bus
-                .read(0xff0f, Some(Lock::Debugger))
+                .read(0xff0f, Some(Source::Debugger))
                 .unwrap_or_default();
             assert!(
                 int_flag & Timer::TIMER_INT_MASK != 0,
