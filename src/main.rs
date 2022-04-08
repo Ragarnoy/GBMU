@@ -65,10 +65,7 @@ fn main() -> Result<(), Error> {
         | Event::Resumed
         | Event::Suspended
         | Event::RedrawEventsCleared
-        | Event::DeviceEvent {
-            device_id: _,
-            event: _,
-        } => log::debug!("ignore event {event:?}"),
+        | Event::DeviceEvent { .. } => log::debug!("ignore event {event:?}"),
     })
 }
 
