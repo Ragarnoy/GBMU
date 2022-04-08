@@ -56,7 +56,7 @@ impl Context {
     ) {
         match event {
             WindowEvent::Resized(new_size) => {
-                self.windows.main.resize_surface(new_size);
+                self.windows.main.resize(new_size);
                 self.windows.main.request_redraw();
             }
             WindowEvent::CloseRequested => event_proxy
