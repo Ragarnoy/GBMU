@@ -59,41 +59,39 @@ impl PPUMem {
     }
 }
 
-impl InternalLock<Addr<Area>, Area> for PPUMem {}
+// impl MemoryLock for PPUMem {
+//     fn lock(&mut self, area: Area, lock: Lock) {
+//         match area {
+//             Area::Vram => self.vram.borrow_mut().lock(lock),
+//             Area::Oam => self.oam.borrow_mut().lock(lock),
+//             _ => {}
+//         }
+//     }
 
-impl MemoryLock for PPUMem {
-    fn lock(&mut self, area: Area, lock: Lock) {
-        match area {
-            Area::Vram => self.vram.borrow_mut().lock(lock),
-            Area::Oam => self.oam.borrow_mut().lock(lock),
-            _ => {}
-        }
-    }
+//     fn unlock(&mut self, area: Area) {
+//         match area {
+//             Area::Vram => self.vram.borrow_mut().unlock(),
+//             Area::Oam => self.oam.borrow_mut().unlock(),
+//             _ => {}
+//         }
+//     }
 
-    fn unlock(&mut self, area: Area) {
-        match area {
-            Area::Vram => self.vram.borrow_mut().unlock(),
-            Area::Oam => self.oam.borrow_mut().unlock(),
-            _ => {}
-        }
-    }
-
-    fn is_available(&self, area: Area, lock_key: Option<Lock>) -> bool {
-        let current_lock = match area {
-            Area::Vram => self.vram.borrow().get_lock(),
-            Area::Oam => self.oam.borrow().get_lock(),
-            _ => None,
-        };
-        if let Some(lock) = current_lock {
-            if let Some(key) = lock_key {
-                return lock == key;
-            }
-        } else {
-            return true;
-        }
-        false
-    }
-}
+//     fn is_available(&self, area: Area, lock_key: Option<Lock>) -> bool {
+//         let current_lock = match area {
+//             Area::Vram => self.vram.borrow().get_lock(),
+//             Area::Oam => self.oam.borrow().get_lock(),
+//             _ => None,
+//         };
+//         if let Some(lock) = current_lock {
+//             if let Some(key) = lock_key {
+//                 return lock == key;
+//             }
+//         } else {
+//             return true;
+//         }
+//         false
+//     }
+// }
 
 impl<A> FileOperation<A, Area> for PPUMem
 where
