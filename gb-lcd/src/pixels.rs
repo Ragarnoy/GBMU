@@ -69,11 +69,7 @@ impl EventProcessing for GBPixels {
         match event {
             WindowEvent::CloseRequested => self.state.closed = true,
             WindowEvent::Focused(focused) => self.state.focused = focused,
-            WindowEvent::CursorMoved {
-                device_id: _,
-                position: _,
-                ..
-            }
+            WindowEvent::CursorMoved { .. }
             | WindowEvent::Moved(_)
             | WindowEvent::ModifiersChanged(_) => log::debug!("ignore event {event:?}"),
             WindowEvent::Resized(new_size) => {

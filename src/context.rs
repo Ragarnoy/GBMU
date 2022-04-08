@@ -1,5 +1,5 @@
 use crate::{custom_event::CustomEvent, windows::Windows};
-use gb_lcd::{EventProcessing, PseudoWindow};
+use gb_lcd::{EventProcessing, PseudoPixels, PseudoWindow};
 use winit::{event::WindowEvent, event_loop::EventLoopProxy, window::WindowId};
 
 pub struct Context {
@@ -54,11 +54,25 @@ impl Context {
         event: WindowEvent,
         event_proxy: &EventLoopProxy<CustomEvent>,
     ) {
-        self.windows.main.process_window_event(event);
-        if self.windows.main.closed() {
-            event_proxy
+        match event {
+            WindowEvent::Resized(new_size) => {
+                self.windows.main.resize_surface(new_size);
+                self.windows.main.request_redraw();
+            }
+            WindowEvent::CloseRequested => event_proxy
                 .send_event(CustomEvent::Quit)
-                .expect("cannot send quit event");
+                .expect("cannot send quit event"),
+            WindowEvent::DroppedFile(path) => event_proxy
+                .send_event(CustomEvent::LoadFile(path))
+                .expect("cannot send load file event"),
+            WindowEvent::CursorMoved { .. }
+            | WindowEvent::CursorEntered { .. }
+            | WindowEvent::CursorLeft { .. }
+            | WindowEvent::AxisMotion { .. }
+            | WindowEvent::Moved(_)
+            | WindowEvent::Focused(_)
+            | WindowEvent::ModifiersChanged(_) => log::debug!("ignore main window event {event:?}"),
+            _ => todo!("process main window event {event:?}"),
         }
     }
 }
