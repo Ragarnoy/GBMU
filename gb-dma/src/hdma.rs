@@ -3,13 +3,21 @@ use gb_clock::{Tick, Ticker};
 use gb_cpu::cpu::Cpu;
 use gb_ppu::{Mode, Ppu};
 
-#[derive(PartialEq)]
+#[cfg_attr(
+    feature = "serialization",
+    derive(serde::Serialize, serde::Deserialize)
+)]
+#[derive(PartialEq, Clone, Copy)]
 pub enum HdmaMode {
     Gdma,
     Hdma,
 }
 
-#[derive(Default)]
+#[cfg_attr(
+    feature = "serialization",
+    derive(serde::Serialize, serde::Deserialize)
+)]
+#[derive(Default, Clone, Copy)]
 pub struct Hdma {
     src: u16,
     dest: u16,
@@ -83,10 +91,10 @@ where
 {
     fn read(&self, addr: A, _source: Option<Source>) -> Result<u8, gb_bus::Error> {
         match addr.area_type() {
-            IORegArea::Hdma1 => Ok(self.src.to_be_bytes()[1]),
-            IORegArea::Hdma2 => Ok(self.src.to_be_bytes()[0]),
-            IORegArea::Hdma3 => Ok(self.dest.to_be_bytes()[1]),
-            IORegArea::Hdma4 => Ok(self.dest.to_be_bytes()[0]),
+            IORegArea::Hdma1 => Ok(self.src.to_le_bytes()[1]),
+            IORegArea::Hdma2 => Ok(self.src.to_le_bytes()[0]),
+            IORegArea::Hdma3 => Ok(self.dest.to_le_bytes()[1]),
+            IORegArea::Hdma4 => Ok(self.dest.to_le_bytes()[0]),
             IORegArea::Hdma5 => Ok(self.remaining_data_chunks
                 | if self.active {
                     0x00

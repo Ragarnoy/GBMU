@@ -24,7 +24,11 @@ impl<'a> State<'a> {
     /// Read the byte at the `Program Counter` then increment it
     pub fn read(&mut self) -> u8 {
         let res = self.read_bus(self.regs.pc);
-        self.regs.pc += 1;
+        let (new_pc, overflowing) = self.regs.pc.overflowing_add(1);
+        if overflowing {
+            log::warn!("pc should not overflow")
+        }
+        self.regs.pc = new_pc;
         res
     }
 
