@@ -81,7 +81,7 @@ where
     u16: From<A>,
     A: Address<IORegArea>,
 {
-    fn read(&self, addr: A) -> Result<u8, gb_bus::Error> {
+    fn read(&self, addr: A, _source: Option<Source>) -> Result<u8, gb_bus::Error> {
         match addr.area_type() {
             IORegArea::Hdma1 => Ok(self.src.to_be_bytes()[1]),
             IORegArea::Hdma2 => Ok(self.src.to_be_bytes()[0]),
@@ -96,7 +96,7 @@ where
             _ => Err(Error::SegmentationFault(addr.into())),
         }
     }
-    fn write(&mut self, v: u8, addr: A) -> Result<(), gb_bus::Error> {
+    fn write(&mut self, v: u8, addr: A, _source: Option<Source>) -> Result<(), gb_bus::Error> {
         match addr.area_type() {
             IORegArea::Hdma1 => {
                 self.src = ((v as u16) << 8) | (self.src & 0x00FF);

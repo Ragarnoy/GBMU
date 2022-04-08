@@ -1,17 +1,19 @@
 use gb_bus::{Address, Area, Bus, Error, FileOperation, IORegArea, Source};
 use gb_clock::{Tick, Ticker};
+use gb_ppu::PPUMem;
 
-#[derive(Default)]
 pub struct Dma {
     oam_register: u8,
     oam_transfer: Option<u16>,
+    ppu_mem: PPUMem,
 }
 
 impl Dma {
-    pub fn new() -> Dma {
+    pub fn new(ppu_mem: PPUMem) -> Dma {
         Dma {
             oam_register: 0,
             oam_transfer: None,
+            ppu_mem,
         }
     }
 }
@@ -21,11 +23,11 @@ where
     u16: From<A>,
     A: Address<IORegArea>,
 {
-    fn read(&self, _addr: A) -> Result<u8, Error> {
+    fn read(&self, _addr: A, _source: Option<Source>) -> Result<u8, Error> {
         Ok(self.oam_register)
     }
 
-    fn write(&mut self, v: u8, _addr: A) -> Result<(), Error> {
+    fn write(&mut self, v: u8, _addr: A, _source: Option<Source>) -> Result<(), Error> {
         self.oam_register = v;
         self.oam_transfer = Some(0);
         Ok(())
@@ -40,7 +42,7 @@ impl Ticker for Dma {
     fn tick(&mut self, adr_bus: &mut dyn Bus<u8>) {
         if let Some(step) = self.oam_transfer {
             if step == 0 {
-                adr_bus.lock(Area::Oam, Source::Dma);
+                self.ppu_mem.lock(Area::Oam, Source::Dma);
             }
             let src: u8 = adr_bus
                 .read(((self.oam_register as u16) << 8) + step, Some(Source::Dma))
@@ -60,7 +62,7 @@ impl Ticker for Dma {
                 self.oam_transfer = Some(next_step);
             } else {
                 self.oam_transfer = None;
-                adr_bus.unlock(Area::Oam);
+                self.ppu_mem.unlock(Area::Oam);
             }
         }
     }
