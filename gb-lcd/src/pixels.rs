@@ -1,3 +1,5 @@
+use egui::CtxRef;
+use egui_wgpu_backend::BackendError;
 use pixels::{Error, Pixels, SurfaceTexture};
 use winit::{dpi::PhysicalSize, event::WindowEvent, window::Window};
 
@@ -35,6 +37,46 @@ impl GBPixels {
     /// When the window is requested to closed
     pub fn closed(&self) -> bool {
         self.window.state.closed
+    }
+}
+
+impl GBPixels {
+    pub fn prepare_egui<F>(&mut self, render: F)
+    where
+        F: FnOnce(&CtxRef),
+    {
+        self.window.prepare_egui(render)
+    }
+
+    pub fn render_egui(
+        &mut self,
+        encoder: &mut wgpu::CommandEncoder,
+        render_target: &wgpu::TextureView,
+    ) -> Result<(), BackendError> {
+        let context = self.pixels.context();
+
+        self.window.rpass.update_texture(
+            &context.device,
+            &context.queue,
+            &self.window.egui_ctx.font_image(),
+        );
+        self.window
+            .rpass
+            .update_user_textures(&context.device, &context.queue);
+        self.window.rpass.update_buffers(
+            &context.device,
+            &context.queue,
+            &self.window.paint_jobs,
+            &self.window.screen_descriptor,
+        );
+
+        self.window.rpass.execute(
+            encoder,
+            render_target,
+            &self.window.paint_jobs,
+            &self.window.screen_descriptor,
+            None,
+        )
     }
 }
 
