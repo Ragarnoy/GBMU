@@ -31,7 +31,7 @@ pub fn draw_egui(
             egui::containers::TopBottomPanel::top("Top menu").show(egui_ctx, |ui| {
                 egui::menu::bar(ui, |ui| {
                     ui.set_height(crate::constant::MENU_BAR_SIZE);
-                    ui.style_mut().override_text_style = Some(egui::TextStyle::Heading);
+                    // ui.style_mut().override_text_style = Some(egui::TextStyle::Heading);
                     file::draw_ui(ui, &context.event_proxy);
                     // ui_debug!(ui, context);
                     // ui_settings!(ui, context, options, &mut context.custom_events);
