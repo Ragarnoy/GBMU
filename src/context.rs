@@ -37,16 +37,14 @@ impl Context {
 impl Context {
     pub fn redraw_main_window(&mut self) -> anyhow::Result<()> {
         crate::ui::draw_egui(self);
+        let main_pixels = &self.windows.main.pixels;
 
-        self.windows
-            .main
-            .pixels
-            .render_with(|encoder, render_target, context| {
-                // Render pixels buffer
-                context.scaling_renderer.render(encoder, render_target);
+        main_pixels.render_with(|encoder, render_target, context| {
+            // Render pixels buffer
+            context.scaling_renderer.render(encoder, render_target);
 
-                Ok(())
-            })?;
+            Ok(())
+        })?;
 
         Ok(())
     }
