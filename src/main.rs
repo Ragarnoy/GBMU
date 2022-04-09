@@ -39,11 +39,11 @@ fn main() -> Result<(), Error> {
     let (event_loop, main_window) = init::<GB_SCREEN_WIDTH, GB_SCREEN_HEIGHT>(&opts)?;
     let event_loop_proxy = event_loop.create_proxy();
     let windows = Windows::new(main_window);
-    let mut context = Context::new(windows);
+    let mut context = Context::new(windows, event_loop_proxy);
 
     event_loop.run(move |event, _event_loop, control_flow| match event {
         Event::WindowEvent { window_id, event } => {
-            context.process_window_event(window_id, event, &event_loop_proxy);
+            context.process_window_event(window_id, event);
         }
         Event::UserEvent(event) => handle_custom_event(event, control_flow),
         Event::RedrawRequested(window_id) => {

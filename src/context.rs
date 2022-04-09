@@ -4,11 +4,15 @@ use winit::{event::WindowEvent, event_loop::EventLoopProxy, window::WindowId};
 
 pub struct Context {
     pub windows: Windows,
+    pub event_proxy: EventLoopProxy<CustomEvent>,
 }
 
 impl Context {
-    pub fn new(windows: Windows) -> Self {
-        Self { windows }
+    pub fn new(windows: Windows, event_proxy: EventLoopProxy<CustomEvent>) -> Self {
+        Self {
+            windows,
+            event_proxy,
+        }
     }
 
     pub fn redraw(&mut self, window_id: WindowId) -> anyhow::Result<()> {
@@ -19,14 +23,9 @@ impl Context {
         }
     }
 
-    pub fn process_window_event(
-        &mut self,
-        window_id: WindowId,
-        event: WindowEvent,
-        event_proxy: &EventLoopProxy<CustomEvent>,
-    ) {
+    pub fn process_window_event(&mut self, window_id: WindowId, event: WindowEvent) {
         if window_id == self.windows.main.id() {
-            self.process_main_window_event(event, event_proxy)
+            self.process_main_window_event(event)
         } else {
             panic!("unexpected window id {window_id:?}")
         }
@@ -56,20 +55,18 @@ impl Context {
         Ok(())
     }
 
-    fn process_main_window_event(
-        &mut self,
-        event: WindowEvent,
-        event_proxy: &EventLoopProxy<CustomEvent>,
-    ) {
+    fn process_main_window_event(&mut self, event: WindowEvent) {
         match event {
             WindowEvent::Resized(new_size) => {
                 self.windows.main.resize(new_size);
                 self.windows.main.request_redraw();
             }
-            WindowEvent::CloseRequested => event_proxy
+            WindowEvent::CloseRequested => self
+                .event_proxy
                 .send_event(CustomEvent::Quit)
                 .expect("cannot send quit event"),
-            WindowEvent::DroppedFile(path) => event_proxy
+            WindowEvent::DroppedFile(path) => self
+                .event_proxy
                 .send_event(CustomEvent::LoadFile(path))
                 .expect("cannot send load file event"),
             WindowEvent::CursorMoved { .. }
