@@ -39,8 +39,10 @@ impl Context {
     }
 
     pub fn resize(&mut self, size: PhysicalSize<u32>) {
-        self.screen_descriptor.physical_width = size.width;
-        self.screen_descriptor.physical_height = size.height;
+        if size.height > 0 && size.width > 0 {
+            self.screen_descriptor.physical_width = size.width;
+            self.screen_descriptor.physical_height = size.height;
+        }
     }
 
     pub fn scale_factor(&mut self, scale_factor: f32) {
@@ -85,5 +87,9 @@ impl DrawEgui for Context {
             &self.screen_descriptor,
             None,
         )
+    }
+
+    fn on_event(&mut self, event: &winit::event::WindowEvent) -> bool {
+        self.egui_state.on_event(&self.egui_ctx, event)
     }
 }

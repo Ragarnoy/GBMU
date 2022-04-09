@@ -93,4 +93,8 @@ pub trait DrawEgui {
         render_target: &wgpu::TextureView,
         context: &RenderContext,
     ) -> Result<(), BackendError>;
+
+    /// Handle [winit::event::WindowEvent] window event
+    /// Return `true` when the event was consumed
+    fn on_event(&mut self, event: &winit::event::WindowEvent) -> bool;
 }
