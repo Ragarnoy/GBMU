@@ -58,12 +58,16 @@ fn main() -> Result<(), Error> {
         Event::LoopDestroyed => {
             log::info!("bye bye");
         }
+        Event::MainEventsCleared => {
+            context.windows.main.window.request_redraw();
+        }
         Event::NewEvents(_)
-        | Event::MainEventsCleared
         | Event::Resumed
         | Event::Suspended
         | Event::RedrawEventsCleared
-        | Event::DeviceEvent { .. } => log::debug!("ignore event {event:?}"),
+        | Event::DeviceEvent { .. } => {
+            // log::debug!("ignore event {event:?}");
+        }
     })
 }
 
