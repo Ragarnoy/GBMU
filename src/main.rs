@@ -13,7 +13,7 @@ use config::Config;
 use constant::{GB_SCREEN_HEIGHT, GB_SCREEN_WIDTH};
 use context::Context;
 use custom_event::CustomEvent;
-use gb_lcd::{GBPixels, GBWindow};
+use gb_lcd::GBPixels;
 use logger::init_logger;
 use pixels::Error;
 use windows::Windows;
@@ -73,16 +73,15 @@ fn init<const WIDTH: u32, const HEIGHT: u32>(
     let event_loop = EventLoop::with_user_event();
     let main_window = {
         let size = LogicalSize::new(WIDTH as f64, HEIGHT as f64);
-        let window = WindowBuilder::new()
+        WindowBuilder::new()
             .with_title(constant::APP_NAME)
             .with_inner_size(size)
             .with_min_inner_size(size)
             .build(&event_loop)
-            .expect("cannot build main window");
-        GBWindow::new(window)
+            .expect("cannot build main window")
     };
 
-    let main_window = GBPixels::from_window::<WIDTH, HEIGHT>(main_window)?;
+    let main_window = GBPixels::new::<WIDTH, HEIGHT>(main_window)?;
 
     Ok((event_loop, main_window))
 }
