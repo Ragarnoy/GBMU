@@ -6,6 +6,8 @@ use crate::Opts;
 #[cfg(feature = "debug_render")]
 use native_dialog::FileDialog;
 
+use gb_lcd::DrawEgui;
+
 #[cfg(feature = "debug_fps")]
 macro_rules! ui_fps {
     ($ui:expr, $context:expr, $fps:expr) => {

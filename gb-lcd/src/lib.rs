@@ -6,6 +6,8 @@ mod state;
 pub mod window;
 
 pub use crate::pixels::GBPixels;
+use egui::CtxRef;
+use egui_wgpu_backend::BackendError;
 pub use window::GBWindow;
 use winit::{dpi::PhysicalSize, event::WindowEvent, window::WindowId};
 
@@ -56,4 +58,18 @@ pub trait PseudoPixels {
 pub trait EventProcessing {
     /// Add a event to be processed
     fn process_window_event(&mut self, event: WindowEvent);
+}
+
+pub trait DrawEgui {
+    /// Prepare to render egui
+    fn prepare_egui<F>(&mut self, render: F)
+    where
+        F: FnOnce(&CtxRef);
+
+    /// Render egui
+    fn render_egui(
+        &mut self,
+        encoder: &mut wgpu::CommandEncoder,
+        render_target: &wgpu::TextureView,
+    ) -> Result<(), BackendError>;
 }

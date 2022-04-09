@@ -2,7 +2,7 @@ use egui::{ClippedMesh, CtxRef};
 use egui_wgpu_backend::{BackendError, RenderPass, ScreenDescriptor};
 use winit::{event::WindowEvent, window::Window};
 
-use crate::{state::State, EventProcessing, PseudoPixels, PseudoWindow};
+use crate::{state::State, DrawEgui, EventProcessing, PseudoPixels, PseudoWindow};
 
 pub struct GBWindow {
     pub window: Window,
@@ -91,9 +91,8 @@ impl GBWindow {
     }
 }
 
-impl GBWindow {
-    /// Prepare to render egui
-    pub fn prepare_egui<F>(&mut self, render: F)
+impl DrawEgui for GBWindow {
+    fn prepare_egui<F>(&mut self, render: F)
     where
         F: FnOnce(&CtxRef),
     {
@@ -105,8 +104,7 @@ impl GBWindow {
         self.paint_jobs = self.egui_ctx.tessellate(paint_commands);
     }
 
-    /// Render egui
-    pub fn render_egui(
+    fn render_egui(
         &mut self,
         encoder: &mut wgpu::CommandEncoder,
         render_target: &wgpu::TextureView,
