@@ -1,5 +1,5 @@
 use crate::{custom_event::CustomEvent, windows::Windows};
-use gb_lcd::{EventProcessing, PseudoPixels, PseudoWindow};
+use gb_lcd::{PseudoPixels, PseudoWindow};
 use winit::{event::WindowEvent, event_loop::EventLoopProxy, window::WindowId};
 
 pub struct Context {
@@ -11,7 +11,7 @@ impl Context {
         Self { windows }
     }
 
-    pub fn redraw(&self, window_id: WindowId) -> anyhow::Result<()> {
+    pub fn redraw(&mut self, window_id: WindowId) -> anyhow::Result<()> {
         if window_id == self.windows.main.id() {
             self.redraw_main_window()
         } else {
@@ -35,7 +35,9 @@ impl Context {
 
 /// Context impl for main window
 impl Context {
-    pub fn redraw_main_window(&self) -> anyhow::Result<()> {
+    pub fn redraw_main_window(&mut self) -> anyhow::Result<()> {
+        crate::ui::draw_egui(self);
+
         self.windows
             .main
             .pixels

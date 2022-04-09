@@ -5,18 +5,17 @@ mod custom_event;
 mod logger;
 #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
 mod time_frame;
+mod ui;
 mod windows;
 
 use clap::StructOpt;
 use config::Config;
-use constant::{GB_SCREEN_HEIGHT, GB_SCREEN_WIDTH, TARGET_FPS_X10};
+use constant::{GB_SCREEN_HEIGHT, GB_SCREEN_WIDTH};
 use context::Context;
 use custom_event::CustomEvent;
-use egui::panel;
-use gb_lcd::{EventProcessing, GBPixels, GBWindow, PseudoWindow};
+use gb_lcd::{GBPixels, GBWindow};
 use logger::init_logger;
 use pixels::Error;
-use std::time::Duration;
 use windows::Windows;
 use winit::{
     dpi::LogicalSize,
@@ -24,7 +23,6 @@ use winit::{
     event_loop::{ControlFlow, EventLoop},
     window::WindowBuilder,
 };
-use winit_input_helper::WinitInputHelper;
 
 fn main() -> Result<(), Error> {
     #[cfg(feature = "cgb")]
@@ -70,7 +68,7 @@ fn main() -> Result<(), Error> {
 }
 
 fn init<const WIDTH: u32, const HEIGHT: u32>(
-    config: &Config,
+    _config: &Config,
 ) -> Result<(EventLoop<CustomEvent>, GBPixels), Error> {
     let event_loop = EventLoop::with_user_event();
     let main_window = {

@@ -1,95 +1,10 @@
+use crate::Context;
 #[cfg(feature = "debug_render")]
 use crate::Game;
 #[cfg(feature = "cgb")]
 use crate::Opts;
-use crate::{custom_event::CustomEvent, Context};
-use egui::Ui;
-use gb_dbg::{DEBUGGER_HEIGHT, DEBUGGER_WIDTH};
-use gb_lcd::{render, window::GBWindow};
 #[cfg(feature = "debug_render")]
-use gb_ppu::{
-    SPRITE_LIST_RENDER_HEIGHT, SPRITE_LIST_RENDER_WIDTH, SPRITE_RENDER_HEIGHT, SPRITE_RENDER_WIDTH,
-    TILEMAP_DIM, TILESHEET_HEIGHT, TILESHEET_WIDTH,
-};
 use native_dialog::FileDialog;
-
-macro_rules! replace_windows {
-    ($context:expr, $name:ident, $window:expr) => {
-        $context.windows.$name.replace($window)
-    };
-}
-
-macro_rules! ui_debug {
-    ($ui:expr, $context:expr) => {
-        $ui.menu_button("🔧", |ui| {
-            ui.style_mut().override_text_style = None;
-            if ui.button("Cpu").clicked() && $context.windows.debug.is_none() {
-                replace_windows!($context, debug, new_debug_window(&$context.video));
-            }
-            #[cfg(feature = "debug_render")]
-            {
-                if ui.button("tilesheet").clicked() && $context.windows.tilesheet.is_none() {
-                    replace_windows!($context, tilesheet, new_tilesheep_window(&$context.video));
-                }
-                if ui.button("tilemap").clicked() && $context.windows.tilemap.is_none() {
-                    replace_windows!($context, tilemap, new_tilemap_window(&$context.video));
-                }
-                if ui.button("objects").clicked() && $context.windows.oam.is_none() {
-                    replace_windows!($context, oam, new_objects_window(&$context.video));
-                }
-            }
-        });
-    };
-}
-
-macro_rules! ui_settings {
-    ($ui:expr, $context:expr, $opts:expr, $events:expr) => {
-        $ui.menu_button("⚙", |ui| {
-            ui.style_mut().override_text_style = None;
-            if ui.button("Input").clicked() && $context.windows.input.is_none() {
-                $context.windows.input.replace(
-                    GBWindow::new(
-                        "GBMU Input Settings",
-                        (
-                            GBWindow::dots_to_pixels(&$context.video, 250.0)
-                                .expect("error while computing window size"),
-                            GBWindow::dots_to_pixels(&$context.video, 250.0)
-                                .expect("error while computing window size"),
-                        ),
-                        false,
-                        &$context.video,
-                    )
-                    .expect("Error while building input window"),
-                );
-            }
-            ui.separator();
-            #[cfg(feature = "cgb")]
-            {
-                ui.radio_value(&mut $opts.mode, None, "auto");
-                if ui
-                    .radio_value(
-                        &mut $opts.mode,
-                        Some(crate::Mode::Classic),
-                        crate::Mode::Classic.to_string(),
-                    )
-                    .clicked()
-                {
-                    $events.push(CustomEvent::ChangedMode(crate::Mode::Classic));
-                }
-                if ui
-                    .radio_value(
-                        &mut $opts.mode,
-                        Some(crate::Mode::Color),
-                        crate::Mode::Color.to_string(),
-                    )
-                    .clicked()
-                {
-                    $events.push(CustomEvent::ChangedMode(crate::Mode::Color));
-                }
-            }
-        });
-    };
-}
 
 #[cfg(feature = "debug_fps")]
 macro_rules! ui_fps {
@@ -99,23 +14,25 @@ macro_rules! ui_fps {
     };
 }
 
-pub fn draw_egui<const WIDTH: usize, const HEIGHT: usize>(
-    context: &mut Context<WIDTH, HEIGHT>,
+pub fn draw_egui(
+    context: &mut Context,
     #[cfg(feature = "cgb")] options: &mut Opts,
     #[cfg(feature = "debug_fps")] fps: f64,
 ) {
-    egui::containers::TopBottomPanel::top("Top menu").show(context.windows.main.egui_ctx(), |ui| {
-        egui::menu::bar(ui, |ui| {
-            ui.set_height(render::MENU_BAR_SIZE);
-            ui.style_mut().override_text_style = Some(egui::TextStyle::Heading);
-            ui_file(ui, &mut context.custom_events);
-            ui_debug!(ui, context);
-            ui_settings!(ui, context, options, &mut context.custom_events);
-            ui.style_mut().override_text_style = None;
-            #[cfg(feature = "debug_fps")]
-            ui_fps!(ui, context, fps);
+    context.windows.main.prepare_egui(|egui_ctx| {
+        egui::containers::TopBottomPanel::top("Top menu").show(egui_ctx, |ui| {
+            egui::menu::bar(ui, |ui| {
+                ui.set_height(crate::constant::MENU_BAR_SIZE);
+                ui.style_mut().override_text_style = Some(egui::TextStyle::Heading);
+                // ui_file(ui, &mut context.custom_events);
+                // ui_debug!(ui, context);
+                // ui_settings!(ui, context, options, &mut context.custom_events);
+                // ui.style_mut().override_text_style = None;
+                #[cfg(feature = "debug_fps")]
+                ui_fps!(ui, context, fps);
+            });
         });
-    });
+    })
 }
 
 #[cfg(feature = "debug_render")]
@@ -200,60 +117,6 @@ pub fn draw_ppu_debug_ui<const WIDTH: usize, const HEIGHT: usize>(
             .end_frame()
             .expect("Fail at the end for the oam window");
     }
-}
-
-fn ui_file(ui: &mut Ui, events: &mut Vec<CustomEvent>) {
-    ui.menu_button("💾", |ui| {
-        ui.style_mut().override_text_style = None;
-        if ui.button("Load").clicked() {
-            let file = FileDialog::new()
-                .set_location(
-                    &std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("/")),
-                )
-                .add_filter("rom", &crate::constant::PREFERED_ROM_EXTS)
-                .show_open_single_file();
-            log::debug!("picked romfile: {:?}", file);
-            if let Ok(Some(path)) = file {
-                events.push(CustomEvent::LoadFile(path));
-            }
-        }
-        #[cfg(feature = "save_state")]
-        {
-            use crate::context::game_root_config_path;
-
-            ui.separator();
-            if ui.button("save as").clicked() {
-                let file = FileDialog::new()
-                    .set_location(&game_root_config_path())
-                    .add_filter("save state", &crate::constant::PREFERED_SAVE_STATE_EXT)
-                    .show_save_single_file();
-                log::debug!("picked name for 'save state' file: {:?}", file);
-                if let Ok(Some(path)) = file {
-                    events.push(CustomEvent::SaveState(path));
-                }
-            }
-            if ui.button("load save").clicked() {
-                let file = FileDialog::new()
-                    .set_location(&game_root_config_path())
-                    .add_filter("save state", &crate::constant::PREFERED_SAVE_STATE_EXT)
-                    .show_open_single_file();
-                log::debug!("picked a file to load the state from: {:?}", file);
-                if let Ok(Some(path)) = file {
-                    events.push(CustomEvent::LoadState(path));
-                }
-            }
-        }
-    });
-}
-
-pub fn new_debug_window(video: &sdl2::VideoSubsystem) -> GBWindow {
-    GBWindow::new(
-        "GBMU Debug",
-        (DEBUGGER_WIDTH as u32, DEBUGGER_HEIGHT as u32),
-        false,
-        video,
-    )
-    .expect("Error while building debug window")
 }
 
 #[cfg(feature = "debug_render")]
