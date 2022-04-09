@@ -21,20 +21,24 @@ pub fn draw_egui(
     #[cfg(feature = "cgb")] options: &mut Opts,
     #[cfg(feature = "debug_fps")] fps: f64,
 ) {
-    context.windows.main.prepare_egui(|egui_ctx| {
-        egui::containers::TopBottomPanel::top("Top menu").show(egui_ctx, |ui| {
-            egui::menu::bar(ui, |ui| {
-                ui.set_height(crate::constant::MENU_BAR_SIZE);
-                ui.style_mut().override_text_style = Some(egui::TextStyle::Heading);
-                // ui_file(ui, &mut context.custom_events);
-                // ui_debug!(ui, context);
-                // ui_settings!(ui, context, options, &mut context.custom_events);
-                // ui.style_mut().override_text_style = None;
-                #[cfg(feature = "debug_fps")]
-                ui_fps!(ui, context, fps);
+    context
+        .windows
+        .main
+        .context
+        .prepare_egui(&context.windows.main.window, |egui_ctx| {
+            egui::containers::TopBottomPanel::top("Top menu").show(egui_ctx, |ui| {
+                egui::menu::bar(ui, |ui| {
+                    ui.set_height(crate::constant::MENU_BAR_SIZE);
+                    ui.style_mut().override_text_style = Some(egui::TextStyle::Heading);
+                    // ui_file(ui, &mut context.custom_events);
+                    // ui_debug!(ui, context);
+                    // ui_settings!(ui, context, options, &mut context.custom_events);
+                    // ui.style_mut().override_text_style = None;
+                    #[cfg(feature = "debug_fps")]
+                    ui_fps!(ui, context, fps);
+                });
             });
-        });
-    })
+        })
 }
 
 #[cfg(feature = "debug_render")]

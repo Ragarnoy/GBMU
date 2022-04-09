@@ -1,17 +1,11 @@
-use egui::{ClippedMesh, CtxRef};
-use egui_wgpu_backend::{BackendError, RenderPass, ScreenDescriptor};
 use winit::{event::WindowEvent, window::Window};
 
-use crate::{state::State, DrawEgui, EventProcessing, PseudoPixels, PseudoWindow};
+use crate::{context::Context, state::State, EventProcessing, PseudoPixels, PseudoWindow};
 
 pub struct GBWindow {
     pub window: Window,
 
-    pub egui_ctx: CtxRef,
-    pub egui_state: egui_winit::State,
-    pub screen_descriptor: ScreenDescriptor,
-    pub rpass: RenderPass,
-    pub paint_jobs: Vec<ClippedMesh>,
+    pub context: Context,
 
     pub device: wgpu::Device,
     pub queue: wgpu::Queue,
@@ -58,26 +52,12 @@ impl GBWindow {
         };
         surface.configure(&device, &surface_config);
 
-        let egui_ctx = CtxRef::default();
-        let egui_state = egui_winit::State::from_pixels_per_point(scale_factor as f32);
-        let screen_descriptor = ScreenDescriptor {
-            physical_width: size.width,
-            physical_height: size.height,
-            scale_factor: scale_factor as f32,
-        };
-
-        let rpass = RenderPass::new(&device, surface_format, 1);
-        let paint_jobs = Vec::new();
+        let context = Context::new(&device, surface_format, scale_factor as f32, size);
 
         Self {
             window,
 
-            egui_ctx,
-            egui_state,
-
-            screen_descriptor,
-            rpass,
-            paint_jobs,
+            context,
 
             device,
             queue,
@@ -88,44 +68,6 @@ impl GBWindow {
 
             state: State::default(),
         }
-    }
-}
-
-impl DrawEgui for GBWindow {
-    fn prepare_egui<F>(&mut self, render: F)
-    where
-        F: FnOnce(&CtxRef),
-    {
-        let raw_input = self.egui_state.take_egui_input(&self.window);
-        let (output, paint_commands) = self.egui_ctx.run(raw_input, render);
-
-        self.egui_state
-            .handle_output(&self.window, &self.egui_ctx, output);
-        self.paint_jobs = self.egui_ctx.tessellate(paint_commands);
-    }
-
-    fn render_egui(
-        &mut self,
-        encoder: &mut wgpu::CommandEncoder,
-        render_target: &wgpu::TextureView,
-    ) -> Result<(), BackendError> {
-        self.rpass
-            .update_texture(&self.device, &self.queue, &self.egui_ctx.font_image());
-        self.rpass.update_user_textures(&self.device, &self.queue);
-        self.rpass.update_buffers(
-            &self.device,
-            &self.queue,
-            &self.paint_jobs,
-            &self.screen_descriptor,
-        );
-
-        self.rpass.execute(
-            encoder,
-            render_target,
-            &self.paint_jobs,
-            &self.screen_descriptor,
-            None,
-        )
     }
 }
 
@@ -149,8 +91,7 @@ impl PseudoWindow for GBWindow {
 
 impl PseudoPixels for GBWindow {
     fn resize(&mut self, size: winit::dpi::PhysicalSize<u32>) {
-        self.screen_descriptor.physical_height = size.height;
-        self.screen_descriptor.physical_width = size.width;
+        self.context.resize(size);
     }
 }
 

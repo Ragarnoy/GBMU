@@ -1,6 +1,7 @@
 // pub mod error;
 // pub mod render;
 // mod shader;
+mod context;
 pub mod pixels;
 mod state;
 pub mod window;
@@ -9,7 +10,11 @@ pub use crate::pixels::GBPixels;
 use egui::CtxRef;
 use egui_wgpu_backend::BackendError;
 pub use window::GBWindow;
-use winit::{dpi::PhysicalSize, event::WindowEvent, window::WindowId};
+use winit::{
+    dpi::PhysicalSize,
+    event::WindowEvent,
+    window::{Window, WindowId},
+};
 
 // use error::Error;
 // use sdl2::{video::GLProfile, EventPump, Sdl, VideoSubsystem};
@@ -60,9 +65,14 @@ pub trait EventProcessing {
     fn process_window_event(&mut self, event: WindowEvent);
 }
 
+pub struct RenderContext {
+    device: wgpu::Device,
+    queue: wgpu::Queue,
+}
+
 pub trait DrawEgui {
     /// Prepare to render egui
-    fn prepare_egui<F>(&mut self, render: F)
+    fn prepare_egui<F>(&mut self, window: &Window, render: F)
     where
         F: FnOnce(&CtxRef);
 
@@ -71,5 +81,6 @@ pub trait DrawEgui {
         &mut self,
         encoder: &mut wgpu::CommandEncoder,
         render_target: &wgpu::TextureView,
+        context: &RenderContext,
     ) -> Result<(), BackendError>;
 }
