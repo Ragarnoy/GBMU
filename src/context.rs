@@ -1,5 +1,5 @@
 use crate::{custom_event::CustomEvent, windows::Windows};
-use gb_lcd::{PseudoPixels, PseudoWindow};
+use gb_lcd::{DrawEgui, PseudoPixels, PseudoWindow};
 use winit::{event::WindowEvent, event_loop::EventLoopProxy, window::WindowId};
 
 pub struct Context {
@@ -37,11 +37,18 @@ impl Context {
 impl Context {
     pub fn redraw_main_window(&mut self) -> anyhow::Result<()> {
         crate::ui::draw_egui(self);
-        let main_pixels = &self.windows.main.pixels;
+        let main_pixels = &mut self.windows.main.pixels;
+        let main_context = &mut self.windows.main.context;
 
         main_pixels.render_with(|encoder, render_target, context| {
             // Render pixels buffer
             context.scaling_renderer.render(encoder, render_target);
+
+            main_context.render_egui(
+                encoder,
+                render_target,
+                &gb_lcd::RenderContext::from(context),
+            )?;
 
             Ok(())
         })?;

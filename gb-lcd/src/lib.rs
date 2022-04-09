@@ -7,6 +7,7 @@ mod state;
 pub mod window;
 
 pub use crate::pixels::GBPixels;
+use ::pixels::PixelsContext;
 use egui::CtxRef;
 use egui_wgpu_backend::BackendError;
 pub use window::GBWindow;
@@ -65,9 +66,18 @@ pub trait EventProcessing {
     fn process_window_event(&mut self, event: WindowEvent);
 }
 
-pub struct RenderContext {
-    device: wgpu::Device,
-    queue: wgpu::Queue,
+pub struct RenderContext<'a> {
+    device: &'a wgpu::Device,
+    queue: &'a wgpu::Queue,
+}
+
+impl<'a> From<&'a PixelsContext> for RenderContext<'a> {
+    fn from(ctx: &'a PixelsContext) -> Self {
+        Self {
+            device: &ctx.device,
+            queue: &ctx.queue,
+        }
+    }
 }
 
 pub trait DrawEgui {
