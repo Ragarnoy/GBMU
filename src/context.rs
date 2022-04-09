@@ -35,6 +35,8 @@ impl Context {
 /// Context impl for main window
 impl Context {
     pub fn redraw_main_window(&mut self) -> anyhow::Result<()> {
+        let _ = self.windows.main.pixels.get_frame();
+
         crate::ui::draw_egui(self);
         let main_pixels = &mut self.windows.main.pixels;
         let main_context = &mut self.windows.main.context;
@@ -56,10 +58,20 @@ impl Context {
     }
 
     fn process_main_window_event(&mut self, event: WindowEvent) {
+        if self.windows.main.context.on_event(&event) {
+            return;
+        }
+
         match event {
             WindowEvent::Resized(new_size) => {
                 self.windows.main.resize(new_size);
-                self.windows.main.request_redraw();
+            }
+            WindowEvent::ScaleFactorChanged {
+                scale_factor,
+                new_inner_size,
+            } => {
+                self.windows.main.resize(*new_inner_size);
+                self.windows.main.context.scale_factor(scale_factor as f32);
             }
             WindowEvent::CloseRequested => self
                 .event_proxy
@@ -72,10 +84,13 @@ impl Context {
             WindowEvent::CursorMoved { .. }
             | WindowEvent::CursorEntered { .. }
             | WindowEvent::CursorLeft { .. }
+            | WindowEvent::MouseInput { .. }
             | WindowEvent::AxisMotion { .. }
             | WindowEvent::Moved(_)
             | WindowEvent::Focused(_)
-            | WindowEvent::ModifiersChanged(_) => log::debug!("ignore main window event {event:?}"),
+            | WindowEvent::ModifiersChanged(_) => {
+                // log::debug!("ignore main window event {event:?}")
+            }
             _ => todo!("process main window event {event:?}"),
         }
     }
