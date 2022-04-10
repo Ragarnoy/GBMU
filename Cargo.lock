@@ -972,6 +972,7 @@ dependencies = [
  "egui",
  "gb-bus",
  "gb-clock",
+ "lazy_static",
  "log",
  "modular-bitfield",
  "serde",
