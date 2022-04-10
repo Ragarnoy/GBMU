@@ -29,10 +29,20 @@ impl From<KeyboardInput> for KeyEntry {
 impl KeyEntry {
     pub const A: KeyEntry = KeyEntry::VirtualKeyCode(VirtualKeyCode::A);
     pub const B: KeyEntry = KeyEntry::VirtualKeyCode(VirtualKeyCode::B);
-    pub const Up: KeyEntry = KeyEntry::VirtualKeyCode(VirtualKeyCode::Up);
-    pub const Down: KeyEntry = KeyEntry::VirtualKeyCode(VirtualKeyCode::Down);
-    pub const Left: KeyEntry = KeyEntry::VirtualKeyCode(VirtualKeyCode::Left);
-    pub const Right: KeyEntry = KeyEntry::VirtualKeyCode(VirtualKeyCode::Right);
-    pub const Return: KeyEntry = KeyEntry::VirtualKeyCode(VirtualKeyCode::Return);
-    pub const RShift: KeyEntry = KeyEntry::VirtualKeyCode(VirtualKeyCode::RShift);
+    pub const UP: KeyEntry = KeyEntry::VirtualKeyCode(VirtualKeyCode::Up);
+    pub const DOWN: KeyEntry = KeyEntry::VirtualKeyCode(VirtualKeyCode::Down);
+    pub const LEFT: KeyEntry = KeyEntry::VirtualKeyCode(VirtualKeyCode::Left);
+    pub const RIGHT: KeyEntry = KeyEntry::VirtualKeyCode(VirtualKeyCode::Right);
+    pub const RETURN: KeyEntry = KeyEntry::VirtualKeyCode(VirtualKeyCode::Return);
+    pub const RSHIFT: KeyEntry = KeyEntry::VirtualKeyCode(VirtualKeyCode::RShift);
+}
+
+impl KeyEntry {
+    /// Return the name of the KeyEntry
+    pub fn name(&self) -> String {
+        match self {
+            KeyEntry::ScanCode(code) => format!("{code}"),
+            KeyEntry::VirtualKeyCode(code) => format!("{code:?}"),
+        }
+    }
 }
