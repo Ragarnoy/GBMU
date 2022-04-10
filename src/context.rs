@@ -4,6 +4,7 @@ use winit::{event::WindowEvent, event_loop::EventLoopProxy, window::WindowId};
 
 pub struct Context {
     pub windows: Windows,
+    pub joypad_config: gb_joypad::Config,
     pub event_proxy: EventLoopProxy<CustomEvent>,
 }
 
@@ -11,6 +12,8 @@ impl Context {
     pub fn new(windows: Windows, event_proxy: EventLoopProxy<CustomEvent>) -> Self {
         Self {
             windows,
+            // joypad_config: load_joypad_config(),
+            joypad_config: gb_joypad::Config::default(),
             event_proxy,
         }
     }
