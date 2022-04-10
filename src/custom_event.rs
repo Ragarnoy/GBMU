@@ -1,7 +1,8 @@
 use std::path::PathBuf;
 
 #[cfg(feature = "cgb")]
-use crate::Mode;
+use crate::config::Mode;
+use crate::windows::WindowType;
 
 #[derive(Debug, Clone)]
 pub enum CustomEvent {
@@ -16,8 +17,10 @@ pub enum CustomEvent {
 
     #[cfg(feature = "cgb")]
     /// Event when we want to force a gameboy mode
-    ChangedMode(Mode),
+    ChangedMode(Option<Mode>),
 
+    OpenWindow(WindowType),
+    // CloseWindow(WindowType),
     /// Exit the emulator
     Quit,
 }
