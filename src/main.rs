@@ -26,20 +26,20 @@ use winit::{
 
 fn main() -> Result<(), Error> {
     #[cfg(feature = "cgb")]
-    let mut opts: Config = Config::parse();
+    let mut config: Config = Config::parse();
     #[cfg(not(feature = "cgb"))]
-    let opts: Config = Config::parse();
+    let config: Config = Config::parse();
     // #[cfg(feature = "time_frame")]
     // let mut time_frame_stat = time_frame::TimeStat::default();
     // #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
     // let mut render_time_frame = time_frame::TimeStat::default();
     // let frame_duration_target = Duration::from_nanos(10_000_000_000 / TARGET_FPS_X10);
-    init_logger(opts.log_level);
+    init_logger(config.log_level);
 
-    let (event_loop, main_window) = init::<GB_SCREEN_WIDTH, GB_SCREEN_HEIGHT>(&opts)?;
+    let (event_loop, main_window) = init::<GB_SCREEN_WIDTH, GB_SCREEN_HEIGHT>(&config)?;
     let event_loop_proxy = event_loop.create_proxy();
     let windows = Windows::new(main_window);
-    let mut context = Context::new(windows, event_loop_proxy);
+    let mut context = Context::new(windows, config, event_loop_proxy);
 
     event_loop.run(move |event, _event_loop, control_flow| match event {
         Event::WindowEvent { window_id, event } => {
@@ -116,6 +116,6 @@ fn init<const WIDTH: u32, const HEIGHT: u32>(
 fn handle_custom_event(event: CustomEvent, control_flow: &mut ControlFlow) {
     match event {
         CustomEvent::Quit => *control_flow = ControlFlow::Exit,
-        _ => todo!("unhandle custom event {event:?}"),
+        _ => todo!("unhandled custom event {event:?}"),
     }
 }

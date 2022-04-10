@@ -1,19 +1,21 @@
-use crate::{custom_event::CustomEvent, windows::Windows};
+use crate::{config::Config, custom_event::CustomEvent, windows::Windows};
 use gb_lcd::{DrawEgui, PseudoPixels, PseudoWindow};
 use winit::{event::WindowEvent, event_loop::EventLoopProxy, window::WindowId};
 
 pub struct Context {
     pub windows: Windows,
     pub joypad_config: gb_joypad::Config,
+    pub config: Config,
     pub event_proxy: EventLoopProxy<CustomEvent>,
 }
 
 impl Context {
-    pub fn new(windows: Windows, event_proxy: EventLoopProxy<CustomEvent>) -> Self {
+    pub fn new(windows: Windows, config: Config, event_proxy: EventLoopProxy<CustomEvent>) -> Self {
         Self {
             windows,
             // joypad_config: load_joypad_config(),
             joypad_config: gb_joypad::Config::default(),
+            config,
             event_proxy,
         }
     }
