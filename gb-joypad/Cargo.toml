@@ -4,7 +4,7 @@ version = "0.0.0"
 edition = "2021"
 
 [dependencies]
-winit = "0.26.1"
+winit = { version = "0.26.1", features = ["serde"] }
 egui = "0.16"
 log = { version = "0.4" }
 serde = { version = "1.0", features = ["derive"] }
