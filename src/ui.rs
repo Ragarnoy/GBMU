@@ -1,11 +1,12 @@
 mod file;
+mod settings;
 
 use crate::Context;
 #[cfg(feature = "debug_render")]
 use crate::Game;
 #[cfg(feature = "cgb")]
 use crate::Opts;
-use egui::{Color32, Visuals};
+// use egui::{Color32, Visuals};
 #[cfg(feature = "debug_render")]
 use native_dialog::FileDialog;
 
@@ -88,6 +89,12 @@ pub fn draw_egui(
                     // ui.set_height(crate::constant::MENU_BAR_SIZE);
                     // ui.style_mut().override_text_style = Some(egui::TextStyle::Heading);
                     file::draw_ui(ui, &context.event_proxy);
+                    settings::draw_ui(
+                        ui,
+                        &context.event_proxy,
+                        #[cfg(feature = "cgb")]
+                        &mut context.config,
+                    );
                     // ui_debug!(ui, context);
                     // ui_settings!(ui, context, options, &mut context.custom_events);
                     // ui.style_mut().override_text_style = None;
