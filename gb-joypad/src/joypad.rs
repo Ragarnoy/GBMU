@@ -11,23 +11,10 @@ use std::iter::FromIterator;
 #[derive(Debug)]
 /// Translate events from keyboard input inputs for the gameboy.
 pub struct Joypad {
-    input_map: HashMap<KeyEntry, InputType>,
+    config: Config,
     input_states: HashMap<InputType, bool>,
     mode: Mode,
     reg_val: u8,
-}
-
-lazy_static::lazy_static! {
-    static ref DEFAULT_INPUT_MAP: HashMap<KeyEntry, InputType> = HashMap::from([
-        (KeyEntry::UP, InputType::Up),
-        (KeyEntry::DOWN, InputType::Down),
-        (KeyEntry::LEFT, InputType::Left),
-        (KeyEntry::RIGHT, InputType::Right),
-        (KeyEntry::RETURN, InputType::Start),
-        (KeyEntry::RSHIFT, InputType::Select),
-        (KeyEntry::B, InputType::B),
-        (KeyEntry::A, InputType::A),
-    ]);
 }
 
 impl Joypad {
@@ -36,7 +23,7 @@ impl Joypad {
 
     pub fn from_config(conf: Config) -> Self {
         Joypad {
-            input_map: conf.mapping,
+            config: conf,
             input_states: HashMap::from_iter([
                 (InputType::Up, false),
                 (InputType::Down, false),
@@ -53,22 +40,20 @@ impl Joypad {
     }
 
     pub fn get_config(&self) -> Config {
-        Config {
-            mapping: self.input_map.clone(),
-        }
+        self.config.clone()
     }
 
     /// Map a [KeyEntry] to an [InputType].
     /// Pressing the [KeyEntry] will result in a [InputType] generated
     pub fn map_key_to_input(&mut self, key: KeyEntry, input_type: InputType) {
-        self.input_map.retain(|_, v| v != &input_type);
-        self.input_map.insert(key, input_type);
+        self.config.0.retain(|_, v| v != &input_type);
+        self.config.0.insert(key, input_type);
     }
 
     /// Update the state of the joypad on key event (release / pressed)
     /// Return true when the key event is used by the joypad
     pub fn on_key_event(&mut self, key: KeyEntry, pressed: bool) -> bool {
-        if let Some(input_type) = self.input_map.get(&key) {
+        if let Some(input_type) = self.config.0.get(&key) {
             #[cfg(feature = "debug_state")]
             let mut changed = false;
             #[cfg(feature = "toggle_joypad")]
@@ -110,21 +95,7 @@ impl Joypad {
 
 impl Default for Joypad {
     fn default() -> Self {
-        Joypad {
-            input_map: DEFAULT_INPUT_MAP.clone(),
-            input_states: HashMap::from_iter([
-                (InputType::Up, false),
-                (InputType::Down, false),
-                (InputType::Left, false),
-                (InputType::Right, false),
-                (InputType::Start, false),
-                (InputType::Select, false),
-                (InputType::B, false),
-                (InputType::A, false),
-            ]),
-            mode: Default::default(),
-            reg_val: 0xff,
-        }
+        Self::from_config(Config::default())
     }
 }
 
