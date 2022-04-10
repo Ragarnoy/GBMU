@@ -81,6 +81,12 @@ impl Context {
                 .event_proxy
                 .send_event(CustomEvent::LoadFile(path))
                 .expect("cannot send load file event"),
+            WindowEvent::KeyboardInput { input, .. } => {
+                use gb_joypad::KeyEntry;
+
+                let _key = KeyEntry::from(input);
+                todo!("send keyboard input to joypad");
+            }
             WindowEvent::CursorMoved { .. }
             | WindowEvent::CursorEntered { .. }
             | WindowEvent::CursorLeft { .. }
