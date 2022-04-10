@@ -39,3 +39,9 @@ pub struct Config {
     )]
     pub mode: Option<Mode>,
 }
+
+#[derive(Debug, clap::ArgEnum, Clone, Copy, PartialEq, Eq)]
+pub enum Mode {
+    Color,
+    Classic,
+}
