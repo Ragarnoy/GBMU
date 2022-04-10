@@ -17,4 +17,4 @@ pub const PREFERED_ROM_EXTS: [&str; 3] = ["rom", "gb", "gbc"];
 pub const GB_SCREEN_WIDTH: u32 = 160;
 pub const GB_SCREEN_HEIGHT: u32 = 144;
 
-pub const MENU_BAR_SIZE: f32 = 30.;
+// pub const MENU_BAR_SIZE: f32 = 30.;
