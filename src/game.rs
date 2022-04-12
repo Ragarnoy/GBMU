@@ -2,7 +2,6 @@
 mod save_state;
 mod utils;
 
-use crate::context::Context;
 #[cfg(feature = "cgb")]
 use crate::Mode;
 
@@ -20,7 +19,6 @@ use gb_dbg::{
 };
 use gb_dma::{dma::Dma, hdma::Hdma};
 use gb_joypad::Joypad;
-use gb_lcd::render::{SCREEN_HEIGHT, SCREEN_WIDTH};
 use gb_ppu::Ppu;
 #[cfg(feature = "save_state")]
 use gb_roms::controllers::Full;
@@ -318,11 +316,6 @@ impl Game {
         }
     }
 
-    pub fn draw(&self, context: &mut Context<SCREEN_WIDTH, SCREEN_HEIGHT>) {
-        context.display.update_render(self.ppu.pixels());
-        context.display.draw();
-    }
-
     pub fn update_scheduled_stop(&mut self, flow: std::ops::ControlFlow<Until>) {
         use std::ops::ControlFlow::{Break, Continue};
         match flow {
@@ -552,9 +545,16 @@ impl Drop for Game {
                 .and_then(|mut file| {
                     write_named(&mut file, &self.mbc.borrow().save_partial()).map_err(Error::from)
                 }) {
-                Ok(_) => log::info!("successfuly save mbc data to {}", filename),
+                Ok(_) => log::info!(
+                    "successfuly save mbc data to {}",
+                    filename.to_string_lossy()
+                ),
                 Err(e) => {
-                    log::error!("failed to save mbc data to {}, got error: {}", filename, e)
+                    log::error!(
+                        "failed to save mbc data to {}, got error: {}",
+                        filename.to_string_lossy(),
+                        e
+                    )
                 }
             }
         }
