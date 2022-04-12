@@ -317,7 +317,7 @@ impl PixelFetcher {
                 for color_id in row {
                     self.pixels_sprite.push_front(Pixel::new(
                         color_id,
-                        Some(palette_ref.clone()),
+                        Some(palette_ref),
                         sprite.bg_win_priority(),
                     ));
                 }
@@ -326,11 +326,11 @@ impl PixelFetcher {
         }
     }
 
-    pub fn push_to_fifo(&mut self, fifo: &mut PixelFIFO) -> bool {
+    pub fn push_to_fifo(&mut self, fifo: &mut PixelFIFO, discard_bg_win: bool) -> bool {
         match self.mode {
             FetchMode::Sprite(_) => {
                 if self.pixels_sprite.len() >= 8 && self.internal_tick_sprite % 2 == 1 {
-                    self.mix_to_fifo(fifo)
+                    self.mix_to_fifo(fifo, discard_bg_win)
                 } else {
                     false
                 }
@@ -354,8 +354,8 @@ impl PixelFetcher {
         }
     }
 
-    fn mix_to_fifo(&mut self, fifo: &mut PixelFIFO) -> bool {
-        if fifo.mix(&self.pixels_sprite) {
+    fn mix_to_fifo(&mut self, fifo: &mut PixelFIFO, discard_bg_win: bool) -> bool {
+        if fifo.mix(&self.pixels_sprite, discard_bg_win) {
             self.clear_sprite();
             self.set_mode_to_default();
             true

@@ -236,11 +236,8 @@ impl Ppu {
                 for (i, pixel_value) in pixels_values.iter().rev().enumerate() {
                     if *pixel_value != 0 {
                         let x_img = x + i;
-                        let pixel = Pixel::new(
-                            *pixel_value,
-                            Some(palette.clone()),
-                            sprite.bg_win_priority(),
-                        );
+                        let pixel =
+                            Pixel::new(*pixel_value, Some(palette), sprite.bg_win_priority());
                         let mut rgb: [u8; 3] = pixel.into_color(&lcd_reg).into();
                         if invert_pixel {
                             rgb[0] = 255 - rgb[0];
@@ -296,11 +293,8 @@ impl Ppu {
                 for (i, pixel_value) in pixels_values.iter().rev().enumerate() {
                     if *pixel_value != 0 {
                         let x_img = x + i;
-                        let pixel = Pixel::new(
-                            *pixel_value,
-                            Some(palette.clone()),
-                            sprite.bg_win_priority(),
-                        );
+                        let pixel =
+                            Pixel::new(*pixel_value, Some(palette), sprite.bg_win_priority());
                         let mut rgb: [u8; 3] = pixel.into_color(&lcd_reg).into();
                         if invert_pixel {
                             rgb[0] = 255 - rgb[0];
@@ -481,7 +475,10 @@ impl Ppu {
                     pixels_not_drawn,
                     self.scx as usize & 0xff,
                 );
-                if self.pixel_fetcher.push_to_fifo(&mut self.pixel_fifo) {
+                if self.pixel_fetcher.push_to_fifo(
+                    &mut self.pixel_fifo,
+                    self.cgb_enabled && !lcd_reg.control.bg_win_enable(),
+                ) {
                     Self::check_next_pixel_mode(
                         &lcd_reg,
                         (&mut self.pixel_fetcher, &mut self.pixel_fifo),

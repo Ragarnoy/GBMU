@@ -50,10 +50,16 @@ impl PixelFIFO {
         }
     }
 
-    pub fn mix(&mut self, mix_pixels: &VecDeque<Pixel>) -> bool {
+    pub fn mix(&mut self, mix_pixels: &VecDeque<Pixel>, discard_bg_win: bool) -> bool {
         if self.pixels.len() >= 8 && mix_pixels.len() == 8 {
             for (in_place, mix_pixel) in self.pixels.iter_mut().zip(mix_pixels) {
-                in_place.mix(mix_pixel);
+                if let Some(in_place_palette) = in_place.palette {
+                    if discard_bg_win && !in_place_palette.is_sprite() {
+                        in_place.overwrite(mix_pixel);
+                    } else {
+                        in_place.mix(mix_pixel);
+                    }
+                }
             }
             true
         } else {
@@ -94,7 +100,7 @@ mod tests {
         let mut fifo = PixelFIFO::new();
 
         fifo.append(&mut pixels_0);
-        fifo.mix(&pixels_1);
+        fifo.mix(&pixels_1, false);
         assert_eq!(fifo.pixels.len(), 8, "incorrect pixel amount pushed");
         for (i, pixel) in fifo.pixels.iter().enumerate() {
             if i % 2 == 0 {

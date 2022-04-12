@@ -7,6 +7,7 @@ assets/cpu_instrs
 assets/mooneye-test-suite.tar.xz
 assets/mooneye-test-suite/
 assets/dmg-acid2.gb
+assets/cgb-acid2.gbc
 
 # Rust
 target

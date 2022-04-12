@@ -6,7 +6,7 @@ use std::ops::Deref;
     feature = "serialization",
     derive(serde::Deserialize, serde::Serialize)
 )]
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Copy)]
 pub struct Pixel {
     pub color: u8,
     pub palette: Option<PaletteRef>,
@@ -32,12 +32,16 @@ impl Pixel {
                     && other.color != 0
                     && !(other.background_priority && self.color != 0)
                 {
-                    *self = other.clone();
+                    *self = *other;
                 }
             }
         } else {
-            *self = other.clone();
+            *self = *other;
         }
+    }
+
+    pub fn overwrite(&mut self, other: &Pixel) {
+        *self = *other;
     }
 
     pub fn into_color(self, lcd_reg: &dyn Deref<Target = LcdReg>) -> Color {
