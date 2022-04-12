@@ -24,24 +24,25 @@ impl Pixel {
         }
     }
 
-    pub fn mix(&mut self, other: &Pixel) {
-        if let Some(self_palette) = &self.palette {
-            if let Some(other_palette) = &other.palette {
+    pub fn mix(&mut self, candidate: &Pixel) {
+        if let Some(self_palette) = self.palette {
+            if let Some(candidate_palette) = candidate.palette {
                 if !self_palette.is_sprite()
-                    && other_palette.is_sprite()
-                    && other.color != 0
-                    && !(other.background_priority && self.color != 0)
+                    && candidate_palette.is_sprite()
+                    && candidate.color != 0
+                    && !(self.background_priority && self.color != 0)
+                    && !(candidate.background_priority && self.color != 0)
                 {
-                    *self = *other;
+                    *self = *candidate;
                 }
             }
         } else {
-            *self = *other;
+            *self = *candidate;
         }
     }
 
-    pub fn overwrite(&mut self, other: &Pixel) {
-        *self = *other;
+    pub fn overwrite(&mut self, candidate: &Pixel) {
+        *self = *candidate;
     }
 
     pub fn into_color(self, lcd_reg: &dyn Deref<Target = LcdReg>) -> Color {
