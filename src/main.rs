@@ -45,7 +45,7 @@ fn main() -> Result<(), Error> {
         Event::WindowEvent { window_id, event } => {
             context.process_window_event(window_id, event);
         }
-        Event::UserEvent(event) => handle_custom_event(event, control_flow),
+        Event::UserEvent(event) => handle_custom_event(&mut context, event, control_flow),
         Event::RedrawRequested(window_id) => {
             if context
                 .redraw(window_id)
@@ -113,9 +113,10 @@ fn init<const WIDTH: u32, const HEIGHT: u32>(
     Ok((event_loop, main_window))
 }
 
-fn handle_custom_event(event: CustomEvent, control_flow: &mut ControlFlow) {
+fn handle_custom_event(context: &mut Context, event: CustomEvent, control_flow: &mut ControlFlow) {
     match event {
         CustomEvent::Quit => *control_flow = ControlFlow::Exit,
+        CustomEvent::LoadFile(file) => context.load(file),
         _ => todo!("unhandled custom event {event:?}"),
     }
 }

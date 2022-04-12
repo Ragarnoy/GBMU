@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use crate::{config::Config, custom_event::CustomEvent, windows::Windows};
 use gb_lcd::{DrawEgui, PseudoPixels, PseudoWindow};
 use winit::{event::WindowEvent, event_loop::EventLoopProxy, window::WindowId};
@@ -34,6 +36,12 @@ impl Context {
         } else {
             panic!("unexpected window id {window_id:?}")
         }
+    }
+}
+
+impl Context {
+    pub fn load(&mut self, file: PathBuf) {
+        todo!("load file in game context")
     }
 }
 
