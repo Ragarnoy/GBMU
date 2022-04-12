@@ -709,15 +709,15 @@ impl RegisterDebugOperations for Game {
             #[cfg(feature = "cgb")]
             IORegs::WRamBank => read_bus_reg!(self.addr_bus, Svbk),
             #[cfg(feature = "cgb")]
-            IORegs::VramDma => read_bus_reg!(self.addr_bus, Hdma1),
+            IORegs::Hdma1 => read_bus_reg!(self.addr_bus, Hdma1),
             #[cfg(feature = "cgb")]
-            IORegs::VramDma => read_bus_reg!(self.addr_bus, Hdma2),
+            IORegs::Hdma2 => read_bus_reg!(self.addr_bus, Hdma2),
             #[cfg(feature = "cgb")]
-            IORegs::VramDma => read_bus_reg!(self.addr_bus, Hdma3),
+            IORegs::Hdma3 => read_bus_reg!(self.addr_bus, Hdma3),
             #[cfg(feature = "cgb")]
-            IORegs::VramDma => read_bus_reg!(self.addr_bus, Hdma4),
+            IORegs::Hdma4 => read_bus_reg!(self.addr_bus, Hdma4),
             #[cfg(feature = "cgb")]
-            IORegs::VramDma => read_bus_reg!(self.addr_bus, Hdma5),
+            IORegs::Hdma5 => read_bus_reg!(self.addr_bus, Hdma5),
         }
     }
 
@@ -814,15 +814,15 @@ impl RegisterDebugOperations for Game {
             #[cfg(feature = "cgb")]
             read_bus_reg!(IORegs::WRamBank, self.addr_bus, Svbk),
             #[cfg(feature = "cgb")]
-            read_bus_reg!(IORegs::VramDma, self.addr_bus, Hdma1),
+            read_bus_reg!(IORegs::Hdma1, self.addr_bus, Hdma1),
             #[cfg(feature = "cgb")]
-            read_bus_reg!(IORegs::VramDma, self.addr_bus, Hdma2),
+            read_bus_reg!(IORegs::Hdma2, self.addr_bus, Hdma2),
             #[cfg(feature = "cgb")]
-            read_bus_reg!(IORegs::VramDma, self.addr_bus, Hdma3),
+            read_bus_reg!(IORegs::Hdma3, self.addr_bus, Hdma3),
             #[cfg(feature = "cgb")]
-            read_bus_reg!(IORegs::VramDma, self.addr_bus, Hdma4),
+            read_bus_reg!(IORegs::Hdma4, self.addr_bus, Hdma4),
             #[cfg(feature = "cgb")]
-            read_bus_reg!(IORegs::VramDma, self.addr_bus, Hdma5),
+            read_bus_reg!(IORegs::Hdma5, self.addr_bus, Hdma5),
         ]
     }
 

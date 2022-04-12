@@ -41,7 +41,7 @@ where
 
     fn addr_in_bios_area(addr: usize, cgb_mode: bool) -> bool {
         let in_std_area = addr <= 0xFF;
-        let in_color_area = addr >= 0x200 && addr <= 0x8FF;
+        let in_color_area = (0x200..=0x8FF).contains(&addr);
 
         in_std_area || (cgb_mode && in_color_area)
     }
