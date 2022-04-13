@@ -62,7 +62,9 @@ impl Pixel {
     }
 
     pub fn overwrite(&mut self, candidate: &Pixel) {
-        *self = *candidate;
+        if candidate.color != 0 {
+            *self = *candidate;
+        }
     }
 
     pub fn into_color(self, lcd_reg: &dyn Deref<Target = LcdReg>) -> Color {
