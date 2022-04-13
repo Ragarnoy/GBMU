@@ -284,10 +284,11 @@ impl PixelFetcher {
                         pixel_row.into_iter().collect()
                     };
                     for color_id in pixel_iter {
-                        self.pixels.push_front(Pixel::new(
+                        self.pixels.push_front(Pixel::new_cgb(
                             color_id,
                             Some(attributes.palette_ref()),
                             attributes.bg_priority(),
+                            None,
                         ));
                     }
                 }
@@ -307,6 +308,11 @@ impl PixelFetcher {
         line: usize,
         sprite: &Sprite,
     ) {
+        let oam_index = if lcd_reg.object_priority_cgb() {
+            Some(sprite.oam_index())
+        } else {
+            None
+        };
         match sprite.get_pixels_row(
             line + Sprite::VERTICAL_OFFSET as usize - sprite.y_pos() as usize,
             vram,
@@ -315,10 +321,11 @@ impl PixelFetcher {
         ) {
             Ok((row, palette_ref)) => {
                 for color_id in row {
-                    self.pixels_sprite.push_front(Pixel::new(
+                    self.pixels_sprite.push_front(Pixel::new_cgb(
                         color_id,
                         Some(palette_ref),
                         sprite.bg_win_priority(),
+                        oam_index,
                     ));
                 }
             }

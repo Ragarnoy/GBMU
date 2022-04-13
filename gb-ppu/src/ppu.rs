@@ -371,19 +371,15 @@ impl Ppu {
                                 let bot = top + if lcd_reg.control.obj_size() { 16 } else { 8 };
 
                                 if scanline >= top && scanline < bot {
-                                    if !self.cgb_enabled
-                                        || !self.lcd_reg.borrow().object_priority_cgb()
-                                    {
-                                        for i in 0..self.scanline_sprites.len() {
-                                            let scan_sprite = self.scanline_sprites[i];
+                                    for i in 0..self.scanline_sprites.len() {
+                                        let scan_sprite = self.scanline_sprites[i];
 
-                                            if sprite.x_pos() < scan_sprite.x_pos() {
-                                                self.scanline_sprites.insert(i, sprite);
-                                                if self.scanline_sprites.len() > 10 {
-                                                    self.scanline_sprites.pop();
-                                                }
-                                                return;
+                                        if sprite.x_pos() < scan_sprite.x_pos() {
+                                            self.scanline_sprites.insert(i, sprite);
+                                            if self.scanline_sprites.len() > 10 {
+                                                self.scanline_sprites.pop();
                                             }
+                                            return;
                                         }
                                     }
                                     if self.scanline_sprites.len() < 10 {
@@ -427,7 +423,6 @@ impl Ppu {
                         (x, y),
                         self.pixel_discarded,
                         (self.scx & 7) + 8,
-                        self.cgb_enabled,
                     );
                 }
             } else {
@@ -458,7 +453,6 @@ impl Ppu {
                             (x, y),
                             self.pixel_discarded,
                             pixel_offset,
-                            self.cgb_enabled,
                         );
                     };
                 }
@@ -486,7 +480,6 @@ impl Ppu {
                         (x, y),
                         self.pixel_discarded,
                         pixel_offset,
-                        self.cgb_enabled,
                     );
                 }
             }
@@ -502,7 +495,6 @@ impl Ppu {
         cursor: (u8, u8),
         pixels_discarded: u8,
         pixel_offset: u8,
-        cgb_enabled: bool,
     ) {
         let (x, y) = cursor;
         let (pixel_fetcher, pixel_fifo) = pixel_queues;
@@ -524,34 +516,16 @@ impl Ppu {
 
         // check for sprite eventually
         if pixel_fifo.count() >= 8 {
-            if !cgb_enabled || !lcd_reg.object_priority_cgb() {
-                if let Some(sprite) = sprites.pop() {
-                    let viewport_x_at_sprite_scale = x + Sprite::HORIZONTAL_OFFSET;
-                    let pixels_to_skip_before_viewport = pixel_offset - pixels_discarded;
-                    if viewport_x_at_sprite_scale >= pixels_to_skip_before_viewport
-                        && sprite.x_pos()
-                            == viewport_x_at_sprite_scale - pixels_to_skip_before_viewport
-                    {
-                        pixel_fetcher.set_mode_to_sprite(sprite);
-                        pixel_fifo.enabled = false;
-                    } else {
-                        sprites.push(sprite);
-                    }
-                }
-            } else {
-                for i in 0..sprites.len() {
-                    let scan_sprite = sprites[i];
-                    let viewport_x_at_sprite_scale = x + Sprite::HORIZONTAL_OFFSET;
-                    let pixels_to_skip_before_viewport = pixel_offset - pixels_discarded;
-                    if viewport_x_at_sprite_scale >= pixels_to_skip_before_viewport
-                        && scan_sprite.x_pos()
-                            == viewport_x_at_sprite_scale - pixels_to_skip_before_viewport
-                    {
-                        pixel_fetcher.set_mode_to_sprite(scan_sprite);
-                        pixel_fifo.enabled = false;
-                        sprites.remove(i);
-                        break;
-                    }
+            if let Some(sprite) = sprites.pop() {
+                let viewport_x_at_sprite_scale = x + Sprite::HORIZONTAL_OFFSET;
+                let pixels_to_skip_before_viewport = pixel_offset - pixels_discarded;
+                if viewport_x_at_sprite_scale >= pixels_to_skip_before_viewport
+                    && sprite.x_pos() == viewport_x_at_sprite_scale - pixels_to_skip_before_viewport
+                {
+                    pixel_fetcher.set_mode_to_sprite(sprite);
+                    pixel_fifo.enabled = false;
+                } else {
+                    sprites.push(sprite);
                 }
             }
         }

@@ -66,12 +66,12 @@ impl Oam {
         let bytes: [u8; Sprite::SIZE] = self.data[index..index + Sprite::SIZE]
             .try_into()
             .expect("failed to map sprite's bytes into array");
-        Ok(Sprite::from(bytes))
+        Ok(Sprite::from((pos as u8, bytes)))
     }
 
     /// Return all the sprites contained in memory.
     pub fn collect_all_sprites(&self) -> PPUResult<[Sprite; Self::SPRITE_COUNT]> {
-        let mut sprites = [Sprite::new(); Self::SPRITE_COUNT];
+        let mut sprites = [Sprite::default(); Self::SPRITE_COUNT];
         for (i, sprite) in sprites.iter_mut().enumerate() {
             *sprite = self.read_sprite(i)?;
         }

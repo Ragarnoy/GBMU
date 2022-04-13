@@ -1,7 +1,7 @@
+#[cfg(feature = "cgb")]
+use crate::config::{Config, Mode};
 #[cfg(feature = "debug_render")]
 use crate::Game;
-#[cfg(feature = "cgb")]
-use crate::Opts;
 use crate::{custom_event::CustomEvent, Context};
 use egui::Ui;
 use gb_dbg::{DEBUGGER_HEIGHT, DEBUGGER_WIDTH};
@@ -101,7 +101,7 @@ macro_rules! ui_fps {
 
 pub fn draw_egui<const WIDTH: usize, const HEIGHT: usize>(
     context: &mut Context<WIDTH, HEIGHT>,
-    #[cfg(feature = "cgb")] options: &mut Opts,
+    #[cfg(feature = "cgb")] options: &mut Config,
     #[cfg(feature = "debug_fps")] fps: f64,
 ) {
     egui::containers::TopBottomPanel::top("Top menu").show(context.windows.main.egui_ctx(), |ui| {
