@@ -308,7 +308,7 @@ impl PixelFetcher {
         line: usize,
         sprite: &Sprite,
     ) {
-        let oam_index = if lcd_reg.object_priority_cgb() {
+        let oam_index = if self.cgb_enabled && lcd_reg.object_priority_cgb() {
             Some(sprite.oam_index())
         } else {
             None
