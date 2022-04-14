@@ -1,6 +1,6 @@
 #[cfg(feature = "cgb")]
-use gb_bus::generic::CharDevice;
-use gb_bus::{generic::SimpleRW, AddressBus, Bus, IORegArea, IORegBus, Lock, WorkingRam};
+use gb_bus::generic::{CharDevice, PanicDevice};
+use gb_bus::{generic::SimpleRW, AddressBus, Bus, IORegArea, IORegBus, Source, WorkingRam};
 use gb_clock::{cycles, Clock};
 use gb_cpu::{cpu::Cpu, new_cpu, registers::Registers};
 use gb_dbg::{
@@ -24,7 +24,7 @@ use gb_roms::{
 use gb_timer::Timer;
 #[cfg(feature = "registers_logs")]
 use std::io::BufWriter;
-use std::{cell::RefCell, collections::BTreeMap, fs::File, ops::DerefMut, path::Path, rc::Rc};
+use std::{cell::RefCell, fs::File, ops::DerefMut, path::Path, rc::Rc};
 
 use crate::custom_event::CustomEvent;
 #[cfg(feature = "cgb")]
@@ -148,7 +148,7 @@ impl Game {
             };
             Rc::new(RefCell::new(wrapper))
         };
-        let dma = Rc::new(RefCell::new(Dma::new()));
+        let dma = Rc::new(RefCell::new(Dma::new(ppu.memory())));
         let hdma = Rc::new(RefCell::new(Hdma::default()));
         let serial = Rc::new(RefCell::new(gb_bus::Serial::default()));
 
@@ -195,7 +195,6 @@ impl Game {
             hram,
 
             ie_reg: cpu_io_reg,
-            area_locks: BTreeMap::new(),
         };
         #[cfg(feature = "registers_logs")]
         let logs_file = Game::create_new_file().unwrap();
@@ -445,8 +444,8 @@ impl Game {
     }
 
     #[cfg(feature = "save_state")]
-    fn load_dma(&mut self, dma: Dma) -> anyhow::Result<()> {
-        self.dma = Rc::new(RefCell::new(dma));
+    fn load_dma(&mut self, state: gb_dma::dma::State) -> anyhow::Result<()> {
+        self.dma = Rc::new(RefCell::new(Dma::with_state(state, self.ppu.memory())));
         Ok(())
     }
 
@@ -632,7 +631,7 @@ impl DebugOperations for Game {
 impl MemoryDebugOperations for Game {
     fn read(&self, index: u16) -> u8 {
         self.addr_bus
-            .read(index, Some(Lock::Debugger))
+            .read(index, Some(Source::Debugger))
             .unwrap_or_else(|err| {
                 log::trace!("[DBG-OPS] bus read error at {}: {:?}", index, err);
                 0xff
@@ -646,7 +645,7 @@ macro_rules! read_bus_reg {
     };
 
     ($bus:expr, $addr:expr) => {
-        $bus.read(u16::from($addr), Some(Lock::Debugger))
+        $bus.read(u16::from($addr), Some(Source::Debugger))
             .unwrap_or(0xffu8)
             .into()
     };
@@ -875,7 +874,7 @@ struct SaveState {
     pub timer: Timer,
     pub hram: Vec<u8>,
     pub ppu: Ppu,
-    pub dma: Dma,
+    pub dma: gb_dma::dma::State,
     pub hdma: Hdma,
 }
 
@@ -891,7 +890,7 @@ impl From<&Game> for SaveState {
             timer: *context.timer.borrow(),
             hram: context.hram.borrow().save(),
             ppu: context.ppu.clone(),
-            dma: *context.dma.borrow(),
+            dma: context.dma.borrow().state,
             hdma: *context.hdma.borrow(),
         }
     }

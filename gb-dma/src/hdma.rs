@@ -1,4 +1,4 @@
-use gb_bus::{Address, Bus, Error, FileOperation, IORegArea, Lock};
+use gb_bus::{Address, Bus, Error, FileOperation, IORegArea, Source};
 use gb_clock::{Tick, Ticker};
 use gb_cpu::cpu::Cpu;
 use gb_ppu::{Mode, Ppu};
@@ -41,9 +41,9 @@ impl Hdma {
 
     fn data_transfer(&mut self, adr_bus: &mut dyn Bus<u8>) {
         let v = adr_bus
-            .read(self.src, Some(Lock::Dma))
+            .read(self.src, Some(Source::Dma))
             .expect("memory unavailable during HDMA");
-        if adr_bus.write(self.dest, v, Some(Lock::Dma)).is_err() {
+        if adr_bus.write(self.dest, v, Some(Source::Dma)).is_err() {
             log::error!(
                 "failed to write data '{:x}' at '{:x}' during HDMA",
                 v,
@@ -89,7 +89,7 @@ where
     u16: From<A>,
     A: Address<IORegArea>,
 {
-    fn read(&self, addr: A) -> Result<u8, gb_bus::Error> {
+    fn read(&self, addr: A, _source: Option<Source>) -> Result<u8, gb_bus::Error> {
         match addr.area_type() {
             IORegArea::Hdma1 => Ok(self.src.to_le_bytes()[1]),
             IORegArea::Hdma2 => Ok(self.src.to_le_bytes()[0]),
@@ -104,7 +104,7 @@ where
             _ => Err(Error::SegmentationFault(addr.into())),
         }
     }
-    fn write(&mut self, v: u8, addr: A) -> Result<(), gb_bus::Error> {
+    fn write(&mut self, v: u8, addr: A, _source: Option<Source>) -> Result<(), gb_bus::Error> {
         match addr.area_type() {
             IORegArea::Hdma1 => {
                 self.src = ((v as u16) << 8) | (self.src & 0x00FF);

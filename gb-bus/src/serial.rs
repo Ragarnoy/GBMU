@@ -1,4 +1,4 @@
-use crate::{Address, Error, FileOperation, IORegArea};
+use crate::{Address, Error, FileOperation, IORegArea, Source};
 
 #[derive(Clone, Default)]
 pub struct Serial {
@@ -53,7 +53,7 @@ where
     u16: From<A>,
     A: Address<IORegArea>,
 {
-    fn read(&self, addr: A) -> Result<u8, Error> {
+    fn read(&self, addr: A, _source: Option<Source>) -> Result<u8, Error> {
         match addr.area_type() {
             IORegArea::SB => Ok(self.payload),
             IORegArea::SC => Ok(self.control | Serial::SC_MASK),
@@ -61,7 +61,7 @@ where
         }
     }
 
-    fn write(&mut self, v: u8, addr: A) -> Result<(), Error> {
+    fn write(&mut self, v: u8, addr: A, _source: Option<Source>) -> Result<(), Error> {
         match addr.area_type() {
             IORegArea::SB => self.payload = v,
             IORegArea::SC => {

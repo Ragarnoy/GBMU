@@ -1,4 +1,4 @@
-use gb_bus::{Address, Area, Error, FileOperation};
+use gb_bus::{Address, Area, Error, FileOperation, Source};
 use serde::{Deserialize, Serialize};
 use std::io::{self, Read};
 
@@ -126,7 +126,7 @@ where
     u16: From<A>,
     A: Address<Area>,
 {
-    fn read(&self, addr: A) -> Result<u8, Error> {
+    fn read(&self, addr: A, _source: Option<Source>) -> Result<u8, Error> {
         match addr.area_type() {
             Area::Rom => self.read_rom(u16::from(addr)),
             Area::ExtRam => self.read_ram(u16::from(addr)),
@@ -134,7 +134,7 @@ where
         }
     }
 
-    fn write(&mut self, v: u8, addr: A) -> Result<(), Error> {
+    fn write(&mut self, v: u8, addr: A, _source: Option<Source>) -> Result<(), Error> {
         match addr.area_type() {
             Area::Rom => self.write_rom(v, u16::from(addr)),
             Area::ExtRam => self.write_ram(v, u16::from(addr)),
