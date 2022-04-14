@@ -139,6 +139,18 @@ impl IORegBus {
             .with_area(Wx, ppu)
     }
 
+    #[cfg(feature = "cgb")]
+    pub fn with_ppu_cgb(&mut self, ppu: IORegNode) -> &mut Self {
+        use IORegArea::{Bcpd, Bcps, Ocpd, Ocps, Opri, Vbk};
+
+        self.with_area(Vbk, ppu.clone())
+            .with_area(Opri, ppu.clone())
+            .with_area(Bcps, ppu.clone())
+            .with_area(Bcpd, ppu.clone())
+            .with_area(Ocps, ppu.clone())
+            .with_area(Ocpd, ppu.clone())
+    }
+
     pub fn with_hdma(&mut self, hdma: IORegNode) -> &mut Self {
         self.with_area(IORegArea::Hdma1, hdma.clone())
             .with_area(IORegArea::Hdma2, hdma.clone())
