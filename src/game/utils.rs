@@ -60,6 +60,6 @@ fn game_id(rom_filename: &str) -> String {
             || rom_filename.to_string(),
             |filename| filename.to_string_lossy().to_string(),
         )
-        .replace(" ", "-")
+        .replace(' ', "-")
         .to_lowercase()
 }
