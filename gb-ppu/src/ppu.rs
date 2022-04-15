@@ -17,7 +17,7 @@ use std::cell::RefCell;
 use std::ops::Deref;
 use std::rc::Rc;
 
-type RenderData<const WIDTH: usize, const HEIGHT: usize> = [[[u8; 3]; WIDTH]; HEIGHT];
+pub type ImageRGB<const WIDTH: usize, const HEIGHT: usize> = [[[u8; 3]; WIDTH]; HEIGHT];
 
 struct PixelBorder {
     pub pos: usize,
@@ -51,9 +51,9 @@ pub struct Ppu {
     oam: Rc<RefCell<Oam>>,
     pub lcd_reg: Rc<RefCell<LcdReg>>,
     #[cfg_attr(feature = "serialization", serde(with = "de_ser::pixel_buffer"))]
-    pixels: RenderData<GB_SCREEN_WIDTH, GB_SCREEN_HEIGHT>,
+    pixels: ImageRGB<GB_SCREEN_WIDTH, GB_SCREEN_HEIGHT>,
     #[cfg_attr(feature = "serialization", serde(with = "de_ser::pixel_buffer"))]
-    next_pixels: RenderData<GB_SCREEN_WIDTH, GB_SCREEN_HEIGHT>,
+    next_pixels: ImageRGB<GB_SCREEN_WIDTH, GB_SCREEN_HEIGHT>,
     pixel_fifo: PixelFIFO,
     pixel_fetcher: PixelFetcher,
     state: State,
@@ -99,7 +99,7 @@ impl Ppu {
         PPURegisters::new(Rc::clone(&self.lcd_reg))
     }
 
-    pub fn pixels(&self) -> &RenderData<GB_SCREEN_WIDTH, GB_SCREEN_HEIGHT> {
+    pub fn pixels(&self) -> &ImageRGB<GB_SCREEN_WIDTH, GB_SCREEN_HEIGHT> {
         &self.pixels
     }
 
@@ -120,7 +120,7 @@ impl Ppu {
     /// Create an image of the current tilesheet.
     ///
     /// This function is used for debugging purpose.
-    pub fn tilesheet_image(&self) -> RenderData<TILESHEET_WIDTH, TILESHEET_HEIGHT> {
+    pub fn tilesheet_image(&self) -> ImageRGB<TILESHEET_WIDTH, TILESHEET_HEIGHT> {
         let mut image = [[[255; 3]; TILESHEET_WIDTH]; TILESHEET_HEIGHT];
         let mut x = 0;
         let mut y = 0;
@@ -150,7 +150,7 @@ impl Ppu {
     /// Create an image of the current tilemap.
     ///
     /// This function is used for debugging purpose.
-    pub fn tilemap_image(&self, window: bool) -> RenderData<TILEMAP_DIM, TILEMAP_DIM> {
+    pub fn tilemap_image(&self, window: bool) -> ImageRGB<TILEMAP_DIM, TILEMAP_DIM> {
         let mut image = [[[255; 3]; TILEMAP_DIM]; TILEMAP_DIM];
         let mut x = 0;
         let mut y = 0;
@@ -216,7 +216,7 @@ impl Ppu {
     pub fn sprites_image(
         &self,
         invert_pixel: bool,
-    ) -> RenderData<SPRITE_RENDER_WIDTH, SPRITE_RENDER_HEIGHT> {
+    ) -> ImageRGB<SPRITE_RENDER_WIDTH, SPRITE_RENDER_HEIGHT> {
         let mut image = [[[255; 3]; SPRITE_RENDER_WIDTH]; SPRITE_RENDER_HEIGHT];
         let sprites = self
             .oam
@@ -276,7 +276,7 @@ impl Ppu {
     pub fn sprites_list_image(
         &self,
         invert_pixel: bool,
-    ) -> RenderData<SPRITE_LIST_RENDER_WIDTH, SPRITE_LIST_RENDER_HEIGHT> {
+    ) -> ImageRGB<SPRITE_LIST_RENDER_WIDTH, SPRITE_LIST_RENDER_HEIGHT> {
         let mut image = [[[255; 3]; SPRITE_LIST_RENDER_WIDTH]; SPRITE_LIST_RENDER_HEIGHT];
         let sprites = self
             .oam

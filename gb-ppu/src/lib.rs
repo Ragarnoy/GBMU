@@ -12,7 +12,7 @@ mod test_tools;
 use color::Color;
 pub use drawing::Mode;
 pub use memory::PPUMem;
-pub use ppu::Ppu;
+pub use ppu::{ImageRGB, Ppu};
 pub use registers::PPURegisters;
 use sprite::Sprite;
 
