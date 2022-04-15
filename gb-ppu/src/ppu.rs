@@ -6,17 +6,18 @@ use crate::memory::{Lock, Lockable, Oam, PPUMem, Vram};
 use crate::registers::{LcdReg, PPURegisters};
 use crate::Sprite;
 use crate::{
-    SPRITE_LIST_PER_LINE, SPRITE_LIST_RENDER_HEIGHT, SPRITE_LIST_RENDER_WIDTH,
-    SPRITE_RENDER_HEIGHT, SPRITE_RENDER_WIDTH, TILEMAP_DIM, TILEMAP_TILE_COUNT, TILESHEET_HEIGHT,
-    TILESHEET_TILE_COUNT, TILESHEET_WIDTH,
+    GB_SCREEN_HEIGHT, GB_SCREEN_WIDTH, SPRITE_LIST_PER_LINE, SPRITE_LIST_RENDER_HEIGHT,
+    SPRITE_LIST_RENDER_WIDTH, SPRITE_RENDER_HEIGHT, SPRITE_RENDER_WIDTH, TILEMAP_DIM,
+    TILEMAP_TILE_COUNT, TILESHEET_HEIGHT, TILESHEET_TILE_COUNT, TILESHEET_WIDTH,
 };
 use gb_bus::Bus;
 use gb_clock::{Tick, Ticker};
-use gb_lcd::render::{RenderData, SCREEN_HEIGHT, SCREEN_WIDTH};
 
 use std::cell::RefCell;
 use std::ops::Deref;
 use std::rc::Rc;
+
+type RenderData<const WIDTH: usize, const HEIGHT: usize> = [[[u8; 3]; WIDTH]; HEIGHT];
 
 struct PixelBorder {
     pub pos: usize,
@@ -50,9 +51,9 @@ pub struct Ppu {
     oam: Rc<RefCell<Oam>>,
     pub lcd_reg: Rc<RefCell<LcdReg>>,
     #[cfg_attr(feature = "serialization", serde(with = "de_ser::pixel_buffer"))]
-    pixels: RenderData<SCREEN_WIDTH, SCREEN_HEIGHT>,
+    pixels: RenderData<GB_SCREEN_WIDTH, GB_SCREEN_HEIGHT>,
     #[cfg_attr(feature = "serialization", serde(with = "de_ser::pixel_buffer"))]
-    next_pixels: RenderData<SCREEN_WIDTH, SCREEN_HEIGHT>,
+    next_pixels: RenderData<GB_SCREEN_WIDTH, GB_SCREEN_HEIGHT>,
     pixel_fifo: PixelFIFO,
     pixel_fetcher: PixelFetcher,
     state: State,
@@ -69,8 +70,8 @@ impl Ppu {
             vram: Rc::new(RefCell::new(Vram::new(cgb_enabled))),
             oam: Rc::new(RefCell::new(Oam::new())),
             lcd_reg: Rc::new(RefCell::new(LcdReg::new())),
-            pixels: [[[255; 3]; SCREEN_WIDTH]; SCREEN_HEIGHT],
-            next_pixels: [[[255; 3]; SCREEN_WIDTH]; SCREEN_HEIGHT],
+            pixels: [[[255; 3]; GB_SCREEN_WIDTH]; GB_SCREEN_HEIGHT],
+            next_pixels: [[[255; 3]; GB_SCREEN_WIDTH]; GB_SCREEN_HEIGHT],
             pixel_fifo: PixelFIFO::new(),
             pixel_fetcher: PixelFetcher::new(cgb_enabled),
             state: State::new(),
@@ -98,14 +99,14 @@ impl Ppu {
         PPURegisters::new(Rc::clone(&self.lcd_reg))
     }
 
-    pub fn pixels(&self) -> &RenderData<SCREEN_WIDTH, SCREEN_HEIGHT> {
+    pub fn pixels(&self) -> &RenderData<GB_SCREEN_WIDTH, GB_SCREEN_HEIGHT> {
         &self.pixels
     }
 
     pub fn compute(&mut self) {
-        for j in 0..SCREEN_HEIGHT {
-            for i in 0..SCREEN_WIDTH {
-                if i == 0 || i == SCREEN_WIDTH - 1 || j == 0 || j == SCREEN_HEIGHT - 1 {
+        for j in 0..GB_SCREEN_HEIGHT {
+            for i in 0..GB_SCREEN_WIDTH {
+                if i == 0 || i == GB_SCREEN_WIDTH - 1 || j == 0 || j == GB_SCREEN_HEIGHT - 1 {
                     self.pixels[j][i] = [255, 0, 0];
                 } else if (i + j) % 2 == 0 {
                     self.pixels[j][i] = [0; 3];
@@ -318,7 +319,7 @@ impl Ppu {
     fn vblank(&mut self) {
         if self.state.line() == State::LAST_LINE && self.state.step() == State::LAST_STEP {
             std::mem::swap(&mut self.pixels, &mut self.next_pixels);
-            self.next_pixels = [[[255; 3]; SCREEN_WIDTH]; SCREEN_HEIGHT];
+            self.next_pixels = [[[255; 3]; GB_SCREEN_WIDTH]; GB_SCREEN_HEIGHT];
             self.pixel_fetcher.reset_win_line_counter();
         }
     }
@@ -444,7 +445,7 @@ impl Ppu {
             let pixel_offset = (self.scx & 7) + 8;
             if let Some(Lock::Ppu) = lock {
                 let vram = self.vram.borrow();
-                if self.pixel_fifo.enabled && x < SCREEN_WIDTH as u8 {
+                if self.pixel_fifo.enabled && x < GB_SCREEN_WIDTH as u8 {
                     if let Some(pixel) = self.pixel_fifo.pop() {
                         if self.pixel_fetcher.mode() == FetchMode::Window {
                             self.pixel_discarded = pixel_offset;

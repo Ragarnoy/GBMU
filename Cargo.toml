@@ -49,7 +49,7 @@ rmp-serde = "1.0.0-beta.2"
 clap = { version = "3.0.1", features = ["derive"] }
 anyhow = "1.0"
 gb-lcd = { path = "./gb-lcd" }
-# gb-ppu = { path = "./gb-ppu" }
+gb-ppu = { path = "./gb-ppu" }
 gb-dbg = { path = "./gb-dbg" }
 gb-joypad = { path = "./gb-joypad" }
 gb-bus = { path = "./gb-bus" }
@@ -64,7 +64,7 @@ members = [
   # "gb-dma",
   "gb-clock",
   "gb-roms",
-  # "gb-ppu",
+  "gb-ppu",
   "gb-lcd",
   "gb-cpu",
   "gb-dbg",

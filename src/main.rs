@@ -10,10 +10,10 @@ mod windows;
 
 use clap::StructOpt;
 use config::Config;
-use constant::{GB_SCREEN_HEIGHT, GB_SCREEN_WIDTH};
 use context::Context;
 use custom_event::CustomEvent;
 use gb_lcd::GBPixels;
+use gb_ppu::{GB_SCREEN_HEIGHT, GB_SCREEN_WIDTH};
 use logger::init_logger;
 use pixels::Error;
 use windows::Windows;
@@ -23,6 +23,9 @@ use winit::{
     event_loop::{ControlFlow, EventLoop},
     window::WindowBuilder,
 };
+
+const WIDTH: u32 = GB_SCREEN_WIDTH as u32;
+const HEIGHT: u32 = GB_SCREEN_HEIGHT as u32;
 
 fn main() -> Result<(), Error> {
     #[cfg(feature = "cgb")]
@@ -36,7 +39,7 @@ fn main() -> Result<(), Error> {
     // let frame_duration_target = Duration::from_nanos(10_000_000_000 / TARGET_FPS_X10);
     init_logger(config.log_level);
 
-    let (event_loop, main_window) = init::<GB_SCREEN_WIDTH, GB_SCREEN_HEIGHT>(&config)?;
+    let (event_loop, main_window) = init::<WIDTH, HEIGHT>(&config)?;
     let event_loop_proxy = event_loop.create_proxy();
     let windows = Windows::new(main_window);
     let mut context = Context::new(windows, config, event_loop_proxy);
