@@ -22,7 +22,7 @@ time_stat_samples = []
 debug_fps = ["time_stat_samples"]
 cgb = [
   "gb-bus/cgb",
-  # "gb-ppu/cgb",
+  "gb-ppu/cgb",
   "gb-cpu/cgb",
   "gb-dbg/cgb"
 ]
@@ -31,8 +31,8 @@ save_state = [
   "gb-cpu/serialization",
   "gb-bus/serialization",
   "gb-timer/serialization",
-  # "gb-ppu/serialization",
-  # "gb-dma/serialization",
+  "gb-ppu/serialization",
+  "gb-dma/serialization",
 ]
 
 [dependencies]
@@ -57,11 +57,11 @@ gb-cpu = { path = "./gb-cpu" }
 gb-roms = { path = "./gb-roms" }
 gb-clock = { path = "./gb-clock" }
 gb-timer = { path = "./gb-timer" }
-# gb-dma = { path = "./gb-dma" }
+gb-dma = { path = "./gb-dma" }
 
 [workspace]
 members = [
-  # "gb-dma",
+  "gb-dma",
   "gb-clock",
   "gb-roms",
   "gb-ppu",

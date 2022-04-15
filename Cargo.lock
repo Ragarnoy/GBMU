@@ -966,6 +966,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "gb-dma"
+version = "0.1.0"
+dependencies = [
+ "gb-bus",
+ "gb-clock",
+ "gb-cpu",
+ "gb-ppu",
+ "log",
+ "serde",
+]
+
+[[package]]
 name = "gb-joypad"
 version = "0.0.0"
 dependencies = [
@@ -1059,6 +1071,7 @@ dependencies = [
  "gb-clock",
  "gb-cpu",
  "gb-dbg",
+ "gb-dma",
  "gb-joypad",
  "gb-lcd",
  "gb-ppu",
