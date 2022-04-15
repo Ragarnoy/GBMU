@@ -27,9 +27,6 @@ use std::{
 };
 use windows::Windows;
 
-// const TARGET_FPS_X10: u64 = 597;    // the true value
-const TARGET_FPS_X10: u64 = 600;
-
 #[derive(Debug, clap::ArgEnum, Clone, Copy, PartialEq, Eq)]
 pub enum Mode {
     Color,
@@ -54,7 +51,7 @@ fn main() {
     let mut time_frame_stat = time_frame::TimeStat::default();
     #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
     let mut render_time_frame = time_frame::TimeStat::default();
-    let frame_duration_target = Duration::from_nanos(10_000_000_000 / TARGET_FPS_X10);
+    let frame_duration_target = Duration::from_nanos(10_000_000_000 / constant::TARGET_FPS_X10);
     init_logger(cfg.log_level);
 
     let (mut context, mut game, mut debugger, mut event_pump) = init_gbmu(&cfg);
