@@ -2,6 +2,7 @@ mod config;
 mod constant;
 mod context;
 mod custom_event;
+mod image;
 mod logger;
 #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
 mod time_frame;
