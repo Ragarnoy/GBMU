@@ -47,7 +47,24 @@ impl Context {
 
 impl Context {
     pub fn load(&mut self, file: PathBuf) {
-        todo!("load file in game context")
+        match Game::new(
+            &file,
+            self.joypad_config.clone(),
+            false,
+            #[cfg(feature = "cgb")]
+            self.config.mode,
+        ) {
+            Ok(game) => {
+                self.game.replace(game);
+            }
+            Err(err) => {
+                log::error!(
+                    "Failed to load rom file \"{}\": {}",
+                    file.to_string_lossy(),
+                    err
+                );
+            }
+        };
     }
 }
 

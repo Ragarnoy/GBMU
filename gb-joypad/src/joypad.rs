@@ -39,8 +39,16 @@ impl Joypad {
         }
     }
 
-    pub fn get_config(&self) -> Config {
-        self.config.clone()
+    pub fn load_config(&mut self, conf: Config) {
+        self.config = conf;
+    }
+
+    pub fn config(&self) -> &Config {
+        &self.config
+    }
+
+    pub fn config_mut(&mut self) -> &mut Config {
+        &mut self.config
     }
 
     /// Map a [KeyEntry] to an [InputType].

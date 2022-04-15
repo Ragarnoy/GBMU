@@ -18,7 +18,7 @@ use gb_dbg::{
     until::Until,
 };
 use gb_dma::{dma::Dma, hdma::Hdma};
-use gb_joypad::Joypad;
+use gb_joypad::{Config, Joypad};
 use gb_ppu::Ppu;
 #[cfg(feature = "save_state")]
 use gb_roms::controllers::Full;
@@ -77,7 +77,7 @@ enum ScheduledStop {
 impl Game {
     pub fn new<P: AsRef<Path>>(
         rompath: &P,
-        joypad: Rc<RefCell<Joypad>>,
+        joypad_config: Config,
         stopped: bool,
         #[cfg(feature = "cgb")] forced_mode: Option<Mode>,
     ) -> Result<Game, anyhow::Error> {
@@ -142,6 +142,8 @@ impl Game {
         let dma = Rc::new(RefCell::new(Dma::new(ppu.memory())));
         let hdma = Rc::new(RefCell::new(Hdma::default()));
         let serial = Rc::new(RefCell::new(gb_bus::Serial::default()));
+
+        let joypad = Rc::new(RefCell::new(Joypad::from_config(joypad_config)));
 
         let io_bus = {
             let mut io_bus = IORegBus::default();
