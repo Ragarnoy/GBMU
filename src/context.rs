@@ -17,7 +17,7 @@ use gb_ppu::Ppu;
 #[cfg(feature = "save_state")]
 use gb_roms::controllers::Full;
 use gb_roms::{
-    controllers::{bios, generate_rom_controller, BiosWrapper, Generic, GenericState, Partial},
+    controllers::{cgb_bios, dmg_bios, generate_rom_controller, Generic, GenericState, Partial},
     header::AutoSave,
     Header,
 };
@@ -134,19 +134,15 @@ impl Game {
         };
         let timer = Rc::new(RefCell::new(timer));
         let bios_wrapper = {
-            let bios = Rc::new(RefCell::new(if cfg!(feature = "cgb") {
-                bios::cgb()
+            let mut bios = if cfg!(feature = "cgb") {
+                cgb_bios(mbc.clone())
             } else {
-                bios::dmg()
-            }));
-            let wrapper = if cfg!(feature = "bios") {
-                BiosWrapper::new(bios, mbc.clone())
-            } else {
-                let mut wp = BiosWrapper::new(bios, mbc.clone());
-                wp.bios_enabling_reg = 0xa;
-                wp
+                dmg_bios(mbc.clone())
             };
-            Rc::new(RefCell::new(wrapper))
+            if cfg!(not(feature = "bios")) {
+                bios.bios_enabling_reg = 0xa;
+            };
+            Rc::new(RefCell::new(bios))
         };
         let dma = Rc::new(RefCell::new(Dma::new(ppu.memory())));
         let hdma = Rc::new(RefCell::new(Hdma::default()));

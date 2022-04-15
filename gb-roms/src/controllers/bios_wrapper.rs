@@ -1,4 +1,4 @@
-use super::Bios;
+use super::bios::{self, Bios};
 use gb_bus::{Address, Area, Error, FileOperation, IORegArea, Source};
 use std::{cell::RefCell, rc::Rc};
 
@@ -9,6 +9,7 @@ where
 {
     bios: Rc<RefCell<Bios>>,
     mbc: Rc<RefCell<dyn FileOperation<A, Area>>>,
+    cgb_mode: bool,
     pub bios_enabling_reg: u8,
 }
 
@@ -17,10 +18,15 @@ where
     u16: From<A>,
     A: Address<Area>,
 {
-    pub fn new(bios: Rc<RefCell<Bios>>, mbc: Rc<RefCell<dyn FileOperation<A, Area>>>) -> Self {
+    fn new(
+        bios: Rc<RefCell<Bios>>,
+        mbc: Rc<RefCell<dyn FileOperation<A, Area>>>,
+        cgb_mode: bool,
+    ) -> Self {
         Self {
             bios,
             mbc,
+            cgb_mode,
             bios_enabling_reg: 0,
         }
     }
@@ -31,6 +37,13 @@ where
 
     fn read_bios(&self, addr: A, source: Option<Source>) -> Result<u8, Error> {
         self.bios.borrow().read(addr, source)
+    }
+
+    fn addr_in_bios_area(&self, addr: usize) -> bool {
+        let in_std_area = addr < self.bios.borrow().container.len();
+        let in_color_area = addr >= 0x200 && addr <= 0x8FF;
+
+        in_std_area || (self.cgb_mode && in_color_area)
     }
 
     fn read_mbc(&self, addr: A, source: Option<Source>) -> Result<u8, Error> {
@@ -52,7 +65,7 @@ where
     A: Address<Area>,
 {
     fn read(&self, addr: A, source: Option<Source>) -> Result<u8, Error> {
-        if self.bios_enabled() && addr.get_address() < self.bios.borrow().container.len() {
+        if self.bios_enabled() && self.addr_in_bios_area(addr.get_address()) {
             self.read_bios(addr, source)
         } else {
             self.read_mbc(addr, source)
@@ -60,7 +73,7 @@ where
     }
 
     fn write(&mut self, v: u8, addr: A, source: Option<Source>) -> Result<(), Error> {
-        if self.bios_enabled() && addr.get_address() < self.bios.borrow().container.len() {
+        if self.bios_enabled() && self.addr_in_bios_area(addr.get_address()) {
             self.write_bios(v, addr, source)
         } else {
             self.write_mbc(v, addr, source)
@@ -93,6 +106,22 @@ where
     }
 }
 
+pub fn dmg_bios<A>(mbc: Rc<RefCell<dyn FileOperation<A, Area>>>) -> BiosWrapper<A>
+where
+    u16: From<A>,
+    A: Address<Area>,
+{
+    BiosWrapper::new(Rc::new(RefCell::new(bios::dmg())), mbc, false)
+}
+
+pub fn cgb_bios<A>(mbc: Rc<RefCell<dyn FileOperation<A, Area>>>) -> BiosWrapper<A>
+where
+    u16: From<A>,
+    A: Address<Area>,
+{
+    BiosWrapper::new(Rc::new(RefCell::new(bios::cgb())), mbc, true)
+}
+
 #[cfg(test)]
 mod test {
     use super::{Area, BiosWrapper, FileOperation};
@@ -113,6 +142,7 @@ mod test {
         let mut wrapper = BiosWrapper {
             bios,
             mbc: mbc.clone(),
+            cgb_mode: false,
             bios_enabling_reg: 0,
         };
 
