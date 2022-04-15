@@ -2,9 +2,9 @@ name: Rust
 
 on:
   push:
-    branches: [ develop ]
+    branches: [develop]
   pull_request:
-    branches: [ develop ]
+    branches: [develop]
   workflow_dispatch:
     inputs: {}
 
@@ -93,8 +93,7 @@ jobs:
         run: make bios
 
       - name: Run tests
-        run: cargo test --verbose --workspace
+        run: cargo test --verbose --workspace --lib
 
       - name: Build
         run: cargo build --verbose --workspace
-
