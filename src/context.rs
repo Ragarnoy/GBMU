@@ -139,6 +139,7 @@ impl Context {
             | WindowEvent::AxisMotion { .. }
             | WindowEvent::Moved(_)
             | WindowEvent::Focused(_)
+            | WindowEvent::ReceivedCharacter(_)
             | WindowEvent::ModifiersChanged(_) => {
                 // log::debug!("ignore main window event {event:?}")
             }
