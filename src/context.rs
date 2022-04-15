@@ -1,14 +1,19 @@
 use std::path::PathBuf;
 
-use crate::{config::Config, custom_event::CustomEvent, windows::Windows};
+use crate::{config::Config, custom_event::CustomEvent, game::Game, windows::Windows};
 use gb_lcd::{DrawEgui, PseudoPixels, PseudoWindow};
-use winit::{event::WindowEvent, event_loop::EventLoopProxy, window::WindowId};
+use winit::{
+    event::{ElementState, WindowEvent},
+    event_loop::EventLoopProxy,
+    window::WindowId,
+};
 
 pub struct Context {
     pub windows: Windows,
     pub joypad_config: gb_joypad::Config,
     pub config: Config,
     pub event_proxy: EventLoopProxy<CustomEvent>,
+    game: Option<Game>,
 }
 
 impl Context {
@@ -19,6 +24,7 @@ impl Context {
             joypad_config: gb_joypad::Config::default(),
             config,
             event_proxy,
+            game: None,
         }
     }
 
@@ -97,8 +103,11 @@ impl Context {
             WindowEvent::KeyboardInput { input, .. } => {
                 use gb_joypad::KeyEntry;
 
-                let _key = KeyEntry::from(input);
-                todo!("send keyboard input to joypad");
+                let pressed = input.state == ElementState::Pressed;
+                let key = KeyEntry::from(input);
+                if let Some(ref mut game) = self.game {
+                    game.joypad.borrow_mut().on_key_event(key, pressed);
+                }
             }
             WindowEvent::CursorMoved { .. }
             | WindowEvent::CursorEntered { .. }
