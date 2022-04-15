@@ -2,8 +2,8 @@
 
 ## MVP
 
-- [ ] execute game frame
-- [ ] render ppu frame
+- [x] execute game frame
+- [x] render ppu frame
 
 ## Later
 
