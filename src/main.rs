@@ -13,7 +13,7 @@ use clap::Parser;
 
 use context::{Context, Game};
 #[cfg(feature = "audio")]
-use gb_apu::BUFFER_SIZE;
+use gb_apu::{OUTPUT_CHANNELS_NB, SAMPLES_PER_FRAME, SAMPLE_RATE};
 use gb_dbg::debugger::options::DebuggerOptions;
 use gb_dbg::debugger::{Debugger, DebuggerBuilder};
 use gb_lcd::{render, window::GBWindow};
@@ -328,9 +328,9 @@ fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
 
     #[cfg(feature = "audio")]
     let desired_spec = AudioSpecDesired {
-        freq: Some(44_100),
-        channels: Some(2),
-        samples: Some(BUFFER_SIZE as u16),
+        freq: Some(SAMPLE_RATE as i32),
+        channels: Some(OUTPUT_CHANNELS_NB as u8),
+        samples: Some(SAMPLES_PER_FRAME as u16),
     };
 
     #[cfg(feature = "audio")]

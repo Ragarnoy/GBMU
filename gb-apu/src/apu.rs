@@ -5,7 +5,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     channel::sound_channel::SoundChannel, control::frame_sequencer::FrameSequencer, ChannelType,
-    BUFFER_SIZE,
+    SAMPLES_PER_FRAME,
 };
 
 const NB_CYCLES_512_HZ: u16 = 0x2000;
@@ -15,7 +15,7 @@ pub struct Apu {
     cycle_counter: u16,
     enabled: bool,
     audio_queue: Rc<RefCell<AudioQueue<f32>>>,
-    buffer: [f32; BUFFER_SIZE],
+    buffer: [f32; SAMPLES_PER_FRAME],
     buffer_i: usize,
     sound_channels: Vec<SoundChannel>,
     frame_sequencer: FrameSequencer,
@@ -34,7 +34,7 @@ impl Apu {
             cycle_counter: 0,
             enabled: false,
             audio_queue,
-            buffer: [0.0; BUFFER_SIZE],
+            buffer: [0.0; SAMPLES_PER_FRAME],
             buffer_i: 0,
             sound_channels,
             frame_sequencer: FrameSequencer::default(),
@@ -122,7 +122,7 @@ impl Ticker for Apu {
         if self.cycle_counter % NB_CYCLES_44_100_HZ == 0 {
             self.add_sample();
         }
-        if self.buffer_i >= BUFFER_SIZE {
+        if self.buffer_i >= SAMPLES_PER_FRAME {
             self.queue_audio();
             self.buffer_i = 0;
         }

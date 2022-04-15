@@ -9,4 +9,6 @@ pub enum ChannelType {
     Noise,
 }
 
-pub const BUFFER_SIZE: usize = 2048;
+pub const OUTPUT_CHANNELS_NB: usize = 2;
+pub const SAMPLE_RATE: usize = 44100;
+pub const SAMPLES_PER_FRAME: usize = SAMPLE_RATE / 60 * OUTPUT_CHANNELS_NB;
