@@ -1,5 +1,5 @@
 #[cfg(feature = "cgb")]
-use crate::config::{Config, Mode};
+use crate::config::Config;
 #[cfg(feature = "debug_render")]
 use crate::Game;
 use crate::{custom_event::CustomEvent, Context};
