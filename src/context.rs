@@ -17,7 +17,7 @@ use gb_ppu::Ppu;
 #[cfg(feature = "save_state")]
 use gb_roms::controllers::Full;
 use gb_roms::{
-    controllers::{bios, generate_rom_controller, BiosWrapper, Generic, GenericState, Partial},
+    controllers::{cgb_bios, dmg_bios, generate_rom_controller, Generic, GenericState, Partial},
     header::AutoSave,
     Header,
 };
@@ -134,19 +134,15 @@ impl Game {
         };
         let timer = Rc::new(RefCell::new(timer));
         let bios_wrapper = {
-            let bios = Rc::new(RefCell::new(if cfg!(feature = "cgb") {
-                bios::cgb()
+            let mut bios = if cfg!(feature = "cgb") {
+                cgb_bios(mbc.clone())
             } else {
-                bios::dmg()
-            }));
-            let wrapper = if cfg!(feature = "bios") {
-                BiosWrapper::new(bios, mbc.clone())
-            } else {
-                let mut wp = BiosWrapper::new(bios, mbc.clone());
-                wp.bios_enabling_reg = 0xa;
-                wp
+                dmg_bios(mbc.clone())
             };
-            Rc::new(RefCell::new(wrapper))
+            if cfg!(not(feature = "bios")) {
+                bios.bios_enabling_reg = 0xa;
+            };
+            Rc::new(RefCell::new(bios))
         };
         let dma = Rc::new(RefCell::new(Dma::new(ppu.memory())));
         let hdma = Rc::new(RefCell::new(Hdma::default()));
@@ -713,15 +709,15 @@ impl RegisterDebugOperations for Game {
             #[cfg(feature = "cgb")]
             IORegs::WRamBank => read_bus_reg!(self.addr_bus, Svbk),
             #[cfg(feature = "cgb")]
-            IORegs::VramDma => read_bus_reg!(self.addr_bus, Hdma1),
+            IORegs::Hdma1 => read_bus_reg!(self.addr_bus, Hdma1),
             #[cfg(feature = "cgb")]
-            IORegs::VramDma => read_bus_reg!(self.addr_bus, Hdma2),
+            IORegs::Hdma2 => read_bus_reg!(self.addr_bus, Hdma2),
             #[cfg(feature = "cgb")]
-            IORegs::VramDma => read_bus_reg!(self.addr_bus, Hdma3),
+            IORegs::Hdma3 => read_bus_reg!(self.addr_bus, Hdma3),
             #[cfg(feature = "cgb")]
-            IORegs::VramDma => read_bus_reg!(self.addr_bus, Hdma4),
+            IORegs::Hdma4 => read_bus_reg!(self.addr_bus, Hdma4),
             #[cfg(feature = "cgb")]
-            IORegs::VramDma => read_bus_reg!(self.addr_bus, Hdma5),
+            IORegs::Hdma5 => read_bus_reg!(self.addr_bus, Hdma5),
         }
     }
 
@@ -818,15 +814,15 @@ impl RegisterDebugOperations for Game {
             #[cfg(feature = "cgb")]
             read_bus_reg!(IORegs::WRamBank, self.addr_bus, Svbk),
             #[cfg(feature = "cgb")]
-            read_bus_reg!(IORegs::VramDma, self.addr_bus, Hdma1),
+            read_bus_reg!(IORegs::Hdma1, self.addr_bus, Hdma1),
             #[cfg(feature = "cgb")]
-            read_bus_reg!(IORegs::VramDma, self.addr_bus, Hdma2),
+            read_bus_reg!(IORegs::Hdma2, self.addr_bus, Hdma2),
             #[cfg(feature = "cgb")]
-            read_bus_reg!(IORegs::VramDma, self.addr_bus, Hdma3),
+            read_bus_reg!(IORegs::Hdma3, self.addr_bus, Hdma3),
             #[cfg(feature = "cgb")]
-            read_bus_reg!(IORegs::VramDma, self.addr_bus, Hdma4),
+            read_bus_reg!(IORegs::Hdma4, self.addr_bus, Hdma4),
             #[cfg(feature = "cgb")]
-            read_bus_reg!(IORegs::VramDma, self.addr_bus, Hdma5),
+            read_bus_reg!(IORegs::Hdma5, self.addr_bus, Hdma5),
         ]
     }
 
