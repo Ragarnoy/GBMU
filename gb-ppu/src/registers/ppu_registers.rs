@@ -1,7 +1,7 @@
 use super::LcdReg;
 use crate::error::{PPUError, PPUResult};
 use crate::UNDEFINED_VALUE;
-use gb_bus::{Address, Error, FileOperation, IORegArea};
+use gb_bus::{Address, Error, FileOperation, IORegArea, Source};
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -47,7 +47,7 @@ where
     A: Address<IORegArea>,
     u16: From<A>,
 {
-    fn read(&self, addr: A) -> Result<u8, Error> {
+    fn read(&self, addr: A, _source: Option<Source>) -> Result<u8, Error> {
         #[cfg(feature = "cgb")]
         use IORegArea::{Bcpd, Bcps, Ocpd, Ocps, Opri, Vbk};
         use IORegArea::{Bgp, Dma, LcdControl, LcdStat, Ly, Lyc, Obp0, Obp1, Scx, Scy, Wx, Wy};
@@ -82,7 +82,7 @@ where
         }
     }
 
-    fn write(&mut self, v: u8, addr: A) -> Result<(), Error> {
+    fn write(&mut self, v: u8, addr: A, _source: Option<Source>) -> Result<(), Error> {
         #[cfg(feature = "cgb")]
         use IORegArea::{Bcpd, Bcps, Ocpd, Ocps, Opri, Vbk};
         use IORegArea::{Bgp, Dma, LcdControl, LcdStat, Ly, Lyc, Obp0, Obp1, Scx, Scy, Wx, Wy};
@@ -126,7 +126,7 @@ mod read {
         let ppu_reg = PPURegisters::new(lcd);
 
         let res = ppu_reg
-            .read(TestIORegAddress::control())
+            .read(TestIORegAddress::control(), None)
             .expect("Try reading value from lcd control");
         assert_eq!(res, 0x42, "invalid value from lcd control");
     }
@@ -138,7 +138,7 @@ mod read {
         let ppu_reg = PPURegisters::new(lcd);
 
         let res = ppu_reg
-            .read(TestIORegAddress::stat())
+            .read(TestIORegAddress::stat(), None)
             .expect("Try reading value from lcd dma");
         assert_eq!(res, 0x42, "invalid value from lcd dma");
     }
@@ -150,7 +150,7 @@ mod read {
         let ppu_reg = PPURegisters::new(lcd);
 
         let res = ppu_reg
-            .read(TestIORegAddress::window_pos(1))
+            .read(TestIORegAddress::window_pos(1), None)
             .expect("Try reading value from lcd window_pos");
         assert_eq!(res, 0x42, "invalid value from lcd window_pos");
     }
@@ -171,10 +171,10 @@ mod write {
         let mut ppu_reg = PPURegisters::new(lcd);
 
         ppu_reg
-            .write(0b1111_1111, TestIORegAddress::stat())
+            .write(0b1111_1111, TestIORegAddress::stat(), None)
             .expect("Try write value into lcd stat");
         let res = ppu_reg
-            .read(TestIORegAddress::stat())
+            .read(TestIORegAddress::stat(), None)
             .expect("Try reading value from lcd stat");
         assert_eq!(res, 0b0111_1000, "invalid value from lcd stat");
     }
@@ -186,10 +186,10 @@ mod write {
         let mut ppu_reg = PPURegisters::new(lcd);
 
         ppu_reg
-            .write(0x42, TestIORegAddress::palette(2))
+            .write(0x42, TestIORegAddress::palette(2), None)
             .expect("Try write value into lcd palette");
         let res = ppu_reg
-            .read(TestIORegAddress::palette(2))
+            .read(TestIORegAddress::palette(2), None)
             .expect("Try reading value from lcd palette");
         assert_eq!(res, 0x42, "invalid value from lcd palette");
     }
@@ -202,23 +202,23 @@ mod write {
 
         for pos in 0..4 {
             ppu_reg
-                .write(0x42, TestIORegAddress::scrolling(pos))
+                .write(0x42, TestIORegAddress::scrolling(pos), None)
                 .expect("Try write value into lcd scrolling");
         }
         let res = ppu_reg
-            .read(TestIORegAddress::scrolling(0))
+            .read(TestIORegAddress::scrolling(0), None)
             .expect("Try reading value from lcd scrolling");
         assert_eq!(res, 0x42, "invalid value from lcd scrolling");
         let res = ppu_reg
-            .read(TestIORegAddress::scrolling(1))
+            .read(TestIORegAddress::scrolling(1), None)
             .expect("Try reading value from lcd scrolling");
         assert_eq!(res, 0x42, "invalid value from lcd scrolling");
         let res = ppu_reg
-            .read(TestIORegAddress::scrolling(2))
+            .read(TestIORegAddress::scrolling(2), None)
             .expect("Try reading value from lcd scrolling");
         assert_eq!(res, 0x00, "invalid value from lcd scrolling");
         let res = ppu_reg
-            .read(TestIORegAddress::scrolling(3))
+            .read(TestIORegAddress::scrolling(3), None)
             .expect("Try reading value from lcd scrolling");
         assert_eq!(res, 0x42, "invalid value from lcd scrolling");
     }

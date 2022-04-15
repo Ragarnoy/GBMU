@@ -21,9 +21,9 @@ impl Color {
     fn rgb_scale(byte0: u8, byte1: u8) -> [u8; 3] {
         let color_bytes = ((byte1 as u16) << 8) | byte0 as u16;
         [
-            (color_bytes & Self::RED_MASK) as u8 * 255 / 31,
-            (color_bytes & Self::GREEN_MASK >> 5) as u8 * 255 / 31,
-            (color_bytes & Self::BLUE_MASK >> 10) as u8 * 255 / 31,
+            ((color_bytes & Self::RED_MASK) as f32 * 255.0 / 31.0) as u8,
+            (((color_bytes & Self::GREEN_MASK) >> 5) as f32 * 255.0 / 31.0) as u8,
+            (((color_bytes & Self::BLUE_MASK) >> 10) as f32 * 255.0 / 31.0) as u8,
         ]
     }
 }

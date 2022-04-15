@@ -1,4 +1,4 @@
-use gb_bus::{Address, Area, Error, FileOperation, IORegArea};
+use gb_bus::{Address, Area, Error, FileOperation, IORegArea, Source};
 
 #[cfg_attr(
     feature = "serialization",
@@ -59,11 +59,11 @@ where
     u16: From<A>,
     A: Address<Area>,
 {
-    fn read(&self, _addr: A) -> Result<u8, gb_bus::Error> {
+    fn read(&self, _addr: A, _source: Option<Source>) -> Result<u8, gb_bus::Error> {
         Ok(IORegisters::FLAG_MASK | self.enable_mask)
     }
 
-    fn write(&mut self, v: u8, _addr: A) -> Result<(), gb_bus::Error> {
+    fn write(&mut self, v: u8, _addr: A, _source: Option<Source>) -> Result<(), gb_bus::Error> {
         self.enable_mask = v & (!IORegisters::FLAG_MASK);
         Ok(())
     }
@@ -74,7 +74,7 @@ where
     u16: From<A>,
     A: Address<IORegArea>,
 {
-    fn read(&self, addr: A) -> Result<u8, Error> {
+    fn read(&self, addr: A, _source: Option<Source>) -> Result<u8, Error> {
         match addr.area_type() {
             IORegArea::IF => Ok(IORegisters::FLAG_MASK | self.flag),
             #[cfg(feature = "cgb")]
@@ -86,7 +86,7 @@ where
         }
     }
 
-    fn write(&mut self, v: u8, addr: A) -> Result<(), gb_bus::Error> {
+    fn write(&mut self, v: u8, addr: A, _source: Option<Source>) -> Result<(), gb_bus::Error> {
         match addr.area_type() {
             IORegArea::IF => self.flag = v & !(IORegisters::FLAG_MASK),
             #[cfg(feature = "cgb")]

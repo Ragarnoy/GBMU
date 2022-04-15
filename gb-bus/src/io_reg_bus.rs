@@ -1,4 +1,4 @@
-use crate::{Addr, Address, Area, Error, FileOperation, IORegArea};
+use crate::{Addr, Address, Area, Error, FileOperation, IORegArea, Source};
 use std::{cell::RefCell, collections::BTreeMap, rc::Rc};
 
 macro_rules! new_chardev {
@@ -20,32 +20,34 @@ where
     u16: From<A>,
     A: Address<Area> + std::fmt::Debug,
 {
-    fn read(&self, address: A) -> Result<u8, Error> {
+    fn read(&self, address: A, source: Option<Source>) -> Result<u8, Error> {
         let addr: u16 = address.into();
         let reg = IORegArea::try_from(addr).map_err(|_e| Error::BusError(addr))?;
 
         if let Some(area) = self.areas.get(&reg) {
             #[cfg(feature = "trace_bus_read")]
-            log::trace!("reading at {:4x} in area {:?}", addr, reg);
-            area.borrow().read(Addr::byte_reg(reg, addr))
+            log::trace!("reading at {:4x} in area {:?} from {:?}", addr, reg, source);
+            area.borrow().read(Addr::byte_reg(reg, addr), source)
         } else {
             Err(Error::BusError(addr))
         }
     }
 
-    fn write(&mut self, v: u8, address: A) -> Result<(), Error> {
+    fn write(&mut self, v: u8, address: A, source: Option<Source>) -> Result<(), Error> {
         let addr: u16 = address.into();
         let reg = IORegArea::try_from(addr).map_err(|_e| Error::InvalidIORegAddress(addr))?;
 
         if let Some(area) = self.areas.get_mut(&reg) {
             #[cfg(feature = "trace_bus_write")]
             log::trace!(
-                "writing at {:4x} the value {:2x} in area {:?}",
+                "writing at {:4x} the value {:2x} in area {:?} from {:?}",
                 addr,
                 v,
-                reg
+                reg,
+                source
             );
-            area.borrow_mut().write(v, Addr::byte_reg(reg, addr))
+            area.borrow_mut()
+                .write(v, Addr::byte_reg(reg, addr), source)
         } else {
             Err(Error::BusError(addr))
         }
@@ -135,6 +137,18 @@ impl IORegBus {
             .with_area(Obp1, ppu.clone())
             .with_area(Wy, ppu.clone())
             .with_area(Wx, ppu)
+    }
+
+    #[cfg(feature = "cgb")]
+    pub fn with_ppu_cgb(&mut self, ppu: IORegNode) -> &mut Self {
+        use IORegArea::{Bcpd, Bcps, Ocpd, Ocps, Opri, Vbk};
+
+        self.with_area(Vbk, ppu.clone())
+            .with_area(Opri, ppu.clone())
+            .with_area(Bcps, ppu.clone())
+            .with_area(Bcpd, ppu.clone())
+            .with_area(Ocps, ppu.clone())
+            .with_area(Ocpd, ppu.clone())
     }
 
     pub fn with_hdma(&mut self, hdma: IORegNode) -> &mut Self {

@@ -3,7 +3,7 @@ use crate::{
     utils::{register_from_state, trigger_interrupt, Mode},
     Config, InputType,
 };
-use gb_bus::{Address, Bus, Error, FileOperation, IORegArea};
+use gb_bus::{Address, Bus, Error, FileOperation, IORegArea, Source};
 use gb_clock::{Tick, Ticker};
 use std::collections::HashMap;
 use std::iter::FromIterator;
@@ -104,7 +104,7 @@ where
     u16: From<A>,
     A: Address<IORegArea>,
 {
-    fn write(&mut self, v: u8, addr: A) -> Result<(), Error> {
+    fn write(&mut self, v: u8, addr: A, _source: Option<Source>) -> Result<(), Error> {
         if IORegArea::Joy == addr.area_type() {
             let v = !v & Self::WRITABLE_BITS;
             self.mode = Mode::from(v);
@@ -114,7 +114,7 @@ where
         }
     }
 
-    fn read(&self, addr: A) -> Result<u8, Error> {
+    fn read(&self, addr: A, _source: Option<Source>) -> Result<u8, Error> {
         if IORegArea::Joy == addr.area_type() {
             Ok(Self::READ_MASK | self.reg_val)
         } else {

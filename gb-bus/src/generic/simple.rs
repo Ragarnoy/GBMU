@@ -1,4 +1,5 @@
-use crate::{area::Area, error::Error, io_reg_area::IORegArea, Addr, Address, FileOperation};
+use crate::Source;
+use crate::{area::Area, error::Error, io_reg_area::IORegArea, Address, FileOperation};
 
 pub struct SimpleRW<const SIZE: usize> {
     store: [u8; SIZE],
@@ -22,8 +23,12 @@ impl<const SIZE: usize> TryFrom<Vec<u8>> for SimpleRW<SIZE> {
     }
 }
 
-impl<const SIZE: usize> FileOperation<Addr<Area>, Area> for SimpleRW<SIZE> {
-    fn write(&mut self, v: u8, addr: Addr<Area>) -> Result<(), Error> {
+impl<A, const SIZE: usize> FileOperation<A, Area> for SimpleRW<SIZE>
+where
+    u16: From<A>,
+    A: Address<Area>,
+{
+    fn write(&mut self, v: u8, addr: A, _source: Option<Source>) -> Result<(), Error> {
         let address = addr.get_address();
         #[cfg(feature = "trace_simple_rw_write")]
         log::trace!(
@@ -36,7 +41,7 @@ impl<const SIZE: usize> FileOperation<Addr<Area>, Area> for SimpleRW<SIZE> {
         Ok(())
     }
 
-    fn read(&self, addr: Addr<Area>) -> Result<u8, Error> {
+    fn read(&self, addr: A, _source: Option<Source>) -> Result<u8, Error> {
         let address = addr.get_address();
         #[cfg(feature = "trace_simple_rw_read")]
         log::trace!("reading value abs={:x}, rel={:x}", u16::from(addr), address);
@@ -44,8 +49,12 @@ impl<const SIZE: usize> FileOperation<Addr<Area>, Area> for SimpleRW<SIZE> {
     }
 }
 
-impl<const SIZE: usize> FileOperation<Addr<IORegArea>, IORegArea> for SimpleRW<SIZE> {
-    fn write(&mut self, v: u8, addr: Addr<IORegArea>) -> Result<(), Error> {
+impl<A, const SIZE: usize> FileOperation<A, IORegArea> for SimpleRW<SIZE>
+where
+    u16: From<A>,
+    A: Address<IORegArea>,
+{
+    fn write(&mut self, v: u8, addr: A, _source: Option<Source>) -> Result<(), Error> {
         let address = addr.get_address();
         #[cfg(feature = "trace_simple_rw_write")]
         log::trace!(
@@ -58,7 +67,7 @@ impl<const SIZE: usize> FileOperation<Addr<IORegArea>, IORegArea> for SimpleRW<S
         Ok(())
     }
 
-    fn read(&self, addr: Addr<IORegArea>) -> Result<u8, Error> {
+    fn read(&self, addr: A, _source: Option<Source>) -> Result<u8, Error> {
         let address = addr.get_address();
         #[cfg(feature = "trace_simple_rw_read")]
         log::trace!("reading value abs={:x}, rel={:x}", u16::from(addr), address);

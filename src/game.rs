@@ -7,7 +7,7 @@ use crate::Mode;
 
 #[cfg(feature = "cgb")]
 use gb_bus::generic::{CharDevice, PanicDevice};
-use gb_bus::{generic::SimpleRW, AddressBus, Bus, IORegArea, IORegBus, Lock, WorkingRam};
+use gb_bus::{generic::SimpleRW, AddressBus, Bus, IORegArea, IORegBus, Source, WorkingRam};
 use gb_clock::{cycles, Clock};
 use gb_cpu::{cpu::Cpu, new_cpu, registers::Registers};
 use gb_dbg::{
@@ -23,7 +23,7 @@ use gb_ppu::Ppu;
 #[cfg(feature = "save_state")]
 use gb_roms::controllers::Full;
 use gb_roms::{
-    controllers::{bios, BiosWrapper, Generic},
+    controllers::{cgb_bios, dmg_bios, Generic},
     header::AutoSave,
     Header,
 };
@@ -34,7 +34,7 @@ use utils::{game_save_path, mbc_with_save_state};
 
 #[cfg(feature = "registers_logs")]
 use std::io::BufWriter;
-use std::{cell::RefCell, collections::BTreeMap, fs::File, ops::DerefMut, path::Path, rc::Rc};
+use std::{cell::RefCell, fs::File, ops::DerefMut, path::Path, rc::Rc};
 
 pub struct Game {
     pub romname: String,
@@ -129,21 +129,17 @@ impl Game {
         };
         let timer = Rc::new(RefCell::new(timer));
         let bios_wrapper = {
-            let bios = Rc::new(RefCell::new(if cfg!(feature = "cgb") {
-                bios::cgb()
+            let mut bios = if cfg!(feature = "cgb") {
+                cgb_bios(mbc.clone())
             } else {
-                bios::dmg()
-            }));
-            let wrapper = if cfg!(feature = "bios") {
-                BiosWrapper::new(bios, mbc.clone())
-            } else {
-                let mut wp = BiosWrapper::new(bios, mbc.clone());
-                wp.bios_enabling_reg = 0xa;
-                wp
+                dmg_bios(mbc.clone())
             };
-            Rc::new(RefCell::new(wrapper))
+            if cfg!(not(feature = "bios")) {
+                bios.bios_enabling_reg = 0xa;
+            };
+            Rc::new(RefCell::new(bios))
         };
-        let dma = Rc::new(RefCell::new(Dma::new()));
+        let dma = Rc::new(RefCell::new(Dma::new(ppu.memory())));
         let hdma = Rc::new(RefCell::new(Hdma::default()));
         let serial = Rc::new(RefCell::new(gb_bus::Serial::default()));
 
@@ -191,7 +187,6 @@ impl Game {
             hram,
 
             ie_reg: cpu_io_reg,
-            area_locks: BTreeMap::new(),
         };
         #[cfg(feature = "registers_logs")]
         let logs_file = Game::create_new_file().unwrap();
@@ -436,8 +431,8 @@ impl Game {
     }
 
     #[cfg(feature = "save_state")]
-    fn load_dma(&mut self, dma: Dma) -> anyhow::Result<()> {
-        self.dma = Rc::new(RefCell::new(dma));
+    fn load_dma(&mut self, state: gb_dma::dma::State) -> anyhow::Result<()> {
+        self.dma = Rc::new(RefCell::new(Dma::with_state(state, self.ppu.memory())));
         Ok(())
     }
 
@@ -570,7 +565,7 @@ impl DebugOperations for Game {
 impl MemoryDebugOperations for Game {
     fn read(&self, index: u16) -> u8 {
         self.addr_bus
-            .read(index, Some(Lock::Debugger))
+            .read(index, Some(Source::Debugger))
             .unwrap_or_else(|err| {
                 log::trace!("[DBG-OPS] bus read error at {}: {:?}", index, err);
                 0xff
@@ -584,7 +579,7 @@ macro_rules! read_bus_reg {
     };
 
     ($bus:expr, $addr:expr) => {
-        $bus.read(u16::from($addr), Some(Lock::Debugger))
+        $bus.read(u16::from($addr), Some(Source::Debugger))
             .unwrap_or(0xffu8)
             .into()
     };
@@ -652,15 +647,15 @@ impl RegisterDebugOperations for Game {
             #[cfg(feature = "cgb")]
             IORegs::WRamBank => read_bus_reg!(self.addr_bus, Svbk),
             #[cfg(feature = "cgb")]
-            IORegs::VramDma => read_bus_reg!(self.addr_bus, Hdma1),
+            IORegs::Hdma1 => read_bus_reg!(self.addr_bus, Hdma1),
             #[cfg(feature = "cgb")]
-            IORegs::VramDma => read_bus_reg!(self.addr_bus, Hdma2),
+            IORegs::Hdma2 => read_bus_reg!(self.addr_bus, Hdma2),
             #[cfg(feature = "cgb")]
-            IORegs::VramDma => read_bus_reg!(self.addr_bus, Hdma3),
+            IORegs::Hdma3 => read_bus_reg!(self.addr_bus, Hdma3),
             #[cfg(feature = "cgb")]
-            IORegs::VramDma => read_bus_reg!(self.addr_bus, Hdma4),
+            IORegs::Hdma4 => read_bus_reg!(self.addr_bus, Hdma4),
             #[cfg(feature = "cgb")]
-            IORegs::VramDma => read_bus_reg!(self.addr_bus, Hdma5),
+            IORegs::Hdma5 => read_bus_reg!(self.addr_bus, Hdma5),
         }
     }
 
@@ -757,15 +752,15 @@ impl RegisterDebugOperations for Game {
             #[cfg(feature = "cgb")]
             read_bus_reg!(IORegs::WRamBank, self.addr_bus, Svbk),
             #[cfg(feature = "cgb")]
-            read_bus_reg!(IORegs::VramDma, self.addr_bus, Hdma1),
+            read_bus_reg!(IORegs::Hdma1, self.addr_bus, Hdma1),
             #[cfg(feature = "cgb")]
-            read_bus_reg!(IORegs::VramDma, self.addr_bus, Hdma2),
+            read_bus_reg!(IORegs::Hdma2, self.addr_bus, Hdma2),
             #[cfg(feature = "cgb")]
-            read_bus_reg!(IORegs::VramDma, self.addr_bus, Hdma3),
+            read_bus_reg!(IORegs::Hdma3, self.addr_bus, Hdma3),
             #[cfg(feature = "cgb")]
-            read_bus_reg!(IORegs::VramDma, self.addr_bus, Hdma4),
+            read_bus_reg!(IORegs::Hdma4, self.addr_bus, Hdma4),
             #[cfg(feature = "cgb")]
-            read_bus_reg!(IORegs::VramDma, self.addr_bus, Hdma5),
+            read_bus_reg!(IORegs::Hdma5, self.addr_bus, Hdma5),
         ]
     }
 

@@ -2,7 +2,7 @@ use gb_roms::{
     controllers::{generate_rom_controller, Generic, GenericState, Partial},
     Header,
 };
-use std::{fs::File, path::PathBuf, str::FromStr};
+use std::{fs::File, path::Path};
 
 /// Return an initalised MBCs with it auto game save if possible
 pub(crate) fn mbc_with_save_state(
