@@ -1,6 +1,9 @@
 use std::path::PathBuf;
 
-use crate::{config::Config, custom_event::CustomEvent, game::Game, windows::Windows};
+use crate::{
+    config::Config, custom_event::CustomEvent, game::Game, image::load_image_to_frame,
+    windows::Windows,
+};
 use gb_lcd::{DrawEgui, PseudoPixels, PseudoWindow};
 use winit::{
     event::{ElementState, WindowEvent},
@@ -13,7 +16,7 @@ pub struct Context {
     pub joypad_config: gb_joypad::Config,
     pub config: Config,
     pub event_proxy: EventLoopProxy<CustomEvent>,
-    game: Option<Game>,
+    pub game: Option<Game>,
 }
 
 impl Context {
@@ -71,12 +74,15 @@ impl Context {
 /// Context impl for main window
 impl Context {
     pub fn redraw_main_window(&mut self) -> anyhow::Result<()> {
-        let _ = self.windows.main.pixels.get_frame();
-
         crate::ui::draw_egui(self);
         let main_pixels = &mut self.windows.main.pixels;
         let main_context = &mut self.windows.main.context;
 
+        if let Some(ref game) = self.game {
+            let image = game.ppu.pixels();
+            let frame = main_pixels.get_frame();
+            load_image_to_frame(image, frame);
+        }
         main_pixels.render_with(|encoder, render_target, context| {
             // Render pixels buffer
             context.scaling_renderer.render(encoder, render_target);

@@ -59,34 +59,14 @@ fn main() -> Result<(), Error> {
             {
                 *control_flow = ControlFlow::Exit;
             }
-
-            {
-                let frame = context.windows.main.pixels.get_frame();
-                const BOX_SIZE: usize = 32;
-                const BOX_X: usize = (GB_SCREEN_WIDTH / 2) as usize - BOX_SIZE / 2;
-                const BOX_Y: usize = (GB_SCREEN_HEIGHT / 2) as usize - BOX_SIZE / 2;
-
-                for (i, pixel) in frame.chunks_exact_mut(4).enumerate() {
-                    let x = i % GB_SCREEN_WIDTH as usize;
-                    let y = i / GB_SCREEN_HEIGHT as usize;
-
-                    let inside_the_box = (x >= BOX_X && x < BOX_X + BOX_SIZE)
-                        && (y >= BOX_Y && y < BOX_Y + BOX_SIZE);
-
-                    let rgba = if inside_the_box {
-                        [0x5e, 0x48, 0xe8, 0xff]
-                    } else {
-                        [0x48, 0xb2, 0xe8, 0xff]
-                    };
-
-                    pixel.copy_from_slice(&rgba);
-                }
-            }
         }
         Event::LoopDestroyed => {
             log::info!("bye bye");
         }
         Event::MainEventsCleared => {
+            if let Some(ref mut game) = context.game {
+                while game.cycle() {}
+            }
             context.windows.main.window.request_redraw();
         }
         Event::NewEvents(_)
