@@ -39,11 +39,11 @@ where
         self.bios.borrow().read(addr, source)
     }
 
-    fn addr_in_bios_area(&self, addr: usize) -> bool {
-        let in_std_area = addr < self.bios.borrow().container.len();
+    fn addr_in_bios_area(addr: usize, cgb_mode: bool) -> bool {
+        let in_std_area = addr <= 0xFF;
         let in_color_area = addr >= 0x200 && addr <= 0x8FF;
 
-        in_std_area || (self.cgb_mode && in_color_area)
+        in_std_area || (cgb_mode && in_color_area)
     }
 
     fn read_mbc(&self, addr: A, source: Option<Source>) -> Result<u8, Error> {
@@ -65,7 +65,8 @@ where
     A: Address<Area>,
 {
     fn read(&self, addr: A, source: Option<Source>) -> Result<u8, Error> {
-        if self.bios_enabled() && self.addr_in_bios_area(addr.get_address()) {
+        if self.bios_enabled() && BiosWrapper::addr_in_bios_area(addr.get_address(), self.cgb_mode)
+        {
             self.read_bios(addr, source)
         } else {
             self.read_mbc(addr, source)
@@ -73,7 +74,8 @@ where
     }
 
     fn write(&mut self, v: u8, addr: A, source: Option<Source>) -> Result<(), Error> {
-        if self.bios_enabled() && self.addr_in_bios_area(addr.get_address()) {
+        if self.bios_enabled() && BiosWrapper::addr_in_bios_area(addr.get_address(), self.cgb_mode)
+        {
             self.write_bios(v, addr, source)
         } else {
             self.write_mbc(v, addr, source)
