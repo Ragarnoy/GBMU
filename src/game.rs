@@ -10,12 +10,9 @@ use gb_bus::generic::{CharDevice, PanicDevice};
 use gb_bus::{generic::SimpleRW, AddressBus, Bus, IORegArea, IORegBus, Source, WorkingRam};
 use gb_clock::{cycles, Clock};
 use gb_cpu::{cpu::Cpu, new_cpu, registers::Registers};
-use gb_dbg::{
-    dbg_interfaces::{
-        AudioRegs, CpuRegs, DebugOperations, IORegs, MemoryDebugOperations, PpuRegs,
-        RegisterDebugOperations, RegisterMap, RegisterValue,
-    },
-    until::Until,
+use gb_dbg::dbg_interfaces::{
+    AudioRegs, CpuRegs, DebugOperations, IORegs, MemoryDebugOperations, PpuRegs,
+    RegisterDebugOperations, RegisterMap, RegisterValue,
 };
 use gb_dma::{dma::Dma, hdma::Hdma};
 use gb_joypad::{Config, Joypad};
@@ -50,7 +47,7 @@ pub struct Game {
     pub dma: Rc<RefCell<Dma>>,
     pub joypad: Rc<RefCell<Joypad>>,
     pub addr_bus: AddressBus,
-    scheduled_stop: Option<ScheduledStop>,
+    // scheduled_stop: Option<ScheduledStop>,
     emulation_stopped: bool,
     cycle_count: usize,
     #[cfg(feature = "save_state")]
@@ -62,17 +59,17 @@ pub struct Game {
     pub cgb_mode: bool,
 }
 
-#[derive(Debug)]
-enum ScheduledStop {
-    /// Schedule a stop after `usize` cycle
-    Cycle(usize),
-    /// Schedule a stop after `usize` step
-    Step(usize),
-    /// Schedule a stop after `usize` frame
-    Frame(usize),
-    /// Schedule a stop after `time` delay
-    Timeout(std::time::Instant, std::time::Duration),
-}
+// #[derive(Debug)]
+// enum ScheduledStop {
+//     /// Schedule a stop after `usize` cycle
+//     Cycle(usize),
+//     /// Schedule a stop after `usize` step
+//     Step(usize),
+//     /// Schedule a stop after `usize` frame
+//     Frame(usize),
+//     /// Schedule a stop after `time` delay
+//     Timeout(std::time::Instant, std::time::Duration),
+// }
 
 impl Game {
     pub fn new<P: AsRef<Path>>(
@@ -207,7 +204,7 @@ impl Game {
             hdma,
             joypad,
             addr_bus: bus,
-            scheduled_stop: None,
+            // scheduled_stop: None,
             emulation_stopped: stopped,
             cycle_count: 0,
             #[cfg(feature = "save_state")]
@@ -240,7 +237,7 @@ impl Game {
                 &mut self.cpu,
                 self.hdma.borrow_mut().deref_mut()
             );
-            self.check_scheduled_stop(!frame_not_finished);
+            // self.check_scheduled_stop(!frame_not_finished);
             #[cfg(feature = "cgb")]
             if self.cpu.io_regs.borrow().fast_mode() {
                 cycles!(
@@ -260,94 +257,94 @@ impl Game {
         }
     }
 
-    fn check_scheduled_stop(&mut self, frame_ended: bool) {
-        if let Some(ref mut scheduled) = self.scheduled_stop {
-            log::trace!(
-                "check for stop, scheduled={:?}, framed_ended={}",
-                scheduled,
-                frame_ended
-            );
-            match scheduled {
-                ScheduledStop::Cycle(count) => {
-                    if *count == 1 {
-                        self.emulation_stopped = true;
-                        self.scheduled_stop = None;
-                    } else {
-                        *count -= 1;
-                    }
-                }
-                ScheduledStop::Step(count) => {
-                    if self.cpu.controller.is_instruction_finished {
-                        if *count == 1 {
-                            self.emulation_stopped = true;
-                            self.scheduled_stop = None;
-                        } else {
-                            *count -= 1;
-                        }
-                    }
-                }
-                ScheduledStop::Frame(count) => {
-                    if frame_ended {
-                        if *count == 1 {
-                            self.finish_instruction();
-                        } else {
-                            *count -= 1;
-                        }
-                    }
-                }
-                ScheduledStop::Timeout(instant, timeout) => {
-                    if &instant.elapsed() > timeout {
-                        self.finish_instruction();
-                    }
-                }
-            }
-        }
-    }
+    // fn check_scheduled_stop(&mut self, frame_ended: bool) {
+    //     if let Some(ref mut scheduled) = self.scheduled_stop {
+    //         log::trace!(
+    //             "check for stop, scheduled={:?}, framed_ended={}",
+    //             scheduled,
+    //             frame_ended
+    //         );
+    //         match scheduled {
+    //             ScheduledStop::Cycle(count) => {
+    //                 if *count == 1 {
+    //                     self.emulation_stopped = true;
+    //                     self.scheduled_stop = None;
+    //                 } else {
+    //                     *count -= 1;
+    //                 }
+    //             }
+    //             ScheduledStop::Step(count) => {
+    //                 if self.cpu.controller.is_instruction_finished {
+    //                     if *count == 1 {
+    //                         self.emulation_stopped = true;
+    //                         self.scheduled_stop = None;
+    //                     } else {
+    //                         *count -= 1;
+    //                     }
+    //                 }
+    //             }
+    //             ScheduledStop::Frame(count) => {
+    //                 if frame_ended {
+    //                     if *count == 1 {
+    //                         self.finish_instruction();
+    //                     } else {
+    //                         *count -= 1;
+    //                     }
+    //                 }
+    //             }
+    //             ScheduledStop::Timeout(instant, timeout) => {
+    //                 if &instant.elapsed() > timeout {
+    //                     self.finish_instruction();
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
 
-    fn finish_instruction(&mut self) {
-        if !self.cpu.controller.is_instruction_finished {
-            self.scheduled_stop = Some(ScheduledStop::Step(1));
-        } else {
-            self.emulation_stopped = true;
-            self.scheduled_stop = None;
-        }
-    }
+    // fn finish_instruction(&mut self) {
+    //     if !self.cpu.controller.is_instruction_finished {
+    //         self.scheduled_stop = Some(ScheduledStop::Step(1));
+    //     } else {
+    //         self.emulation_stopped = true;
+    //         self.scheduled_stop = None;
+    //     }
+    // }
 
-    pub fn update_scheduled_stop(&mut self, flow: std::ops::ControlFlow<Until>) {
-        use std::ops::ControlFlow::{Break, Continue};
-        match flow {
-            Continue(()) => {
-                self.emulation_stopped = false;
-                self.scheduled_stop = None;
-            }
-            Break(Until::Null | Until::Cycle(0) | Until::Frame(0) | Until::Second(0)) => {
-                self.emulation_stopped = true;
-                self.scheduled_stop = None;
-            }
-            Break(Until::Cycle(count)) => {
-                self.emulation_stopped = false;
-                self.scheduled_stop = Some(ScheduledStop::Cycle(count));
-            }
-            Break(Until::Step(count)) => {
-                self.emulation_stopped = false;
-                self.scheduled_stop = Some(ScheduledStop::Step(count));
-            }
-            Break(Until::Frame(count)) => {
-                self.emulation_stopped = false;
-                self.scheduled_stop = Some(ScheduledStop::Frame(count));
-            }
-            Break(Until::Second(count)) => {
-                self.emulation_stopped = false;
-                self.scheduled_stop = Some(ScheduledStop::Timeout(
-                    std::time::Instant::now(),
-                    std::time::Duration::from_secs(count.try_into().unwrap_or_else(|e| {
-                        log::error!("cannot convert {}_usize to u64: {:?}", count, e);
-                        1_u64
-                    })),
-                ));
-            }
-        }
-    }
+    // pub fn update_scheduled_stop(&mut self, flow: std::ops::ControlFlow<Until>) {
+    //     use std::ops::ControlFlow::{Break, Continue};
+    //     match flow {
+    //         Continue(()) => {
+    //             self.emulation_stopped = false;
+    //             self.scheduled_stop = None;
+    //         }
+    //         Break(Until::Null | Until::Cycle(0) | Until::Frame(0) | Until::Second(0)) => {
+    //             self.emulation_stopped = true;
+    //             self.scheduled_stop = None;
+    //         }
+    //         Break(Until::Cycle(count)) => {
+    //             self.emulation_stopped = false;
+    //             self.scheduled_stop = Some(ScheduledStop::Cycle(count));
+    //         }
+    //         Break(Until::Step(count)) => {
+    //             self.emulation_stopped = false;
+    //             self.scheduled_stop = Some(ScheduledStop::Step(count));
+    //         }
+    //         Break(Until::Frame(count)) => {
+    //             self.emulation_stopped = false;
+    //             self.scheduled_stop = Some(ScheduledStop::Frame(count));
+    //         }
+    //         Break(Until::Second(count)) => {
+    //             self.emulation_stopped = false;
+    //             self.scheduled_stop = Some(ScheduledStop::Timeout(
+    //                 std::time::Instant::now(),
+    //                 std::time::Duration::from_secs(count.try_into().unwrap_or_else(|e| {
+    //                     log::error!("cannot convert {}_usize to u64: {:?}", count, e);
+    //                     1_u64
+    //                 })),
+    //             ));
+    //         }
+    //     }
+    // }
 
     #[cfg(feature = "save_state")]
     /// Save the current game state to a file
