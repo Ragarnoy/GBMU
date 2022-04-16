@@ -115,6 +115,7 @@ impl Context {
         #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
         {
             self.time_frame.add_sample(self.main_draw_instant.elapsed());
+            self.main_draw_instant = std::time::Instant::now();
         }
 
         Ok(())
