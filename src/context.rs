@@ -1,14 +1,18 @@
 use std::path::PathBuf;
 
 use crate::{
-    config::Config, custom_event::CustomEvent, game::Game, image::load_image_to_frame,
-    windows::Windows,
+    config::Config,
+    custom_event::CustomEvent,
+    game::Game,
+    image::load_image_to_frame,
+    windows::{WindowType, Windows},
 };
-use gb_lcd::{DrawEgui, PseudoPixels, PseudoWindow};
+use gb_lcd::{DrawEgui, GBWindow, PseudoPixels, PseudoWindow};
 use winit::{
+    dpi::LogicalSize,
     event::{ElementState, WindowEvent},
-    event_loop::EventLoopProxy,
-    window::WindowId,
+    event_loop::{EventLoopProxy, EventLoopWindowTarget},
+    window::{WindowBuilder, WindowId},
 };
 
 pub struct Context {
@@ -28,6 +32,33 @@ impl Context {
             config,
             event_proxy,
             game: None,
+        }
+    }
+}
+
+impl Context {
+    pub fn open_window(
+        &mut self,
+        window_type: WindowType,
+        event_loop: &EventLoopWindowTarget<CustomEvent>,
+    ) {
+        match window_type {
+            WindowType::Debugger => {
+                if self.windows.debugger.is_none() {
+                    let window = {
+                        let size =
+                            LogicalSize::new(gb_dbg::DEBUGGER_WIDTH, gb_dbg::DEBUGGER_HEIGHT);
+                        WindowBuilder::new()
+                            .with_title("cpu debugger")
+                            .with_inner_size(size)
+                            .with_resizable(false)
+                            .build(event_loop)
+                            .expect("cannot build debugger window")
+                    };
+                    self.windows.debugger.replace(GBWindow::new(window));
+                }
+            }
+            _ => todo!("cannot currently open window {window_type:?}"),
         }
     }
 
