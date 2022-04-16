@@ -60,6 +60,10 @@ fn main() -> Result<(), Error> {
             log::info!("bye bye");
         }
         Event::MainEventsCleared => {
+            #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
+            {
+                context.main_draw_instant = std::time::Instant::now();
+            }
             if let Some(ref mut game) = context.game {
                 while game.cycle() {}
             }

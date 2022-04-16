@@ -7,6 +7,8 @@ use crate::{
     windows::Windows,
 };
 use gb_lcd::{DrawEgui, PseudoPixels, PseudoWindow};
+#[cfg(any(feature = "time_frame", feature = "debug_fps"))]
+use std::time::Instant;
 use winit::{
     event::{ElementState, WindowEvent},
     event_loop::EventLoopProxy,
@@ -21,6 +23,8 @@ pub struct Context {
     pub game: Option<Game>,
     #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
     pub time_frame: TimeStat,
+    #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
+    pub main_draw_instant: Instant,
 }
 
 impl Context {
@@ -34,6 +38,8 @@ impl Context {
             game: None,
             #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
             time_frame: TimeStat::default(),
+            #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
+            main_draw_instant: Instant::now(),
         }
     }
 
@@ -105,6 +111,11 @@ impl Context {
 
             Ok(())
         })?;
+
+        #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
+        {
+            self.time_frame.add_sample(self.main_draw_instant.elapsed());
+        }
 
         Ok(())
     }
