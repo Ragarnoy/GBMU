@@ -1,5 +1,7 @@
 use std::path::PathBuf;
 
+#[cfg(any(feature = "time_frame", feature = "debug_fps"))]
+use crate::time_frame::TimeStat;
 use crate::{
     config::Config, custom_event::CustomEvent, game::Game, image::load_image_to_frame,
     windows::Windows,
@@ -17,6 +19,8 @@ pub struct Context {
     pub config: Config,
     pub event_proxy: EventLoopProxy<CustomEvent>,
     pub game: Option<Game>,
+    #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
+    pub time_frame: TimeStat,
 }
 
 impl Context {
@@ -28,6 +32,8 @@ impl Context {
             config,
             event_proxy,
             game: None,
+            #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
+            time_frame: TimeStat::default(),
         }
     }
 
@@ -74,7 +80,11 @@ impl Context {
 /// Context impl for main window
 impl Context {
     pub fn redraw_main_window(&mut self) -> anyhow::Result<()> {
-        crate::ui::draw_egui(self);
+        crate::ui::draw_egui(
+            self,
+            #[cfg(feature = "debug_fps")]
+            self.time_frame.instant_fps(),
+        );
         let main_pixels = &mut self.windows.main.pixels;
         let main_context = &mut self.windows.main.context;
 

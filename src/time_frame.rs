@@ -7,6 +7,7 @@ use std::time::Duration;
 pub struct TimeStat {
     min: Option<Duration>,
     max: Option<Duration>,
+    last_value: Duration,
     sum: Duration,
     sample_count: u32,
     #[cfg(feature = "time_stat_samples")]
@@ -23,6 +24,8 @@ impl TimeStat {
 
         let max = self.max.get_or_insert(sample);
         *max = (*max).max(sample);
+
+        self.last_value = sample;
 
         self.sum += sample;
         self.sample_count += 1;
@@ -45,6 +48,14 @@ impl TimeStat {
             acc + elt.as_nanos() as f64 / self.samples.len() as f64
         });
         1_000_000_000.0 / mean
+    }
+
+    pub fn instant_fps(&self) -> f64 {
+        if self.last_value != Duration::ZERO {
+            (1_000_000_000.0 / self.last_value.as_nanos() as f64)
+        } else {
+            f64::NAN
+        }
     }
 }
 
