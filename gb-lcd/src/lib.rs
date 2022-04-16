@@ -56,19 +56,17 @@ pub trait PseudoWindow {
     fn request_redraw(&self);
 }
 
-type DynError = Box<dyn std::error::Error + Send + Sync + 'static>;
-
 pub trait PseudoPixels {
     /// Resize the pixels surface
     fn resize(&mut self, size: PhysicalSize<u32>);
 
-    fn render_with<F>(&mut self, render_function: F) -> Result<(), DynError>
+    fn render_with<F>(&mut self, render_function: F) -> anyhow::Result<()>
     where
         F: FnOnce(
             &mut wgpu::CommandEncoder,
             &wgpu::TextureView,
             &RenderContext,
-        ) -> Result<(), DynError>;
+        ) -> anyhow::Result<()>;
 }
 
 pub trait EventProcessing {

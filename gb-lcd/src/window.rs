@@ -97,13 +97,13 @@ impl PseudoPixels for GBWindow {
         self.context.resize(size);
     }
 
-    fn render_with<F>(&mut self, render_function: F) -> Result<(), crate::DynError>
+    fn render_with<F>(&mut self, render_function: F) -> anyhow::Result<()>
     where
         F: FnOnce(
             &mut wgpu::CommandEncoder,
             &wgpu::TextureView,
             &RenderContext,
-        ) -> Result<(), crate::DynError>,
+        ) -> anyhow::Result<()>,
     {
         let output_frame = match self.surface.get_current_texture() {
             Ok(frame) => frame,
@@ -122,7 +122,8 @@ impl PseudoPixels for GBWindow {
             .create_view(&wgpu::TextureViewDescriptor::default());
         let context = RenderContext::new(&self.device, &self.queue);
 
-        render_function(&mut encoder, &render_target, &context)?;
+        render_function(&mut encoder, &render_target, &context)
+            .map_err(|err| anyhow::Error::from(err))?;
         self.context
             .render_egui(&mut encoder, &render_target, &context)?;
 

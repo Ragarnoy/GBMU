@@ -73,19 +73,20 @@ impl PseudoPixels for GBPixels {
         self.pixels.resize_surface(size.width, size.height)
     }
 
-    fn render_with<F>(&mut self, render_function: F) -> Result<(), crate::DynError>
+    fn render_with<F>(&mut self, render_function: F) -> anyhow::Result<()>
     where
         F: FnOnce(
             &mut wgpu::CommandEncoder,
             &wgpu::TextureView,
             &RenderContext,
-        ) -> Result<(), crate::DynError>,
+        ) -> anyhow::Result<()>,
     {
         self.pixels
             .render_with(|encoder, render_target, context| {
-                render_function(encoder, render_target, &RenderContext::from(context))
+                render_function(encoder, render_target, &RenderContext::from(context))?;
+                Ok(())
             })
-            .map_err(|err| Box::new(err).into())
+            .map_err(|err| anyhow::Error::from(err))
     }
 }
 
