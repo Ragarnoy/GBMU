@@ -20,7 +20,7 @@ pub enum CustomEvent {
     ChangedMode(Option<Mode>),
 
     OpenWindow(WindowType),
-    // CloseWindow(WindowType),
+    CloseWindow(WindowType),
     /// Exit the emulator
     Quit,
 }
