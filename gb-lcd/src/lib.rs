@@ -71,6 +71,12 @@ pub struct RenderContext<'a> {
     queue: &'a wgpu::Queue,
 }
 
+impl<'a> RenderContext<'a> {
+    pub fn new(device: &'a wgpu::Device, queue: &'a wgpu::Queue) -> Self {
+        Self { device, queue }
+    }
+}
+
 impl<'a> From<&'a PixelsContext> for RenderContext<'a> {
     fn from(ctx: &'a PixelsContext) -> Self {
         Self {
