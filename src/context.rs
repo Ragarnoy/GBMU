@@ -189,8 +189,8 @@ impl Context {
             .prepare_egui(&window.window, |ctx| debugger.draw(ctx, game, None));
 
         window
-            .render_with(|encoder, render_target, context| Ok(()))
-            .map_err(|e| anyhow::Error::from(&e))
+            .render_with(|_encoder, _render_target, _context| Ok(()))
+            .map_err(anyhow::Error::from)
     }
 
     fn process_debugger_window_event(&mut self, event: WindowEvent) {
