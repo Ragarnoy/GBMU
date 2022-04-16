@@ -59,6 +59,8 @@ impl Context {
                             .expect("cannot build debugger window")
                     };
                     self.windows.debugger.replace(GBWindow::new(window));
+                    self.debugger
+                        .replace(gb_dbg::debugger::DebuggerBuilder::new().build());
                 }
             }
             _ => todo!("cannot currently open window {window_type:?}"),
@@ -68,7 +70,7 @@ impl Context {
     pub fn redraw(&mut self, window_id: WindowId) -> anyhow::Result<()> {
         if window_id == self.windows.main.id() {
             self.redraw_main_window()
-        } else if Some(window_id) == self.windows.debugger.map(|win| win.id()) {
+        } else if Some(window_id) == self.windows.debugger.as_ref().map(|win| win.id()) {
             self.redraw_debugger_window()
         } else {
             panic!("unexpected window id {window_id:?}")
@@ -78,7 +80,7 @@ impl Context {
     pub fn process_window_event(&mut self, window_id: WindowId, event: WindowEvent) {
         if window_id == self.windows.main.id() {
             self.process_main_window_event(event)
-        } else if Some(window_id) == self.windows.debugger.map(|win| win.id()) {
+        } else if Some(window_id) == self.windows.debugger.as_ref().map(|win| win.id()) {
             self.process_debugger_window_event(event)
         } else {
             panic!("unexpected window id {window_id:?}")
@@ -182,8 +184,13 @@ impl Context {
         let debugger = self.debugger.as_mut().unwrap();
         let game = self.game.as_mut().unwrap();
 
-        debugger.draw(&window.context.egui_ctx, game, None);
-        todo!("redraw debugger window")
+        window
+            .context
+            .prepare_egui(&window.window, |ctx| debugger.draw(ctx, game, None));
+
+        window
+            .render_with(|encoder, render_target, context| Ok(()))
+            .map_err(|e| anyhow::Error::from(&e))
     }
 
     fn process_debugger_window_event(&mut self, event: WindowEvent) {
