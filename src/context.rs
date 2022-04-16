@@ -67,6 +67,16 @@ impl Context {
         }
     }
 
+    pub fn close_window(&mut self, window_type: WindowType) {
+        match window_type {
+            WindowType::Debugger => {
+                self.windows.debugger = None;
+                self.debugger = None;
+            }
+            _ => todo!("cannot currently close window {window_type:?}"),
+        }
+    }
+
     pub fn redraw(&mut self, window_id: WindowId) -> anyhow::Result<()> {
         if window_id == self.windows.main.id() {
             self.redraw_main_window()
@@ -83,7 +93,7 @@ impl Context {
         } else if Some(window_id) == self.windows.debugger.as_ref().map(|win| win.id()) {
             self.process_debugger_window_event(event)
         } else {
-            panic!("unexpected window id {window_id:?}")
+            log::error!("unexpected window id {window_id:?} for event {event:?}")
         }
     }
 }
