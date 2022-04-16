@@ -14,7 +14,7 @@ use clap::StructOpt;
 use config::Config;
 use context::Context;
 use custom_event::CustomEvent;
-use gb_lcd::GBPixels;
+use gb_lcd::{GBPixels, PseudoWindow};
 use gb_ppu::{GB_SCREEN_HEIGHT, GB_SCREEN_WIDTH};
 use logger::init_logger;
 use pixels::Error;
@@ -70,6 +70,9 @@ fn main() -> Result<(), Error> {
                 while game.cycle() {}
             }
             context.windows.main.window.request_redraw();
+            if let Some(ref debugger) = context.windows.debugger {
+                debugger.request_redraw();
+            }
         }
         Event::NewEvents(_)
         | Event::Resumed
