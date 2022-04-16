@@ -1,6 +1,9 @@
 use winit::{event::WindowEvent, window::Window};
 
-use crate::{context::Context, state::State, EventProcessing, PseudoPixels, PseudoWindow};
+use crate::{
+    context::Context, state::State, DrawEgui, EventProcessing, PseudoPixels, PseudoWindow,
+    RenderContext,
+};
 
 pub struct GBWindow {
     pub window: Window,
@@ -92,6 +95,40 @@ impl PseudoWindow for GBWindow {
 impl PseudoPixels for GBWindow {
     fn resize(&mut self, size: winit::dpi::PhysicalSize<u32>) {
         self.context.resize(size);
+    }
+
+    fn render_with<F>(&mut self, render_function: F) -> Result<(), crate::DynError>
+    where
+        F: FnOnce(
+            &mut wgpu::CommandEncoder,
+            &wgpu::TextureView,
+            &RenderContext,
+        ) -> Result<(), crate::DynError>,
+    {
+        let output_frame = match self.surface.get_current_texture() {
+            Ok(frame) => frame,
+            Err(wgpu::SurfaceError::Outdated) => return Ok(()),
+            Err(e) => return Err(e.into()),
+        };
+
+        let mut encoder = self
+            .device
+            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
+                label: Some("debugger_encoder"),
+            });
+
+        let render_target = output_frame
+            .texture
+            .create_view(&wgpu::TextureViewDescriptor::default());
+        let context = RenderContext::new(&self.device, &self.queue);
+
+        render_function(&mut encoder, &render_target, &context)?;
+        self.context
+            .render_egui(&mut encoder, &render_target, &context)?;
+
+        self.queue.submit(std::iter::once(encoder.finish()));
+        output_frame.present();
+        Ok(())
     }
 }
 
