@@ -52,7 +52,7 @@ impl TimeStat {
 
     pub fn instant_fps(&self) -> f64 {
         if self.last_value != Duration::ZERO {
-            (1_000_000_000.0 / self.last_value.as_nanos() as f64)
+            1_000_000_000.0 / self.last_value.as_nanos() as f64
         } else {
             f64::NAN
         }
