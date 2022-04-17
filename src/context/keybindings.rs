@@ -33,7 +33,7 @@ impl Context {
 impl Context {
     pub(crate) fn redraw_window(&mut self) -> anyhow::Result<()> {
         let window = &mut self.window;
-        let config = &self.config.clone();
+        let config = &self.config;
 
         window.context.prepare_egui(&window.window, |ctx| {
             Context::draw_window(ctx, config, &mut self.listening)

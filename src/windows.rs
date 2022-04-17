@@ -9,7 +9,6 @@ pub enum WindowType {
 pub struct Windows {
     pub main: GBPixels,
     pub debugger: Option<GBWindow>,
-    pub keybindings: Option<GBWindow>,
 }
 
 impl Windows {
@@ -17,7 +16,6 @@ impl Windows {
         Self {
             main,
             debugger: None,
-            keybindings: None,
         }
     }
 }
