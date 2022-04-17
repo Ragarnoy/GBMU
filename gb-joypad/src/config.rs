@@ -42,6 +42,7 @@ impl Config {
 
     /// Update mapping for [KeyEntry]->[InputType]
     pub fn update_keybinding(&mut self, input_type: InputType, new_key: KeyEntry) {
+        self.0.retain(|_, candidate_key| candidate_key != &new_key);
         self.0.insert(input_type, new_key);
     }
 }
