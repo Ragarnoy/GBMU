@@ -74,7 +74,7 @@ pub struct Game {
 impl Game {
     pub fn new<P: AsRef<Path>>(
         rompath: &P,
-        joypad_config: Config,
+        joypad_config: Rc<RefCell<Config>>,
         stopped: bool,
         #[cfg(feature = "cgb")] forced_mode: Option<Mode>,
     ) -> Result<Game, anyhow::Error> {
