@@ -1,7 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 
 use egui::{CtxRef, Direction, Layout, Separator, Ui};
-use gb_joypad::{input::INPUT_LIST, Config, InputType};
+use gb_joypad::{input::INPUT_LIST, Config, InputType, KeyEntry};
 use gb_lcd::{DrawEgui, GBWindow, PseudoPixels};
 use winit::{event::WindowEvent, event_loop::EventLoopProxy};
 
@@ -58,6 +58,16 @@ impl Context {
             } => {
                 window.context.scale_factor(scale_factor as f32);
                 window.resize(*new_inner_size);
+            }
+            WindowEvent::KeyboardInput { input, .. } => {
+                if let Some(input_type) = self.listening {
+                    let new_key = KeyEntry::from(input);
+
+                    self.config
+                        .borrow_mut()
+                        .update_keybinding(input_type, new_key);
+                    self.listening = None;
+                }
             }
             WindowEvent::CloseRequested => self
                 .event_proxy
