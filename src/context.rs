@@ -64,7 +64,7 @@ impl Context {
                         let size =
                             LogicalSize::new(gb_dbg::DEBUGGER_WIDTH, gb_dbg::DEBUGGER_HEIGHT);
                         WindowBuilder::new()
-                            .with_title("cpu debugger")
+                            .with_title("GBMU - Cpu Debugger")
                             .with_inner_size(size)
                             .with_resizable(false)
                             .build(event_loop)
@@ -75,7 +75,19 @@ impl Context {
                         .replace(gb_dbg::debugger::DebuggerBuilder::new().build());
                 }
             }
-            _ => todo!("cannot currently open window {window_type:?}"),
+            WindowType::Keybindings => {
+                if self.windows.keybindings.is_none() {
+                    let window = {
+                        let size = LogicalSize::new(250 as f64, 250 as f64);
+                        WindowBuilder::new()
+                            .with_title("GBMU - Keybindings")
+                            .with_inner_size(size)
+                            .build(event_loop)
+                            .expect("cannot build keybinding window")
+                    };
+                    self.windows.keybindings.replace(GBWindow::new(window));
+                }
+            }
         }
     }
 
@@ -85,7 +97,9 @@ impl Context {
                 self.windows.debugger = None;
                 self.debugger = None;
             }
-            _ => todo!("cannot currently close window {window_type:?}"),
+            WindowType::Keybindings => {
+                self.windows.keybindings = None;
+            }
         }
     }
 
@@ -94,6 +108,8 @@ impl Context {
             self.redraw_main_window()
         } else if Some(window_id) == self.windows.debugger.as_ref().map(|win| win.id()) {
             self.redraw_debugger_window()
+        } else if Some(window_id) == self.windows.keybindings.as_ref().map(|win| win.id()) {
+            self.redraw_keybindings_window()
         } else {
             panic!("unexpected window id {window_id:?}")
         }
@@ -104,6 +120,8 @@ impl Context {
             self.process_main_window_event(event)
         } else if Some(window_id) == self.windows.debugger.as_ref().map(|win| win.id()) {
             self.process_debugger_window_event(event)
+        } else if Some(window_id) == self.windows.keybindings.as_ref().map(|win| win.id()) {
+            self.process_keybindings_window_event(event)
         } else {
             log::error!("unexpected window id {window_id:?} for event {event:?}")
         }
@@ -238,6 +256,45 @@ impl Context {
             WindowEvent::CloseRequested => self
                 .event_proxy
                 .send_event(CustomEvent::CloseWindow(WindowType::Debugger))
+                .unwrap(),
+            _ => {}
+        }
+    }
+}
+
+/// Context impl for keybindings window
+impl Context {
+    fn redraw_keybindings_window(&mut self) -> anyhow::Result<()> {
+        let window = self.windows.keybindings.as_mut().unwrap();
+        let config = &mut self.joypad_config;
+
+        window.context.prepare_egui(&window.window, |ctx| {
+            crate::ui::window::keybindings::draw_window(ctx, config)
+        });
+
+        window
+            .render_with(|_encoder, _render_target, _context| Ok(()))
+            .map_err(anyhow::Error::from)
+    }
+
+    fn process_keybindings_window_event(&mut self, event: WindowEvent) {
+        let window = self.windows.keybindings.as_mut().unwrap();
+        if window.context.on_event(&event) {
+            return;
+        }
+
+        match event {
+            WindowEvent::Resized(size) => window.resize(size),
+            WindowEvent::ScaleFactorChanged {
+                scale_factor,
+                new_inner_size,
+            } => {
+                window.context.scale_factor(scale_factor as f32);
+                window.resize(*new_inner_size);
+            }
+            WindowEvent::CloseRequested => self
+                .event_proxy
+                .send_event(CustomEvent::CloseWindow(WindowType::Keybindings))
                 .unwrap(),
             _ => {}
         }
