@@ -94,6 +94,9 @@ impl PseudoWindow for GBWindow {
 
 impl PseudoPixels for GBWindow {
     fn resize(&mut self, size: winit::dpi::PhysicalSize<u32>) {
+        self.surface_config.width = size.width;
+        self.surface_config.height = size.height;
+        self.surface.configure(&self.device, &self.surface_config);
         self.context.resize(size);
     }
 
