@@ -36,6 +36,10 @@ impl Config {
             .map(|(input_type, _)| *input_type)
     }
 
+    pub fn get_key_entry(&self, input_type: &InputType) -> Option<&KeyEntry> {
+        self.0.get(input_type)
+    }
+
     /// Update mapping for [KeyEntry]->[InputType]
     pub fn update_keybinding(&mut self, input_type: InputType, new_key: KeyEntry) {
         self.0.insert(input_type, new_key);
