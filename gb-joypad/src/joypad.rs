@@ -5,13 +5,13 @@ use crate::{
 };
 use gb_bus::{Address, Bus, Error, FileOperation, IORegArea, Source};
 use gb_clock::{Tick, Ticker};
-use std::collections::HashMap;
 use std::iter::FromIterator;
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 #[derive(Debug)]
 /// Translate events from keyboard input inputs for the gameboy.
 pub struct Joypad {
-    config: Config,
+    config: Rc<RefCell<Config>>,
     input_states: HashMap<InputType, bool>,
     mode: Mode,
     reg_val: u8,
@@ -21,9 +21,9 @@ impl Joypad {
     const READ_MASK: u8 = 0b1100_0000;
     const WRITABLE_BITS: u8 = 0b0011_0000;
 
-    pub fn from_config(conf: Config) -> Self {
+    pub fn from_config(config: Rc<RefCell<Config>>) -> Self {
         Joypad {
-            config: conf,
+            config,
             input_states: HashMap::from_iter([
                 (InputType::Up, false),
                 (InputType::Down, false),
@@ -39,29 +39,10 @@ impl Joypad {
         }
     }
 
-    pub fn load_config(&mut self, conf: Config) {
-        self.config = conf;
-    }
-
-    pub fn config(&self) -> &Config {
-        &self.config
-    }
-
-    pub fn config_mut(&mut self) -> &mut Config {
-        &mut self.config
-    }
-
-    /// Map a [KeyEntry] to an [InputType].
-    /// Pressing the [KeyEntry] will result in a [InputType] generated
-    pub fn map_key_to_input(&mut self, key: KeyEntry, input_type: InputType) {
-        self.config.0.retain(|_, v| v != &input_type);
-        self.config.0.insert(key, input_type);
-    }
-
     /// Update the state of the joypad on key event (release / pressed)
     /// Return true when the key event is used by the joypad
     pub fn on_key_event(&mut self, key: KeyEntry, pressed: bool) -> bool {
-        if let Some(input_type) = self.config.0.get(&key) {
+        if let Some(input_type) = self.config.borrow().get_input_type(&key) {
             #[cfg(feature = "debug_state")]
             let mut changed = false;
             #[cfg(feature = "toggle_joypad")]
@@ -76,8 +57,8 @@ impl Joypad {
                 }
             }
             #[cfg(not(feature = "toggle_joypad"))]
-            if self.input_states[input_type] != pressed {
-                self.input_states.insert(*input_type, pressed);
+            if self.input_states[&input_type] != pressed {
+                self.input_states.insert(input_type, pressed);
                 #[cfg(feature = "debug_state")]
                 {
                     changed = true;
@@ -98,12 +79,6 @@ impl Joypad {
         } else {
             false
         }
-    }
-}
-
-impl Default for Joypad {
-    fn default() -> Self {
-        Self::from_config(Config::default())
     }
 }
 
