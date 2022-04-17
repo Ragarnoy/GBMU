@@ -1,5 +1,6 @@
 mod file;
 mod settings;
+mod tools;
 
 use crate::Context;
 #[cfg(feature = "debug_render")]
@@ -89,6 +90,7 @@ pub fn draw_egui(
                     // ui.set_height(crate::constant::MENU_BAR_SIZE);
                     // ui.style_mut().override_text_style = Some(egui::TextStyle::Heading);
                     file::draw_ui(ui, &context.event_proxy);
+                    tools::draw_ui(ui, &context.event_proxy);
                     settings::draw_ui(
                         ui,
                         &context.event_proxy,

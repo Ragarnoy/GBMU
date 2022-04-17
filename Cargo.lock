@@ -995,6 +995,7 @@ dependencies = [
 name = "gb-lcd"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "egui",
  "egui-winit",
  "egui_wgpu_backend",

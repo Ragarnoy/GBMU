@@ -1,7 +1,9 @@
 use pixels::{Error, Pixels, SurfaceTexture};
 use winit::{dpi::PhysicalSize, event::WindowEvent, window::Window};
 
-use crate::{context::Context, state::State, EventProcessing, PseudoPixels, PseudoWindow};
+use crate::{
+    context::Context, state::State, EventProcessing, PseudoPixels, PseudoWindow, RenderContext,
+};
 
 pub struct GBPixels {
     pub window: Window,
@@ -69,6 +71,22 @@ impl PseudoPixels for GBPixels {
     fn resize(&mut self, size: PhysicalSize<u32>) {
         self.context.resize(size);
         self.pixels.resize_surface(size.width, size.height)
+    }
+
+    fn render_with<F>(&mut self, render_function: F) -> anyhow::Result<()>
+    where
+        F: FnOnce(
+            &mut wgpu::CommandEncoder,
+            &wgpu::TextureView,
+            &RenderContext,
+        ) -> anyhow::Result<()>,
+    {
+        self.pixels
+            .render_with(|encoder, render_target, context| {
+                render_function(encoder, render_target, &RenderContext::from(context))?;
+                Ok(())
+            })
+            .map_err(|err| anyhow::Error::from(err))
     }
 }
 
