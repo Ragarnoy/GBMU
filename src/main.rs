@@ -34,15 +34,18 @@ fn main() -> Result<(), Error> {
     let mut config: Config = Config::parse();
     #[cfg(not(feature = "cgb"))]
     let config: Config = Config::parse();
-    // let frame_duration_target = Duration::from_nanos(10_000_000_000 / TARGET_FPS_X10);
     init_logger(config.log_level);
 
     let (event_loop, main_window) = init::<WIDTH, HEIGHT>(&config)?;
     let event_loop_proxy = event_loop.create_proxy();
     let windows = Windows::new(main_window);
     let mut context = Context::new(windows, config, event_loop_proxy);
+    let mut render_time = std::time::Instant::now();
 
     event_loop.run(move |event, event_loop, control_flow| match event {
+        Event::NewEvents(_) => {
+            render_time = std::time::Instant::now();
+        }
         Event::WindowEvent { window_id, event } => {
             context.process_window_event(window_id, event);
         }
@@ -70,11 +73,20 @@ fn main() -> Result<(), Error> {
                 debugger.request_redraw();
             }
         }
-        Event::NewEvents(_)
-        | Event::Resumed
-        | Event::Suspended
-        | Event::RedrawEventsCleared
-        | Event::DeviceEvent { .. } => {
+        Event::RedrawEventsCleared => {
+            let elapsed = render_time.elapsed();
+            if control_flow != &ControlFlow::Exit {
+                if elapsed < constant::TARGET_FRAME_DURATION {
+                    let time_to_sleep = constant::TARGET_FRAME_DURATION - elapsed;
+                    *control_flow =
+                        ControlFlow::WaitUntil(std::time::Instant::now() + time_to_sleep);
+                    std::thread::sleep(time_to_sleep);
+                } else {
+                    *control_flow = ControlFlow::Poll;
+                }
+            }
+        }
+        Event::Resumed | Event::Suspended | Event::DeviceEvent { .. } => {
             // log::debug!("ignore event {event:?}");
         }
     })
