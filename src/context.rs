@@ -1,5 +1,7 @@
 use std::path::PathBuf;
 
+#[cfg(any(feature = "time_frame", feature = "debug_fps"))]
+use crate::time_frame::TimeStat;
 use crate::{
     config::Config,
     custom_event::CustomEvent,
@@ -9,6 +11,8 @@ use crate::{
 };
 use gb_dbg::debugger::Debugger;
 use gb_lcd::{DrawEgui, GBWindow, PseudoPixels, PseudoWindow};
+#[cfg(any(feature = "time_frame", feature = "debug_fps"))]
+use std::time::Instant;
 use winit::{
     dpi::LogicalSize,
     event::{ElementState, WindowEvent},
@@ -22,6 +26,10 @@ pub struct Context {
     pub config: Config,
     pub event_proxy: EventLoopProxy<CustomEvent>,
     pub game: Option<Game>,
+    #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
+    pub time_frame: TimeStat,
+    #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
+    pub main_draw_instant: Instant,
     pub debugger: Option<Debugger<Game>>,
 }
 
@@ -34,6 +42,10 @@ impl Context {
             config,
             event_proxy,
             game: None,
+            #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
+            time_frame: TimeStat::default(),
+            #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
+            main_draw_instant: Instant::now(),
             debugger: None,
         }
     }
@@ -124,7 +136,11 @@ impl Context {
 /// Context impl for main window
 impl Context {
     pub fn redraw_main_window(&mut self) -> anyhow::Result<()> {
-        crate::ui::draw_egui(self);
+        crate::ui::draw_egui(
+            self,
+            #[cfg(feature = "debug_fps")]
+            self.time_frame.instant_fps(),
+        );
         let main_pixels = &mut self.windows.main.pixels;
         let main_context = &mut self.windows.main.context;
 
@@ -145,6 +161,12 @@ impl Context {
 
             Ok(())
         })?;
+
+        #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
+        {
+            self.time_frame.add_sample(self.main_draw_instant.elapsed());
+            self.main_draw_instant = std::time::Instant::now();
+        }
 
         Ok(())
     }
