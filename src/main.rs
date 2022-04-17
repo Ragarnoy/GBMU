@@ -110,6 +110,5 @@ fn handle_custom_event(
         CustomEvent::LoadFile(file) => context.load(file),
         CustomEvent::OpenWindow(window_type) => context.open_window(window_type, event_loop),
         CustomEvent::CloseWindow(window_type) => context.close_window(window_type),
-        _ => todo!("unhandled custom event {event:?}"),
     }
 }
