@@ -3,16 +3,21 @@ use std::path::PathBuf;
 #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
 use crate::time_frame::TimeStat;
 use crate::{
-    config::Config, custom_event::CustomEvent, game::Game, image::load_image_to_frame,
-    windows::Windows,
+    config::Config,
+    custom_event::CustomEvent,
+    game::Game,
+    image::load_image_to_frame,
+    windows::{WindowType, Windows},
 };
-use gb_lcd::{DrawEgui, PseudoPixels, PseudoWindow};
+use gb_dbg::debugger::Debugger;
+use gb_lcd::{DrawEgui, GBWindow, PseudoPixels, PseudoWindow};
 #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
 use std::time::Instant;
 use winit::{
+    dpi::LogicalSize,
     event::{ElementState, WindowEvent},
-    event_loop::EventLoopProxy,
-    window::WindowId,
+    event_loop::{EventLoopProxy, EventLoopWindowTarget},
+    window::{WindowBuilder, WindowId},
 };
 
 pub struct Context {
@@ -25,6 +30,7 @@ pub struct Context {
     pub time_frame: TimeStat,
     #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
     pub main_draw_instant: Instant,
+    pub debugger: Option<Debugger<Game>>,
 }
 
 impl Context {
@@ -40,12 +46,54 @@ impl Context {
             time_frame: TimeStat::default(),
             #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
             main_draw_instant: Instant::now(),
+            debugger: None,
+        }
+    }
+}
+
+impl Context {
+    pub fn open_window(
+        &mut self,
+        window_type: WindowType,
+        event_loop: &EventLoopWindowTarget<CustomEvent>,
+    ) {
+        match window_type {
+            WindowType::Debugger => {
+                if self.windows.debugger.is_none() {
+                    let window = {
+                        let size =
+                            LogicalSize::new(gb_dbg::DEBUGGER_WIDTH, gb_dbg::DEBUGGER_HEIGHT);
+                        WindowBuilder::new()
+                            .with_title("cpu debugger")
+                            .with_inner_size(size)
+                            .with_resizable(false)
+                            .build(event_loop)
+                            .expect("cannot build debugger window")
+                    };
+                    self.windows.debugger.replace(GBWindow::new(window));
+                    self.debugger
+                        .replace(gb_dbg::debugger::DebuggerBuilder::new().build());
+                }
+            }
+            _ => todo!("cannot currently open window {window_type:?}"),
+        }
+    }
+
+    pub fn close_window(&mut self, window_type: WindowType) {
+        match window_type {
+            WindowType::Debugger => {
+                self.windows.debugger = None;
+                self.debugger = None;
+            }
+            _ => todo!("cannot currently close window {window_type:?}"),
         }
     }
 
     pub fn redraw(&mut self, window_id: WindowId) -> anyhow::Result<()> {
         if window_id == self.windows.main.id() {
             self.redraw_main_window()
+        } else if Some(window_id) == self.windows.debugger.as_ref().map(|win| win.id()) {
+            self.redraw_debugger_window()
         } else {
             panic!("unexpected window id {window_id:?}")
         }
@@ -54,8 +102,10 @@ impl Context {
     pub fn process_window_event(&mut self, window_id: WindowId, event: WindowEvent) {
         if window_id == self.windows.main.id() {
             self.process_main_window_event(event)
+        } else if Some(window_id) == self.windows.debugger.as_ref().map(|win| win.id()) {
+            self.process_debugger_window_event(event)
         } else {
-            panic!("unexpected window id {window_id:?}")
+            log::error!("unexpected window id {window_id:?} for event {event:?}")
         }
     }
 }
@@ -154,18 +204,42 @@ impl Context {
                     game.joypad.borrow_mut().on_key_event(key, pressed);
                 }
             }
-            WindowEvent::CursorMoved { .. }
-            | WindowEvent::CursorEntered { .. }
-            | WindowEvent::CursorLeft { .. }
-            | WindowEvent::MouseInput { .. }
-            | WindowEvent::AxisMotion { .. }
-            | WindowEvent::Moved(_)
-            | WindowEvent::Focused(_)
-            | WindowEvent::ReceivedCharacter(_)
-            | WindowEvent::ModifiersChanged(_) => {
-                // log::debug!("ignore main window event {event:?}")
+            _ => {}
+        }
+    }
+}
+
+/// Context impl for debugger window
+impl Context {
+    fn redraw_debugger_window(&mut self) -> anyhow::Result<()> {
+        let window = self.windows.debugger.as_mut().unwrap();
+        let debugger = self.debugger.as_mut().unwrap();
+        let game = self.game.as_mut().unwrap();
+
+        window
+            .context
+            .prepare_egui(&window.window, |ctx| debugger.draw(ctx, game, None));
+
+        window
+            .render_with(|_encoder, _render_target, _context| Ok(()))
+            .map_err(anyhow::Error::from)
+    }
+
+    fn process_debugger_window_event(&mut self, event: WindowEvent) {
+        let debugger_window = self.windows.debugger.as_mut().unwrap();
+        if debugger_window.context.on_event(&event) {
+            return;
+        }
+
+        match event {
+            WindowEvent::ScaleFactorChanged { scale_factor, .. } => {
+                debugger_window.context.scale_factor(scale_factor as f32)
             }
-            _ => todo!("process main window event {event:?}"),
+            WindowEvent::CloseRequested => self
+                .event_proxy
+                .send_event(CustomEvent::CloseWindow(WindowType::Debugger))
+                .unwrap(),
+            _ => {}
         }
     }
 }

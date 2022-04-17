@@ -14,7 +14,7 @@ use clap::StructOpt;
 use config::Config;
 use context::Context;
 use custom_event::CustomEvent;
-use gb_lcd::GBPixels;
+use gb_lcd::{GBPixels, PseudoWindow};
 use gb_ppu::{GB_SCREEN_HEIGHT, GB_SCREEN_WIDTH};
 use logger::init_logger;
 use pixels::Error;
@@ -22,7 +22,7 @@ use windows::Windows;
 use winit::{
     dpi::LogicalSize,
     event::Event,
-    event_loop::{ControlFlow, EventLoop},
+    event_loop::{ControlFlow, EventLoop, EventLoopWindowTarget},
     window::WindowBuilder,
 };
 
@@ -42,11 +42,13 @@ fn main() -> Result<(), Error> {
     let windows = Windows::new(main_window);
     let mut context = Context::new(windows, config, event_loop_proxy);
 
-    event_loop.run(move |event, _event_loop, control_flow| match event {
+    event_loop.run(move |event, event_loop, control_flow| match event {
         Event::WindowEvent { window_id, event } => {
             context.process_window_event(window_id, event);
         }
-        Event::UserEvent(event) => handle_custom_event(&mut context, event, control_flow),
+        Event::UserEvent(event) => {
+            handle_custom_event(&mut context, event, event_loop, control_flow)
+        }
         Event::RedrawRequested(window_id) => {
             if context
                 .redraw(window_id)
@@ -64,6 +66,9 @@ fn main() -> Result<(), Error> {
                 while game.cycle() {}
             }
             context.windows.main.window.request_redraw();
+            if let Some(ref debugger) = context.windows.debugger {
+                debugger.request_redraw();
+            }
         }
         Event::NewEvents(_)
         | Event::Resumed
@@ -94,10 +99,17 @@ fn init<const WIDTH: u32, const HEIGHT: u32>(
     Ok((event_loop, main_window))
 }
 
-fn handle_custom_event(context: &mut Context, event: CustomEvent, control_flow: &mut ControlFlow) {
+fn handle_custom_event(
+    context: &mut Context,
+    event: CustomEvent,
+    event_loop: &EventLoopWindowTarget<CustomEvent>,
+    control_flow: &mut ControlFlow,
+) {
     match event {
         CustomEvent::Quit => *control_flow = ControlFlow::Exit,
         CustomEvent::LoadFile(file) => context.load(file),
+        CustomEvent::OpenWindow(window_type) => context.open_window(window_type, event_loop),
+        CustomEvent::CloseWindow(window_type) => context.close_window(window_type),
         _ => todo!("unhandled custom event {event:?}"),
     }
 }

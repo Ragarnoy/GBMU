@@ -59,6 +59,14 @@ pub trait PseudoWindow {
 pub trait PseudoPixels {
     /// Resize the pixels surface
     fn resize(&mut self, size: PhysicalSize<u32>);
+
+    fn render_with<F>(&mut self, render_function: F) -> anyhow::Result<()>
+    where
+        F: FnOnce(
+            &mut wgpu::CommandEncoder,
+            &wgpu::TextureView,
+            &RenderContext,
+        ) -> anyhow::Result<()>;
 }
 
 pub trait EventProcessing {
@@ -69,6 +77,12 @@ pub trait EventProcessing {
 pub struct RenderContext<'a> {
     device: &'a wgpu::Device,
     queue: &'a wgpu::Queue,
+}
+
+impl<'a> RenderContext<'a> {
+    pub fn new(device: &'a wgpu::Device, queue: &'a wgpu::Queue) -> Self {
+        Self { device, queue }
+    }
 }
 
 impl<'a> From<&'a PixelsContext> for RenderContext<'a> {
