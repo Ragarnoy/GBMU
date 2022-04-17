@@ -1,12 +1,13 @@
 use std::{cell::RefCell, rc::Rc};
 
-use gb_joypad::{Config, InputType};
+use egui::{CtxRef, Direction, Layout, Separator, Ui};
+use gb_joypad::{input::INPUT_LIST, Config, InputType};
 use gb_lcd::{DrawEgui, GBWindow, PseudoPixels};
 use winit::{event::WindowEvent, event_loop::EventLoopProxy};
 
 use crate::{custom_event::CustomEvent, windows::WindowType};
 
-pub(crate) struct Context {
+pub struct Context {
     pub window: GBWindow,
     listening: Option<InputType>,
     config: Rc<RefCell<Config>>,
@@ -31,11 +32,11 @@ impl Context {
 /// Context impl for keybindings window
 impl Context {
     pub(crate) fn redraw_keybindings_window(&mut self) -> anyhow::Result<()> {
-        let window = self.window;
-        let config = self.config.borrow_mut();
+        let window = &mut self.window;
+        let config = &self.config.clone();
 
         window.context.prepare_egui(&window.window, |ctx| {
-            crate::ui::window::keybindings::draw_window(ctx, &mut config)
+            Context::draw_window(ctx, config, &mut self.listening)
         });
 
         window
@@ -44,7 +45,7 @@ impl Context {
     }
 
     pub(crate) fn process_keybindings_window_event(&mut self, event: WindowEvent) {
-        let window = self.window;
+        let window = &mut self.window;
         if window.context.on_event(&event) {
             return;
         }
@@ -64,5 +65,74 @@ impl Context {
                 .unwrap(),
             _ => {}
         }
+    }
+}
+
+impl Context {
+    fn draw_window(ctx: &CtxRef, config: &Rc<RefCell<Config>>, listening: &mut Option<InputType>) {
+        egui::CentralPanel::default().show(ctx, |ui| {
+            let height = ui.available_size().y;
+            egui::ScrollArea::vertical()
+                .max_height(height - 50.0)
+                .show(ui, |ui| {
+                    ui.set_height(height - 60.0);
+                    for input_type in INPUT_LIST.iter() {
+                        ui.horizontal(|ui| {
+                            if let Some(listened) = listening {
+                                Context::input_row(
+                                    ui,
+                                    config,
+                                    input_type,
+                                    listened == input_type,
+                                    listening,
+                                );
+                            } else {
+                                Context::input_row(ui, config, input_type, false, listening);
+                            }
+                        });
+                    }
+                });
+            ui.vertical(|ui| {
+                ui.vertical_centered(|ui| {
+                    ui.add(Separator::default().horizontal().spacing(30.0));
+                    if ui.button("reset   ⟲").clicked() {
+                        *listening = None;
+                        *(config.borrow_mut()) = Config::default();
+                    }
+                });
+            });
+        });
+    }
+
+    fn input_row(
+        ui: &mut Ui,
+        config: &Rc<RefCell<Config>>,
+        input_type: &InputType,
+        force_empty: bool,
+        listening: &mut Option<InputType>,
+    ) {
+        ui.columns(3, |ui| {
+            ui[0].label(format!("{:?}:", input_type));
+            ui[1].with_layout(
+                Layout::centered_and_justified(Direction::LeftToRight),
+                |ui| {
+                    if force_empty {
+                        ui.label("---");
+                    } else {
+                        match config.borrow().get_key_entry(input_type) {
+                            Some(entry) => ui.label(entry.name()),
+                            None => ui.label("---"),
+                        };
+                    }
+                },
+            );
+            ui[2].with_layout(Layout::right_to_left(), |ui| {
+                if !force_empty && ui.button("⚙").clicked() {
+                    *listening = Some(*input_type);
+                } else if force_empty && ui.button("❌").clicked() {
+                    *listening = None;
+                }
+            });
+        });
     }
 }
