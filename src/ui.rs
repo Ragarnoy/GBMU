@@ -1,6 +1,7 @@
 mod file;
 mod settings;
 mod tools;
+pub mod window;
 
 use crate::Context;
 #[cfg(feature = "debug_render")]
