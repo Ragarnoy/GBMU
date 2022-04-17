@@ -114,7 +114,7 @@ impl PseudoPixels for GBWindow {
         let mut encoder = self
             .device
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                label: Some("debugger_encoder"),
+                label: Some("gb_window_encoder"),
             });
 
         let render_target = output_frame
