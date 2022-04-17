@@ -1,5 +1,5 @@
 mod config;
-mod input;
+pub mod input;
 mod joypad;
 mod utils;
 
