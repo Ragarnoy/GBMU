@@ -84,6 +84,7 @@ impl Context {
                         let size = LogicalSize::new(250 as f64, 250 as f64);
                         WindowBuilder::new()
                             .with_title("GBMU - Keybindings")
+                            .with_resizable(false)
                             .with_inner_size(size)
                             .build(event_loop)
                             .expect("cannot build keybinding window")
