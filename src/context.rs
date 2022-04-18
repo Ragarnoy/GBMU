@@ -1,16 +1,13 @@
+mod debugger;
 mod keybindings;
 
 #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
 use crate::time_frame::TimeStat;
 use crate::{
-    config::Config,
-    custom_event::CustomEvent,
-    game::Game,
-    image::load_image_to_frame,
-    windows::{WindowType, Windows},
+    config::Config, custom_event::CustomEvent, game::Game, image::load_image_to_frame,
+    windows::WindowType,
 };
-use gb_dbg::debugger::Debugger;
-use gb_lcd::{DrawEgui, GBWindow, PseudoPixels, PseudoWindow};
+use gb_lcd::{DrawEgui, GBPixels, GBWindow, PseudoPixels, PseudoWindow};
 #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
 use std::time::Instant;
 use std::{cell::RefCell, path::PathBuf, rc::Rc};
@@ -22,7 +19,7 @@ use winit::{
 };
 
 pub struct Context {
-    pub windows: Windows,
+    pub main_window: GBPixels,
     pub joypad_config: Rc<RefCell<gb_joypad::Config>>,
     pub config: Config,
     pub event_proxy: EventLoopProxy<CustomEvent>,
@@ -31,14 +28,18 @@ pub struct Context {
     pub time_frame: TimeStat,
     #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
     pub main_draw_instant: Instant,
-    pub debugger: Option<Debugger<Game>>,
+    pub debugger_ctx: Option<debugger::Context>,
     pub keybindings_ctx: Option<keybindings::Context>,
 }
 
 impl Context {
-    pub fn new(windows: Windows, config: Config, event_proxy: EventLoopProxy<CustomEvent>) -> Self {
+    pub fn new(
+        main_window: GBPixels,
+        config: Config,
+        event_proxy: EventLoopProxy<CustomEvent>,
+    ) -> Self {
         Self {
-            windows,
+            main_window,
             joypad_config: Rc::new(RefCell::new(keybindings::load_config())),
             config,
             event_proxy,
@@ -47,7 +48,7 @@ impl Context {
             time_frame: TimeStat::default(),
             #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
             main_draw_instant: Instant::now(),
-            debugger: None,
+            debugger_ctx: None,
             keybindings_ctx: None,
         }
     }
@@ -61,7 +62,7 @@ impl Context {
     ) {
         match window_type {
             WindowType::Debugger => {
-                if self.windows.debugger.is_none() {
+                if self.debugger_ctx.is_none() && self.game.is_some() {
                     let window = {
                         let size =
                             LogicalSize::new(gb_dbg::DEBUGGER_WIDTH, gb_dbg::DEBUGGER_HEIGHT);
@@ -72,15 +73,16 @@ impl Context {
                             .build(event_loop)
                             .expect("cannot build debugger window")
                     };
-                    self.windows.debugger.replace(GBWindow::new(window));
-                    self.debugger
-                        .replace(gb_dbg::debugger::DebuggerBuilder::new().build());
+                    self.debugger_ctx.replace(debugger::Context::new(
+                        GBWindow::new(window),
+                        self.event_proxy.clone(),
+                    ));
                 }
             }
             WindowType::Keybindings => {
                 if self.keybindings_ctx.is_none() {
                     let window = {
-                        let size = LogicalSize::new(250 as f64, 250 as f64);
+                        let size = LogicalSize::new(250.0, 250.0);
                         WindowBuilder::new()
                             .with_title("GBMU - Keybindings")
                             .with_inner_size(size)
@@ -100,8 +102,8 @@ impl Context {
     pub fn close_window(&mut self, window_type: WindowType) {
         match window_type {
             WindowType::Debugger => {
-                self.windows.debugger = None;
-                self.debugger = None;
+                self.debugger_ctx = None;
+                self.debugger_ctx = None;
             }
             WindowType::Keybindings => {
                 self.keybindings_ctx = None;
@@ -110,10 +112,15 @@ impl Context {
     }
 
     pub fn redraw(&mut self, window_id: WindowId) -> anyhow::Result<()> {
-        if window_id == self.windows.main.id() {
+        if window_id == self.main_window.id() {
             self.redraw_main_window()
-        } else if Some(window_id) == self.windows.debugger.as_ref().map(|win| win.id()) {
-            self.redraw_debugger_window()
+        } else if Some(window_id) == self.debugger_ctx.as_ref().map(|ctx| ctx.window.id()) {
+            if let Some(game) = self.game.as_mut() {
+                self.debugger_ctx.as_mut().unwrap().redraw_window(game)
+            } else {
+                log::warn!("Debugger need a game");
+                Ok(())
+            }
         } else if Some(window_id) == self.keybindings_ctx.as_ref().map(|ctx| ctx.window.id()) {
             self.keybindings_ctx.as_mut().unwrap().redraw_window()
         } else {
@@ -122,10 +129,13 @@ impl Context {
     }
 
     pub fn process_window_event(&mut self, window_id: WindowId, event: WindowEvent) {
-        if window_id == self.windows.main.id() {
+        if window_id == self.main_window.id() {
             self.process_main_window_event(event)
-        } else if Some(window_id) == self.windows.debugger.as_ref().map(|win| win.id()) {
-            self.process_debugger_window_event(event)
+        } else if Some(window_id) == self.debugger_ctx.as_ref().map(|ctx| ctx.window.id()) {
+            self.debugger_ctx
+                .as_mut()
+                .unwrap()
+                .process_window_event(event)
         } else if Some(window_id) == self.keybindings_ctx.as_ref().map(|ctx| ctx.window.id()) {
             self.keybindings_ctx
                 .as_mut()
@@ -168,8 +178,8 @@ impl Context {
             #[cfg(feature = "debug_fps")]
             self.time_frame.instant_fps(),
         );
-        let main_pixels = &mut self.windows.main.pixels;
-        let main_context = &mut self.windows.main.context;
+        let main_pixels = &mut self.main_window.pixels;
+        let main_context = &mut self.main_window.context;
 
         if let Some(ref game) = self.game {
             let image = game.ppu.pixels();
@@ -199,20 +209,20 @@ impl Context {
     }
 
     fn process_main_window_event(&mut self, event: WindowEvent) {
-        if self.windows.main.context.on_event(&event) {
+        if self.main_window.context.on_event(&event) {
             return;
         }
 
         match event {
             WindowEvent::Resized(new_size) => {
-                self.windows.main.resize(new_size);
+                self.main_window.resize(new_size);
             }
             WindowEvent::ScaleFactorChanged {
                 scale_factor,
                 new_inner_size,
             } => {
-                self.windows.main.resize(*new_inner_size);
-                self.windows.main.context.scale_factor(scale_factor as f32);
+                self.main_window.resize(*new_inner_size);
+                self.main_window.context.scale_factor(scale_factor as f32);
             }
             WindowEvent::CloseRequested => self
                 .event_proxy
@@ -231,41 +241,6 @@ impl Context {
                     game.joypad.borrow_mut().on_key_event(key, pressed);
                 }
             }
-            _ => {}
-        }
-    }
-}
-
-/// Context impl for debugger window
-impl Context {
-    fn redraw_debugger_window(&mut self) -> anyhow::Result<()> {
-        let window = self.windows.debugger.as_mut().unwrap();
-        let debugger = self.debugger.as_mut().unwrap();
-        let game = self.game.as_mut().unwrap();
-
-        window
-            .context
-            .prepare_egui(&window.window, |ctx| debugger.draw(ctx, game, None));
-
-        window
-            .render_with(|_encoder, _render_target, _context| Ok(()))
-            .map_err(anyhow::Error::from)
-    }
-
-    fn process_debugger_window_event(&mut self, event: WindowEvent) {
-        let debugger_window = self.windows.debugger.as_mut().unwrap();
-        if debugger_window.context.on_event(&event) {
-            return;
-        }
-
-        match event {
-            WindowEvent::ScaleFactorChanged { scale_factor, .. } => {
-                debugger_window.context.scale_factor(scale_factor as f32)
-            }
-            WindowEvent::CloseRequested => self
-                .event_proxy
-                .send_event(CustomEvent::CloseWindow(WindowType::Debugger))
-                .unwrap(),
             _ => {}
         }
     }
