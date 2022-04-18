@@ -39,8 +39,7 @@ impl Context {
     pub fn new(windows: Windows, config: Config, event_proxy: EventLoopProxy<CustomEvent>) -> Self {
         Self {
             windows,
-            // joypad_config: load_joypad_config(),
-            joypad_config: Rc::new(RefCell::new(gb_joypad::Config::default())),
+            joypad_config: Rc::new(RefCell::new(keybindings::load_config())),
             config,
             event_proxy,
             game: None,

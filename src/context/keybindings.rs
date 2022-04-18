@@ -165,3 +165,23 @@ impl Drop for Context {
             .expect("cannot save keybindings config file");
     }
 }
+
+pub fn load_config() -> Config {
+    use std::fs::File;
+
+    let keybindings_config_path = crate::path::keybinding_path();
+    match File::open(&keybindings_config_path)
+        .map_err(anyhow::Error::from)
+        .and_then(|file| serde_yaml::from_reader::<File, Config>(file).map_err(anyhow::Error::from))
+    {
+        Ok(config) => config,
+        Err(e) => {
+            log::error!(
+                "cannot load keybindings configuration file at {}: {}",
+                keybindings_config_path.to_string_lossy(),
+                e
+            );
+            Config::default()
+        }
+    }
+}
