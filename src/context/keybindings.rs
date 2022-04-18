@@ -31,7 +31,7 @@ impl Context {
 
 /// Context impl for keybindings window
 impl Context {
-    pub(crate) fn redraw_keybindings_window(&mut self) -> anyhow::Result<()> {
+    pub(crate) fn redraw_window(&mut self) -> anyhow::Result<()> {
         let window = &mut self.window;
         let config = &self.config.clone();
 
@@ -44,7 +44,7 @@ impl Context {
             .map_err(anyhow::Error::from)
     }
 
-    pub(crate) fn process_keybindings_window_event(&mut self, event: WindowEvent) {
+    pub(crate) fn process_window_event(&mut self, event: WindowEvent) {
         let window = &mut self.window;
         if window.context.on_event(&event) {
             return;
