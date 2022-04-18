@@ -27,10 +27,9 @@ pub fn draw_egui(
     #[cfg(feature = "debug_fps")] fps: f64,
 ) {
     context
-        .windows
-        .main
+        .main_window
         .context
-        .prepare_egui(&context.windows.main.window, |egui_ctx| {
+        .prepare_egui(&context.main_window.window, |egui_ctx| {
             // let c1 = Color32::from_rgba_unmultiplied(168, 115, 232, 64);
             // let c2 = Color32::from_rgba_unmultiplied(241, 91, 181, 128);
             // let c3 = Color32::from_rgba_unmultiplied(254, 228, 64, 255);

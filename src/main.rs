@@ -19,7 +19,6 @@ use gb_lcd::{GBPixels, PseudoWindow};
 use gb_ppu::{GB_SCREEN_HEIGHT, GB_SCREEN_WIDTH};
 use logger::init_logger;
 use pixels::Error;
-use windows::Windows;
 use winit::{
     dpi::LogicalSize,
     event::Event,
@@ -39,8 +38,7 @@ fn main() -> Result<(), Error> {
 
     let (event_loop, main_window) = init::<WIDTH, HEIGHT>(&config)?;
     let event_loop_proxy = event_loop.create_proxy();
-    let windows = Windows::new(main_window);
-    let mut context = Context::new(windows, config, event_loop_proxy);
+    let mut context = Context::new(main_window, config, event_loop_proxy);
     let mut render_time = std::time::Instant::now();
 
     event_loop.run(move |event, event_loop, control_flow| match event {
@@ -69,9 +67,9 @@ fn main() -> Result<(), Error> {
             if let Some(ref mut game) = context.game {
                 while game.cycle() {}
             }
-            context.windows.main.window.request_redraw();
-            if let Some(ref debugger) = context.windows.debugger {
-                debugger.request_redraw();
+            context.main_window.window.request_redraw();
+            if let Some(ref ctx) = context.debugger_ctx {
+                ctx.window.request_redraw();
             }
             if let Some(ref keybindings) = context.keybindings_ctx {
                 keybindings.window.request_redraw();
