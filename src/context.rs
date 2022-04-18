@@ -62,7 +62,7 @@ impl Context {
     ) {
         match window_type {
             WindowType::Debugger => {
-                if self.debugger_ctx.is_none() {
+                if self.debugger_ctx.is_none() && self.game.is_some() {
                     let window = {
                         let size =
                             LogicalSize::new(gb_dbg::DEBUGGER_WIDTH, gb_dbg::DEBUGGER_HEIGHT);

@@ -65,12 +65,23 @@ fn main() -> Result<(), Error> {
         }
         Event::MainEventsCleared => {
             if let Some(ref mut game) = context.game {
-                while game.cycle() {}
+                while game.cycle() {
+                    if let Some(status) = context
+                        .debugger_ctx
+                        .as_mut()
+                        .and_then(|ctx| ctx.debugger.updated_flow_status(game))
+                    {
+                        game.update_scheduled_stop(status);
+                    }
+                }
+                if let Some(ref mut ctx) = context.debugger_ctx {
+                    ctx.window.request_redraw();
+                    if let Some(status) = ctx.debugger.updated_flow_status(game) {
+                        game.update_scheduled_stop(status);
+                    }
+                }
             }
             context.main_window.window.request_redraw();
-            if let Some(ref ctx) = context.debugger_ctx {
-                ctx.window.request_redraw();
-            }
             if let Some(ref keybindings) = context.keybindings_ctx {
                 keybindings.window.request_redraw();
             }
