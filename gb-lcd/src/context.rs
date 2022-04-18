@@ -25,7 +25,7 @@ impl Context {
         let screen_descriptor = ScreenDescriptor {
             physical_width: size.width,
             physical_height: size.height,
-            scale_factor: scale_factor,
+            scale_factor,
         };
         let rpass = RenderPass::new(device, texture_format, 1);
 
@@ -70,12 +70,12 @@ impl DrawEgui for Context {
         context: &crate::RenderContext,
     ) -> Result<(), egui_wgpu_backend::BackendError> {
         self.rpass
-            .update_texture(&context.device, &context.queue, &self.egui_ctx.font_image());
+            .update_texture(context.device, context.queue, &self.egui_ctx.font_image());
         self.rpass
-            .update_user_textures(&context.device, &context.queue);
+            .update_user_textures(context.device, context.queue);
         self.rpass.update_buffers(
-            &context.device,
-            &context.queue,
+            context.device,
+            context.queue,
             &self.paint_jobs,
             &self.screen_descriptor,
         );
