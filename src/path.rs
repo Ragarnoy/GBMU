@@ -12,8 +12,13 @@ pub fn game_save_path(rom_filename: &str) -> PathBuf {
 
 /// Return the root path of the config folder
 pub fn game_root_config_path() -> PathBuf {
-    let mut path = PathBuf::from("~/.config/");
-    path.push(crate::constant::APP_NAME);
+    let mut path = if let Some(home_dir) = std::env::var_os("HOME") {
+        PathBuf::from(home_dir)
+    } else {
+        PathBuf::from(".")
+    };
+    path.push(".config");
+    path.push(crate::constant::APP_NAME.to_lowercase());
     path
 }
 
