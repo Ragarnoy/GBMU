@@ -1,3 +1,4 @@
+use std::ops::Deref;
 use std::{cell::RefCell, rc::Rc};
 
 use egui::{CtxRef, Direction, Layout, Separator, Ui};
@@ -144,5 +145,31 @@ impl Context {
                 }
             });
         });
+    }
+}
+
+impl Drop for Context {
+    fn drop(&mut self) {
+        use crate::path::game_root_config_path;
+
+        let mut path = game_root_config_path();
+
+        log::info!("create config dir {}", path.to_string_lossy());
+        std::fs::create_dir_all(&path).expect("cannot create config directory");
+
+        path.push("keybindings.yaml");
+
+        let keybindings_config_path = path;
+
+        log::info!(
+            "saving keybindings configuration to {}",
+            keybindings_config_path.to_string_lossy()
+        );
+
+        let keybindings_config_file = std::fs::File::create(keybindings_config_path)
+            .expect("cannot create file for keybindings");
+
+        serde_yaml::to_writer(keybindings_config_file, self.config.borrow().deref())
+            .expect("cannot save keybindings config file");
     }
 }
