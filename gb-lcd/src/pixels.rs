@@ -86,7 +86,7 @@ impl PseudoPixels for GBPixels {
                 render_function(encoder, render_target, &RenderContext::from(context))?;
                 Ok(())
             })
-            .map_err(|err| anyhow::Error::from(err))
+            .map_err(anyhow::Error::from)
     }
 }
 

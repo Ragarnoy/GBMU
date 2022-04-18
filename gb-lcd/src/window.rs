@@ -125,8 +125,7 @@ impl PseudoPixels for GBWindow {
             .create_view(&wgpu::TextureViewDescriptor::default());
         let context = RenderContext::new(&self.device, &self.queue);
 
-        render_function(&mut encoder, &render_target, &context)
-            .map_err(|err| anyhow::Error::from(err))?;
+        render_function(&mut encoder, &render_target, &context).map_err(anyhow::Error::from)?;
         self.context
             .render_egui(&mut encoder, &render_target, &context)?;
 
