@@ -150,16 +150,8 @@ impl Context {
 
 impl Drop for Context {
     fn drop(&mut self) {
-        use crate::path::game_root_config_path;
-
-        let mut path = game_root_config_path();
-
-        log::info!("create config dir {}", path.to_string_lossy());
-        std::fs::create_dir_all(&path).expect("cannot create config directory");
-
-        path.push("keybindings.yaml");
-
-        let keybindings_config_path = path;
+        crate::path::create_root_config_path().expect("failed to create config directory");
+        let keybindings_config_path = crate::path::keybinding_path();
 
         log::info!(
             "saving keybindings configuration to {}",
