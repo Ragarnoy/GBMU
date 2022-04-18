@@ -3,8 +3,9 @@ mod save_state;
 mod utils;
 
 #[cfg(feature = "cgb")]
-use crate::Mode;
+use crate::config::Mode;
 
+use crate::path::game_save_path;
 #[cfg(feature = "cgb")]
 use gb_bus::generic::{CharDevice, PanicDevice};
 use gb_bus::{generic::SimpleRW, AddressBus, Bus, IORegArea, IORegBus, Source, WorkingRam};
@@ -27,7 +28,7 @@ use gb_roms::{
 use gb_timer::Timer;
 #[cfg(feature = "save_state")]
 use save_state::SaveState;
-use utils::{game_save_path, mbc_with_save_state};
+use utils::mbc_with_save_state;
 
 #[cfg(feature = "registers_logs")]
 use std::io::BufWriter;

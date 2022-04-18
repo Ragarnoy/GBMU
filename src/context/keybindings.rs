@@ -1,3 +1,4 @@
+use std::ops::Deref;
 use std::{cell::RefCell, rc::Rc};
 
 use egui::{CtxRef, Direction, Layout, Separator, Ui};
@@ -31,9 +32,9 @@ impl Context {
 
 /// Context impl for keybindings window
 impl Context {
-    pub(crate) fn redraw_keybindings_window(&mut self) -> anyhow::Result<()> {
+    pub(crate) fn redraw_window(&mut self) -> anyhow::Result<()> {
         let window = &mut self.window;
-        let config = &self.config.clone();
+        let config = &self.config;
 
         window.context.prepare_egui(&window.window, |ctx| {
             Context::draw_window(ctx, config, &mut self.listening)
@@ -44,7 +45,7 @@ impl Context {
             .map_err(anyhow::Error::from)
     }
 
-    pub(crate) fn process_keybindings_window_event(&mut self, event: WindowEvent) {
+    pub(crate) fn process_window_event(&mut self, event: WindowEvent) {
         let window = &mut self.window;
         if window.context.on_event(&event) {
             return;
@@ -144,5 +145,43 @@ impl Context {
                 }
             });
         });
+    }
+}
+
+impl Drop for Context {
+    fn drop(&mut self) {
+        crate::path::create_root_config_path().expect("failed to create config directory");
+        let keybindings_config_path = crate::path::keybinding_path();
+
+        log::info!(
+            "saving keybindings configuration to {}",
+            keybindings_config_path.to_string_lossy()
+        );
+
+        let keybindings_config_file = std::fs::File::create(keybindings_config_path)
+            .expect("cannot create file for keybindings");
+
+        serde_yaml::to_writer(keybindings_config_file, self.config.borrow().deref())
+            .expect("cannot save keybindings config file");
+    }
+}
+
+pub fn load_config() -> Config {
+    use std::fs::File;
+
+    let keybindings_config_path = crate::path::keybinding_path();
+    match File::open(&keybindings_config_path)
+        .map_err(anyhow::Error::from)
+        .and_then(|file| serde_yaml::from_reader::<File, Config>(file).map_err(anyhow::Error::from))
+    {
+        Ok(config) => config,
+        Err(e) => {
+            log::error!(
+                "cannot load keybindings configuration file at {}: {}",
+                keybindings_config_path.to_string_lossy(),
+                e
+            );
+            Config::default()
+        }
     }
 }

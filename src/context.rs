@@ -39,8 +39,7 @@ impl Context {
     pub fn new(windows: Windows, config: Config, event_proxy: EventLoopProxy<CustomEvent>) -> Self {
         Self {
             windows,
-            // joypad_config: load_joypad_config(),
-            joypad_config: Rc::new(RefCell::new(gb_joypad::Config::default())),
+            joypad_config: Rc::new(RefCell::new(keybindings::load_config())),
             config,
             event_proxy,
             game: None,
@@ -116,10 +115,7 @@ impl Context {
         } else if Some(window_id) == self.windows.debugger.as_ref().map(|win| win.id()) {
             self.redraw_debugger_window()
         } else if Some(window_id) == self.keybindings_ctx.as_ref().map(|ctx| ctx.window.id()) {
-            self.keybindings_ctx
-                .as_mut()
-                .unwrap()
-                .redraw_keybindings_window()
+            self.keybindings_ctx.as_mut().unwrap().redraw_window()
         } else {
             panic!("unexpected window id {window_id:?}")
         }
@@ -134,7 +130,7 @@ impl Context {
             self.keybindings_ctx
                 .as_mut()
                 .unwrap()
-                .process_keybindings_window_event(event)
+                .process_window_event(event)
         } else {
             log::error!("unexpected window id {window_id:?} for event {event:?}")
         }
