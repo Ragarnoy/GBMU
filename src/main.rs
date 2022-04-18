@@ -72,6 +72,9 @@ fn main() -> Result<(), Error> {
             if let Some(ref debugger) = context.windows.debugger {
                 debugger.request_redraw();
             }
+            if let Some(ref keybindings) = context.keybindings_ctx {
+                keybindings.window.request_redraw();
+            }
         }
         Event::RedrawEventsCleared => {
             let elapsed = render_time.elapsed();

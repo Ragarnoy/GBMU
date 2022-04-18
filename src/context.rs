@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+mod keybindings;
 
 #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
 use crate::time_frame::TimeStat;
@@ -13,6 +13,7 @@ use gb_dbg::debugger::Debugger;
 use gb_lcd::{DrawEgui, GBWindow, PseudoPixels, PseudoWindow};
 #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
 use std::time::Instant;
+use std::{cell::RefCell, path::PathBuf, rc::Rc};
 use winit::{
     dpi::LogicalSize,
     event::{ElementState, WindowEvent},
@@ -22,7 +23,7 @@ use winit::{
 
 pub struct Context {
     pub windows: Windows,
-    pub joypad_config: gb_joypad::Config,
+    pub joypad_config: Rc<RefCell<gb_joypad::Config>>,
     pub config: Config,
     pub event_proxy: EventLoopProxy<CustomEvent>,
     pub game: Option<Game>,
@@ -31,6 +32,7 @@ pub struct Context {
     #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
     pub main_draw_instant: Instant,
     pub debugger: Option<Debugger<Game>>,
+    pub keybindings_ctx: Option<keybindings::Context>,
 }
 
 impl Context {
@@ -38,7 +40,7 @@ impl Context {
         Self {
             windows,
             // joypad_config: load_joypad_config(),
-            joypad_config: gb_joypad::Config::default(),
+            joypad_config: Rc::new(RefCell::new(gb_joypad::Config::default())),
             config,
             event_proxy,
             game: None,
@@ -47,6 +49,7 @@ impl Context {
             #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
             main_draw_instant: Instant::now(),
             debugger: None,
+            keybindings_ctx: None,
         }
     }
 }
@@ -64,7 +67,7 @@ impl Context {
                         let size =
                             LogicalSize::new(gb_dbg::DEBUGGER_WIDTH, gb_dbg::DEBUGGER_HEIGHT);
                         WindowBuilder::new()
-                            .with_title("cpu debugger")
+                            .with_title("GBMU - Cpu Debugger")
                             .with_inner_size(size)
                             .with_resizable(false)
                             .build(event_loop)
@@ -75,7 +78,23 @@ impl Context {
                         .replace(gb_dbg::debugger::DebuggerBuilder::new().build());
                 }
             }
-            _ => todo!("cannot currently open window {window_type:?}"),
+            WindowType::Keybindings => {
+                if self.keybindings_ctx.is_none() {
+                    let window = {
+                        let size = LogicalSize::new(250 as f64, 250 as f64);
+                        WindowBuilder::new()
+                            .with_title("GBMU - Keybindings")
+                            .with_inner_size(size)
+                            .build(event_loop)
+                            .expect("cannot build keybinding window")
+                    };
+                    self.keybindings_ctx.replace(keybindings::Context::new(
+                        GBWindow::new(window),
+                        self.joypad_config.clone(),
+                        self.event_proxy.clone(),
+                    ));
+                }
+            }
         }
     }
 
@@ -85,7 +104,9 @@ impl Context {
                 self.windows.debugger = None;
                 self.debugger = None;
             }
-            _ => todo!("cannot currently close window {window_type:?}"),
+            WindowType::Keybindings => {
+                self.keybindings_ctx = None;
+            }
         }
     }
 
@@ -94,6 +115,11 @@ impl Context {
             self.redraw_main_window()
         } else if Some(window_id) == self.windows.debugger.as_ref().map(|win| win.id()) {
             self.redraw_debugger_window()
+        } else if Some(window_id) == self.keybindings_ctx.as_ref().map(|ctx| ctx.window.id()) {
+            self.keybindings_ctx
+                .as_mut()
+                .unwrap()
+                .redraw_keybindings_window()
         } else {
             panic!("unexpected window id {window_id:?}")
         }
@@ -104,6 +130,11 @@ impl Context {
             self.process_main_window_event(event)
         } else if Some(window_id) == self.windows.debugger.as_ref().map(|win| win.id()) {
             self.process_debugger_window_event(event)
+        } else if Some(window_id) == self.keybindings_ctx.as_ref().map(|ctx| ctx.window.id()) {
+            self.keybindings_ctx
+                .as_mut()
+                .unwrap()
+                .process_keybindings_window_event(event)
         } else {
             log::error!("unexpected window id {window_id:?} for event {event:?}")
         }
