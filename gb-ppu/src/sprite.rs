@@ -21,6 +21,7 @@ pub struct Sprite {
     y_pos: u8,
     x_pos: u8,
     tile_index: u8,
+    oam_index: u8,
     attributes: u8,
 }
 
@@ -29,15 +30,6 @@ impl<'r> Sprite {
     pub const HORIZONTAL_OFFSET: u8 = 8;
 
     pub const TILE_INDEX_MASK: u8 = 0b1111_1110;
-
-    pub fn new() -> Self {
-        Sprite {
-            y_pos: 0,
-            x_pos: 0,
-            tile_index: 0,
-            attributes: 0,
-        }
-    }
 
     pub const SIZE: usize = 4;
 
@@ -59,6 +51,10 @@ impl<'r> Sprite {
 
     pub fn tile_index(&self) -> u8 {
         self.tile_index
+    }
+
+    pub fn oam_index(&self) -> u8 {
+        self.oam_index
     }
 
     fn bank_selector(&self, cgb_enabled: bool) -> Option<BankSelector> {
@@ -183,12 +179,14 @@ impl<'r> Sprite {
     }
 }
 
-impl From<[u8; Sprite::SIZE]> for Sprite {
-    fn from(bytes: [u8; Sprite::SIZE]) -> Sprite {
+impl From<(u8, [u8; Sprite::SIZE])> for Sprite {
+    fn from(data: (u8, [u8; Sprite::SIZE])) -> Sprite {
+        let (oam_index, bytes) = data;
         Sprite {
             y_pos: bytes[0],
             x_pos: bytes[1],
             tile_index: bytes[2],
+            oam_index,
             attributes: bytes[3],
         }
     }

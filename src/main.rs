@@ -13,6 +13,8 @@ mod windows;
 
 use clap::Parser;
 
+#[cfg(feature = "cgb")]
+use config::Mode;
 use context::Context;
 use game::Game;
 use gb_dbg::debugger::options::DebuggerOptions;
@@ -21,26 +23,10 @@ use gb_lcd::{render, window::GBWindow};
 use logger::init_logger;
 use std::{
     cell::RefCell,
-    fmt::{self, Display},
     rc::Rc,
     time::{Duration, Instant},
 };
 use windows::Windows;
-
-#[derive(Debug, clap::ArgEnum, Clone, Copy, PartialEq, Eq)]
-pub enum Mode {
-    Color,
-    Classic,
-}
-
-impl Display for Mode {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Mode::Color => write!(f, "color"),
-            Mode::Classic => write!(f, "classic"),
-        }
-    }
-}
 
 fn main() {
     #[cfg(feature = "cgb")]
@@ -86,7 +72,7 @@ fn main() {
         ui::draw_egui(
             &mut context,
             #[cfg(feature = "cgb")]
-            &mut opts,
+            &mut cfg,
             #[cfg(feature = "debug_fps")]
             render_time_frame.fps(),
         );
@@ -189,7 +175,7 @@ fn main() {
                             game = load_game(
                                 game_ctx.romname.clone(),
                                 context.joypad.clone(),
-                                opts.debug,
+                                cfg.debug,
                                 Some(*wanted_mode),
                             )
                         }

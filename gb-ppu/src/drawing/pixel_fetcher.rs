@@ -284,10 +284,11 @@ impl PixelFetcher {
                         pixel_row.into_iter().collect()
                     };
                     for color_id in pixel_iter {
-                        self.pixels.push_front(Pixel::new(
+                        self.pixels.push_front(Pixel::new_cgb(
                             color_id,
                             Some(attributes.palette_ref()),
                             attributes.bg_priority(),
+                            None,
                         ));
                     }
                 }
@@ -307,6 +308,11 @@ impl PixelFetcher {
         line: usize,
         sprite: &Sprite,
     ) {
+        let oam_index = if self.cgb_enabled && lcd_reg.object_priority_cgb() {
+            Some(sprite.oam_index())
+        } else {
+            None
+        };
         match sprite.get_pixels_row(
             line + Sprite::VERTICAL_OFFSET as usize - sprite.y_pos() as usize,
             vram,
@@ -315,10 +321,11 @@ impl PixelFetcher {
         ) {
             Ok((row, palette_ref)) => {
                 for color_id in row {
-                    self.pixels_sprite.push_front(Pixel::new(
+                    self.pixels_sprite.push_front(Pixel::new_cgb(
                         color_id,
-                        Some(palette_ref.clone()),
+                        Some(palette_ref),
                         sprite.bg_win_priority(),
+                        oam_index,
                     ));
                 }
             }
@@ -326,11 +333,11 @@ impl PixelFetcher {
         }
     }
 
-    pub fn push_to_fifo(&mut self, fifo: &mut PixelFIFO) -> bool {
+    pub fn push_to_fifo(&mut self, fifo: &mut PixelFIFO, discard_bg_win: bool) -> bool {
         match self.mode {
             FetchMode::Sprite(_) => {
                 if self.pixels_sprite.len() >= 8 && self.internal_tick_sprite % 2 == 1 {
-                    self.mix_to_fifo(fifo)
+                    self.mix_to_fifo(fifo, discard_bg_win)
                 } else {
                     false
                 }
@@ -354,8 +361,8 @@ impl PixelFetcher {
         }
     }
 
-    fn mix_to_fifo(&mut self, fifo: &mut PixelFIFO) -> bool {
-        if fifo.mix(&self.pixels_sprite) {
+    fn mix_to_fifo(&mut self, fifo: &mut PixelFIFO, discard_bg_win: bool) -> bool {
+        if fifo.mix(&self.pixels_sprite, discard_bg_win) {
             self.clear_sprite();
             self.set_mode_to_default();
             true

@@ -1,4 +1,5 @@
 use clap::Parser;
+use std::fmt::{self, Display};
 
 #[derive(Parser, Debug)]
 #[clap(version, author, about)]
@@ -38,4 +39,19 @@ pub struct Config {
         help = "force gameboy mode between color and mono"
     )]
     pub mode: Option<Mode>,
+}
+
+#[derive(Debug, clap::ArgEnum, Clone, Copy, PartialEq, Eq)]
+pub enum Mode {
+    Color,
+    Classic,
+}
+
+impl Display for Mode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Mode::Color => write!(f, "color"),
+            Mode::Classic => write!(f, "classic"),
+        }
+    }
 }

@@ -7,7 +7,7 @@ use crate::context::Context;
 use crate::Mode;
 
 #[cfg(feature = "cgb")]
-use gb_bus::generic::{CharDevice, PanicDevice};
+use gb_bus::generic::CharDevice;
 use gb_bus::{generic::SimpleRW, AddressBus, Bus, IORegArea, IORegBus, Source, WorkingRam};
 use gb_clock::{cycles, Clock};
 use gb_cpu::{cpu::Cpu, new_cpu, registers::Registers};
