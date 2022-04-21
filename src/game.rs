@@ -229,7 +229,8 @@ impl Game {
                 .borrow_mut()
                 .check_hdma_state(&mut self.cpu, &self.ppu);
 
-            let frame_not_finished = cycles!(
+            #[allow(unused_mut)]
+            let mut frame_not_finished = cycles!(
                 self.clock,
                 &mut self.addr_bus,
                 self.timer.borrow_mut().deref_mut(),
@@ -242,7 +243,7 @@ impl Game {
             self.check_scheduled_stop(!frame_not_finished);
             #[cfg(feature = "cgb")]
             if self.cpu.io_regs.borrow().fast_mode() {
-                cycles!(
+                frame_not_finished = cycles!(
                     self.clock,
                     &mut self.addr_bus,
                     &mut self.cpu,
