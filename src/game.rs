@@ -249,7 +249,7 @@ impl Game {
                     &mut self.cpu,
                     self.timer.borrow_mut().deref_mut(),
                     self.dma.borrow_mut().deref_mut()
-                );
+                ) && frame_not_finished;
                 self.check_scheduled_stop(!frame_not_finished);
             }
 
