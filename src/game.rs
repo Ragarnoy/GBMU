@@ -114,11 +114,11 @@ impl Game {
             new_cpu()
         } else {
             let (mut cpu, cpu_io_reg) = new_cpu();
-            assert!(
-                !cgb_mode,
-                "we don't have the registers value for color mode"
-            );
-            cpu.set_registers(Registers::DMG);
+            cpu.set_registers(if cgb_mode {
+                Registers::CGB
+            } else {
+                Registers::DMG
+            });
             (cpu, cpu_io_reg)
         };
         let wram = Rc::new(RefCell::new(WorkingRam::new(cgb_mode)));
