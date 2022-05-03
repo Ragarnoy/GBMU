@@ -6,6 +6,7 @@ use crate::context::Context;
 #[cfg(feature = "cgb")]
 use crate::Mode;
 
+#[cfg(feature = "audio")]
 use gb_apu::apu::Apu;
 #[cfg(feature = "cgb")]
 use gb_bus::generic::CharDevice;
@@ -35,6 +36,7 @@ use gb_roms::{
 use gb_timer::Timer;
 #[cfg(feature = "save_state")]
 use save_state::SaveState;
+#[cfg(feature = "audio")]
 use sdl2::audio::AudioQueue;
 use utils::{game_save_path, mbc_with_save_state};
 
@@ -55,8 +57,6 @@ pub struct Game {
     pub hdma: Rc<RefCell<Hdma>>,
     pub dma: Rc<RefCell<Dma>>,
     pub joypad: Rc<RefCell<Joypad>>,
-    #[cfg(not(feature = "audio"))]
-    pub apu: Rc<RefCell<DummyApu>>,
     #[cfg(feature = "audio")]
     pub apu: Rc<RefCell<Apu>>,
     pub addr_bus: AddressBus,
@@ -153,8 +153,6 @@ impl Game {
         let dma = Rc::new(RefCell::new(Dma::new(ppu.memory())));
         let hdma = Rc::new(RefCell::new(Hdma::default()));
         let serial = Rc::new(RefCell::new(gb_bus::Serial::default()));
-        #[cfg(not(feature = "audio"))]
-        let apu = Rc::new(RefCell::new(DummyApu::default()));
         #[cfg(feature = "audio")]
         let apu = Rc::new(RefCell::new(Apu::new(audio_queue)));
 
@@ -169,6 +167,8 @@ impl Game {
                     .with_area(IORegArea::RP, Rc::new(RefCell::new(CharDevice(0))))
                     .with_area(IORegArea::Svbk, wram.clone());
             }
+            #[cfg(feature = "audio")]
+            io_bus.with_sound(apu.clone());
             io_bus
                 .with_area(IORegArea::Joy, joypad.clone())
                 .with_timer(timer.clone())
@@ -176,8 +176,8 @@ impl Game {
                 .with_area(IORegArea::IF, cpu_io_reg.clone())
                 .with_area(IORegArea::Dma, dma.clone())
                 .with_area(IORegArea::BootRom, bios_wrapper.clone())
-                .with_serial(serial)
-                .with_sound(apu.clone());
+                .with_serial(serial);
+
             io_bus
         };
         let io_bus = Rc::new(RefCell::new(io_bus));
@@ -217,6 +217,7 @@ impl Game {
             dma,
             hdma,
             joypad,
+            #[cfg(feature = "audio")]
             apu,
             addr_bus: bus,
             scheduled_stop: None,
@@ -251,6 +252,7 @@ impl Game {
                 self.dma.borrow_mut().deref_mut(),
                 &mut self.cpu,
                 self.hdma.borrow_mut().deref_mut(),
+                #[cfg(feature = "audio")]
                 self.apu.borrow_mut().deref_mut()
             );
             self.check_scheduled_stop(!frame_not_finished);

@@ -214,6 +214,7 @@ where
             _ => Err(Error::SegmentationFault(addr.into())),
         }
     }
+
     fn write(&mut self, v: u8, addr: A, _source: Option<Source>) -> Result<(), Error> {
         use IORegArea::{
             Nr10, Nr11, Nr12, Nr13, Nr14, Nr21, Nr22, Nr23, Nr24, Nr30, Nr31, Nr32, Nr33, Nr34,
