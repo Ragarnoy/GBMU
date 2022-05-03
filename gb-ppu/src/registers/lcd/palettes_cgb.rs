@@ -58,7 +58,7 @@ impl PalettesCGB {
 
     pub fn set_bcpd(&mut self, value: u8) {
         self.bcpd = value;
-        let index = (self.bcps & Self::SPEC_DATA_INDEX) as usize;
+        let index = (self.bcps & (Self::PALETTES_RAW_SIZE as u8 - 1)) as usize;
         self.bc_values[index] = value;
 
         if self.bcps & Self::SPEC_AUTO_INCR != 0 {
