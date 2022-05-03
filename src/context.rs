@@ -1,5 +1,6 @@
 use gb_joypad::Joypad;
 use gb_lcd::render::RenderImage;
+#[cfg(feature = "audio")]
 use sdl2::audio::AudioQueue;
 
 use std::{cell::RefCell, rc::Rc};

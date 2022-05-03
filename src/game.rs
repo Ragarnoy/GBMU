@@ -243,6 +243,19 @@ impl Game {
                 .borrow_mut()
                 .check_hdma_state(&mut self.cpu, &self.ppu);
 
+            #[cfg(not(feature = "audio"))]
+            let frame_not_finished = counted_cycles!(
+                self.clock,
+                &mut self.addr_bus,
+                self.timer.borrow_mut().deref_mut(),
+                &mut self.ppu,
+                self.joypad.borrow_mut().deref_mut(),
+                self.dma.borrow_mut().deref_mut(),
+                &mut self.cpu,
+                self.hdma.borrow_mut().deref_mut()
+            );
+
+            #[cfg(feature = "audio")]
             let frame_not_finished = counted_cycles!(
                 self.clock,
                 &mut self.addr_bus,
@@ -252,10 +265,11 @@ impl Game {
                 self.dma.borrow_mut().deref_mut(),
                 &mut self.cpu,
                 self.hdma.borrow_mut().deref_mut(),
-                #[cfg(feature = "audio")]
                 self.apu.borrow_mut().deref_mut()
             );
+
             self.check_scheduled_stop(!frame_not_finished);
+
             #[cfg(feature = "cgb")]
             if self.cpu.io_regs.borrow().fast_mode() {
                 not_counted_cycles!(
