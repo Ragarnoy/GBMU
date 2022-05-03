@@ -6,6 +6,7 @@ use crate::context::Context;
 #[cfg(feature = "cgb")]
 use crate::Mode;
 
+use gb_apu::apu::Apu;
 #[cfg(feature = "cgb")]
 use gb_bus::generic::CharDevice;
 use gb_bus::{generic::SimpleRW, AddressBus, Bus, IORegArea, IORegBus, Source, WorkingRam};
@@ -34,6 +35,7 @@ use gb_roms::{
 use gb_timer::Timer;
 #[cfg(feature = "save_state")]
 use save_state::SaveState;
+use sdl2::audio::AudioQueue;
 use utils::{game_save_path, mbc_with_save_state};
 
 #[cfg(feature = "registers_logs")]
@@ -53,6 +55,10 @@ pub struct Game {
     pub hdma: Rc<RefCell<Hdma>>,
     pub dma: Rc<RefCell<Dma>>,
     pub joypad: Rc<RefCell<Joypad>>,
+    #[cfg(not(feature = "audio"))]
+    pub apu: Rc<RefCell<DummyApu>>,
+    #[cfg(feature = "audio")]
+    pub apu: Rc<RefCell<Apu>>,
     pub addr_bus: AddressBus,
     scheduled_stop: Option<ScheduledStop>,
     emulation_stopped: bool,
@@ -83,6 +89,7 @@ impl Game {
         rompath: &P,
         joypad: Rc<RefCell<Joypad>>,
         stopped: bool,
+        #[cfg(feature = "audio")] audio_queue: Rc<RefCell<AudioQueue<f32>>>,
         #[cfg(feature = "cgb")] forced_mode: Option<Mode>,
     ) -> Result<Game, anyhow::Error> {
         use std::io::Seek;
@@ -146,6 +153,10 @@ impl Game {
         let dma = Rc::new(RefCell::new(Dma::new(ppu.memory())));
         let hdma = Rc::new(RefCell::new(Hdma::default()));
         let serial = Rc::new(RefCell::new(gb_bus::Serial::default()));
+        #[cfg(not(feature = "audio"))]
+        let apu = Rc::new(RefCell::new(DummyApu::default()));
+        #[cfg(feature = "audio")]
+        let apu = Rc::new(RefCell::new(Apu::new(audio_queue)));
 
         let io_bus = {
             let mut io_bus = IORegBus::default();
@@ -166,8 +177,7 @@ impl Game {
                 .with_area(IORegArea::Dma, dma.clone())
                 .with_area(IORegArea::BootRom, bios_wrapper.clone())
                 .with_serial(serial)
-                .with_default_sound()
-                .with_default_waveform_ram();
+                .with_sound(apu.clone());
             io_bus
         };
         let io_bus = Rc::new(RefCell::new(io_bus));
@@ -207,6 +217,7 @@ impl Game {
             dma,
             hdma,
             joypad,
+            apu,
             addr_bus: bus,
             scheduled_stop: None,
             emulation_stopped: stopped,
@@ -239,7 +250,8 @@ impl Game {
                 self.joypad.borrow_mut().deref_mut(),
                 self.dma.borrow_mut().deref_mut(),
                 &mut self.cpu,
-                self.hdma.borrow_mut().deref_mut()
+                self.hdma.borrow_mut().deref_mut(),
+                self.apu.borrow_mut().deref_mut()
             );
             self.check_scheduled_stop(!frame_not_finished);
             #[cfg(feature = "cgb")]

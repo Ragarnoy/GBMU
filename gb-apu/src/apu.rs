@@ -1,4 +1,4 @@
-use gb_bus::{Address, Bus, Error, FileOperation, IORegArea};
+use gb_bus::{Address, Bus, Error, FileOperation, IORegArea, Source};
 use gb_clock::{Tick, Ticker};
 use sdl2::audio::AudioQueue;
 use std::{cell::RefCell, rc::Rc};
@@ -103,6 +103,7 @@ impl Ticker for Apu {
         if !self.enabled {
             return;
         }
+
         self.cycle_counter += 1;
         for i in 0..self.sound_channels.len() {
             self.sound_channels[i].step();
@@ -140,7 +141,7 @@ where
     A: Address<IORegArea>,
     u16: From<A>,
 {
-    fn read(&self, addr: A) -> Result<u8, Error> {
+    fn read(&self, addr: A, _source: Option<Source>) -> Result<u8, Error> {
         use IORegArea::{
             Nr10, Nr11, Nr12, Nr13, Nr14, Nr21, Nr22, Nr23, Nr24, Nr30, Nr31, Nr32, Nr33, Nr34,
             Nr41, Nr42, Nr43, Nr44, Nr50, Nr51, Nr52, WaveRam0, WaveRam1, WaveRam2, WaveRam3,
@@ -148,21 +149,21 @@ where
             WaveRamC, WaveRamD, WaveRamE, WaveRamF,
         };
         match addr.area_type() {
-            Nr10 | Nr11 | Nr12 | Nr13 | Nr14 => self.sound_channels[0].read(addr),
-            Nr21 | Nr22 | Nr23 | Nr24 => self.sound_channels[1].read(addr),
+            Nr10 | Nr11 | Nr12 | Nr13 | Nr14 => self.sound_channels[0].read(addr, None),
+            Nr21 | Nr22 | Nr23 | Nr24 => self.sound_channels[1].read(addr, None),
             Nr30 | Nr31 | Nr32 | Nr33 | Nr34 | WaveRam0 | WaveRam1 | WaveRam2 | WaveRam3
             | WaveRam4 | WaveRam5 | WaveRam6 | WaveRam7 | WaveRam8 | WaveRam9 | WaveRamA
             | WaveRamB | WaveRamC | WaveRamD | WaveRamE | WaveRamF => {
-                self.sound_channels[2].read(addr)
+                self.sound_channels[2].read(addr, None)
             }
-            Nr41 | Nr42 | Nr43 | Nr44 => self.sound_channels[3].read(addr),
+            Nr41 | Nr42 | Nr43 | Nr44 => self.sound_channels[3].read(addr, None),
             Nr50 => Ok(0),
             Nr51 => Ok(0),
             Nr52 => Ok(self.get_power_channels_statuses_byte()),
             _ => Err(Error::SegmentationFault(addr.into())),
         }
     }
-    fn write(&mut self, v: u8, addr: A) -> Result<(), Error> {
+    fn write(&mut self, v: u8, addr: A, _source: Option<Source>) -> Result<(), Error> {
         use IORegArea::{
             Nr10, Nr11, Nr12, Nr13, Nr14, Nr21, Nr22, Nr23, Nr24, Nr30, Nr31, Nr32, Nr33, Nr34,
             Nr41, Nr42, Nr43, Nr44, Nr50, Nr51, Nr52, WaveRam0, WaveRam1, WaveRam2, WaveRam3,
@@ -170,14 +171,14 @@ where
             WaveRamC, WaveRamD, WaveRamE, WaveRamF,
         };
         match addr.area_type() {
-            Nr10 | Nr11 | Nr12 | Nr13 | Nr14 => return self.sound_channels[0].write(v, addr),
-            Nr21 | Nr22 | Nr23 | Nr24 => return self.sound_channels[1].write(v, addr),
+            Nr10 | Nr11 | Nr12 | Nr13 | Nr14 => return self.sound_channels[0].write(v, addr, None),
+            Nr21 | Nr22 | Nr23 | Nr24 => return self.sound_channels[1].write(v, addr, None),
             Nr30 | Nr31 | Nr32 | Nr33 | Nr34 | WaveRam0 | WaveRam1 | WaveRam2 | WaveRam3
             | WaveRam4 | WaveRam5 | WaveRam6 | WaveRam7 | WaveRam8 | WaveRam9 | WaveRamA
             | WaveRamB | WaveRamC | WaveRamD | WaveRamE | WaveRamF => {
-                return self.sound_channels[2].write(v, addr)
+                return self.sound_channels[2].write(v, addr, None)
             }
-            Nr41 | Nr42 | Nr43 | Nr44 => return self.sound_channels[3].write(v, addr),
+            Nr41 | Nr42 | Nr43 | Nr44 => return self.sound_channels[3].write(v, addr, None),
             Nr50 => {}
             Nr51 => {}
             Nr52 => {
@@ -214,10 +215,10 @@ where
     A: Address<IORegArea>,
     u16: From<A>,
 {
-    fn read(&self, _addr: A) -> Result<u8, Error> {
+    fn read(&self, _addr: A, _source: Option<Source>) -> Result<u8, Error> {
         Ok(0xFF)
     }
-    fn write(&mut self, _v: u8, _addr: A) -> Result<(), Error> {
+    fn write(&mut self, _v: u8, _addr: A, _source: Option<Source>) -> Result<(), Error> {
         Ok(())
     }
 }
