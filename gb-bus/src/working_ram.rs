@@ -69,7 +69,10 @@ where
 {
     fn write(&mut self, value: u8, addr: A, _source: Option<Source>) -> Result<(), Error> {
         if self.enable_cgb_feature {
-            self.bank = (value & 0x7).min(1);
+            self.bank = value & 0x7;
+            if self.bank == 0 {
+                self.bank = 1;
+            }
             Ok(())
         } else {
             Err(Error::new_segfault(addr.into()))
