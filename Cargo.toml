@@ -52,7 +52,7 @@ gb-roms = { path = "./gb-roms" }
 gb-clock = { path = "./gb-clock" }
 gb-timer = { path = "./gb-timer" }
 gb-dma = { path = "./gb-dma" }
-gb-apu = { path = "./gb-apu" }
+gb-apu = { path = "./gb-apu", optional = true }
 
 [workspace]
 members = [
