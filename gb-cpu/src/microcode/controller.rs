@@ -3,7 +3,8 @@ use super::{
     MicrocodeFlow, State,
 };
 use crate::{
-    io_registers::IORegisters, registers::Registers, CACHE_LEN, NB_MAX_ACTIONS, NB_MAX_CYCLES,
+    io_registers::IORegisters, registers::Registers, CACHE_LEN, MAX_CYCLES_IN_HALT_MODE,
+    NB_MAX_ACTIONS, NB_MAX_CYCLES,
 };
 use gb_bus::Bus;
 use std::fmt::{self, Debug, Display};
@@ -58,6 +59,12 @@ pub struct MicrocodeController {
     pub current_cycle: Vec<ActionFn>,
     /// Current mode of the controller
     pub mode: Mode,
+    /// Handles a peculiar case of the stop opcode
+    /// It appends when the switch of speed is made and that an interrupt isn't pending
+    /// In this case it will enter the halt mode and will exit it automatically after about 0x2000 t-cycles
+    /// https://gbdev.io/pandocs/Reducing_Power_Consumption.html?highlight=stop#using-the-stop-instruction
+    pub halted_from_stop: bool,
+    pub cycles_in_halt_mode: usize,
     /// Cache use for microcode action
     cache: Vec<u8>,
     /// Debug helper to catch the event of end of instruction
@@ -86,6 +93,8 @@ impl Default for MicrocodeController {
             current_cycle: Vec::with_capacity(NB_MAX_ACTIONS),
             cache: Vec::with_capacity(CACHE_LEN),
             mode: Mode::default(),
+            halted_from_stop: false,
+            cycles_in_halt_mode: 0,
             is_instruction_finished: true,
         }
     }
@@ -148,12 +157,20 @@ impl MicrocodeController {
     fn halt_mode(&mut self, state: &mut State, int_flags: Rc<RefCell<IORegisters>>) {
         let borrow_int_flags = int_flags.borrow();
 
+        if self.halted_from_stop {
+            self.cycles_in_halt_mode += 1;
+        }
+
         if borrow_int_flags.is_interrupt_ready() {
             self.mode = Mode::Normal;
             if borrow_int_flags.should_handle_interrupt() {
                 drop(borrow_int_flags);
                 handle_interrupts(self, state);
             }
+            self.halted_from_stop = false;
+        } else if self.halted_from_stop && self.cycles_in_halt_mode >= MAX_CYCLES_IN_HALT_MODE {
+            self.mode = Mode::Normal;
+            self.halted_from_stop = false;
         }
     }
 

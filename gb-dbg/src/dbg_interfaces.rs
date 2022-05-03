@@ -154,7 +154,15 @@ pub enum IORegs {
     #[cfg(feature = "cgb")]
     VramBank,
     #[cfg(feature = "cgb")]
-    VramDma,
+    Hdma1,
+    #[cfg(feature = "cgb")]
+    Hdma2,
+    #[cfg(feature = "cgb")]
+    Hdma3,
+    #[cfg(feature = "cgb")]
+    Hdma4,
+    #[cfg(feature = "cgb")]
+    Hdma5,
     #[cfg(feature = "cgb")]
     WRamBank,
 }
@@ -177,7 +185,15 @@ impl Display for IORegs {
             #[cfg(feature = "cgb")]
             IORegs::VramBank => "VBank",
             #[cfg(feature = "cgb")]
-            IORegs::VramDma => "VDMA",
+            IORegs::Hdma1 => "Hdma1",
+            #[cfg(feature = "cgb")]
+            IORegs::Hdma2 => "Hdma2",
+            #[cfg(feature = "cgb")]
+            IORegs::Hdma3 => "Hdma3",
+            #[cfg(feature = "cgb")]
+            IORegs::Hdma4 => "Hdma4",
+            #[cfg(feature = "cgb")]
+            IORegs::Hdma5 => "Hdma5",
             #[cfg(feature = "cgb")]
             IORegs::WRamBank => "WBank",
         };

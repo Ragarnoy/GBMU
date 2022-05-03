@@ -8,7 +8,7 @@ authors = [
   "Cedric M'Passi <cedricmpassi@gmail.com>",
 ]
 edition = "2021"
-rust-version = "1.58.0"
+rust-version = "1.60.0"
 description = "A gameboy emulator"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -28,6 +28,7 @@ save_state = [
   "gb-bus/serialization",
   "gb-timer/serialization",
   "gb-ppu/serialization",
+  "gb-dma/serialization",
 ]
 
 [dependencies]
