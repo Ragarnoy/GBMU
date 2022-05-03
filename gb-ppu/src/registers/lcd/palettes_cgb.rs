@@ -84,7 +84,7 @@ impl PalettesCGB {
 
     pub fn set_ocpd(&mut self, value: u8) {
         self.ocpd = value;
-        let index = (self.ocps & Self::SPEC_DATA_INDEX) as usize;
+        let index = (self.ocps & (Self::PALETTES_RAW_SIZE as u8 - 1)) as usize;
         self.oc_values[index] = value;
 
         if self.ocps & Self::SPEC_AUTO_INCR != 0 {
