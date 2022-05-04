@@ -520,7 +520,7 @@ impl Ppu {
                 let viewport_x_at_sprite_scale = x + Sprite::HORIZONTAL_OFFSET;
                 let pixels_to_skip_before_viewport = pixel_offset - pixels_discarded;
                 if viewport_x_at_sprite_scale >= pixels_to_skip_before_viewport
-                    && sprite.x_pos() == viewport_x_at_sprite_scale - pixels_to_skip_before_viewport
+                    && sprite.x_pos() <= viewport_x_at_sprite_scale - pixels_to_skip_before_viewport
                 {
                     pixel_fetcher.set_mode_to_sprite(sprite);
                     pixel_fifo.enabled = false;
