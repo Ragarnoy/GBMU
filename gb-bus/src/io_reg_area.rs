@@ -250,6 +250,14 @@ impl TryFrom<u16> for IORegArea {
             #[cfg(feature = "cgb")]
             OPRI => Self::Opri,
             #[cfg(feature = "cgb")]
+            BCPS => Self::Bcps,
+            #[cfg(feature = "cgb")]
+            BCPD => Self::Bcpd,
+            #[cfg(feature = "cgb")]
+            OCPS => Self::Ocps,
+            #[cfg(feature = "cgb")]
+            OCPD => Self::Ocpd,
+            #[cfg(feature = "cgb")]
             SVBK => Self::Svbk,
             _ => {
                 return Err(format!("no register for {:x}", value));

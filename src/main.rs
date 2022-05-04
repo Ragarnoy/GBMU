@@ -1,7 +1,9 @@
+mod config;
 mod constant;
 mod context;
 mod custom_event;
 mod event;
+mod game;
 mod logger;
 mod settings;
 #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
@@ -11,7 +13,10 @@ mod windows;
 
 use clap::Parser;
 
-use context::{Context, Game};
+#[cfg(feature = "cgb")]
+use config::Mode;
+use context::Context;
+use game::Game;
 #[cfg(feature = "audio")]
 use gb_apu::{OUTPUT_CHANNELS_NB, SAMPLES_PER_FRAME, SAMPLE_RATE};
 use gb_dbg::debugger::options::DebuggerOptions;
@@ -22,83 +27,24 @@ use logger::init_logger;
 use sdl2::audio::{AudioQueue, AudioSpecDesired};
 use std::{
     cell::RefCell,
-    fmt::{self, Display},
     rc::Rc,
     time::{Duration, Instant},
 };
 use windows::Windows;
 
-// const TARGET_FPS_X10: u64 = 597;    // the true value
-const TARGET_FPS_X10: u64 = 600;
-
-#[derive(Parser, Debug)]
-#[clap(version, author, about)]
-pub struct Opts {
-    #[clap(short = 'l', long = "log", help = "change log level", possible_values = &["trace", "debug", "info", "warn", "error", "off"])]
-    #[cfg_attr(not(debug_assertions), clap(default_value = "warn"))]
-    #[cfg_attr(debug_assertions, clap(default_value = "debug"))]
-    log_level: log::LevelFilter,
-
-    #[clap(help = "rom file to be loaded by the gameboy")]
-    rom: Option<String>,
-
-    #[clap(
-        long = "breakpoint",
-        short = 'b',
-        help = "create and enable breakpoints at the start of the rom\n\
-        breakpoints must be specified in the following format:\n\
-        ./gbmu -b \"PC == 0050\" -b \"AF == 0010\" ...",
-        multiple_occurrences = true,
-        multiple_values = false,
-        requires = "rom"
-    )]
-    breakpoints: Vec<String>,
-    #[clap(
-        long = "debug",
-        short = 'd',
-        help = "enable debug mode at the start of the rom",
-        requires = "rom"
-    )]
-    debug: bool,
-
-    #[cfg(feature = "cgb")]
-    #[clap(
-        arg_enum,
-        short = 'm',
-        long,
-        help = "force gameboy mode between color and mono"
-    )]
-    mode: Option<Mode>,
-}
-
-#[derive(Debug, clap::ArgEnum, Clone, Copy, PartialEq, Eq)]
-pub enum Mode {
-    Color,
-    Classic,
-}
-
-impl Display for Mode {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Mode::Color => write!(f, "color"),
-            Mode::Classic => write!(f, "classic"),
-        }
-    }
-}
-
 fn main() {
     #[cfg(feature = "cgb")]
-    let mut opts: Opts = Opts::parse();
+    let mut cfg = config::Config::parse();
     #[cfg(not(feature = "cgb"))]
-    let opts: Opts = Opts::parse();
+    let cfg = config::Config::parse();
     #[cfg(feature = "time_frame")]
     let mut time_frame_stat = time_frame::TimeStat::default();
     #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
     let mut render_time_frame = time_frame::TimeStat::default();
-    let frame_duration_target = Duration::from_nanos(10_000_000_000 / TARGET_FPS_X10);
-    init_logger(opts.log_level);
+    let frame_duration_target = Duration::from_nanos(10_000_000_000 / constant::TARGET_FPS_X10);
+    init_logger(cfg.log_level);
 
-    let (mut context, mut game, mut debugger, mut event_pump) = init_gbmu(&opts);
+    let (mut context, mut game, mut debugger, mut event_pump) = init_gbmu(&cfg);
 
     'running: loop {
         let now_render = Instant::now();
@@ -130,7 +76,7 @@ fn main() {
         ui::draw_egui(
             &mut context,
             #[cfg(feature = "cgb")]
-            &mut opts,
+            &mut cfg,
             #[cfg(feature = "debug_fps")]
             render_time_frame.fps(),
         );
@@ -162,7 +108,7 @@ fn main() {
             }
         }
         if debugger.reset_triggered {
-            game = opts.rom.as_ref().and_then(|romname| {
+            game = cfg.rom.as_ref().and_then(|romname| {
                 load_game(
                     romname,
                     context.joypad.clone(),
@@ -170,7 +116,7 @@ fn main() {
                     #[cfg(feature = "audio")]
                     context.audio_queue.clone(),
                     #[cfg(feature = "cgb")]
-                    opts.mode,
+                    cfg.mode,
                 )
             });
             debugger.reset();
@@ -196,22 +142,22 @@ fn main() {
                     game = load_game(
                         filename,
                         context.joypad.clone(),
-                        opts.debug,
+                        cfg.debug,
                         #[cfg(feature = "audio")]
                         context.audio_queue.clone(),
                         #[cfg(feature = "cgb")]
-                        opts.mode,
+                        cfg.mode,
                     )
                 }
                 CustomEvent::LoadFile(file) => {
                     game = load_game(
                         file,
                         context.joypad.clone(),
-                        opts.debug,
+                        cfg.debug,
                         #[cfg(feature = "audio")]
                         context.audio_queue.clone(),
                         #[cfg(feature = "cgb")]
-                        opts.mode,
+                        cfg.mode,
                     )
                 }
                 #[cfg(feature = "save_state")]
@@ -239,7 +185,9 @@ fn main() {
                             game = load_game(
                                 game_ctx.romname.clone(),
                                 context.joypad.clone(),
-                                opts.debug,
+                                cfg.debug,
+                                #[cfg(feature = "audio")]
+                                context.audio_queue.clone(),
                                 Some(*wanted_mode),
                             )
                         }
@@ -282,7 +230,7 @@ fn main() {
 }
 
 fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
-    opts: &Opts,
+    config: &config::Config,
 ) -> (
     Context<WIDTH, HEIGHT>,
     Option<Game>,
@@ -342,27 +290,27 @@ fn init_gbmu<const WIDTH: usize, const HEIGHT: usize>(
     #[cfg(feature = "audio")]
     let audio_queue = Rc::new(RefCell::new(audio_queue));
 
-    let game_context: Option<Game> = opts.rom.as_ref().and_then(|romname| {
+    let game_context: Option<Game> = config.rom.as_ref().and_then(|romname| {
         load_game(
             &romname,
             joypad.clone(),
-            opts.debug,
+            config.debug,
             #[cfg(feature = "audio")]
             audio_queue.clone(),
             #[cfg(feature = "cgb")]
-            opts.mode,
+            config.mode,
         )
     });
 
     let dbg_options = DebuggerOptions {
-        breakpoints: opts.breakpoints.clone(),
+        breakpoints: config.breakpoints.clone(),
         ..Default::default()
     };
     let dbg = DebuggerBuilder::new().with_options(dbg_options).build();
 
     let windows = Windows {
         main: gb_window,
-        debug: if opts.debug && game_context.is_some() {
+        debug: if config.debug && game_context.is_some() {
             Some(ui::new_debug_window(&video_subsystem))
         } else {
             None

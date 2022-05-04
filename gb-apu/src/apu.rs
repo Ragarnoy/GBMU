@@ -1,4 +1,4 @@
-use gb_bus::{Address, Bus, Error, FileOperation, IORegArea};
+use gb_bus::{Address, Bus, Error, FileOperation, IORegArea, Source};
 use gb_clock::{Tick, Ticker};
 use sdl2::audio::AudioQueue;
 use std::{cell::RefCell, rc::Rc};
@@ -19,6 +19,8 @@ pub struct Apu {
     buffer_i: usize,
     sound_channels: Vec<SoundChannel>,
     frame_sequencer: FrameSequencer,
+    master: u8,
+    panning: u8,
 }
 
 impl Apu {
@@ -38,6 +40,8 @@ impl Apu {
             buffer_i: 0,
             sound_channels,
             frame_sequencer: FrameSequencer::default(),
+            master: 0,
+            panning: 0,
         }
     }
 
@@ -101,6 +105,7 @@ impl Ticker for Apu {
         if !self.enabled {
             return;
         }
+
         self.cycle_counter += 1;
         for i in 0..self.sound_channels.len() {
             self.sound_channels[i].step();
@@ -134,7 +139,7 @@ where
     A: Address<IORegArea>,
     u16: From<A>,
 {
-    fn read(&self, addr: A) -> Result<u8, Error> {
+    fn read(&self, addr: A, _source: Option<Source>) -> Result<u8, Error> {
         use IORegArea::{
             Nr10, Nr11, Nr12, Nr13, Nr14, Nr21, Nr22, Nr23, Nr24, Nr30, Nr31, Nr32, Nr33, Nr34,
             Nr41, Nr42, Nr43, Nr44, Nr50, Nr51, Nr52, WaveRam0, WaveRam1, WaveRam2, WaveRam3,
@@ -142,21 +147,21 @@ where
             WaveRamC, WaveRamD, WaveRamE, WaveRamF,
         };
         match addr.area_type() {
-            Nr10 | Nr11 | Nr12 | Nr13 | Nr14 => self.sound_channels[0].read(addr),
-            Nr21 | Nr22 | Nr23 | Nr24 => self.sound_channels[1].read(addr),
+            Nr10 | Nr11 | Nr12 | Nr13 | Nr14 => self.sound_channels[0].read(addr, None),
+            Nr21 | Nr22 | Nr23 | Nr24 => self.sound_channels[1].read(addr, None),
             Nr30 | Nr31 | Nr32 | Nr33 | Nr34 | WaveRam0 | WaveRam1 | WaveRam2 | WaveRam3
             | WaveRam4 | WaveRam5 | WaveRam6 | WaveRam7 | WaveRam8 | WaveRam9 | WaveRamA
             | WaveRamB | WaveRamC | WaveRamD | WaveRamE | WaveRamF => {
-                self.sound_channels[2].read(addr)
+                self.sound_channels[2].read(addr, None)
             }
-            Nr41 | Nr42 | Nr43 | Nr44 => self.sound_channels[3].read(addr),
-            Nr50 => Ok(0),
-            Nr51 => Ok(0),
+            Nr41 | Nr42 | Nr43 | Nr44 => self.sound_channels[3].read(addr, None),
+            Nr50 => Ok(self.master),
+            Nr51 => Ok(self.panning),
             Nr52 => Ok(self.get_power_channels_statuses_byte()),
             _ => Err(Error::SegmentationFault(addr.into())),
         }
     }
-    fn write(&mut self, v: u8, addr: A) -> Result<(), Error> {
+    fn write(&mut self, v: u8, addr: A, _source: Option<Source>) -> Result<(), Error> {
         use IORegArea::{
             Nr10, Nr11, Nr12, Nr13, Nr14, Nr21, Nr22, Nr23, Nr24, Nr30, Nr31, Nr32, Nr33, Nr34,
             Nr41, Nr42, Nr43, Nr44, Nr50, Nr51, Nr52, WaveRam0, WaveRam1, WaveRam2, WaveRam3,
@@ -164,16 +169,16 @@ where
             WaveRamC, WaveRamD, WaveRamE, WaveRamF,
         };
         match addr.area_type() {
-            Nr10 | Nr11 | Nr12 | Nr13 | Nr14 => return self.sound_channels[0].write(v, addr),
-            Nr21 | Nr22 | Nr23 | Nr24 => return self.sound_channels[1].write(v, addr),
+            Nr10 | Nr11 | Nr12 | Nr13 | Nr14 => return self.sound_channels[0].write(v, addr, None),
+            Nr21 | Nr22 | Nr23 | Nr24 => return self.sound_channels[1].write(v, addr, None),
             Nr30 | Nr31 | Nr32 | Nr33 | Nr34 | WaveRam0 | WaveRam1 | WaveRam2 | WaveRam3
             | WaveRam4 | WaveRam5 | WaveRam6 | WaveRam7 | WaveRam8 | WaveRam9 | WaveRamA
             | WaveRamB | WaveRamC | WaveRamD | WaveRamE | WaveRamF => {
-                return self.sound_channels[2].write(v, addr)
+                return self.sound_channels[2].write(v, addr, None)
             }
-            Nr41 | Nr42 | Nr43 | Nr44 => return self.sound_channels[3].write(v, addr),
-            Nr50 => {}
-            Nr51 => {}
+            Nr41 | Nr42 | Nr43 | Nr44 => return self.sound_channels[3].write(v, addr, None),
+            Nr50 => self.master = v,
+            Nr51 => self.panning = v,
             Nr52 => {
                 let was_enabled = self.enabled;
                 let enabled = v & 0x80 != 0x00;
@@ -184,34 +189,13 @@ where
                         SoundChannel::new(ChannelType::WaveForm, false),
                         SoundChannel::new(ChannelType::Noise, false),
                     ];
+                    self.master = 0;
+                    self.panning = 0;
                 }
                 self.enabled = enabled;
             }
             _ => return Err(Error::SegmentationFault(addr.into())),
         };
-        Ok(())
-    }
-}
-
-#[derive(Default)]
-pub struct DummyApu {}
-
-impl Ticker for DummyApu {
-    fn cycle_count(&self) -> Tick {
-        Tick::TCycle
-    }
-    fn tick(&mut self, _adr_bus: &mut dyn Bus<u8>) {}
-}
-
-impl<A> FileOperation<A, IORegArea> for DummyApu
-where
-    A: Address<IORegArea>,
-    u16: From<A>,
-{
-    fn read(&self, _addr: A) -> Result<u8, Error> {
-        Ok(0xFF)
-    }
-    fn write(&mut self, _v: u8, _addr: A) -> Result<(), Error> {
         Ok(())
     }
 }

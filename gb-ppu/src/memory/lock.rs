@@ -1,4 +1,4 @@
-pub type Lock = gb_bus::Lock;
+pub type Lock = gb_bus::Source;
 
 pub trait Lockable {
     fn lock(&mut self, owner: Lock);

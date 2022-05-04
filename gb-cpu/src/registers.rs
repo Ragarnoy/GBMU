@@ -191,4 +191,12 @@ impl Registers {
         sp: 0xFFFE,
         pc: 0x0100,
     };
+    pub const CGB: Registers = Registers {
+        af: 0x1180,
+        bc: 0x0000,
+        de: 0xFF56,
+        hl: 0x000D,
+        sp: 0xFFFE,
+        pc: 0x0100,
+    };
 }

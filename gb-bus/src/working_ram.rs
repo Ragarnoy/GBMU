@@ -1,4 +1,4 @@
-use crate::{Address, Area, Error, FileOperation, IORegArea};
+use crate::{Address, Area, Error, FileOperation, IORegArea, Source};
 
 pub const RAM_BANK_SIZE: usize = 0x1000;
 pub const CGB_MAX_BANKS: usize = 8;
@@ -48,14 +48,14 @@ where
     u16: From<A>,
     A: Address<Area>,
 {
-    fn write(&mut self, value: u8, addr: A) -> Result<(), Error> {
+    fn write(&mut self, value: u8, addr: A, _source: Option<Source>) -> Result<(), Error> {
         let address = addr.get_address();
         let offset_addr = self.offset_addr(address);
         self.storage[offset_addr] = value;
         Ok(())
     }
 
-    fn read(&self, addr: A) -> Result<u8, Error> {
+    fn read(&self, addr: A, _source: Option<Source>) -> Result<u8, Error> {
         let address = addr.get_address();
         let offset_addr = self.offset_addr(address);
         Ok(self.storage[offset_addr])
@@ -67,16 +67,19 @@ where
     u16: From<A>,
     A: Address<IORegArea>,
 {
-    fn write(&mut self, value: u8, addr: A) -> Result<(), Error> {
+    fn write(&mut self, value: u8, addr: A, _source: Option<Source>) -> Result<(), Error> {
         if self.enable_cgb_feature {
-            self.bank = (value & 0x7).min(1);
+            self.bank = value & 0x7;
+            if self.bank == 0 {
+                self.bank = 1;
+            }
             Ok(())
         } else {
             Err(Error::new_segfault(addr.into()))
         }
     }
 
-    fn read(&self, addr: A) -> Result<u8, Error> {
+    fn read(&self, addr: A, _source: Option<Source>) -> Result<u8, Error> {
         if self.enable_cgb_feature {
             Ok(self.bank)
         } else {

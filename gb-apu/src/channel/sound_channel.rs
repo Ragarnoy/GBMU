@@ -7,7 +7,7 @@ use crate::{
     channel::volume_envelope::{Direction, VolumeEnvelope},
     ChannelType,
 };
-use gb_bus::{io_reg_constant::WAVE_RAM_0, Address, Error, FileOperation, IORegArea};
+use gb_bus::{io_reg_constant::WAVE_RAM_0, Address, Error, FileOperation, IORegArea, Source};
 
 use super::wave_ram::ProgrammableWave;
 
@@ -141,7 +141,7 @@ where
     A: Address<IORegArea>,
     u16: From<A>,
 {
-    fn read(&self, addr: A) -> Result<u8, Error> {
+    fn read(&self, addr: A, _source: Option<Source>) -> Result<u8, Error> {
         use IORegArea::{
             Nr10, Nr11, Nr12, Nr13, Nr14, Nr21, Nr22, Nr23, Nr24, Nr30, Nr31, Nr32, Nr33, Nr34,
             Nr41, Nr42, Nr43, Nr44, WaveRam0, WaveRam1, WaveRam2, WaveRam3, WaveRam4, WaveRam5,
@@ -237,7 +237,8 @@ where
             _ => Err(Error::SegmentationFault(addr.into())),
         }
     }
-    fn write(&mut self, v: u8, addr: A) -> Result<(), Error> {
+
+    fn write(&mut self, v: u8, addr: A, _source: Option<Source>) -> Result<(), Error> {
         use IORegArea::{
             Nr10, Nr11, Nr12, Nr13, Nr14, Nr21, Nr22, Nr23, Nr24, Nr30, Nr31, Nr32, Nr33, Nr34,
             Nr41, Nr42, Nr43, Nr44, WaveRam0, WaveRam1, WaveRam2, WaveRam3, WaveRam4, WaveRam5,

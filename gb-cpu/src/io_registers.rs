@@ -1,19 +1,52 @@
-use gb_bus::{Address, Area, Error, FileOperation, IORegArea};
+use std::ops::Not;
+
+use gb_bus::{Address, Area, Error, FileOperation, IORegArea, Source};
+
+#[derive(PartialEq, Eq, Clone, Copy, Debug)]
+pub enum Speed {
+    Normal,
+    Double,
+}
+
+impl Not for Speed {
+    type Output = Self;
+
+    fn not(self) -> Self::Output {
+        match self {
+            Speed::Double => Speed::Normal,
+            Speed::Normal => Speed::Double,
+        }
+    }
+}
 
 #[cfg_attr(
     feature = "serialization",
     derive(serde::Deserialize, serde::Serialize)
 )]
-#[derive(Default, Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub struct IORegisters {
     pub master_enable: bool,
     pub flag: u8,
     pub enable_mask: u8,
 
     #[cfg(feature = "cgb")]
-    pub current_speed: bool,
+    pub current_speed: Speed,
     #[cfg(feature = "cgb")]
-    pub desired_speed: bool,
+    pub prepare_to_switch: bool,
+}
+
+impl Default for IORegisters {
+    fn default() -> Self {
+        Self {
+            master_enable: false,
+            flag: 0,
+            enable_mask: 9,
+            #[cfg(feature = "cgb")]
+            current_speed: Speed::Normal,
+            #[cfg(feature = "cgb")]
+            prepare_to_switch: false,
+        }
+    }
 }
 
 impl IORegisters {
@@ -38,19 +71,20 @@ impl IORegisters {
     #[cfg(feature = "cgb")]
     /// Indicate when we need to switch between `normal speed <=> double speed`
     pub fn need_to_change_speed(&self) -> bool {
-        self.current_speed != self.desired_speed
+        self.prepare_to_switch
     }
 
     #[cfg(feature = "cgb")]
     /// Switch the current speed of the cpu
     pub fn switch_speed(&mut self) {
-        self.current_speed = self.desired_speed;
+        self.current_speed = !self.current_speed;
+        self.prepare_to_switch = false;
     }
 
     #[cfg(feature = "cgb")]
     /// Determine if we are in the double mode of the gameboy color
     pub fn fast_mode(&self) -> bool {
-        self.current_speed
+        self.current_speed == Speed::Double
     }
 }
 
@@ -59,11 +93,11 @@ where
     u16: From<A>,
     A: Address<Area>,
 {
-    fn read(&self, _addr: A) -> Result<u8, gb_bus::Error> {
+    fn read(&self, _addr: A, _source: Option<Source>) -> Result<u8, gb_bus::Error> {
         Ok(IORegisters::FLAG_MASK | self.enable_mask)
     }
 
-    fn write(&mut self, v: u8, _addr: A) -> Result<(), gb_bus::Error> {
+    fn write(&mut self, v: u8, _addr: A, _source: Option<Source>) -> Result<(), gb_bus::Error> {
         self.enable_mask = v & (!IORegisters::FLAG_MASK);
         Ok(())
     }
@@ -74,23 +108,25 @@ where
     u16: From<A>,
     A: Address<IORegArea>,
 {
-    fn read(&self, addr: A) -> Result<u8, Error> {
+    fn read(&self, addr: A, _source: Option<Source>) -> Result<u8, Error> {
         match addr.area_type() {
             IORegArea::IF => Ok(IORegisters::FLAG_MASK | self.flag),
             #[cfg(feature = "cgb")]
             IORegArea::Key1 => Ok(double_speed_register(
-                self.current_speed,
-                self.desired_speed,
+                self.fast_mode(),
+                self.prepare_to_switch,
             )),
             _ => Err(gb_bus::Error::bus_error(addr.into())),
         }
     }
 
-    fn write(&mut self, v: u8, addr: A) -> Result<(), gb_bus::Error> {
+    fn write(&mut self, v: u8, addr: A, _source: Option<Source>) -> Result<(), gb_bus::Error> {
         match addr.area_type() {
             IORegArea::IF => self.flag = v & !(IORegisters::FLAG_MASK),
             #[cfg(feature = "cgb")]
-            IORegArea::Key1 => self.desired_speed = v & 1 == 1,
+            IORegArea::Key1 => {
+                self.prepare_to_switch = v & 1 == 1;
+            }
             _ => return Err(gb_bus::Error::bus_error(addr.into())),
         }
         Ok(())
@@ -99,13 +135,13 @@ where
 
 /// generate the key1 register from to current & desired speed mode
 #[cfg(feature = "cgb")]
-fn double_speed_register(current_speed: bool, desired_speed: bool) -> u8 {
+fn double_speed_register(is_double_speed: bool, prepare_to_switch: bool) -> u8 {
     let mut v = 0;
 
-    if current_speed {
+    if is_double_speed {
         v |= 0x80;
     }
-    if desired_speed {
+    if prepare_to_switch {
         v |= 0x1;
     }
 

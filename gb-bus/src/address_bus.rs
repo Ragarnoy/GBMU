@@ -2,15 +2,13 @@ pub mod iter;
 
 use iter::Iter;
 
-use std::collections::BTreeMap;
-
 use crate::{
     constant::{
         ERAM_START, ERAM_STOP, EXT_RAM_START, EXT_RAM_STOP, HRAM_START, HRAM_STOP, IE_REG,
         IO_REG_START, IO_REG_STOP, OAM_START, OAM_STOP, RAM_START, RAM_STOP, ROM_START, ROM_STOP,
-        UNDEFINED_VALUE, VRAM_START, VRAM_STOP,
+        VRAM_START, VRAM_STOP,
     },
-    Addr, Area, Error, FileOperation, InternalLock, Lock, MemoryLock,
+    Addr, Area, Error, FileOperation, Source,
 };
 
 use std::{cell::RefCell, rc::Rc};
@@ -35,7 +33,7 @@ macro_rules! match_area {
 }
 
 macro_rules! write_area {
-    ($start:expr, $field:expr, $area_type:ident, $addr:expr, $value:expr) => {{
+    ($start:expr, $field:expr, $area_type:ident, $addr:expr, $value:expr, $source:expr) => {{
         #[cfg(feature = "trace_bus_write")]
         log::trace!(
             "writing at {:4x} the value {:2x} in area {:?}",
@@ -43,19 +41,21 @@ macro_rules! write_area {
             $value,
             Area::$area_type
         );
-        $field
-            .borrow_mut()
-            .write($value, Addr::from_offset(Area::$area_type, $addr, $start))
+        $field.borrow_mut().write(
+            $value,
+            Addr::from_offset(Area::$area_type, $addr, $start),
+            $source,
+        )
     }};
 }
 
 macro_rules! read_area {
-    ($start:expr, $field:expr, $area_type:ident, $addr: expr) => {{
+    ($start:expr, $field:expr, $area_type:ident, $addr: expr, $source:expr) => {{
         #[cfg(feature = "trace_bus_read")]
         log::trace!("reading at {:4x} in area {:?}", $addr, Area::$area_type);
         $field
             .borrow()
-            .read(Addr::from_offset(Area::$area_type, $addr, $start))
+            .read(Addr::from_offset(Area::$area_type, $addr, $start), $source)
     }};
 }
 
@@ -65,7 +65,7 @@ pub struct AddressBus {
     /// Rom from the cartridge
     pub rom: Rc<RefCell<dyn FileOperation<Addr<Area>, Area>>>,
     /// Video Ram
-    pub vram: Rc<RefCell<dyn InternalLock<Addr<Area>, Area>>>,
+    pub vram: Rc<RefCell<dyn FileOperation<Addr<Area>, Area>>>,
     /// Ram from the cartridge
     pub ext_ram: Rc<RefCell<dyn FileOperation<Addr<Area>, Area>>>,
     /// Internal gameboy ram
@@ -73,7 +73,7 @@ pub struct AddressBus {
     /// Echo Ram area, usually a mirror of ram
     pub eram: Rc<RefCell<dyn FileOperation<Addr<Area>, Area>>>,
     /// Sprite attribute table
-    pub oam: Rc<RefCell<dyn InternalLock<Addr<Area>, Area>>>,
+    pub oam: Rc<RefCell<dyn FileOperation<Addr<Area>, Area>>>,
     /// io registers table
     pub io_reg: Rc<RefCell<dyn FileOperation<Addr<Area>, Area>>>,
     /// high ram
@@ -81,17 +81,15 @@ pub struct AddressBus {
     pub hram: Rc<RefCell<dyn FileOperation<Addr<Area>, Area>>>,
     /// register to enable/disable all interrupts
     pub ie_reg: Rc<RefCell<dyn FileOperation<Addr<Area>, Area>>>,
-    /// map a memory area to its current lock status
-    pub area_locks: BTreeMap<Area, Lock>,
 }
 
 impl AddressBus {
-    pub fn write_byte(&mut self, addr: u16, v: u8) -> Result<(), Error> {
-        match_area!(write_area, self, addr, v)
+    pub fn write_byte(&mut self, addr: u16, v: u8, source: Option<Source>) -> Result<(), Error> {
+        match_area!(write_area, self, addr, v, source)
     }
 
-    pub fn read_byte(&self, addr: u16) -> Result<u8, Error> {
-        match_area!(read_area, self, addr)
+    pub fn read_byte(&self, addr: u16, source: Option<Source>) -> Result<u8, Error> {
+        match_area!(read_area, self, addr, source)
     }
 
     pub fn iter(&self) -> Iter {
@@ -99,76 +97,13 @@ impl AddressBus {
     }
 }
 
-impl MemoryLock for AddressBus {
-    fn lock(&mut self, area: Area, lock: Lock) {
-        self.area_locks.insert(area, lock);
-        match area {
-            Area::Vram => self.vram.borrow_mut().lock(area, lock),
-            Area::Oam => self.oam.borrow_mut().lock(area, lock),
-            _ => {}
-        }
-    }
-
-    fn unlock(&mut self, area: Area) {
-        self.area_locks.remove(&area);
-        match area {
-            Area::Vram => self.vram.borrow_mut().unlock(area),
-            Area::Oam => self.oam.borrow_mut().unlock(area),
-            _ => {}
-        }
-    }
-
-    fn is_available(&self, area: Area, lock_key: Option<Lock>) -> bool {
-        if let Some(lock) = self.area_locks.get(&area) {
-            if let Some(key) = lock_key {
-                return *lock <= key;
-            }
-        } else {
-            return true;
-        }
-        false
-    }
-}
-
 impl crate::Bus<u8> for AddressBus {
-    fn read(&self, address: u16, lock_key: Option<Lock>) -> Result<u8, Error> {
-        if self.is_available(address.into(), lock_key) {
-            self.read_byte(address)
-        } else {
-            Ok(UNDEFINED_VALUE)
-        }
+    fn read(&self, address: u16, source: Option<Source>) -> Result<u8, Error> {
+        self.read_byte(address, source)
     }
 
-    fn write(&mut self, address: u16, data: u8, lock_key: Option<Lock>) -> Result<(), Error> {
-        if self.is_available(address.into(), lock_key) {
-            self.write_byte(address, data)
-        } else {
-            Ok(())
-        }
-    }
-}
-
-impl crate::Bus<u16> for AddressBus {
-    fn read(&self, address: u16, lock_key: Option<Lock>) -> Result<u16, Error> {
-        if self.is_available(address.into(), lock_key) {
-            let lower = self.read_byte(address)?;
-            let upper = self.read_byte(address + 1)?;
-
-            Ok(u16::from_le_bytes([lower, upper]))
-        } else {
-            Ok(u16::from_le_bytes([UNDEFINED_VALUE, UNDEFINED_VALUE]))
-        }
-    }
-
-    fn write(&mut self, address: u16, data: u16, lock_key: Option<Lock>) -> Result<(), Error> {
-        if self.is_available(address.into(), lock_key) {
-            let [lower, upper] = data.to_le_bytes();
-
-            self.write_byte(address, lower)?;
-            self.write_byte(address + 1, upper)
-        } else {
-            Ok(())
-        }
+    fn write(&mut self, address: u16, data: u8, source: Option<Source>) -> Result<(), Error> {
+        self.write_byte(address, data, source)
     }
 }
 
@@ -176,7 +111,6 @@ impl crate::Bus<u16> for AddressBus {
 mod test_address_bus {
     use super::AddressBus;
     use crate::generic::CharDevice;
-    use std::collections::BTreeMap;
     use std::{cell::RefCell, rc::Rc};
 
     #[test]
@@ -191,18 +125,17 @@ mod test_address_bus {
             io_reg: Rc::new(RefCell::new(CharDevice(7))),
             hram: Rc::new(RefCell::new(CharDevice(8))),
             ie_reg: Rc::new(RefCell::new(CharDevice(9))),
-            area_locks: BTreeMap::new(),
         };
 
-        assert_eq!(addr_bus.read_byte(0x10), Ok(1));
-        assert_eq!(addr_bus.read_byte(0x8042), Ok(2));
-        assert_eq!(addr_bus.read_byte(0xa000), Ok(3));
-        assert_eq!(addr_bus.read_byte(0xdfff), Ok(4));
-        assert_eq!(addr_bus.read_byte(0xe000), Ok(5));
-        assert_eq!(addr_bus.read_byte(0xfe00), Ok(6));
-        assert_eq!(addr_bus.read_byte(0xff00), Ok(7));
-        assert_eq!(addr_bus.read_byte(0xff80), Ok(8));
-        assert_eq!(addr_bus.read_byte(0xffff), Ok(9));
+        assert_eq!(addr_bus.read_byte(0x10, None), Ok(1));
+        assert_eq!(addr_bus.read_byte(0x8042, None), Ok(2));
+        assert_eq!(addr_bus.read_byte(0xa000, None), Ok(3));
+        assert_eq!(addr_bus.read_byte(0xdfff, None), Ok(4));
+        assert_eq!(addr_bus.read_byte(0xe000, None), Ok(5));
+        assert_eq!(addr_bus.read_byte(0xfe00, None), Ok(6));
+        assert_eq!(addr_bus.read_byte(0xff00, None), Ok(7));
+        assert_eq!(addr_bus.read_byte(0xff80, None), Ok(8));
+        assert_eq!(addr_bus.read_byte(0xffff, None), Ok(9));
     }
 
     #[test]
@@ -217,98 +150,26 @@ mod test_address_bus {
             io_reg: Rc::new(RefCell::new(CharDevice(7))),
             hram: Rc::new(RefCell::new(CharDevice(8))),
             ie_reg: Rc::new(RefCell::new(CharDevice(9))),
-            area_locks: BTreeMap::new(),
         };
 
-        assert_eq!(addr_bus.write_byte(0x11, 0x30), Ok(()));
-        assert_eq!(addr_bus.write_byte(0x8242, 0x31), Ok(()));
-        assert_eq!(addr_bus.write_byte(0xa050, 0x32), Ok(()));
-        assert_eq!(addr_bus.write_byte(0xdf8f, 0x33), Ok(()));
-        assert_eq!(addr_bus.write_byte(0xe006, 0x34), Ok(()));
-        assert_eq!(addr_bus.write_byte(0xfe80, 0x35), Ok(()));
-        assert_eq!(addr_bus.write_byte(0xff70, 0x36), Ok(()));
-        assert_eq!(addr_bus.write_byte(0xff8e, 0x37), Ok(()));
-        assert_eq!(addr_bus.write_byte(0xffff, 0x38), Ok(()));
+        assert_eq!(addr_bus.write_byte(0x11, 0x30, None), Ok(()));
+        assert_eq!(addr_bus.write_byte(0x8242, 0x31, None), Ok(()));
+        assert_eq!(addr_bus.write_byte(0xa050, 0x32, None), Ok(()));
+        assert_eq!(addr_bus.write_byte(0xdf8f, 0x33, None), Ok(()));
+        assert_eq!(addr_bus.write_byte(0xe006, 0x34, None), Ok(()));
+        assert_eq!(addr_bus.write_byte(0xfe80, 0x35, None), Ok(()));
+        assert_eq!(addr_bus.write_byte(0xff70, 0x36, None), Ok(()));
+        assert_eq!(addr_bus.write_byte(0xff8e, 0x37, None), Ok(()));
+        assert_eq!(addr_bus.write_byte(0xffff, 0x38, None), Ok(()));
 
-        assert_eq!(addr_bus.read_byte(0x10), Ok(0x30));
-        assert_eq!(addr_bus.read_byte(0x8042), Ok(0x31));
-        assert_eq!(addr_bus.read_byte(0xa000), Ok(0x32));
-        assert_eq!(addr_bus.read_byte(0xdfff), Ok(0x33));
-        assert_eq!(addr_bus.read_byte(0xe000), Ok(0x34));
-        assert_eq!(addr_bus.read_byte(0xfe00), Ok(0x35));
-        assert_eq!(addr_bus.read_byte(0xff00), Ok(0x36));
-        assert_eq!(addr_bus.read_byte(0xff80), Ok(0x37));
-        assert_eq!(addr_bus.read_byte(0xffff), Ok(0x38));
-    }
-}
-
-#[cfg(test)]
-mod memory_locking {
-    use super::{AddressBus, Area, Lock, MemoryLock};
-    use crate::generic::CharDevice;
-    use std::collections::BTreeMap;
-    use std::{cell::RefCell, rc::Rc};
-
-    #[test]
-    fn allow_stronger_key() {
-        let mut addr_bus = AddressBus {
-            rom: Rc::new(RefCell::new(CharDevice(1))),
-            vram: Rc::new(RefCell::new(CharDevice(2))),
-            ext_ram: Rc::new(RefCell::new(CharDevice(3))),
-            ram: Rc::new(RefCell::new(CharDevice(4))),
-            eram: Rc::new(RefCell::new(CharDevice(5))),
-            oam: Rc::new(RefCell::new(CharDevice(6))),
-            io_reg: Rc::new(RefCell::new(CharDevice(7))),
-            hram: Rc::new(RefCell::new(CharDevice(8))),
-            ie_reg: Rc::new(RefCell::new(CharDevice(9))),
-            area_locks: BTreeMap::new(),
-        };
-
-        assert!(addr_bus.is_available(Area::Vram, None));
-        assert!(addr_bus.is_available(Area::Vram, Some(Lock::Ppu)));
-        assert!(addr_bus.is_available(Area::Vram, Some(Lock::Dma)));
-        assert!(addr_bus.is_available(Area::Vram, Some(Lock::Debugger)));
-
-        addr_bus.lock(Area::Vram, Lock::Ppu);
-        assert!(!addr_bus.is_available(Area::Vram, None));
-        assert!(addr_bus.is_available(Area::Vram, Some(Lock::Ppu)));
-        assert!(addr_bus.is_available(Area::Vram, Some(Lock::Dma)));
-        assert!(addr_bus.is_available(Area::Vram, Some(Lock::Debugger)));
-
-        addr_bus.lock(Area::Vram, Lock::Dma);
-        assert!(!addr_bus.is_available(Area::Vram, None));
-        assert!(!addr_bus.is_available(Area::Vram, Some(Lock::Ppu)));
-        assert!(addr_bus.is_available(Area::Vram, Some(Lock::Dma)));
-        assert!(addr_bus.is_available(Area::Vram, Some(Lock::Debugger)));
-
-        addr_bus.lock(Area::Vram, Lock::Debugger);
-        assert!(!addr_bus.is_available(Area::Vram, None));
-        assert!(!addr_bus.is_available(Area::Vram, Some(Lock::Ppu)));
-        assert!(!addr_bus.is_available(Area::Vram, Some(Lock::Dma)));
-        assert!(addr_bus.is_available(Area::Vram, Some(Lock::Debugger)));
-    }
-
-    #[test]
-    fn lock_unlock() {
-        let mut addr_bus = AddressBus {
-            rom: Rc::new(RefCell::new(CharDevice(1))),
-            vram: Rc::new(RefCell::new(CharDevice(2))),
-            ext_ram: Rc::new(RefCell::new(CharDevice(3))),
-            ram: Rc::new(RefCell::new(CharDevice(4))),
-            eram: Rc::new(RefCell::new(CharDevice(5))),
-            oam: Rc::new(RefCell::new(CharDevice(6))),
-            io_reg: Rc::new(RefCell::new(CharDevice(7))),
-            hram: Rc::new(RefCell::new(CharDevice(8))),
-            ie_reg: Rc::new(RefCell::new(CharDevice(9))),
-            area_locks: BTreeMap::new(),
-        };
-
-        assert!(addr_bus.is_available(Area::Vram, None));
-
-        addr_bus.lock(Area::Vram, Lock::Ppu);
-        assert!(!addr_bus.is_available(Area::Vram, None));
-
-        addr_bus.unlock(Area::Vram);
-        assert!(addr_bus.is_available(Area::Vram, None));
+        assert_eq!(addr_bus.read_byte(0x10, None), Ok(0x30));
+        assert_eq!(addr_bus.read_byte(0x8042, None), Ok(0x31));
+        assert_eq!(addr_bus.read_byte(0xa000, None), Ok(0x32));
+        assert_eq!(addr_bus.read_byte(0xdfff, None), Ok(0x33));
+        assert_eq!(addr_bus.read_byte(0xe000, None), Ok(0x34));
+        assert_eq!(addr_bus.read_byte(0xfe00, None), Ok(0x35));
+        assert_eq!(addr_bus.read_byte(0xff00, None), Ok(0x36));
+        assert_eq!(addr_bus.read_byte(0xff80, None), Ok(0x37));
+        assert_eq!(addr_bus.read_byte(0xffff, None), Ok(0x38));
     }
 }

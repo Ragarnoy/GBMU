@@ -14,3 +14,4 @@ pub use builder::new_cpu;
 pub const NB_MAX_CYCLES: usize = 6;
 pub const NB_MAX_ACTIONS: usize = 8;
 pub const CACHE_LEN: usize = 6;
+pub const MAX_CYCLES_IN_HALT_MODE: usize = 0x800; // 0x2000 t-cycles

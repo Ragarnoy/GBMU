@@ -10,7 +10,7 @@ pub mod save;
 
 use crate::Header;
 pub use bios::Bios;
-pub use bios_wrapper::BiosWrapper;
+pub use bios_wrapper::{cgb_bios, dmg_bios, BiosWrapper};
 pub use generic::{Generic, GenericState};
 pub use save::{Full, Partial, SaveState};
 
