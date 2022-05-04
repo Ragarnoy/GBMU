@@ -16,6 +16,8 @@ pub struct Apu {
     buffer_i: usize,
     sound_channels: Vec<SoundChannel>,
     frame_sequencer: FrameSequencer,
+    master: u8,
+    panning: u8,
 }
 
 impl Apu {
@@ -35,6 +37,8 @@ impl Apu {
             buffer_i: 0,
             sound_channels,
             frame_sequencer: FrameSequencer::default(),
+            master: 0,
+            panning: 0,
         }
     }
 
@@ -157,8 +161,8 @@ where
                 self.sound_channels[2].read(addr, None)
             }
             Nr41 | Nr42 | Nr43 | Nr44 => self.sound_channels[3].read(addr, None),
-            Nr50 => Ok(0),
-            Nr51 => Ok(0),
+            Nr50 => Ok(self.master),
+            Nr51 => Ok(self.panning),
             Nr52 => Ok(self.get_power_channels_statuses_byte()),
             _ => Err(Error::SegmentationFault(addr.into())),
         }
@@ -179,8 +183,8 @@ where
                 return self.sound_channels[2].write(v, addr, None)
             }
             Nr41 | Nr42 | Nr43 | Nr44 => return self.sound_channels[3].write(v, addr, None),
-            Nr50 => {}
-            Nr51 => {}
+            Nr50 => self.master = v,
+            Nr51 => self.panning = v,
             Nr52 => {
                 let was_enabled = self.enabled;
                 let enabled = v & 0x80 != 0x00;
@@ -191,6 +195,8 @@ where
                         SoundChannel::new(ChannelType::WaveForm, false),
                         SoundChannel::new(ChannelType::Noise, false),
                     ];
+                    self.master = 0;
+                    self.panning = 0;
                 }
                 self.enabled = enabled;
             }
