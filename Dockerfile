@@ -1,4 +1,4 @@
-FROM rust:1.54-slim
+FROM rust:1.60-slim
 
 RUN rustup component add rustfmt clippy \
   && sh -c "(set -x; cargo --version; rustc --version; cargo fmt --version; cargo clippy --version) > /etc/rust_toolchain_version 2>&1" \
