@@ -50,9 +50,6 @@ impl Ticker for Dma {
 
     fn tick(&mut self, adr_bus: &mut dyn Bus<u8>) {
         if let Some(step) = self.state.oam_transfer {
-            if step == 0 {
-                self.ppu_mem.lock(Area::Oam, Source::Dma);
-            }
             let src: u8 = adr_bus
                 .read(
                     ((self.state.oam_register as u16) << 8) + step,
@@ -74,7 +71,6 @@ impl Ticker for Dma {
                 self.state.oam_transfer = Some(next_step);
             } else {
                 self.state.oam_transfer = None;
-                self.ppu_mem.unlock(Area::Oam);
             }
         }
     }
