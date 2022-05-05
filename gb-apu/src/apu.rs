@@ -5,7 +5,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     channel::sound_channel::SoundChannel, control::frame_sequencer::FrameSequencer, ChannelType,
-    SAMPLES_PER_FRAME,
+    MASK_UNUSED_BITS_70, SAMPLES_PER_FRAME,
 };
 
 const NB_CYCLES_512_HZ: u16 = 0x2000;
@@ -157,7 +157,7 @@ where
             Nr41 | Nr42 | Nr43 | Nr44 => self.sound_channels[3].read(addr, None),
             Nr50 => Ok(self.master),
             Nr51 => Ok(self.panning),
-            Nr52 => Ok(self.get_power_channels_statuses_byte()),
+            Nr52 => Ok(self.get_power_channels_statuses_byte() | MASK_UNUSED_BITS_70),
             _ => Err(Error::SegmentationFault(addr.into())),
         }
     }
