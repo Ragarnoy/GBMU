@@ -17,7 +17,7 @@ serde-big-array = { version = "0.3", optional = true }
 
 [dev-dependencies]
 sdl2 = { version = "0.35.2" }
-egui = "0.16"
+egui = "0.17"
 
 [features]
 cgb = ["gb-bus/cgb"]

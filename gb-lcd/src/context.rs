@@ -1,4 +1,4 @@
-use egui::{ClippedMesh, CtxRef};
+use egui::{ClippedMesh, Context as CtxRef};
 use egui_wgpu_backend::{RenderPass, ScreenDescriptor};
 use winit::{dpi::PhysicalSize, window::Window};
 
@@ -20,7 +20,7 @@ impl Context {
         size: PhysicalSize<u32>,
     ) -> Self {
         let egui_ctx = CtxRef::default();
-        let egui_state = egui_winit::State::from_pixels_per_point(scale_factor);
+        let egui_state = egui_winit::State::from_pixels_per_point((1024 * 1024) as usize, scale_factor);
 
         let screen_descriptor = ScreenDescriptor {
             physical_width: size.width,
@@ -56,11 +56,11 @@ impl DrawEgui for Context {
         F: FnOnce(&CtxRef),
     {
         let raw_input = self.egui_state.take_egui_input(window);
-        let (output, paint_commands) = self.egui_ctx.run(raw_input, render);
+        let output = self.egui_ctx.run(raw_input, render);
 
         self.egui_state
-            .handle_output(window, &self.egui_ctx, output);
-        self.paint_jobs = self.egui_ctx.tessellate(paint_commands);
+            .handle_platform_output(window, &self.egui_ctx, output.platform_output);
+        self.paint_jobs = self.egui_ctx.tessellate(output.shapes);
     }
 
     fn render_egui(
@@ -69,10 +69,11 @@ impl DrawEgui for Context {
         render_target: &wgpu::TextureView,
         context: &crate::RenderContext,
     ) -> Result<(), egui_wgpu_backend::BackendError> {
-        self.rpass
-            .update_texture(context.device, context.queue, &self.egui_ctx.font_image());
-        self.rpass
-            .update_user_textures(context.device, context.queue);
+        self.rpass.add_textures(context.device, context.queue, &self.egui_ctx)
+        // self.rpass
+        //     .update_texture(context.device, context.queue, &self.egui_ctx.font_image());
+        // self.rpass
+        //     .update_user_textures(context.device, context.queue);
         self.rpass.update_buffers(
             context.device,
             context.queue,

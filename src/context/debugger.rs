@@ -7,7 +7,7 @@ use gb_lcd::{DrawEgui, PseudoPixels};
 
 pub struct Context {
     pub window: GBWindow,
-    pub debugger: Debugger<Game>,
+    pub debugger: Debugger,
     event_proxy: EventLoopProxy<CustomEvent>,
 }
 

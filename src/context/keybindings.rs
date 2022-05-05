@@ -1,7 +1,7 @@
 use std::ops::Deref;
 use std::{cell::RefCell, rc::Rc};
 
-use egui::{CtxRef, Direction, Layout, Separator, Ui};
+use egui::{Direction, Layout, Separator, Ui};
 use gb_joypad::{input::INPUT_LIST, Config, InputType, KeyEntry};
 use gb_lcd::{DrawEgui, GBWindow, PseudoPixels};
 use winit::{event::WindowEvent, event_loop::EventLoopProxy};
@@ -80,7 +80,7 @@ impl Context {
 }
 
 impl Context {
-    fn draw_window(ctx: &CtxRef, config: &Rc<RefCell<Config>>, listening: &mut Option<InputType>) {
+    fn draw_window(ctx: &egui::Context, config: &Rc<RefCell<Config>>, listening: &mut Option<InputType>) {
         egui::CentralPanel::default().show(ctx, |ui| {
             let height = ui.available_size().y;
             egui::ScrollArea::vertical()

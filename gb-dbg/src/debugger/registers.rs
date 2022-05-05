@@ -1,6 +1,7 @@
 use crate::dbg_interfaces::{RegisterDebugOperations, RegisterMap, RegisterValue};
 
 use egui::{Color32, Ui, Vec2};
+use egui::style::Margin;
 
 pub struct RegisterEditor;
 
@@ -11,7 +12,7 @@ impl RegisterEditor {
             ui.separator();
             ui.add_space(8.0);
             ui.horizontal_top(|ui| {
-                ui.spacing_mut().window_padding = Vec2::new(16.0, 16.0);
+                ui.spacing_mut().window_margin = Margin::from(Vec2::new(16.0, 16.0));
 
                 ui.spacing_mut().item_spacing = Vec2::new(16.0, 2.0);
                 self.draw_register_table(register.cpu_registers(), "CPU", ui);

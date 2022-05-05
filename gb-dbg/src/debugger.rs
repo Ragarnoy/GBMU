@@ -15,11 +15,12 @@ use crate::debugger::options::DebuggerOptions;
 use crate::debugger::registers::RegisterEditor;
 use crate::debugger::status_bar::StatusBar;
 use crate::until::Until;
-use egui::{vec2, Color32, CtxRef, Style, Vec2};
+use egui::{vec2, Color32, Context, Style, Vec2};
 use std::ops::ControlFlow;
+use egui::style::Margin;
 
-pub struct Debugger<DBGOPS> {
-    memory_editor: MemoryViewer<DBGOPS>,
+pub struct Debugger {
+    memory_editor: MemoryViewer,
     register_editor: RegisterEditor,
     flow_controller: FlowController,
     pub disassembler: DisassemblyViewer,
@@ -29,10 +30,10 @@ pub struct Debugger<DBGOPS> {
     pub reset_triggered: bool,
 }
 
-impl<DBGOPS: DebugOperations> Debugger<DBGOPS> {
-    pub fn draw(
+impl Debugger {
+    pub fn draw<DBGOPS: DebugOperations>(
         &mut self,
-        ui_ctx: &CtxRef,
+        ui_ctx: &Context,
         game_ctx: &mut DBGOPS,
         info: Option<(&dyn ToString, &dyn ToString)>,
     ) {
@@ -50,7 +51,7 @@ impl<DBGOPS: DebugOperations> Debugger<DBGOPS> {
 
         egui::SidePanel::left("left_panel")
             .frame(egui::Frame {
-                margin: vec2(16., 16.),
+                margin: Margin::from(vec2(16., 16.)),
                 fill: Color32::from_gray(20),
                 ..Default::default()
             })
@@ -61,7 +62,7 @@ impl<DBGOPS: DebugOperations> Debugger<DBGOPS> {
 
         egui::SidePanel::right("right_panel")
             .frame(egui::Frame {
-                margin: vec2(16., 16.),
+                margin: Margin::from(vec2(16., 16.)),
                 fill: Color32::from_gray(20),
                 ..Default::default()
             })
@@ -71,7 +72,7 @@ impl<DBGOPS: DebugOperations> Debugger<DBGOPS> {
 
         egui::TopBottomPanel::top("top_panel")
             .frame(egui::Frame {
-                margin: vec2(8., 8.),
+                margin: Margin::from(vec2(8., 8.)),
                 fill: Color32::from_gray(40),
                 ..Default::default()
             })
@@ -90,7 +91,7 @@ impl<DBGOPS: DebugOperations> Debugger<DBGOPS> {
 
         egui::CentralPanel::default()
             .frame(egui::Frame {
-                margin: vec2(16., 16.),
+                margin: Margin::from(vec2(16., 16.)),
                 fill: Color32::from_gray(30),
                 ..Default::default()
             })
@@ -113,7 +114,7 @@ impl<DBGOPS: DebugOperations> Debugger<DBGOPS> {
         self.flow_status.take()
     }
 
-    pub fn updated_flow_status(&mut self, memory: &DBGOPS) -> Option<ControlFlow<Until>> {
+    pub fn updated_flow_status<DBGOPS: DebugOperations>(&mut self, memory: &DBGOPS) -> Option<ControlFlow<Until>> {
         if self.breakpoint_editor.are_breakpoints_triggered(memory) {
             Some(ControlFlow::Break(Until::Null))
         } else {
@@ -142,7 +143,7 @@ impl DebuggerBuilder {
         self
     }
 
-    pub fn build<DBGOPS: DebugOperations>(self) -> Debugger<DBGOPS> {
+    pub fn build(self) -> Debugger {
         Debugger {
             memory_editor: MemoryViewer::new(
                 self.options.clone().unwrap_or_default().address_ranges,
