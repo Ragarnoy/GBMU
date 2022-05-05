@@ -7,9 +7,11 @@ use crate::config::Mode;
 
 use crate::path::game_save_path;
 #[cfg(feature = "cgb")]
-use gb_bus::generic::{CharDevice, PanicDevice};
+use gb_bus::generic::CharDevice;
 use gb_bus::{generic::SimpleRW, AddressBus, Bus, IORegArea, IORegBus, Source, WorkingRam};
-use gb_clock::{cycles, Clock};
+#[cfg(feature = "cgb")]
+use gb_clock::not_counted_cycles;
+use gb_clock::{counted_cycles, Clock};
 use gb_cpu::{cpu::Cpu, new_cpu, registers::Registers};
 use gb_dbg::dbg_interfaces::{
     AudioRegs, CpuRegs, DebugOperations, IORegs, MemoryDebugOperations, PpuRegs,
@@ -111,11 +113,11 @@ impl Game {
             new_cpu()
         } else {
             let (mut cpu, cpu_io_reg) = new_cpu();
-            assert!(
-                !cgb_mode,
-                "we don't have the registers value for color mode"
-            );
-            cpu.set_registers(Registers::DMG);
+            cpu.set_registers(if cgb_mode {
+                Registers::CGB
+            } else {
+                Registers::DMG
+            });
             (cpu, cpu_io_reg)
         };
         let wram = Rc::new(RefCell::new(WorkingRam::new(cgb_mode)));
@@ -229,7 +231,7 @@ impl Game {
                 .borrow_mut()
                 .check_hdma_state(&mut self.cpu, &self.ppu);
 
-            let frame_not_finished = cycles!(
+            let frame_not_finished = counted_cycles!(
                 self.clock,
                 &mut self.addr_bus,
                 self.timer.borrow_mut().deref_mut(),
@@ -242,7 +244,7 @@ impl Game {
             self.check_scheduled_stop(!frame_not_finished);
             #[cfg(feature = "cgb")]
             if self.cpu.io_regs.borrow().fast_mode() {
-                cycles!(
+                not_counted_cycles!(
                     self.clock,
                     &mut self.addr_bus,
                     &mut self.cpu,

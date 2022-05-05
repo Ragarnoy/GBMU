@@ -126,6 +126,8 @@ fn stop_cgb_mode(ctl: &mut MicrocodeController, state: &mut State) {
         int_flags.switch_speed();
         if !interrupt_ready {
             mode = Some(Mode::Halt);
+            ctl.halted_from_stop = true;
+            ctl.cycles_in_halt_mode = 0;
         }
     } else {
         mode = Some(Mode::Stop);

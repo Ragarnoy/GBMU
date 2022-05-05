@@ -2,16 +2,14 @@ mod file;
 mod settings;
 mod tools;
 
+#[cfg(feature = "cgb")]
+use crate::config::Config;
 use crate::Context;
 #[cfg(feature = "debug_render")]
 use crate::Game;
-#[cfg(feature = "cgb")]
-use crate::Opts;
-// use egui::{Color32, Visuals};
+use gb_lcd::DrawEgui;
 #[cfg(feature = "debug_render")]
 use native_dialog::FileDialog;
-
-use gb_lcd::DrawEgui;
 
 #[cfg(feature = "debug_fps")]
 macro_rules! ui_fps {
@@ -23,7 +21,7 @@ macro_rules! ui_fps {
 
 pub fn draw_egui(
     context: &mut Context,
-    #[cfg(feature = "cgb")] options: &mut Opts,
+    #[cfg(feature = "cgb")] options: &mut Config,
     #[cfg(feature = "debug_fps")] fps: f64,
 ) {
     context

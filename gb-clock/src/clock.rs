@@ -8,11 +8,19 @@ pub struct Clock {
 ///
 /// Its return value indicate if the current frame is incomplete.
 #[macro_export]
-macro_rules! cycles {
+macro_rules! not_counted_cycles {
     ($clock:expr, $addr_bus:expr, $($tickers:expr),+) => {{
        $(
             gb_clock::cycle($tickers, $addr_bus);
         )+
+        !$clock.frame_ready()
+    }};
+}
+
+#[macro_export]
+macro_rules! counted_cycles {
+    ($clock:expr, $addr_bus:expr, $($tickers:expr),+) => {{
+        gb_clock::not_counted_cycles!($clock, $addr_bus, $($tickers),+);
         $clock.inc_frame()
     }};
 }

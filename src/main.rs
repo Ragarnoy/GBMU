@@ -13,6 +13,9 @@ mod windows;
 
 use clap::StructOpt;
 use config::Config;
+
+#[cfg(feature = "cgb")]
+use config::Mode;
 use context::Context;
 use custom_event::CustomEvent;
 use gb_lcd::{GBPixels, PseudoWindow};

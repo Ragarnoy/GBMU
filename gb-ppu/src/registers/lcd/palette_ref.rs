@@ -7,7 +7,7 @@ use std::ops::Deref;
     feature = "serialization",
     derive(serde::Deserialize, serde::Serialize)
 )]
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(PartialEq, Eq, Clone, Debug, Copy)]
 pub enum PaletteRef {
     MonoBgWin,
     MonoSprite0,
@@ -18,7 +18,7 @@ pub enum PaletteRef {
 
 impl PaletteRef {
     pub fn is_sprite(&self) -> bool {
-        PaletteRef::MonoBgWin != *self
+        !matches!(self, PaletteRef::MonoBgWin | PaletteRef::CgbBGWin(_))
     }
 
     pub fn get_color(
