@@ -184,10 +184,10 @@ where
                 let enabled = v & 0x80 != 0x00;
                 if was_enabled && !enabled {
                     self.sound_channels = vec![
-                        SoundChannel::new(ChannelType::SquareWave, true),
-                        SoundChannel::new(ChannelType::SquareWave, false),
-                        SoundChannel::new(ChannelType::WaveForm, false),
-                        SoundChannel::new(ChannelType::Noise, false),
+                        self.sound_channels[0].reset(),
+                        self.sound_channels[1].reset(),
+                        self.sound_channels[2].reset(),
+                        self.sound_channels[3].reset(),
                     ];
                     self.master = 0;
                     self.panning = 0;

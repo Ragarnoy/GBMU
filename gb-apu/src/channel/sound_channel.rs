@@ -62,6 +62,38 @@ impl SoundChannel {
         }
     }
 
+    pub fn reset(&self) -> Self {
+        SoundChannel {
+            enabled: false,
+            sweep: if self.sweep.is_some() && self.channel_type == ChannelType::SquareWave {
+                Some(Sweep::default())
+            } else {
+                None
+            },
+            duty: if self.channel_type == ChannelType::SquareWave {
+                Some(Duty::default())
+            } else {
+                None
+            },
+            length_counter: LengthCounter::new(self.channel_type),
+            volume_envelope: if self.channel_type == ChannelType::SquareWave
+                || self.channel_type == ChannelType::Noise
+            {
+                Some(VolumeEnvelope::default())
+            } else {
+                None
+            },
+            timer: Timer::new(self.channel_type),
+            programmable_wave: self.programmable_wave.clone(),
+            lfsr: if self.channel_type == ChannelType::Noise {
+                Some(Lfsr::default())
+            } else {
+                None
+            },
+            channel_type: self.channel_type,
+        }
+    }
+
     pub fn step(&mut self) {
         let reached_zero = self.timer.step();
         if reached_zero {

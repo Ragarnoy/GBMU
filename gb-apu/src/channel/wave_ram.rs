@@ -1,5 +1,5 @@
 const SAMPLES_NB: usize = 32;
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone)]
 pub struct ProgrammableWave {
     samples: [u8; SAMPLES_NB],
     step: usize,
