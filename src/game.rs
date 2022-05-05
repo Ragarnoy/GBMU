@@ -2,10 +2,10 @@
 mod save_state;
 mod utils;
 
-use crate::context::Context;
 #[cfg(feature = "cgb")]
-use crate::Mode;
+use crate::config::Mode;
 
+use crate::path::game_save_path;
 #[cfg(feature = "cgb")]
 use gb_bus::generic::CharDevice;
 use gb_bus::{generic::SimpleRW, AddressBus, Bus, IORegArea, IORegBus, Source, WorkingRam};
@@ -13,16 +13,13 @@ use gb_bus::{generic::SimpleRW, AddressBus, Bus, IORegArea, IORegBus, Source, Wo
 use gb_clock::not_counted_cycles;
 use gb_clock::{counted_cycles, Clock};
 use gb_cpu::{cpu::Cpu, new_cpu, registers::Registers};
-use gb_dbg::{
-    dbg_interfaces::{
-        AudioRegs, CpuRegs, DebugOperations, IORegs, MemoryDebugOperations, PpuRegs,
-        RegisterDebugOperations, RegisterMap, RegisterValue,
-    },
-    until::Until,
+use gb_dbg::dbg_interfaces::{
+    AudioRegs, CpuRegs, DebugOperations, IORegs, MemoryDebugOperations, PpuRegs,
+    RegisterDebugOperations, RegisterMap, RegisterValue,
 };
+use gb_dbg::until::Until;
 use gb_dma::{dma::Dma, hdma::Hdma};
-use gb_joypad::Joypad;
-use gb_lcd::render::{SCREEN_HEIGHT, SCREEN_WIDTH};
+use gb_joypad::{Config, Joypad};
 use gb_ppu::Ppu;
 #[cfg(feature = "save_state")]
 use gb_roms::controllers::Full;
@@ -34,7 +31,7 @@ use gb_roms::{
 use gb_timer::Timer;
 #[cfg(feature = "save_state")]
 use save_state::SaveState;
-use utils::{game_save_path, mbc_with_save_state};
+use utils::mbc_with_save_state;
 
 #[cfg(feature = "registers_logs")]
 use std::io::BufWriter;
@@ -81,7 +78,7 @@ enum ScheduledStop {
 impl Game {
     pub fn new<P: AsRef<Path>>(
         rompath: &P,
-        joypad: Rc<RefCell<Joypad>>,
+        joypad_config: Rc<RefCell<Config>>,
         stopped: bool,
         #[cfg(feature = "cgb")] forced_mode: Option<Mode>,
     ) -> Result<Game, anyhow::Error> {
@@ -147,14 +144,16 @@ impl Game {
         let hdma = Rc::new(RefCell::new(Hdma::default()));
         let serial = Rc::new(RefCell::new(gb_bus::Serial::default()));
 
+        let joypad = Rc::new(RefCell::new(Joypad::from_config(joypad_config)));
+
         let io_bus = {
             let mut io_bus = IORegBus::default();
             #[cfg(feature = "cgb")]
             if cgb_mode {
                 io_bus
-                    .with_ppu_cgb(ppu_reg.clone())
+                    .with_area(IORegArea::Vbk, ppu_reg.clone())
                     .with_area(IORegArea::Key1, cpu_io_reg.clone())
-                    .with_hdma(hdma.clone())
+                    .with_hdma(Rc::new(RefCell::new(PanicDevice::default())))
                     .with_area(IORegArea::RP, Rc::new(RefCell::new(CharDevice(0))))
                     .with_area(IORegArea::Svbk, wram.clone());
             }
@@ -164,6 +163,7 @@ impl Game {
                 .with_ppu(ppu_reg)
                 .with_area(IORegArea::IF, cpu_io_reg.clone())
                 .with_area(IORegArea::Dma, dma.clone())
+                .with_hdma(hdma.clone())
                 .with_area(IORegArea::BootRom, bios_wrapper.clone())
                 .with_serial(serial)
                 .with_default_sound()
@@ -312,11 +312,6 @@ impl Game {
             self.emulation_stopped = true;
             self.scheduled_stop = None;
         }
-    }
-
-    pub fn draw(&self, context: &mut Context<SCREEN_WIDTH, SCREEN_HEIGHT>) {
-        context.display.update_render(self.ppu.pixels());
-        context.display.draw();
     }
 
     pub fn update_scheduled_stop(&mut self, flow: std::ops::ControlFlow<Until>) {
@@ -548,9 +543,16 @@ impl Drop for Game {
                 .and_then(|mut file| {
                     write_named(&mut file, &self.mbc.borrow().save_partial()).map_err(Error::from)
                 }) {
-                Ok(_) => log::info!("successfuly save mbc data to {}", filename),
+                Ok(_) => log::info!(
+                    "successfuly save mbc data to {}",
+                    filename.to_string_lossy()
+                ),
                 Err(e) => {
-                    log::error!("failed to save mbc data to {}, got error: {}", filename, e)
+                    log::error!(
+                        "failed to save mbc data to {}, got error: {}",
+                        filename.to_string_lossy(),
+                        e
+                    )
                 }
             }
         }
