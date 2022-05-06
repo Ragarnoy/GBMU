@@ -62,7 +62,10 @@ impl SoundChannel {
         }
     }
 
-    pub fn reset(&self) -> Self {
+    pub fn reset(&mut self) -> Self {
+        if let Some(pw) = &mut self.programmable_wave {
+            (*pw).bits = 0;
+        }
         SoundChannel {
             enabled: false,
             sweep: if self.sweep.is_some() && self.channel_type == ChannelType::SquareWave {
@@ -217,14 +220,7 @@ where
                     return Ok(res);
                 }
                 if let Some(pw) = &self.programmable_wave {
-                    let res = match pw.volume_shift {
-                        4 => 0b00, // mute
-                        0 => 0b01, // 100%
-                        1 => 0b10, // 50%
-                        2 => 0b11, // 25%
-                        _ => unreachable!(),
-                    };
-                    return Ok((res << 5) & 0b0110_0000 | MASK_UNUSED_BITS_9F);
+                    return Ok(pw.bits | MASK_UNUSED_BITS_9F);
                 }
                 Ok(0)
             }
@@ -322,13 +318,7 @@ where
                         (*ve).initial_volume > 0 || (*ve).envelope_direction == Direction::Inc;
                 }
                 if let Some(ref mut pw) = self.programmable_wave {
-                    (*pw).volume_shift = match (v & 0b0110_0000) >> 5 {
-                        0b00 => 4, // mute
-                        0b01 => 0, // 100%
-                        0b10 => 1, // 50%
-                        0b11 => 2, // 25%
-                        _ => unreachable!(),
-                    };
+                    (*pw).bits = v;
                 }
             }
             Nr13 | Nr23 | Nr33 | Nr43 => {
