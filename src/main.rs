@@ -110,7 +110,10 @@ fn init<const WIDTH: u32, const HEIGHT: u32>(
 ) -> Result<(EventLoop<CustomEvent>, GBPixels), Error> {
     let event_loop = EventLoop::with_user_event();
     let main_window = {
-        let size = LogicalSize::new(WIDTH as f64, HEIGHT as f64);
+        let size = LogicalSize::new(
+            WIDTH as f64,
+            HEIGHT as f64 + crate::constant::MENU_BAR_SIZE as f64,
+        );
         WindowBuilder::new()
             .with_title(constant::APP_NAME)
             .with_inner_size(size)
