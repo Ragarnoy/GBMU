@@ -1,169 +1,153 @@
-use crate::error::Error;
-use egui::CtxRef;
-use egui_sdl2_gl::{painter::Painter, DpiScaling, EguiStateHandler, ShaderVersion};
-use sdl2::video::SwapInterval;
-use sdl2::{
-    event::Event,
-    video::{GLContext, Window as SdlWindow},
-    Sdl, VideoSubsystem,
-};
-use std::time::Instant;
+use winit::{event::WindowEvent, window::Window};
 
-const RESOLUTION_DOT: f32 = 96.0;
-const SHADER_VERSION: ShaderVersion = ShaderVersion::Default;
+use crate::{
+    context::Context, state::State, DrawEgui, EventProcessing, PseudoPixels, PseudoWindow,
+    RenderContext,
+};
 
 pub struct GBWindow {
-    sdl_window: SdlWindow,
-    gl_ctx: GLContext,
-    egui_ctx: CtxRef,
-    egui_painter: Painter,
-    egui_state: EguiStateHandler,
-    pixels_per_point: f32,
-    start_time: Instant,
-    #[cfg(feature = "debug_render")]
-    debug: bool,
+    pub window: Window,
+
+    pub context: Context,
+
+    pub device: wgpu::Device,
+    pub queue: wgpu::Queue,
+
+    pub surface_config: wgpu::SurfaceConfiguration,
+    pub surface_format: wgpu::TextureFormat,
+    pub surface: wgpu::Surface,
+
+    pub(crate) state: State,
 }
 
 impl GBWindow {
-    pub fn new(
-        title: &str,
-        dim: (u32, u32),
-        resizable: bool,
-        video_sys: &VideoSubsystem,
-    ) -> Result<Self, Error> {
-        let mut builder = video_sys.window(title, dim.0, dim.1);
-        builder.opengl();
-        if resizable {
-            builder.resizable();
-        }
-        let sdl_window = builder
-            .build()
-            .map_err(|err| Error::GBWindowInit(err.to_string()))?;
+    pub fn new(window: Window) -> Self {
+        let size = window.inner_size();
+        let scale_factor = window.scale_factor();
 
-        let gl_ctx = sdl_window
-            .gl_create_context()
-            .map_err(Error::GBWindowInit)?;
+        let instance = wgpu::Instance::new(wgpu::Backends::PRIMARY);
+        let surface = unsafe { instance.create_surface(&window) };
 
-        video_sys
-            .gl_set_swap_interval(SwapInterval::Immediate)
-            .map_err(Error::GBWindowInit)?;
+        let adapter = pollster::block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
+            power_preference: wgpu::PowerPreference::HighPerformance,
+            compatible_surface: Some(&surface),
+            force_fallback_adapter: false,
+        }))
+        .unwrap();
 
-        let (egui_painter, egui_state) = egui_sdl2_gl::with_sdl2(
-            &sdl_window,
-            SHADER_VERSION,
-            DpiScaling::Custom(
-                video_sys.display_dpi(0).map_err(Error::GBWindowInit)?.0 / RESOLUTION_DOT,
-            ),
-        );
-        let egui_ctx = CtxRef::default();
+        let (device, queue) = pollster::block_on(adapter.request_device(
+            &wgpu::DeviceDescriptor {
+                features: wgpu::Features::default(),
+                limits: wgpu::Limits::default(),
+                label: Some("basic_egui_window"),
+            },
+            None,
+        ))
+        .unwrap();
 
-        let native_pixels_per_point = 1.0;
-
-        let start_time = Instant::now();
-        Ok(Self {
-            sdl_window,
-            gl_ctx,
-            egui_painter,
-            egui_ctx,
-            egui_state,
-            pixels_per_point: native_pixels_per_point,
-            start_time,
-            #[cfg(feature = "debug_render")]
-            debug: false,
-        })
-    }
-
-    #[allow(dead_code)]
-    pub fn sdl_window(&self) -> &SdlWindow {
-        &self.sdl_window
-    }
-    #[allow(dead_code)]
-    pub fn sdl_window_mut(&mut self) -> &mut SdlWindow {
-        &mut self.sdl_window
-    }
-    #[allow(dead_code)]
-    pub fn egui_ctx(&self) -> &CtxRef {
-        &self.egui_ctx
-    }
-    #[allow(dead_code)]
-    pub fn egui_ctx_mut(&mut self) -> &mut CtxRef {
-        &mut self.egui_ctx
-    }
-
-    pub fn start_frame(&mut self) -> Result<(), Error> {
-        self.sdl_window
-            .gl_make_current(&self.gl_ctx)
-            .map_err(Error::GBWindowFrame)?;
-        self.egui_state.input.time = Some(self.start_time.elapsed().as_secs_f64());
-        self.egui_ctx.begin_frame(self.egui_state.input.take());
-        self.egui_state.input.pixels_per_point = Some(self.pixels_per_point);
-        unsafe {
-            // Clear the screen to black
-            gl::ClearColor(0.0, 0.0, 0.0, 1.0);
-            #[cfg(feature = "debug_render")]
-            if self.debug {
-                gl::ClearColor(1.0, 1.0, 1.0, 1.0);
-            }
-            gl::Clear(gl::COLOR_BUFFER_BIT);
+        let surface_format = surface.get_preferred_format(&adapter).unwrap();
+        let surface_config = wgpu::SurfaceConfiguration {
+            usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+            format: surface_format,
+            width: size.width,
+            height: size.height,
+            present_mode: wgpu::PresentMode::Fifo,
         };
-        Ok(())
-    }
+        surface.configure(&device, &surface_config);
 
-    pub fn end_frame(&mut self) -> Result<(), Error> {
-        self.sdl_window
-            .gl_make_current(&self.gl_ctx)
-            .map_err(Error::GBWindowFrame)?;
-        let (_egui_output, paint_cmds) = self.egui_ctx.end_frame();
+        let context = Context::new(&device, surface_format, scale_factor as f32, size);
 
-        let paint_jobs = self.egui_ctx.tessellate(paint_cmds);
+        Self {
+            window,
 
-        self.egui_painter
-            .paint_jobs(None, paint_jobs, &self.egui_ctx.font_image());
+            context,
 
-        self.sdl_window.gl_swap_window();
-        Ok(())
-    }
+            device,
+            queue,
 
-    pub fn resize(&mut self, video_sys: &VideoSubsystem) -> Result<(), Error> {
-        self.sdl_window
-            .gl_make_current(&self.gl_ctx)
-            .map_err(Error::GBWindowFrame)?;
-        let (egui_painter, egui_state) = egui_sdl2_gl::with_sdl2(
-            &self.sdl_window,
-            SHADER_VERSION,
-            DpiScaling::Custom(
-                video_sys.display_dpi(0).map_err(Error::GBWindowInit)?.0 / RESOLUTION_DOT,
-            ),
-        );
-        self.egui_painter = egui_painter;
-        self.egui_state = egui_state;
-        Ok(())
-    }
+            surface_config,
+            surface_format,
+            surface,
 
-    pub fn send_event(&mut self, event: &Event, sdl_context: &Sdl) -> bool {
-        if let (Some(id_mouse_focus), Some(id_keyboard_focus)) = (
-            sdl_context.mouse().focused_window_id(),
-            sdl_context.keyboard().focused_window_id(),
-        ) {
-            let id = self.sdl_window.id();
-            if id_mouse_focus == id || id_keyboard_focus == id {
-                self.egui_state.process_input(
-                    &self.sdl_window,
-                    event.clone(),
-                    &mut self.egui_painter,
-                );
-                return true;
-            }
+            state: State::default(),
         }
-        false
+    }
+}
+
+impl PseudoWindow for GBWindow {
+    fn scale_factor(&self) -> f64 {
+        self.window.scale_factor()
     }
 
-    #[cfg(feature = "debug_render")]
-    pub fn set_debug(&mut self, debug: bool) {
-        self.debug = debug;
+    fn inner_size(&self) -> winit::dpi::PhysicalSize<u32> {
+        self.window.inner_size()
     }
 
-    pub fn dots_to_pixels(_video_sys: &VideoSubsystem, dots: f32) -> Result<u32, Error> {
-        Ok((dots).ceil() as u32 + 4)
+    fn id(&self) -> winit::window::WindowId {
+        self.window.id()
+    }
+
+    fn request_redraw(&self) {
+        self.window.request_redraw()
+    }
+}
+
+impl PseudoPixels for GBWindow {
+    fn resize(&mut self, size: winit::dpi::PhysicalSize<u32>) {
+        self.surface_config.width = size.width;
+        self.surface_config.height = size.height;
+        self.surface.configure(&self.device, &self.surface_config);
+        self.context.resize(size);
+    }
+
+    fn render_with<F>(&mut self, render_function: F) -> anyhow::Result<()>
+    where
+        F: FnOnce(
+            &mut wgpu::CommandEncoder,
+            &wgpu::TextureView,
+            &RenderContext,
+        ) -> anyhow::Result<()>,
+    {
+        let output_frame = match self.surface.get_current_texture() {
+            Ok(frame) => frame,
+            Err(wgpu::SurfaceError::Outdated) => return Ok(()),
+            Err(e) => return Err(e.into()),
+        };
+
+        let mut encoder = self
+            .device
+            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
+                label: Some("gb_window_encoder"),
+            });
+
+        let render_target = output_frame
+            .texture
+            .create_view(&wgpu::TextureViewDescriptor::default());
+        let context = RenderContext::new(&self.device, &self.queue);
+
+        render_function(&mut encoder, &render_target, &context).map_err(anyhow::Error::from)?;
+        self.context
+            .render_egui(&mut encoder, &render_target, &context)?;
+
+        self.queue.submit(std::iter::once(encoder.finish()));
+        output_frame.present();
+        Ok(())
+    }
+}
+
+impl EventProcessing for GBWindow {
+    fn process_window_event(&mut self, event: WindowEvent) {
+        match event {
+            WindowEvent::CloseRequested => self.state.closed = true,
+            WindowEvent::Focused(focused) => self.state.focused = focused,
+            WindowEvent::CursorMoved { .. }
+            | WindowEvent::Moved(_)
+            | WindowEvent::ModifiersChanged(_) => log::debug!("ignore event {event:?}"),
+            WindowEvent::Resized(new_size) => {
+                self.resize(new_size);
+                self.request_redraw();
+            }
+            _ => todo!("process window event {event:?}"),
+        }
     }
 }

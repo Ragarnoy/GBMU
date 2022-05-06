@@ -12,7 +12,7 @@ pub const SCREEN_WIDTH: usize = 160;
 pub const SCREEN_HEIGHT: usize = 144;
 pub const MENU_BAR_SIZE: f32 = 30.0;
 
-pub type RenderData<const WIDTH: usize, const HEIGHT: usize> = [[[u8; 3]; WIDTH]; HEIGHT];
+pub type ImageRGB<const WIDTH: usize, const HEIGHT: usize> = [[[u8; 3]; WIDTH]; HEIGHT];
 pub type Render = RenderImage<SCREEN_WIDTH, SCREEN_HEIGHT>;
 
 const VS_SRC: &str = include_str!("render.vert");
@@ -116,7 +116,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> RenderImage<WIDTH, HEIGHT> {
         }
     }
 
-    pub fn update_render(&mut self, texture_pixels: &RenderData<WIDTH, HEIGHT>) {
+    pub fn update_render(&mut self, texture_pixels: &ImageRGB<WIDTH, HEIGHT>) {
         unsafe {
             gl::BindTexture(gl::TEXTURE_2D, self.texture_buffer);
             gl::TexSubImage2D(
