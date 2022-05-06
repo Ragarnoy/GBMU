@@ -1,4 +1,4 @@
-use egui::{ClippedMesh, Context as CtxRef};
+use egui::{ClippedMesh, Context as CtxRef, TexturesDelta};
 use egui_wgpu_backend::{RenderPass, ScreenDescriptor};
 use winit::{dpi::PhysicalSize, window::Window};
 
@@ -10,6 +10,7 @@ pub struct Context {
     pub screen_descriptor: ScreenDescriptor,
     pub rpass: RenderPass,
     pub paint_jobs: Vec<ClippedMesh>,
+    pub textures_delta: Option<TexturesDelta>
 }
 
 impl Context {
@@ -35,6 +36,7 @@ impl Context {
             screen_descriptor,
             rpass,
             paint_jobs: Vec::new(),
+            textures_delta: None
         }
     }
 
@@ -60,6 +62,7 @@ impl DrawEgui for Context {
 
         self.egui_state
             .handle_platform_output(window, &self.egui_ctx, output.platform_output);
+        self.textures_delta = Some(output.textures_delta);
         self.paint_jobs = self.egui_ctx.tessellate(output.shapes);
     }
 
@@ -69,11 +72,8 @@ impl DrawEgui for Context {
         render_target: &wgpu::TextureView,
         context: &crate::RenderContext,
     ) -> Result<(), egui_wgpu_backend::BackendError> {
-        self.rpass.add_textures(context.device, context.queue, &self.egui_ctx)
-        // self.rpass
-        //     .update_texture(context.device, context.queue, &self.egui_ctx.font_image());
-        // self.rpass
-        //     .update_user_textures(context.device, context.queue);
+        let texture_delta = self.textures_delta.take().unwrap();
+        self.rpass.add_textures(context.device, context.queue, &texture_delta)?;
         self.rpass.update_buffers(
             context.device,
             context.queue,
@@ -87,7 +87,8 @@ impl DrawEgui for Context {
             &self.paint_jobs,
             &self.screen_descriptor,
             None,
-        )
+        )?;
+        self.rpass.remove_textures(texture_delta)
     }
 
     fn on_event(&mut self, event: &winit::event::WindowEvent) -> bool {
