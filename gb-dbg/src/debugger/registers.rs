@@ -1,7 +1,7 @@
 use crate::dbg_interfaces::{RegisterDebugOperations, RegisterMap, RegisterValue};
 
-use egui::{Color32, Ui, Vec2};
 use egui::style::Margin;
+use egui::{Color32, Ui, Vec2};
 
 pub struct RegisterEditor;
 

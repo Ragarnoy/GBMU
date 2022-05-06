@@ -15,9 +15,9 @@ use crate::debugger::options::DebuggerOptions;
 use crate::debugger::registers::RegisterEditor;
 use crate::debugger::status_bar::StatusBar;
 use crate::until::Until;
+use egui::style::Margin;
 use egui::{vec2, Color32, Context, Style, Vec2};
 use std::ops::ControlFlow;
-use egui::style::Margin;
 
 pub struct Debugger {
     memory_editor: MemoryViewer,
@@ -114,7 +114,10 @@ impl Debugger {
         self.flow_status.take()
     }
 
-    pub fn updated_flow_status<DBGOPS: DebugOperations>(&mut self, memory: &DBGOPS) -> Option<ControlFlow<Until>> {
+    pub fn updated_flow_status<DBGOPS: DebugOperations>(
+        &mut self,
+        memory: &DBGOPS,
+    ) -> Option<ControlFlow<Until>> {
         if self.breakpoint_editor.are_breakpoints_triggered(memory) {
             Some(ControlFlow::Break(Until::Null))
         } else {

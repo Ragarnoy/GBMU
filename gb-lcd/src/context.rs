@@ -1,16 +1,16 @@
-use egui::{ClippedMesh, Context as CtxRef, TexturesDelta};
+use egui::{ClippedMesh, Context as EguiContext, TexturesDelta};
 use egui_wgpu_backend::{RenderPass, ScreenDescriptor};
 use winit::{dpi::PhysicalSize, window::Window};
 
 use crate::DrawEgui;
 
 pub struct Context {
-    pub egui_ctx: CtxRef,
+    pub egui_ctx: EguiContext,
     pub egui_state: egui_winit::State,
     pub screen_descriptor: ScreenDescriptor,
     pub rpass: RenderPass,
     pub paint_jobs: Vec<ClippedMesh>,
-    pub textures_delta: Option<TexturesDelta>
+    pub textures_delta: Option<TexturesDelta>,
 }
 
 impl Context {
@@ -20,8 +20,9 @@ impl Context {
         scale_factor: f32,
         size: PhysicalSize<u32>,
     ) -> Self {
-        let egui_ctx = CtxRef::default();
-        let egui_state = egui_winit::State::from_pixels_per_point((1024 * 1024) as usize, scale_factor);
+        let egui_ctx = EguiContext::default();
+        let egui_state =
+            egui_winit::State::from_pixels_per_point((1024 * 1024) as usize, scale_factor);
 
         let screen_descriptor = ScreenDescriptor {
             physical_width: size.width,
@@ -36,7 +37,7 @@ impl Context {
             screen_descriptor,
             rpass,
             paint_jobs: Vec::new(),
-            textures_delta: None
+            textures_delta: None,
         }
     }
 
@@ -55,7 +56,7 @@ impl Context {
 impl DrawEgui for Context {
     fn prepare_egui<F>(&mut self, window: &Window, render: F)
     where
-        F: FnOnce(&CtxRef),
+        F: FnOnce(&EguiContext),
     {
         let raw_input = self.egui_state.take_egui_input(window);
         let output = self.egui_ctx.run(raw_input, render);
@@ -73,7 +74,8 @@ impl DrawEgui for Context {
         context: &crate::RenderContext,
     ) -> Result<(), egui_wgpu_backend::BackendError> {
         let texture_delta = self.textures_delta.take().unwrap();
-        self.rpass.add_textures(context.device, context.queue, &texture_delta)?;
+        self.rpass
+            .add_textures(context.device, context.queue, &texture_delta)?;
         self.rpass.update_buffers(
             context.device,
             context.queue,

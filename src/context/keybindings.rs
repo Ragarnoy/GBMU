@@ -80,7 +80,11 @@ impl Context {
 }
 
 impl Context {
-    fn draw_window(ctx: &egui::Context, config: &Rc<RefCell<Config>>, listening: &mut Option<InputType>) {
+    fn draw_window(
+        ctx: &egui::Context,
+        config: &Rc<RefCell<Config>>,
+        listening: &mut Option<InputType>,
+    ) {
         egui::CentralPanel::default().show(ctx, |ui| {
             let height = ui.available_size().y;
             egui::ScrollArea::vertical()
