@@ -82,6 +82,15 @@ fn main() -> Result<(), Error> {
                         game.update_scheduled_stop(status);
                     }
                 }
+                if let Some(ref mut ctx) = context.tilesheet_ctx {
+                    ctx.window.request_redraw();
+                }
+                if let Some(ref mut ctx) = context.tilemap_ctx {
+                    ctx.window.request_redraw();
+                }
+                if let Some(ref mut ctx) = context.spritesheet_ctx {
+                    ctx.window.request_redraw();
+                }
             }
             context.main_window.window.request_redraw();
             if let Some(ref keybindings) = context.keybindings_ctx {
