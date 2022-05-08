@@ -21,10 +21,12 @@ use gb_dbg::until::Until;
 use gb_dma::{dma::Dma, hdma::Hdma};
 use gb_joypad::{Config, Joypad};
 use gb_ppu::Ppu;
+#[cfg(feature = "cgb")]
+use gb_roms::controllers::cgb_bios;
 #[cfg(feature = "save_state")]
 use gb_roms::controllers::Full;
 use gb_roms::{
-    controllers::{cgb_bios, dmg_bios, Generic},
+    controllers::{dmg_bios, Generic},
     header::AutoSave,
     Header,
 };
@@ -130,11 +132,14 @@ impl Game {
         };
         let timer = Rc::new(RefCell::new(timer));
         let bios_wrapper = {
-            let mut bios = if cfg!(feature = "cgb") {
+            #[cfg(feature = "cgb")]
+            let mut bios = if cgb_mode {
                 cgb_bios(mbc.clone())
             } else {
                 dmg_bios(mbc.clone())
             };
+            #[cfg(not(feature = "cgb"))]
+            let mut bios = dmg_bios(mbc.clone());
             if cfg!(not(feature = "bios")) {
                 bios.bios_enabling_reg = 0xa;
             };
