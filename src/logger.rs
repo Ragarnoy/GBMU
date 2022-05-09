@@ -25,5 +25,5 @@ fn get_log_file_writer() -> anyhow::Result<BufWriter<File>> {
 
     let file = File::create(LOG_FILE).map_err(anyhow::Error::from)?;
 
-    Ok(BufWriter::with_capacity(32_768, file))
+    Ok(BufWriter::with_capacity(BUFFER_CAPS, file))
 }
