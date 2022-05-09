@@ -6,6 +6,7 @@ authors = [
   "Florian Bennetot <fbenneto@student.42.fr>",
   "Tiago Lernould <tlernoul@student.42.fr>",
   "Cedric M'Passi <cedricmpassi@gmail.com>",
+  "Pierre Lamusse <plamusse@student.42.fr>",
 ]
 edition = "2021"
 rust-version = "1.60.0"
