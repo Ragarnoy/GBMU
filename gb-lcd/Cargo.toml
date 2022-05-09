@@ -10,10 +10,10 @@ edition = "2021"
 debug_render = []
 
 [dependencies]
-egui = "0.16.1"
-egui_wgpu_backend = "0.16.0"
+egui = "0.17"
+egui_wgpu_backend = "0.17.0"
 wgpu = "0.12.0"
-egui-winit = "0.16.0"
+egui-winit = "0.17.0"
 winit = "0.26.1"
 pixels = "0.9.0"
 log = { version = "0.4", features = ["std"] }

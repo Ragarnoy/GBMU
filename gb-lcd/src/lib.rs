@@ -8,7 +8,7 @@ pub mod window;
 
 pub use crate::pixels::GBPixels;
 use ::pixels::PixelsContext;
-use egui::CtxRef;
+use egui::Context;
 use egui_wgpu_backend::BackendError;
 pub use window::GBWindow;
 use winit::{
@@ -98,7 +98,7 @@ pub trait DrawEgui {
     /// Prepare to render egui
     fn prepare_egui<F>(&mut self, window: &Window, render: F)
     where
-        F: FnOnce(&CtxRef);
+        F: FnOnce(&Context);
 
     /// Render egui
     fn render_egui(

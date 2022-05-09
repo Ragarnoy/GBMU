@@ -1,15 +1,16 @@
-use egui::{ClippedMesh, CtxRef};
+use egui::{ClippedMesh, Context as EguiContext, TexturesDelta};
 use egui_wgpu_backend::{RenderPass, ScreenDescriptor};
 use winit::{dpi::PhysicalSize, window::Window};
 
 use crate::DrawEgui;
 
 pub struct Context {
-    pub egui_ctx: CtxRef,
+    pub egui_ctx: EguiContext,
     pub egui_state: egui_winit::State,
     pub screen_descriptor: ScreenDescriptor,
     pub rpass: RenderPass,
     pub paint_jobs: Vec<ClippedMesh>,
+    pub textures_delta: Option<TexturesDelta>,
 }
 
 impl Context {
@@ -19,8 +20,9 @@ impl Context {
         scale_factor: f32,
         size: PhysicalSize<u32>,
     ) -> Self {
-        let egui_ctx = CtxRef::default();
-        let egui_state = egui_winit::State::from_pixels_per_point(scale_factor);
+        let egui_ctx = EguiContext::default();
+        let egui_state =
+            egui_winit::State::from_pixels_per_point((1024 * 1024) as usize, scale_factor);
 
         let screen_descriptor = ScreenDescriptor {
             physical_width: size.width,
@@ -35,6 +37,7 @@ impl Context {
             screen_descriptor,
             rpass,
             paint_jobs: Vec::new(),
+            textures_delta: None,
         }
     }
 
@@ -53,14 +56,15 @@ impl Context {
 impl DrawEgui for Context {
     fn prepare_egui<F>(&mut self, window: &Window, render: F)
     where
-        F: FnOnce(&CtxRef),
+        F: FnOnce(&EguiContext),
     {
         let raw_input = self.egui_state.take_egui_input(window);
-        let (output, paint_commands) = self.egui_ctx.run(raw_input, render);
+        let output = self.egui_ctx.run(raw_input, render);
 
         self.egui_state
-            .handle_output(window, &self.egui_ctx, output);
-        self.paint_jobs = self.egui_ctx.tessellate(paint_commands);
+            .handle_platform_output(window, &self.egui_ctx, output.platform_output);
+        self.textures_delta = Some(output.textures_delta);
+        self.paint_jobs = self.egui_ctx.tessellate(output.shapes);
     }
 
     fn render_egui(
@@ -69,10 +73,9 @@ impl DrawEgui for Context {
         render_target: &wgpu::TextureView,
         context: &crate::RenderContext,
     ) -> Result<(), egui_wgpu_backend::BackendError> {
+        let texture_delta = self.textures_delta.take().unwrap();
         self.rpass
-            .update_texture(context.device, context.queue, &self.egui_ctx.font_image());
-        self.rpass
-            .update_user_textures(context.device, context.queue);
+            .add_textures(context.device, context.queue, &texture_delta)?;
         self.rpass.update_buffers(
             context.device,
             context.queue,
@@ -86,7 +89,8 @@ impl DrawEgui for Context {
             &self.paint_jobs,
             &self.screen_descriptor,
             None,
-        )
+        )?;
+        self.rpass.remove_textures(texture_delta)
     }
 
     fn on_event(&mut self, event: &winit::event::WindowEvent) -> bool {

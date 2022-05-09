@@ -7,7 +7,7 @@ use crate::config::Mode;
 
 use crate::path::game_save_path;
 #[cfg(feature = "cgb")]
-use gb_bus::generic::CharDevice;
+use gb_bus::generic::{CharDevice, PanicDevice};
 use gb_bus::{generic::SimpleRW, AddressBus, Bus, IORegArea, IORegBus, Source, WorkingRam};
 #[cfg(feature = "cgb")]
 use gb_clock::not_counted_cycles;
@@ -21,10 +21,12 @@ use gb_dbg::until::Until;
 use gb_dma::{dma::Dma, hdma::Hdma};
 use gb_joypad::{Config, Joypad};
 use gb_ppu::Ppu;
+#[cfg(feature = "cgb")]
+use gb_roms::controllers::cgb_bios;
 #[cfg(feature = "save_state")]
 use gb_roms::controllers::Full;
 use gb_roms::{
-    controllers::{cgb_bios, dmg_bios, Generic},
+    controllers::{dmg_bios, Generic},
     header::AutoSave,
     Header,
 };
@@ -130,11 +132,14 @@ impl Game {
         };
         let timer = Rc::new(RefCell::new(timer));
         let bios_wrapper = {
-            let mut bios = if cfg!(feature = "cgb") {
+            #[cfg(feature = "cgb")]
+            let mut bios = if cgb_mode {
                 cgb_bios(mbc.clone())
             } else {
                 dmg_bios(mbc.clone())
             };
+            #[cfg(not(feature = "cgb"))]
+            let mut bios = dmg_bios(mbc.clone());
             if cfg!(not(feature = "bios")) {
                 bios.bios_enabling_reg = 0xa;
             };
@@ -151,9 +156,8 @@ impl Game {
             #[cfg(feature = "cgb")]
             if cgb_mode {
                 io_bus
-                    .with_area(IORegArea::Vbk, ppu_reg.clone())
+                    .with_ppu_cgb(ppu_reg.clone())
                     .with_area(IORegArea::Key1, cpu_io_reg.clone())
-                    .with_hdma(Rc::new(RefCell::new(PanicDevice::default())))
                     .with_area(IORegArea::RP, Rc::new(RefCell::new(CharDevice(0))))
                     .with_area(IORegArea::Svbk, wram.clone());
             }

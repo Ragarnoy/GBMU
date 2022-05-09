@@ -21,6 +21,7 @@
       <sourceFolder url="file://$MODULE_DIR$/gb-dma/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/gb-test/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/gb-timer/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/gb-breakpoint/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />
