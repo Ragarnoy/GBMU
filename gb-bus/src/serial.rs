@@ -5,16 +5,28 @@ pub struct Serial {
     payload: u8,
     control: u8,
     buffer: String,
+    sc_mask: u8,
 }
 
 impl Serial {
-    #[cfg(feature = "cgb")]
-    const SC_MASK: u8 = 0x7c;
-    #[cfg(not(feature = "cgb"))]
-    const SC_MASK: u8 = 0x7e;
+    const SC_MASK_CGB: u8 = 0x7c;
+    const SC_MASK_DMG: u8 = 0x7e;
 
     const TRANSFER_FIELD: u8 = 0x80;
     const CLOCK_FIELD: u8 = 0x1;
+
+    pub fn new(cgb_mode: bool) -> Self {
+        Serial {
+            payload: 0,
+            control: 0,
+            buffer: String::new(),
+            sc_mask: if cgb_mode {
+                Self::SC_MASK_CGB
+            } else {
+                Self::SC_MASK_DMG
+            },
+        }
+    }
 
     fn internal_data_to_transfer(&self) -> bool {
         self.control & (Serial::TRANSFER_FIELD | Serial::CLOCK_FIELD)
@@ -56,7 +68,7 @@ where
     fn read(&self, addr: A, _source: Option<Source>) -> Result<u8, Error> {
         match addr.area_type() {
             IORegArea::SB => Ok(self.payload),
-            IORegArea::SC => Ok(self.control | Serial::SC_MASK),
+            IORegArea::SC => Ok(self.control | self.sc_mask),
             _ => Err(Error::bus_error(addr.into())),
         }
     }
@@ -65,7 +77,7 @@ where
         match addr.area_type() {
             IORegArea::SB => self.payload = v,
             IORegArea::SC => {
-                self.control = v & !Serial::SC_MASK;
+                self.control = v & !self.sc_mask;
                 self.update();
             }
             _ => return Err(Error::bus_error(addr.into())),

@@ -105,7 +105,7 @@ pub fn stop(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
             state.read();
             ctl.mode = Mode::Halt;
         }
-    } else if cfg!(feature = "cgb") {
+    } else if ctl.cgb_mode {
         drop(int_flags);
         stop_cgb_mode(ctl, state);
     }

@@ -19,6 +19,7 @@ serde-big-array = { version = "0.3", optional = true }
 sdl2 = { version = "0.35.2" }
 egui = "0.17"
 
+[features]
 serialization = [
   "serde",
   "serde/std",

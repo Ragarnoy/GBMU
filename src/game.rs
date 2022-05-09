@@ -106,9 +106,9 @@ impl Game {
             ppu_reg.borrow_mut().overwrite_lcd_control(0x91_u8);
         }
         let (cpu, cpu_io_reg) = if cfg!(feature = "bios") {
-            new_cpu()
+            new_cpu(cgb_mode)
         } else {
-            let (mut cpu, cpu_io_reg) = new_cpu();
+            let (mut cpu, cpu_io_reg) = new_cpu(cgb_mode);
             cpu.set_registers(if cgb_mode {
                 Registers::CGB
             } else {
@@ -138,7 +138,7 @@ impl Game {
         };
         let dma = Rc::new(RefCell::new(Dma::new(ppu.memory())));
         let hdma = Rc::new(RefCell::new(Hdma::default()));
-        let serial = Rc::new(RefCell::new(gb_bus::Serial::default()));
+        let serial = Rc::new(RefCell::new(gb_bus::Serial::new(cgb_mode)));
 
         let joypad = Rc::new(RefCell::new(Joypad::from_config(joypad_config)));
 
