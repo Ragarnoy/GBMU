@@ -20,7 +20,6 @@ sdl2 = { version = "0.35.2" }
 egui = "0.17"
 
 [features]
-cgb = ["gb-bus/cgb"]
 serialization = [
   "serde",
   "serde/std",

@@ -18,6 +18,3 @@ gb-breakpoint = { path = "../gb-breakpoint" }
 
 [dev-dependencies]
 eframe = "0.16"
-
-[features]
-cgb = []

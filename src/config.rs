@@ -31,7 +31,6 @@ pub struct Config {
     )]
     pub debug: bool,
 
-    #[cfg(feature = "cgb")]
     #[clap(
         arg_enum,
         short = 'm',
