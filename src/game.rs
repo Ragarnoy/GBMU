@@ -156,9 +156,8 @@ impl Game {
             #[cfg(feature = "cgb")]
             if cgb_mode {
                 io_bus
-                    .with_area(IORegArea::Vbk, ppu_reg.clone())
+                    .with_ppu_cgb(ppu_reg.clone())
                     .with_area(IORegArea::Key1, cpu_io_reg.clone())
-                    .with_hdma(Rc::new(RefCell::new(PanicDevice::default())))
                     .with_area(IORegArea::RP, Rc::new(RefCell::new(CharDevice(0))))
                     .with_area(IORegArea::Svbk, wram.clone());
             }
