@@ -41,3 +41,9 @@ impl Ticker for Cpu {
             .step(self.io_regs.clone(), &mut self.registers, addr_bus)
     }
 }
+
+impl Default for Cpu {
+    fn default() -> Self {
+        Cpu::new(false)
+    }
+}
