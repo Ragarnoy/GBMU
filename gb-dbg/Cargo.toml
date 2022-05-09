@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-egui_memory_editor = { git = "https://github.com/Hirtol/egui_memory_editor/" }
+egui_memory_editor = { git = "https://github.com/Hirtol/egui_memory_editor/", rev = "caaed40aa12d5409ceb41e171ad4e55e8c4e7787" }
 egui = "0.17"
 anyhow = "1.0.43"
 log = "0.4"

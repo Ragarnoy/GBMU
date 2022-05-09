@@ -27,11 +27,9 @@ impl MemoryViewer {
 
     pub fn draw<MEM: MemoryDebugOperations>(&mut self, ui: &mut Ui, memory: &mut MEM) {
         ui.colored_label(Color32::LIGHT_BLUE, "Memory Editor");
-        self.memory_editor.draw_editor_contents(
-            ui,
-            memory,
-            |mem, address| mem.read(address as u16).into(),
-            None as Option<fn(&mut MEM, Address, u8) -> ()>,
-        );
+        self.memory_editor
+            .draw_editor_contents_read_only(ui, memory, |mem, address| {
+                mem.read(address as u16).into()
+            });
     }
 }
