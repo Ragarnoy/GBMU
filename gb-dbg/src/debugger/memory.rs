@@ -1,7 +1,7 @@
 use crate::dbg_interfaces::MemoryDebugOperations;
 use egui::{Color32, Ui};
 use egui_memory_editor::option_data::MemoryEditorOptions;
-use egui_memory_editor::{Address, MemoryEditor};
+use egui_memory_editor::MemoryEditor;
 use std::ops::Range;
 
 pub struct MemoryViewer {
