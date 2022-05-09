@@ -107,13 +107,11 @@ pub fn stop(ctl: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow {
         }
     } else if cfg!(feature = "cgb") {
         drop(int_flags);
-        #[cfg(feature = "cgb")]
         stop_cgb_mode(ctl, state);
     }
     CONTINUE
 }
 
-#[cfg(feature = "cgb")]
 fn stop_cgb_mode(ctl: &mut MicrocodeController, state: &mut State) {
     use gb_bus::io_reg_constant::DIV;
 

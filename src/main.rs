@@ -31,9 +31,6 @@ const WIDTH: u32 = GB_SCREEN_WIDTH as u32;
 const HEIGHT: u32 = GB_SCREEN_HEIGHT as u32;
 
 fn main() -> Result<(), Error> {
-    #[cfg(feature = "cgb")]
-    let config: Config = Config::parse();
-    #[cfg(not(feature = "cgb"))]
     let config: Config = Config::parse();
     init_logger(config.log_level);
 
@@ -137,7 +134,6 @@ fn handle_custom_event(
         CustomEvent::LoadFile(file) => context.load(file),
         CustomEvent::OpenWindow(window_type) => context.open_window(window_type, event_loop),
         CustomEvent::CloseWindow(window_type) => context.close_window(window_type),
-        #[cfg(feature = "cgb")]
         CustomEvent::ChangedMode(_mode) => todo!("reload the game context with the new mode"),
     }
 }

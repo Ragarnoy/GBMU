@@ -149,13 +149,7 @@ impl Context {
 
 impl Context {
     pub fn load(&mut self, file: PathBuf) {
-        match Game::new(
-            &file,
-            self.joypad_config.clone(),
-            false,
-            #[cfg(feature = "cgb")]
-            self.config.mode,
-        ) {
+        match Game::new(&file, self.joypad_config.clone(), false, self.config.mode) {
             Ok(game) => {
                 self.game.replace(game);
             }

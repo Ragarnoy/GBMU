@@ -48,9 +48,10 @@ where
     u16: From<A>,
 {
     fn read(&self, addr: A, _source: Option<Source>) -> Result<u8, Error> {
-        #[cfg(feature = "cgb")]
-        use IORegArea::{Bcpd, Bcps, Ocpd, Ocps, Opri, Vbk};
-        use IORegArea::{Bgp, Dma, LcdControl, LcdStat, Ly, Lyc, Obp0, Obp1, Scx, Scy, Wx, Wy};
+        use IORegArea::{
+            Bcpd, Bcps, Bgp, Dma, LcdControl, LcdStat, Ly, Lyc, Obp0, Obp1, Ocpd, Ocps, Opri, Scx,
+            Scy, Vbk, Wx, Wy,
+        };
 
         match addr.area_type() {
             Bgp | Dma | LcdControl | LcdStat | Ly | Lyc | Obp0 | Obp1 | Scx | Scy | Wx | Wy => {
@@ -62,7 +63,6 @@ where
                     }
                 }
             }
-            #[cfg(feature = "cgb")]
             Vbk | Opri => match self.lcd.try_borrow() {
                 Ok(lcd) => lcd.read(addr),
                 Err(_) => {
@@ -70,7 +70,6 @@ where
                     Ok(UNDEFINED_VALUE)
                 }
             },
-            #[cfg(feature = "cgb")]
             Bcpd | Bcps | Ocpd | Ocps => match self.lcd.try_borrow() {
                 Ok(lcd) => lcd.read(addr),
                 Err(_) => {
@@ -83,9 +82,10 @@ where
     }
 
     fn write(&mut self, v: u8, addr: A, _source: Option<Source>) -> Result<(), Error> {
-        #[cfg(feature = "cgb")]
-        use IORegArea::{Bcpd, Bcps, Ocpd, Ocps, Opri, Vbk};
-        use IORegArea::{Bgp, Dma, LcdControl, LcdStat, Ly, Lyc, Obp0, Obp1, Scx, Scy, Wx, Wy};
+        use IORegArea::{
+            Bcpd, Bcps, Bgp, Dma, LcdControl, LcdStat, Ly, Lyc, Obp0, Obp1, Ocpd, Ocps, Opri, Scx,
+            Scy, Vbk, Wx, Wy,
+        };
 
         match addr.area_type() {
             Bgp | Dma | LcdControl | LcdStat | Ly | Lyc | Obp0 | Obp1 | Scx | Scy | Wx | Wy => {
@@ -98,7 +98,6 @@ where
                 }
             }
 
-            #[cfg(feature = "cgb")]
             Vbk | Bcpd | Bcps | Ocpd | Ocps | Opri => match self.lcd.try_borrow_mut() {
                 Ok(mut lcd) => lcd.write(addr, v),
                 Err(_) => {
