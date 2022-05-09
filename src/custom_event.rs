@@ -21,4 +21,7 @@ pub enum CustomEvent {
     CloseWindow(WindowType),
     /// Exit the emulator
     Quit,
+
+    /// Reset the game context, those restarting the loaded game
+    ResetGame,
 }
