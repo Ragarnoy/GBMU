@@ -42,7 +42,6 @@ egui = "0.16.1"
 winit_input_helper = "0.11.1"
 native-dialog = "0.6"
 log = { version = "0.4", features = ["std"] }
-simplelog = "0.10"
 serde_yaml = "0.8"
 serde = "1.0.133"
 rmp-serde = "1.0.0-beta.2"
@@ -58,6 +57,7 @@ gb-roms = { path = "./gb-roms" }
 gb-clock = { path = "./gb-clock" }
 gb-timer = { path = "./gb-timer" }
 gb-dma = { path = "./gb-dma" }
+env_logger = "0.9.0"
 
 [workspace]
 members = [
