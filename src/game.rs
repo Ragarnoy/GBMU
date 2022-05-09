@@ -7,7 +7,7 @@ use crate::config::Mode;
 
 use crate::path::game_save_path;
 #[cfg(feature = "cgb")]
-use gb_bus::generic::CharDevice;
+use gb_bus::generic::{CharDevice, PanicDevice};
 use gb_bus::{generic::SimpleRW, AddressBus, Bus, IORegArea, IORegBus, Source, WorkingRam};
 #[cfg(feature = "cgb")]
 use gb_clock::not_counted_cycles;
