@@ -33,7 +33,15 @@ impl Context {
 
         window
             .render_with(|_encoder, _render_target, _context| Ok(()))
-            .map_err(anyhow::Error::from)
+            .map_err(anyhow::Error::from)?;
+
+        if self.debugger.reset_triggered {
+            self.event_proxy
+                .send_event(CustomEvent::ResetGame)
+                .expect("cannot send reset game event");
+            self.debugger.reset()
+        }
+        Ok(())
     }
 
     pub(crate) fn process_window_event(&mut self, event: WindowEvent) {
