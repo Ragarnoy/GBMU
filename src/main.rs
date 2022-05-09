@@ -62,6 +62,7 @@ fn main() -> Result<(), Error> {
             }
         }
         Event::LoopDestroyed => {
+            drop(context.game.take());
             log::info!("bye bye");
         }
         Event::MainEventsCleared => {
