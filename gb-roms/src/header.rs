@@ -144,7 +144,7 @@ mod test_from_chunk {
     }
 
     #[test]
-    fn advanced_title_with_manufacturer_garbadge() {
+    fn advanced_title_with_manufacturer_garbage() {
         assert_eq!(
             Header::from_chunk([
                 0, 195, 80, 1, 206, 237, 102, 102, 204, 13, 0, 11, 3, 115, 0, 131, 0, 12, 0, 13, 0,

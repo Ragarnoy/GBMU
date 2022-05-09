@@ -116,11 +116,11 @@ mod write {
 fn read_flag() {
     use crate::{
         interfaces::{ReadFlagReg, Write8BitsRegExt},
-        registers::{Registers, CARRY_MASK, HALF_CARRY_MASK, SUBSTRACTION_MASK, ZERO_MASK},
+        registers::{Registers, CARRY_MASK, HALF_CARRY_MASK, SUBTRACTION_MASK, ZERO_MASK},
     };
 
     let mut regs = Registers::default();
-    regs.set_f((ZERO_MASK | SUBSTRACTION_MASK | HALF_CARRY_MASK | CARRY_MASK) as u8);
+    regs.set_f((ZERO_MASK | SUBTRACTION_MASK | HALF_CARRY_MASK | CARRY_MASK) as u8);
 
     assert!(regs.zero(), "ZERO flag should be set");
     assert!(regs.subtraction(), "SUBTRACTION flag should be set");

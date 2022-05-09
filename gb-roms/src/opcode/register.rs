@@ -154,7 +154,7 @@ pub enum RegisterFlag {
     /// - `Cmp` OP match 2 values
     Z,
 
-    /// Substract Flag
+    /// Subtract Flag
     /// This flag is set when the last math instruction was a subtraction
     N,
 

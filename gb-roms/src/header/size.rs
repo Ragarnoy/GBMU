@@ -164,7 +164,7 @@ impl TryFrom<u8> for RamSize {
 }
 
 #[test]
-fn test_convert_ram_szie() {
+fn test_convert_ram_size() {
     assert_eq!(RamSize::try_from(0x00), Ok(RamSize::NoRamOrUnused));
     assert_eq!(RamSize::try_from(0x01), Ok(RamSize::NoRamOrUnused));
     assert_eq!(RamSize::try_from(0x02), Ok(RamSize::KByte8));

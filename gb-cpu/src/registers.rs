@@ -140,7 +140,7 @@ impl ReadFlagReg for Registers {
 }
 
 pub const ZERO_MASK: u8 = 0b1000_0000;
-pub const SUBSTRACTION_MASK: u8 = 0b100_0000;
+pub const SUBTRACTION_MASK: u8 = 0b100_0000;
 pub const HALF_CARRY_MASK: u8 = 0b10_0000;
 pub const CARRY_MASK: u8 = 0b1_0000;
 
@@ -155,9 +155,9 @@ impl WriteFlagReg for Registers {
 
     fn set_subtraction(&mut self, value: bool) {
         if value {
-            self.set_f(self.f() | SUBSTRACTION_MASK)
+            self.set_f(self.f() | SUBTRACTION_MASK)
         } else {
-            self.set_f(self.f() & !SUBSTRACTION_MASK)
+            self.set_f(self.f() & !SUBTRACTION_MASK)
         }
     }
 
