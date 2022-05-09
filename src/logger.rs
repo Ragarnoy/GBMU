@@ -3,7 +3,7 @@ use env_logger::{Builder, Env, Target};
 use std::{fs::File, io::BufWriter};
 
 pub fn init_logger(level: log::LevelFilter) {
-    let env = Env::default().default_filter_or("info");
+    let env = Env::default().default_filter_or("wgpu_core=warn,wgpu_hal=warn,naga=warn,debug");
     let mut builder = Builder::from_env(env);
     builder.filter_level(level);
     builder.target(Target::Stdout);
