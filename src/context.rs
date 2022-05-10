@@ -21,7 +21,7 @@ use winit::{
 pub struct Context {
     pub main_window: GBPixels,
     pub joypad_config: Rc<RefCell<gb_joypad::Config>>,
-    pub config: Config,
+    pub config: InternalConfig,
     pub event_proxy: EventLoopProxy<CustomEvent>,
     pub game: Option<Game>,
     #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
@@ -30,19 +30,20 @@ pub struct Context {
     pub main_draw_instant: Instant,
     pub debugger_ctx: Option<debugger::Context>,
     pub keybindings_ctx: Option<keybindings::Context>,
-    rom_file: Option<PathBuf>,
+}
+
+#[derive(Default)]
+pub struct InternalConfig {
+    pub mode: Option<crate::config::Mode>,
+    pub rom_file: Option<PathBuf>,
 }
 
 impl Context {
-    pub fn new(
-        main_window: GBPixels,
-        config: Config,
-        event_proxy: EventLoopProxy<CustomEvent>,
-    ) -> Self {
+    pub fn new(main_window: GBPixels, event_proxy: EventLoopProxy<CustomEvent>) -> Self {
         Self {
             main_window,
             joypad_config: Rc::new(RefCell::new(keybindings::load_config())),
-            config,
+            config: InternalConfig::default(),
             event_proxy,
             game: None,
             #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
@@ -51,7 +52,26 @@ impl Context {
             main_draw_instant: Instant::now(),
             debugger_ctx: None,
             keybindings_ctx: None,
-            rom_file: None,
+        }
+    }
+
+    pub fn load_config(&mut self, config: Config) {
+        let config_file = config.rom.map(PathBuf::from);
+        let reload_mode = self.config.mode != config.mode;
+        let reload_file = self.config.rom_file != config_file;
+        let open_debugger = config.debug;
+
+        if reload_mode || reload_file {
+            self.config.mode = config.mode;
+            if let Some(file) = config_file.or(self.config.rom_file.clone()) {
+                self.load(file)
+            } else {
+                log::warn!("Oh, I was expecting a file or something");
+            }
+        }
+
+        if open_debugger && self.game.is_some() {
+            todo!("open debugger")
         }
     }
 }
@@ -154,7 +174,7 @@ impl Context {
         match Game::new(&file, self.joypad_config.clone(), false, self.config.mode) {
             Ok(game) => {
                 self.game.replace(game);
-                self.rom_file.replace(file);
+                self.config.rom_file.replace(file);
             }
             Err(err) => {
                 log::error!(
@@ -168,7 +188,7 @@ impl Context {
 
     /// Reset the game context allowing the restart a game
     pub fn reset_game(&mut self, wanted_mode: Option<crate::config::Mode>) {
-        if let Some(ref rom_file) = self.rom_file {
+        if let Some(ref rom_file) = self.config.rom_file {
             let selected_mode = wanted_mode.or(self.config.mode);
 
             match Game::new(rom_file, self.joypad_config.clone(), false, selected_mode) {
