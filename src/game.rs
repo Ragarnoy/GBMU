@@ -141,6 +141,7 @@ impl Game {
         };
         let dma = Rc::new(RefCell::new(Dma::new(ppu.memory())));
         let hdma = Rc::new(RefCell::new(Hdma::default()));
+        let serial = Rc::new(RefCell::new(gb_bus::Serial::default()));
         #[cfg(feature = "audio")]
         let apu = Rc::new(RefCell::new(Apu::new(audio_queue)));
 
