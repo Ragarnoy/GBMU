@@ -63,7 +63,7 @@ impl Context {
 
         if reload_mode || reload_file {
             self.config.mode = config.mode;
-            if let Some(file) = config_file.or(self.config.rom_file.clone()) {
+            if let Some(file) = config_file.or_else(|| self.config.rom_file.clone()) {
                 self.load(file)
             } else {
                 log::warn!("Oh, I was expecting a file or something");

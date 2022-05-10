@@ -20,8 +20,10 @@ impl Context {
         let mut builder = DebuggerBuilder::new();
 
         if let Some(breakpoints) = breakpoints {
-            let mut options = DebuggerOptions::default();
-            options.breakpoints = breakpoints;
+            let options = DebuggerOptions {
+                breakpoints,
+                ..Default::default()
+            };
             builder = builder.with_options(options);
         }
 
