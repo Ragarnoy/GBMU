@@ -14,6 +14,7 @@ mod windows;
 use clap::StructOpt;
 use config::Config;
 
+use crate::constant::MENU_BAR_SIZE;
 use context::Context;
 use custom_event::CustomEvent;
 use gb_lcd::{GBPixels, PseudoWindow};
@@ -29,12 +30,13 @@ use winit::{
 
 const WIDTH: u32 = GB_SCREEN_WIDTH as u32;
 const HEIGHT: u32 = GB_SCREEN_HEIGHT as u32;
+const MENU_BAR: u32 = MENU_BAR_SIZE as u32;
 
 fn main() -> Result<(), Error> {
     let config: Config = Config::parse();
     init_logger(config.log_level);
 
-    let (event_loop, main_window) = init::<WIDTH, HEIGHT>(&config)?;
+    let (event_loop, main_window) = init::<WIDTH, HEIGHT, MENU_BAR>(&config)?;
     let event_loop_proxy = event_loop.create_proxy();
     let mut context = Context::new(main_window, event_loop_proxy);
     context.load_config(config);
@@ -105,15 +107,18 @@ fn main() -> Result<(), Error> {
     })
 }
 
-fn init<const WIDTH: u32, const HEIGHT: u32>(
+fn init<const WIDTH: u32, const HEIGHT: u32, const MENU_BAR_SIZE: u32>(
     _config: &Config,
-) -> Result<(EventLoop<CustomEvent>, GBPixels), Error> {
+) -> Result<
+    (
+        EventLoop<CustomEvent>,
+        GBPixels<WIDTH, HEIGHT, MENU_BAR_SIZE>,
+    ),
+    Error,
+> {
     let event_loop = EventLoop::with_user_event();
     let main_window = {
-        let size = LogicalSize::new(
-            WIDTH as f64,
-            HEIGHT as f64 + crate::constant::MENU_BAR_SIZE as f64,
-        );
+        let size = LogicalSize::new(WIDTH as f64, HEIGHT as f64 + MENU_BAR_SIZE as f64);
         WindowBuilder::new()
             .with_title(constant::APP_NAME)
             .with_inner_size(size)
@@ -122,7 +127,7 @@ fn init<const WIDTH: u32, const HEIGHT: u32>(
             .expect("cannot build main window")
     };
 
-    let main_window = GBPixels::new::<WIDTH, HEIGHT>(main_window)?;
+    let main_window = GBPixels::new(main_window)?;
 
     Ok((event_loop, main_window))
 }

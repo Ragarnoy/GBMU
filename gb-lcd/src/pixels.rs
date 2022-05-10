@@ -5,7 +5,7 @@ use crate::{
     context::Context, state::State, EventProcessing, PseudoPixels, PseudoWindow, RenderContext,
 };
 
-pub struct GBPixels {
+pub struct GBPixels<const WIDTH: u32, const HEIGHT: u32, const MENU_BAR_SIZE: u32> {
     pub window: Window,
     pub pixels: Pixels,
     pub texture_id: egui::TextureId,
@@ -15,8 +15,10 @@ pub struct GBPixels {
     pub(crate) state: State,
 }
 
-impl GBPixels {
-    pub fn new<const WIDTH: u32, const HEIGHT: u32>(window: Window) -> Result<Self, Error> {
+impl<const WIDTH: u32, const HEIGHT: u32, const MENU_BAR_SIZE: u32>
+    GBPixels<WIDTH, HEIGHT, MENU_BAR_SIZE>
+{
+    pub fn new(window: Window) -> Result<Self, Error> {
         let size = window.inner_size();
         let scale_factor = window.scale_factor();
 
@@ -57,9 +59,30 @@ impl GBPixels {
     pub fn closed(&self) -> bool {
         self.state.closed
     }
+
+    pub fn texture_size_and_margin(&self) -> ((f32, f32), (f32, f32)) {
+        let screen_ratio = WIDTH as f32 / HEIGHT as f32;
+        let mut actual_dim: (f32, f32) = self.window.inner_size().into();
+        actual_dim.1 -= MENU_BAR_SIZE as f32;
+        let actual_ratio = actual_dim.0 as f32 / actual_dim.1 as f32;
+
+        let mut margin = (0.0, 0.0);
+        let target_dim = if screen_ratio > actual_ratio {
+            let new_height = actual_dim.0 / screen_ratio;
+            margin.1 = ((actual_dim.1 - new_height) / 2.0).round();
+            (actual_dim.0, new_height)
+        } else {
+            let new_width = actual_dim.1 * screen_ratio;
+            margin.0 = ((actual_dim.0 - new_width) / 2.0).round();
+            (new_width, actual_dim.1)
+        };
+        (target_dim, margin)
+    }
 }
 
-impl PseudoWindow for GBPixels {
+impl<const WIDTH: u32, const HEIGHT: u32, const MENU_BAR_SIZE: u32> PseudoWindow
+    for GBPixels<WIDTH, HEIGHT, MENU_BAR_SIZE>
+{
     fn scale_factor(&self) -> f64 {
         self.window.scale_factor()
     }
@@ -77,7 +100,9 @@ impl PseudoWindow for GBPixels {
     }
 }
 
-impl PseudoPixels for GBPixels {
+impl<const WIDTH: u32, const HEIGHT: u32, const MENU_BAR_SIZE: u32> PseudoPixels
+    for GBPixels<WIDTH, HEIGHT, MENU_BAR_SIZE>
+{
     fn resize(&mut self, size: PhysicalSize<u32>) {
         self.context.resize(size);
         self.pixels.resize_surface(size.width, size.height)
@@ -100,7 +125,9 @@ impl PseudoPixels for GBPixels {
     }
 }
 
-impl EventProcessing for GBPixels {
+impl<const WIDTH: u32, const HEIGHT: u32, const MENU_BAR_SIZE: u32> EventProcessing
+    for GBPixels<WIDTH, HEIGHT, MENU_BAR_SIZE>
+{
     fn process_window_event(&mut self, event: WindowEvent) {
         match event {
             WindowEvent::CloseRequested => self.state.closed = true,

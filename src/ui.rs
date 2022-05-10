@@ -18,6 +18,7 @@ macro_rules! ui_fps {
 }
 
 pub fn draw_egui(context: &mut Context, #[cfg(feature = "debug_fps")] fps: f64) {
+    let (size, margin) = context.main_window.texture_size_and_margin();
     context
         .main_window
         .context
@@ -90,13 +91,11 @@ pub fn draw_egui(context: &mut Context, #[cfg(feature = "debug_fps")] fps: f64) 
                     ui_fps!(ui, context, fps);
                 });
             });
-
-            let frame = egui::Frame::none();
+            let mut frame = egui::Frame::none();
+            frame.margin = egui::style::Margin::symmetric(margin.0, margin.1);
             egui::containers::CentralPanel::default()
                 .frame(frame)
                 .show(egui_ctx, |ui| {
-                    let mut size: (f32, f32) = context.main_window.window.inner_size().into();
-                    size.1 -= crate::constant::MENU_BAR_SIZE;
                     ui.image(context.main_window.texture_id, size);
                 });
         })

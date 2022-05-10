@@ -18,8 +18,15 @@ use winit::{
     window::{WindowBuilder, WindowId},
 };
 
+use gb_ppu::{GB_SCREEN_HEIGHT, GB_SCREEN_WIDTH};
+const WIDTH: u32 = GB_SCREEN_WIDTH as u32;
+const HEIGHT: u32 = GB_SCREEN_HEIGHT as u32;
+
+use crate::constant::MENU_BAR_SIZE;
+const MENU_BAR: u32 = MENU_BAR_SIZE as u32;
+
 pub struct Context {
-    pub main_window: GBPixels,
+    pub main_window: GBPixels<WIDTH, HEIGHT, MENU_BAR>,
     pub joypad_config: Rc<RefCell<gb_joypad::Config>>,
     pub config: InternalConfig,
     pub event_proxy: EventLoopProxy<CustomEvent>,
@@ -39,7 +46,10 @@ pub struct InternalConfig {
 }
 
 impl Context {
-    pub fn new(main_window: GBPixels, event_proxy: EventLoopProxy<CustomEvent>) -> Self {
+    pub fn new(
+        main_window: GBPixels<WIDTH, HEIGHT, MENU_BAR>,
+        event_proxy: EventLoopProxy<CustomEvent>,
+    ) -> Self {
         Self {
             main_window,
             joypad_config: Rc::new(RefCell::new(keybindings::load_config())),
