@@ -1,4 +1,4 @@
-use gb_dbg::debugger::Debugger;
+use gb_dbg::debugger::{options::DebuggerOptions, Debugger, DebuggerBuilder};
 use gb_lcd::GBWindow;
 use winit::{event::WindowEvent, event_loop::EventLoopProxy};
 
@@ -12,10 +12,24 @@ pub struct Context {
 }
 
 impl Context {
-    pub fn new(window: GBWindow, event_proxy: EventLoopProxy<CustomEvent>) -> Self {
+    pub fn new(
+        window: GBWindow,
+        event_proxy: EventLoopProxy<CustomEvent>,
+        breakpoints: Option<Vec<String>>,
+    ) -> Self {
+        let mut builder = DebuggerBuilder::new();
+
+        if let Some(breakpoints) = breakpoints {
+            let mut options = DebuggerOptions::default();
+            options.breakpoints = breakpoints;
+            builder = builder.with_options(options);
+        }
+
+        let debugger = builder.build();
+
         Self {
             window,
-            debugger: gb_dbg::debugger::DebuggerBuilder::new().build(),
+            debugger,
             event_proxy,
         }
     }
@@ -56,7 +70,7 @@ impl Context {
             }
             WindowEvent::CloseRequested => self
                 .event_proxy
-                .send_event(CustomEvent::CloseWindow(WindowType::Debugger))
+                .send_event(CustomEvent::CloseWindow(WindowType::Debugger(None)))
                 .unwrap(),
             _ => {}
         }
