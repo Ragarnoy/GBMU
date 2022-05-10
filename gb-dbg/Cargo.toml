@@ -6,8 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-egui_memory_editor = { git = "https://github.com/FirelightFlagboy/egui_memory_editor", rev = "6a28daad74f11d93126baa4f377490a012399cf0" }
-egui = "0.16"
+egui_memory_editor = { git = "https://github.com/Hirtol/egui_memory_editor/", rev = "caaed40aa12d5409ceb41e171ad4e55e8c4e7787" }
+egui = "0.17"
 anyhow = "1.0.43"
 log = "0.4"
 nom = "7.1.0"
@@ -18,6 +18,3 @@ gb-breakpoint = { path = "../gb-breakpoint" }
 
 [dev-dependencies]
 eframe = "0.16"
-
-[features]
-cgb = []

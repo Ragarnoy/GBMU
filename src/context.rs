@@ -30,6 +30,7 @@ pub struct Context {
     pub main_draw_instant: Instant,
     pub debugger_ctx: Option<debugger::Context>,
     pub keybindings_ctx: Option<keybindings::Context>,
+    rom_file: Option<PathBuf>,
 }
 
 impl Context {
@@ -50,6 +51,7 @@ impl Context {
             main_draw_instant: Instant::now(),
             debugger_ctx: None,
             keybindings_ctx: None,
+            rom_file: None,
         }
     }
 }
@@ -149,15 +151,10 @@ impl Context {
 
 impl Context {
     pub fn load(&mut self, file: PathBuf) {
-        match Game::new(
-            &file,
-            self.joypad_config.clone(),
-            false,
-            #[cfg(feature = "cgb")]
-            self.config.mode,
-        ) {
+        match Game::new(&file, self.joypad_config.clone(), false, self.config.mode) {
             Ok(game) => {
                 self.game.replace(game);
+                self.rom_file.replace(file);
             }
             Err(err) => {
                 log::error!(
@@ -167,6 +164,26 @@ impl Context {
                 );
             }
         };
+    }
+
+    /// Reset the game context allowing the restart a game
+    pub fn reset_game(&mut self, wanted_mode: Option<crate::config::Mode>) {
+        if let Some(ref rom_file) = self.rom_file {
+            let selected_mode = wanted_mode.or(self.config.mode);
+
+            match Game::new(rom_file, self.joypad_config.clone(), false, selected_mode) {
+                Ok(game) => {
+                    self.game.replace(game);
+                }
+                Err(err) => {
+                    log::error!(
+                        "failed to reset the game from \"{}\", reason: {}",
+                        rom_file.to_string_lossy(),
+                        err
+                    )
+                }
+            }
+        }
     }
 }
 

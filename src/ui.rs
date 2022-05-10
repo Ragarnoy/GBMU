@@ -2,8 +2,6 @@ mod file;
 mod settings;
 mod tools;
 
-#[cfg(feature = "cgb")]
-use crate::config::Config;
 use crate::Context;
 #[cfg(feature = "debug_render")]
 use crate::Game;
@@ -19,11 +17,7 @@ macro_rules! ui_fps {
     };
 }
 
-pub fn draw_egui(
-    context: &mut Context,
-    #[cfg(feature = "cgb")] options: &mut Config,
-    #[cfg(feature = "debug_fps")] fps: f64,
-) {
+pub fn draw_egui(context: &mut Context, #[cfg(feature = "debug_fps")] fps: f64) {
     context
         .main_window
         .context
@@ -88,14 +82,8 @@ pub fn draw_egui(
                     // ui.style_mut().override_text_style = Some(egui::TextStyle::Heading);
                     file::draw_ui(ui, &context.event_proxy);
                     tools::draw_ui(ui, &context.event_proxy);
-                    settings::draw_ui(
-                        ui,
-                        &context.event_proxy,
-                        #[cfg(feature = "cgb")]
-                        &mut context.config,
-                    );
+                    settings::draw_ui(ui, &context.event_proxy, &mut context.config);
                     // ui_debug!(ui, context);
-                    // ui_settings!(ui, context, options, &mut context.custom_events);
                     // ui.style_mut().override_text_style = None;
                     #[cfg(feature = "debug_fps")]
                     ui_fps!(ui, context, fps);

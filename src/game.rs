@@ -2,16 +2,14 @@
 mod save_state;
 mod utils;
 
-#[cfg(feature = "cgb")]
 use crate::config::Mode;
 
 use crate::path::game_save_path;
-#[cfg(feature = "cgb")]
-use gb_bus::generic::CharDevice;
-use gb_bus::{generic::SimpleRW, AddressBus, Bus, IORegArea, IORegBus, Source, WorkingRam};
-#[cfg(feature = "cgb")]
-use gb_clock::not_counted_cycles;
-use gb_clock::{counted_cycles, Clock};
+use gb_bus::{
+    generic::{CharDevice, SimpleRW},
+    AddressBus, Bus, IORegArea, IORegBus, Source, WorkingRam,
+};
+use gb_clock::{counted_cycles, not_counted_cycles, Clock};
 use gb_cpu::{cpu::Cpu, new_cpu, registers::Registers};
 use gb_dbg::dbg_interfaces::{
     AudioRegs, CpuRegs, DebugOperations, IORegs, MemoryDebugOperations, PpuRegs,
@@ -21,10 +19,11 @@ use gb_dbg::until::Until;
 use gb_dma::{dma::Dma, hdma::Hdma};
 use gb_joypad::{Config, Joypad};
 use gb_ppu::Ppu;
+use gb_roms::controllers::cgb_bios;
 #[cfg(feature = "save_state")]
 use gb_roms::controllers::Full;
 use gb_roms::{
-    controllers::{cgb_bios, dmg_bios, Generic},
+    controllers::{dmg_bios, Generic},
     header::AutoSave,
     Header,
 };
@@ -83,7 +82,7 @@ impl Game {
         joypad_config: Rc<RefCell<Config>>,
         stopped: bool,
         #[cfg(feature = "audio")] audio_queue: Rc<RefCell<AudioQueue<f32>>>,
-        #[cfg(feature = "cgb")] forced_mode: Option<Mode>,
+        forced_mode: Option<Mode>,
     ) -> Result<Game, anyhow::Error> {
         use std::io::Seek;
 
@@ -91,9 +90,6 @@ impl Game {
         let mut file = File::open(rompath)?;
         let header = Header::from_file(&mut file)?;
 
-        #[cfg(not(feature = "cgb"))]
-        let cgb_mode = false;
-        #[cfg(feature = "cgb")]
         let cgb_mode = if let Some(forced_mode) = forced_mode {
             forced_mode == Mode::Color
         } else {
@@ -113,9 +109,9 @@ impl Game {
             ppu_reg.borrow_mut().overwrite_lcd_control(0x91_u8);
         }
         let (cpu, cpu_io_reg) = if cfg!(feature = "bios") {
-            new_cpu()
+            new_cpu(cgb_mode)
         } else {
-            let (mut cpu, cpu_io_reg) = new_cpu();
+            let (mut cpu, cpu_io_reg) = new_cpu(cgb_mode);
             cpu.set_registers(if cgb_mode {
                 Registers::CGB
             } else {
@@ -133,7 +129,7 @@ impl Game {
         };
         let timer = Rc::new(RefCell::new(timer));
         let bios_wrapper = {
-            let mut bios = if cfg!(feature = "cgb") {
+            let mut bios = if cgb_mode {
                 cgb_bios(mbc.clone())
             } else {
                 dmg_bios(mbc.clone())
@@ -145,7 +141,6 @@ impl Game {
         };
         let dma = Rc::new(RefCell::new(Dma::new(ppu.memory())));
         let hdma = Rc::new(RefCell::new(Hdma::default()));
-        let serial = Rc::new(RefCell::new(gb_bus::Serial::default()));
         #[cfg(feature = "audio")]
         let apu = Rc::new(RefCell::new(Apu::new(audio_queue)));
 
@@ -153,12 +148,10 @@ impl Game {
 
         let io_bus = {
             let mut io_bus = IORegBus::default();
-            #[cfg(feature = "cgb")]
             if cgb_mode {
                 io_bus
-                    .with_area(IORegArea::Vbk, ppu_reg.clone())
+                    .with_ppu_cgb(ppu_reg.clone())
                     .with_area(IORegArea::Key1, cpu_io_reg.clone())
-                    .with_hdma(Rc::new(RefCell::new(PanicDevice::default())))
                     .with_area(IORegArea::RP, Rc::new(RefCell::new(CharDevice(0))))
                     .with_area(IORegArea::Svbk, wram.clone());
             }
@@ -265,8 +258,6 @@ impl Game {
             );
 
             self.check_scheduled_stop(!frame_not_finished);
-
-            #[cfg(feature = "cgb")]
             if self.cpu.io_regs.borrow().fast_mode() {
                 not_counted_cycles!(
                     self.clock,
@@ -472,10 +463,7 @@ impl Game {
         let cpu_io = Rc::new(RefCell::new(io_regs));
         self.cpu.io_regs = cpu_io.clone();
         let mut io_bus = self.io_bus.borrow_mut();
-        #[cfg(feature = "cgb")]
-        {
-            io_bus.with_area(IORegArea::Key1, cpu_io.clone());
-        }
+        io_bus.with_area(IORegArea::Key1, cpu_io.clone());
         io_bus.with_area(IORegArea::IF, cpu_io.clone());
 
         self.cpu.registers = registers;
@@ -487,7 +475,6 @@ impl Game {
     fn load_wram(&mut self, state: WorkingRam) -> anyhow::Result<()> {
         let wram = Rc::new(RefCell::new(state));
         self.addr_bus.ram = wram.clone();
-        #[cfg(feature = "cgb")]
         self.io_bus
             .borrow_mut()
             .with_area(IORegArea::Svbk, wram.clone());
@@ -647,9 +634,10 @@ impl RegisterDebugOperations for Game {
 
     fn io_get(&self, key: IORegs) -> RegisterValue {
         use gb_bus::constant::IE_REG;
-        use gb_bus::io_reg_area::IORegArea::{BootRom, Div, Joy, Tac, Tima, Tma, IF, SB, SC};
-        #[cfg(feature = "cgb")]
-        use gb_bus::io_reg_area::IORegArea::{Hdma1, Hdma2, Hdma3, Hdma4, Hdma5, Key1, Svbk, Vbk};
+        use gb_bus::io_reg_area::IORegArea::{
+            BootRom, Div, Hdma1, Hdma2, Hdma3, Hdma4, Hdma5, Joy, Key1, Svbk, Tac, Tima, Tma, Vbk,
+            IF, SB, SC,
+        };
 
         match key {
             // joypad regs
@@ -667,21 +655,13 @@ impl RegisterDebugOperations for Game {
             IORegs::Ie => read_bus_reg!(self.addr_bus, IE_REG),
             // Boot ROM
             IORegs::BootRom => read_bus_reg!(self.addr_bus, BootRom),
-            #[cfg(feature = "cgb")]
             IORegs::Key1 => read_bus_reg!(self.addr_bus, Key1),
-            #[cfg(feature = "cgb")]
             IORegs::VramBank => read_bus_reg!(self.addr_bus, Vbk),
-            #[cfg(feature = "cgb")]
             IORegs::WRamBank => read_bus_reg!(self.addr_bus, Svbk),
-            #[cfg(feature = "cgb")]
             IORegs::Hdma1 => read_bus_reg!(self.addr_bus, Hdma1),
-            #[cfg(feature = "cgb")]
             IORegs::Hdma2 => read_bus_reg!(self.addr_bus, Hdma2),
-            #[cfg(feature = "cgb")]
             IORegs::Hdma3 => read_bus_reg!(self.addr_bus, Hdma3),
-            #[cfg(feature = "cgb")]
             IORegs::Hdma4 => read_bus_reg!(self.addr_bus, Hdma4),
-            #[cfg(feature = "cgb")]
             IORegs::Hdma5 => read_bus_reg!(self.addr_bus, Hdma5),
         }
     }
@@ -752,9 +732,10 @@ impl RegisterDebugOperations for Game {
 
     fn io_registers(&self) -> Vec<RegisterMap<IORegs>> {
         use gb_bus::constant::IE_REG;
-        use gb_bus::io_reg_area::IORegArea::{BootRom, Div, Joy, Tac, Tima, Tma, IF, SB, SC};
-        #[cfg(feature = "cgb")]
-        use gb_bus::io_reg_area::IORegArea::{Hdma1, Hdma2, Hdma3, Hdma4, Hdma5, Key1, Svbk, Vbk};
+        use gb_bus::io_reg_area::IORegArea::{
+            BootRom, Div, Hdma1, Hdma2, Hdma3, Hdma4, Hdma5, Joy, Key1, Svbk, Tac, Tima, Tma, Vbk,
+            IF, SB, SC,
+        };
 
         vec![
             // joypad regs
@@ -772,21 +753,13 @@ impl RegisterDebugOperations for Game {
             read_bus_reg!(IORegs::Ie, self.addr_bus, IE_REG),
             // Boot ROM
             read_bus_reg!(IORegs::BootRom, self.addr_bus, BootRom),
-            #[cfg(feature = "cgb")]
             read_bus_reg!(IORegs::VramBank, self.addr_bus, Vbk),
-            #[cfg(feature = "cgb")]
             read_bus_reg!(IORegs::Key1, self.addr_bus, Key1),
-            #[cfg(feature = "cgb")]
             read_bus_reg!(IORegs::WRamBank, self.addr_bus, Svbk),
-            #[cfg(feature = "cgb")]
             read_bus_reg!(IORegs::Hdma1, self.addr_bus, Hdma1),
-            #[cfg(feature = "cgb")]
             read_bus_reg!(IORegs::Hdma2, self.addr_bus, Hdma2),
-            #[cfg(feature = "cgb")]
             read_bus_reg!(IORegs::Hdma3, self.addr_bus, Hdma3),
-            #[cfg(feature = "cgb")]
             read_bus_reg!(IORegs::Hdma4, self.addr_bus, Hdma4),
-            #[cfg(feature = "cgb")]
             read_bus_reg!(IORegs::Hdma5, self.addr_bus, Hdma5),
         ]
     }

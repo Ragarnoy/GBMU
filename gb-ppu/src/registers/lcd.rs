@@ -20,7 +20,6 @@ use std::cell::Cell;
 use std::convert::TryInto;
 use std::rc::Rc;
 
-#[cfg(feature = "cgb")]
 use gb_bus::io_reg_area::IORegArea::{Bcpd, Bcps, Ocpd, Ocps, Opri, Vbk};
 use gb_bus::io_reg_area::IORegArea::{
     Bgp, LcdControl, LcdStat, Ly, Lyc, Obp0, Obp1, Scx, Scy, Wx, Wy,
@@ -102,17 +101,11 @@ impl LcdReg {
             Wy => Ok(self.window_pos.wy),
             Wx => Ok(self.window_pos.wx),
 
-            #[cfg(feature = "cgb")]
             Vbk => Ok(self.vbk.get()),
-            #[cfg(feature = "cgb")]
             Opri => Ok(self.opri.get()),
-            #[cfg(feature = "cgb")]
             Bcps => Ok(self.pal_cgb.get_bcps()),
-            #[cfg(feature = "cgb")]
             Bcpd => Ok(self.pal_cgb.get_bcpd()),
-            #[cfg(feature = "cgb")]
             Ocps => Ok(self.pal_cgb.get_ocps()),
-            #[cfg(feature = "cgb")]
             Ocpd => Ok(self.pal_cgb.get_ocpd()),
 
             _ => Err(Error::SegmentationFault(addr.into())),
@@ -140,18 +133,12 @@ impl LcdReg {
             Wy => self.window_pos.wy = v,
             Wx => self.window_pos.wx = v,
 
-            #[cfg(feature = "cgb")]
             Vbk => self.vbk.set(v | Self::VBK_UNUSED_BITS),
-            #[cfg(feature = "cgb")]
             Opri => self.opri.set(v | Self::OPRI_UNUSED_BITS),
 
-            #[cfg(feature = "cgb")]
             Bcps => self.pal_cgb.set_bcps(v),
-            #[cfg(feature = "cgb")]
             Bcpd => self.pal_cgb.set_bcpd(v),
-            #[cfg(feature = "cgb")]
             Ocps => self.pal_cgb.set_ocps(v),
-            #[cfg(feature = "cgb")]
             Ocpd => self.pal_cgb.set_ocpd(v),
             _ => return Err(Error::SegmentationFault(addr.into())),
         };
