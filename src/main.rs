@@ -134,6 +134,7 @@ fn handle_custom_event(
         CustomEvent::LoadFile(file) => context.load(file),
         CustomEvent::OpenWindow(window_type) => context.open_window(window_type, event_loop),
         CustomEvent::CloseWindow(window_type) => context.close_window(window_type),
-        CustomEvent::ChangedMode(_mode) => todo!("reload the game context with the new mode"),
+        CustomEvent::ChangedMode(mode) => context.reset_game(mode),
+        CustomEvent::ResetGame => context.reset_game(None),
     }
 }
