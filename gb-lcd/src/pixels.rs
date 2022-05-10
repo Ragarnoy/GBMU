@@ -8,6 +8,7 @@ use crate::{
 pub struct GBPixels {
     pub window: Window,
     pub pixels: Pixels,
+    pub texture_id: egui::TextureId,
 
     pub context: Context,
 
@@ -24,7 +25,7 @@ impl GBPixels {
             Pixels::new(WIDTH, HEIGHT, surface_texture)?
         };
 
-        let context = Context::new(
+        let mut context = Context::new(
             pixels.device(),
             pixels.render_texture_format(),
             scale_factor as f32,
@@ -33,9 +34,18 @@ impl GBPixels {
 
         let state = State::default();
 
+        let texture_id = context.rpass.egui_texture_from_wgpu_texture(
+            pixels.device(),
+            &pixels.texture().create_view(&wgpu::TextureViewDescriptor {
+                ..Default::default()
+            }),
+            wgpu::FilterMode::Nearest,
+        );
+
         Ok(Self {
             window,
             pixels,
+            texture_id,
 
             context,
 

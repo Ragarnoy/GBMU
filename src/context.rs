@@ -215,23 +215,22 @@ impl Context {
 /// Context impl for main window
 impl Context {
     pub fn redraw_main_window(&mut self) -> anyhow::Result<()> {
+        if let Some(ref game) = self.game {
+            let image = game.ppu.pixels();
+            let frame = &mut self.main_window.pixels.get_frame();
+            load_image_to_frame(image, frame);
+        }
+
         crate::ui::draw_egui(
             self,
             #[cfg(feature = "debug_fps")]
             self.time_frame.instant_fps(),
         );
+
         let main_pixels = &mut self.main_window.pixels;
         let main_context = &mut self.main_window.context;
 
-        if let Some(ref game) = self.game {
-            let image = game.ppu.pixels();
-            let frame = main_pixels.get_frame();
-            load_image_to_frame(image, frame);
-        }
         main_pixels.render_with(|encoder, render_target, context| {
-            // Render pixels buffer
-            context.scaling_renderer.render(encoder, render_target);
-
             main_context.render_egui(
                 encoder,
                 render_target,

@@ -75,10 +75,11 @@ pub fn draw_egui(context: &mut Context, #[cfg(feature = "debug_fps")] fps: f64) 
             //     widgets: widget_style,
             //     ..Default::default()
             // });
+
             egui::containers::TopBottomPanel::top("Top menu").show(egui_ctx, |ui| {
                 // egui::containers::CentralPanel::default().show(egui_ctx, |ui| {
                 egui::menu::bar(ui, |ui| {
-                    ui.set_height(crate::constant::MENU_BAR_SIZE);
+                    ui.set_height(crate::constant::MENU_BAR_SIZE - 4.0);
                     // ui.style_mut().override_text_style = Some(egui::TextStyle::Heading);
                     file::draw_ui(ui, &context.event_proxy);
                     tools::draw_ui(ui, &context.event_proxy);
@@ -89,5 +90,14 @@ pub fn draw_egui(context: &mut Context, #[cfg(feature = "debug_fps")] fps: f64) 
                     ui_fps!(ui, context, fps);
                 });
             });
+
+            let frame = egui::Frame::none();
+            egui::containers::CentralPanel::default()
+                .frame(frame)
+                .show(egui_ctx, |ui| {
+                    let mut size: (f32, f32) = context.main_window.window.inner_size().into();
+                    size.1 -= crate::constant::MENU_BAR_SIZE;
+                    ui.image(context.main_window.texture_id, size);
+                });
         })
 }
