@@ -71,7 +71,11 @@ impl Context {
         }
 
         if open_debugger && self.game.is_some() {
-            todo!("open debugger")
+            self.event_proxy
+                .send_event(CustomEvent::OpenWindow(WindowType::Debugger(Some(
+                    config.breakpoints,
+                ))))
+                .expect("failed to send event to open debugger");
         }
     }
 }
@@ -83,7 +87,7 @@ impl Context {
         event_loop: &EventLoopWindowTarget<CustomEvent>,
     ) {
         match window_type {
-            WindowType::Debugger => {
+            WindowType::Debugger(breakpoints) => {
                 if self.debugger_ctx.is_none() && self.game.is_some() {
                     let window = {
                         let size =
@@ -98,6 +102,7 @@ impl Context {
                     self.debugger_ctx.replace(debugger::Context::new(
                         GBWindow::new(window),
                         self.event_proxy.clone(),
+                        breakpoints,
                     ));
                 }
             }
@@ -123,7 +128,7 @@ impl Context {
 
     pub fn close_window(&mut self, window_type: WindowType) {
         match window_type {
-            WindowType::Debugger => {
+            WindowType::Debugger(_) => {
                 self.debugger_ctx = None;
                 self.debugger_ctx = None;
             }
