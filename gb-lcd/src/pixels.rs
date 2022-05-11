@@ -62,19 +62,22 @@ impl<const WIDTH: u32, const HEIGHT: u32, const MENU_BAR_SIZE: u32>
 
     pub fn texture_size_and_margin(&self) -> ((f32, f32), (f32, f32)) {
         let screen_ratio = WIDTH as f32 / HEIGHT as f32;
-        let mut actual_dim: (f32, f32) = self.window.inner_size().into();
-        actual_dim.1 -= MENU_BAR_SIZE as f32;
-        let actual_ratio = actual_dim.0 as f32 / actual_dim.1 as f32;
+        let scale_factor = self.window.scale_factor() as f32;
+
+        let actual_dim: (f32, f32) = self.window.inner_size().into();
+        let actual_width = actual_dim.0 / scale_factor;
+        let actual_height = actual_dim.1 / scale_factor - MENU_BAR_SIZE as f32;
+        let actual_ratio = actual_width / actual_height;
 
         let mut margin = (0.0, 0.0);
         let target_dim = if screen_ratio > actual_ratio {
-            let new_height = actual_dim.0 / screen_ratio;
-            margin.1 = ((actual_dim.1 - new_height) / 2.0).round();
-            (actual_dim.0, new_height)
+            let new_height = actual_width / screen_ratio;
+            margin.1 = ((actual_height - new_height) / 2.0).round();
+            (actual_width, new_height)
         } else {
-            let new_width = actual_dim.1 * screen_ratio;
-            margin.0 = ((actual_dim.0 - new_width) / 2.0).round();
-            (new_width, actual_dim.1)
+            let new_width = actual_height * screen_ratio;
+            margin.0 = ((actual_width - new_width) / 2.0).round();
+            (new_width, actual_height)
         };
         (target_dim, margin)
     }
