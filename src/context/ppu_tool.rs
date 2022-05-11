@@ -8,7 +8,7 @@ use gb_ppu::Ppu;
 #[derive(Clone, Copy)]
 pub enum ToolType {
     Tilesheet,
-    Tilemap,
+    Tilemap { window: bool },
     Spritesheet,
 }
 
@@ -16,7 +16,7 @@ impl From<ToolType> for WindowType {
     fn from(tool_type: ToolType) -> WindowType {
         match tool_type {
             ToolType::Tilesheet => WindowType::Tilesheet,
-            ToolType::Tilemap => WindowType::Tilemap,
+            ToolType::Tilemap { window: _ } => WindowType::Tilemap,
             ToolType::Spritesheet => WindowType::Spritesheet,
         }
     }
@@ -63,7 +63,14 @@ impl<const WIDTH: u32, const HEIGHT: u32, const MENU_BAR_SIZE: u32>
                 .show(egui_ctx, |ui| {
                     egui::menu::bar(ui, |ui| {
                         ui.set_height(crate::constant::MENU_BAR_SIZE - 1.0);
-                        // TODO ui for each tool here
+                        match &mut self.tool_type {
+                            ToolType::Tilesheet => {}
+                            ToolType::Tilemap { ref mut window } => {
+                                ui.checkbox(window, "window");
+                            }
+
+                            ToolType::Spritesheet => {}
+                        };
                     });
                 });
             let mut central_frame = egui::Frame::none();
@@ -82,8 +89,8 @@ impl<const WIDTH: u32, const HEIGHT: u32, const MENU_BAR_SIZE: u32>
                 let frame = pixels.get_frame();
                 load_image_to_frame(&image, frame);
             }
-            ToolType::Tilemap => {
-                let image = ppu.tilemap_image(false);
+            ToolType::Tilemap { window } => {
+                let image = ppu.tilemap_image(window);
                 let frame = pixels.get_frame();
                 load_image_to_frame(&image, frame);
             }

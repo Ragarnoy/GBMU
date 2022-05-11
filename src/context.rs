@@ -189,7 +189,7 @@ impl Context {
                     self.tilemap_ctx.replace(ppu_tool::Context::new(
                         GBPixels::new(window)?,
                         self.event_proxy.clone(),
-                        ppu_tool::ToolType::Tilemap,
+                        ppu_tool::ToolType::Tilemap { window: false },
                     ));
                 }
             }
