@@ -43,10 +43,12 @@ impl Apu {
 
     pub fn init_audio_output(input_buffer: Arc<Mutex<Vec<f32>>>) -> Stream {
         let host = cpal::default_host();
-        let device = host
+        let mut device = host
             .default_output_device()
             .expect("no output device available");
-
+        if device.supported_output_configs().is_err() {
+            device = host.devices().unwrap().nth(0).unwrap();
+        }
         let mut supported_configs_range = device
             .supported_output_configs()
             .expect("error while querying configs");
