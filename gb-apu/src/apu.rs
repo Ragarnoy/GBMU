@@ -2,6 +2,7 @@ use std::sync::{Arc, Mutex};
 
 use crate::{
     channel::sound_channel::SoundChannel, control::frame_sequencer::FrameSequencer, ChannelType,
+    MASK_UNUSED_BITS_70,
 };
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use cpal::{Stream, StreamConfig};
