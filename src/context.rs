@@ -210,7 +210,7 @@ impl Context {
                     self.spritesheet_ctx.replace(ppu_tool::Context::new(
                         GBPixels::new(window)?,
                         self.event_proxy.clone(),
-                        ppu_tool::ToolType::Spritesheet,
+                        ppu_tool::ToolType::Spritesheet { inverted: false },
                     ));
                 }
             }

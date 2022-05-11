@@ -9,7 +9,7 @@ use gb_ppu::Ppu;
 pub enum ToolType {
     Tilesheet,
     Tilemap { window: bool },
-    Spritesheet,
+    Spritesheet { inverted: bool },
 }
 
 impl From<ToolType> for WindowType {
@@ -17,7 +17,7 @@ impl From<ToolType> for WindowType {
         match tool_type {
             ToolType::Tilesheet => WindowType::Tilesheet,
             ToolType::Tilemap { window: _ } => WindowType::Tilemap,
-            ToolType::Spritesheet => WindowType::Spritesheet,
+            ToolType::Spritesheet { inverted: _ } => WindowType::Spritesheet,
         }
     }
 }
@@ -68,8 +68,9 @@ impl<const WIDTH: u32, const HEIGHT: u32, const MENU_BAR_SIZE: u32>
                             ToolType::Tilemap { ref mut window } => {
                                 ui.checkbox(window, "window");
                             }
-
-                            ToolType::Spritesheet => {}
+                            ToolType::Spritesheet { ref mut inverted } => {
+                                ui.checkbox(inverted, "inverted");
+                            }
                         };
                     });
                 });
@@ -94,8 +95,8 @@ impl<const WIDTH: u32, const HEIGHT: u32, const MENU_BAR_SIZE: u32>
                 let frame = pixels.get_frame();
                 load_image_to_frame(&image, frame);
             }
-            ToolType::Spritesheet => {
-                let image = ppu.sprites_image(false);
+            ToolType::Spritesheet { inverted } => {
+                let image = ppu.sprites_image(inverted);
                 let frame = pixels.get_frame();
                 load_image_to_frame(&image, frame);
             }
