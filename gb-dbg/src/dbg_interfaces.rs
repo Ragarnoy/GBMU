@@ -149,21 +149,13 @@ pub enum IORegs {
 
     BootRom,
 
-    #[cfg(feature = "cgb")]
     Key1,
-    #[cfg(feature = "cgb")]
     VramBank,
-    #[cfg(feature = "cgb")]
     Hdma1,
-    #[cfg(feature = "cgb")]
     Hdma2,
-    #[cfg(feature = "cgb")]
     Hdma3,
-    #[cfg(feature = "cgb")]
     Hdma4,
-    #[cfg(feature = "cgb")]
     Hdma5,
-    #[cfg(feature = "cgb")]
     WRamBank,
 }
 
@@ -180,21 +172,13 @@ impl Display for IORegs {
             IORegs::If => "Interrupt Flag",
             IORegs::Ie => "Interrupt Enable",
             IORegs::BootRom => "BootRom",
-            #[cfg(feature = "cgb")]
             IORegs::Key1 => "DSpeed",
-            #[cfg(feature = "cgb")]
             IORegs::VramBank => "VBank",
-            #[cfg(feature = "cgb")]
             IORegs::Hdma1 => "Hdma1",
-            #[cfg(feature = "cgb")]
             IORegs::Hdma2 => "Hdma2",
-            #[cfg(feature = "cgb")]
             IORegs::Hdma3 => "Hdma3",
-            #[cfg(feature = "cgb")]
             IORegs::Hdma4 => "Hdma4",
-            #[cfg(feature = "cgb")]
             IORegs::Hdma5 => "Hdma5",
-            #[cfg(feature = "cgb")]
             IORegs::WRamBank => "WBank",
         };
         write!(f, "{}", name)

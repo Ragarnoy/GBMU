@@ -69,6 +69,7 @@ pub struct MicrocodeController {
     cache: Vec<u8>,
     /// Debug helper to catch the event of end of instruction
     pub is_instruction_finished: bool,
+    pub cgb_mode: bool,
 }
 
 impl Debug for MicrocodeController {
@@ -85,8 +86,8 @@ impl Debug for MicrocodeController {
 
 type ActionFn = fn(controller: &mut MicrocodeController, state: &mut State) -> MicrocodeFlow;
 
-impl Default for MicrocodeController {
-    fn default() -> Self {
+impl MicrocodeController {
+    pub fn new(cgb_mode: bool) -> Self {
         Self {
             opcode: None,
             cycles: Vec::with_capacity(NB_MAX_CYCLES),
@@ -96,11 +97,10 @@ impl Default for MicrocodeController {
             halted_from_stop: false,
             cycles_in_halt_mode: 0,
             is_instruction_finished: true,
+            cgb_mode,
         }
     }
-}
 
-impl MicrocodeController {
     pub fn step(
         &mut self,
         int_flags: Rc<RefCell<IORegisters>>,

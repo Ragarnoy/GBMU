@@ -7,6 +7,22 @@
     {
       "type": "lldb",
       "request": "launch",
+      "name": "Debug GBMU",
+      "cargo": {
+        "args": [
+          "build",
+        ],
+        "filter": {
+          "name": "gbmu",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
       "name": "Debug unit tests in library 'gb-roms'",
       "cargo": {
         "args": [

@@ -23,7 +23,7 @@ pub fn expr(input: &str) -> IResult<&str, Node> {
     alt((wrap_comb_expr, wrap_bin_expr))(input)
 }
 
-/// Skip surounding whitespaces
+/// Skip surrounding whitespaces
 pub fn ws<I, O, E, P>(parser: P) -> impl FnMut(I) -> IResult<I, O, E>
 where
     I: nom::InputTakeAtPosition,
@@ -64,7 +64,7 @@ pub fn any_value(input: &str) -> IResult<&str, Node> {
 /// ```txt
 /// value |= register
 ///       |= u16
-///       |= adress
+///       |= address
 /// ```
 pub fn value(input: &str) -> IResult<&str, Node> {
     use crate::wrapper::{wrap_register, wrap_value};

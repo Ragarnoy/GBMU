@@ -11,7 +11,6 @@ assets/cgb-acid2.gbc
 
 # Rust
 target
-.cargo
 
 # packaged app
 build/

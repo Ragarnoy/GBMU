@@ -33,7 +33,7 @@ pub struct Mbc3 {
     external_selector: u8,
 
     rtc_regs: RTCRegs,
-    last_writed_byte: Option<u8>,
+    last_written_byte: Option<u8>,
 }
 
 impl Default for Mbc3 {
@@ -45,7 +45,7 @@ impl Default for Mbc3 {
             external_gate: false,
             rom_bank: 1,
             external_selector: 0,
-            last_writed_byte: None,
+            last_written_byte: None,
             rtc_regs: RTCRegs::default(),
         }
     }
@@ -53,10 +53,10 @@ impl Default for Mbc3 {
 
 impl Mbc3 {
     fn may_latch_clock_data(&mut self, v: u8) {
-        if self.last_writed_byte == Some(0) && v == 1 {
+        if self.last_written_byte == Some(0) && v == 1 {
             self.latch_clock_data();
         } else {
-            self.last_writed_byte = Some(v);
+            self.last_written_byte = Some(v);
         }
     }
 
@@ -199,7 +199,7 @@ impl SaveState for Mbc3 {
             self.external_gate = state.external_gate;
             self.rom_bank = state.rom_bank;
             self.external_selector = state.external_selector;
-            self.last_writed_byte = state.last_writed_byte;
+            self.last_written_byte = state.last_written_byte;
 
             self.load_partial(Incomplete::Mbc3(state.partial))
         } else {
@@ -236,7 +236,7 @@ pub struct Full {
     external_gate: bool,
     rom_bank: u8,
     external_selector: u8,
-    last_writed_byte: Option<u8>,
+    last_written_byte: Option<u8>,
 }
 
 impl From<&Mbc3> for Full {
@@ -249,7 +249,7 @@ impl From<&Mbc3> for Full {
             external_gate: ctl.external_gate,
             rom_bank: ctl.rom_bank,
             external_selector: ctl.external_selector,
-            last_writed_byte: ctl.last_writed_byte,
+            last_written_byte: ctl.last_written_byte,
         }
     }
 }

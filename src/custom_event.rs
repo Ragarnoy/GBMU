@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
-#[cfg(feature = "cgb")]
-use crate::Mode;
+use crate::config::Mode;
+use crate::windows::WindowType;
 
 #[derive(Debug, Clone)]
 pub enum CustomEvent {
@@ -13,10 +13,15 @@ pub enum CustomEvent {
     #[cfg(feature = "save_state")]
     /// Event that will load a `save state` save
     LoadState(PathBuf),
-    /// Event when user drop a file to the main window
-    FileDropped(String),
 
-    #[cfg(feature = "cgb")]
     /// Event when we want to force a gameboy mode
-    ChangedMode(Mode),
+    ChangedMode(Option<Mode>),
+
+    OpenWindow(WindowType),
+    CloseWindow(WindowType),
+    /// Exit the emulator
+    Quit,
+
+    /// Reset the game context, those restarting the loaded game
+    ResetGame,
 }

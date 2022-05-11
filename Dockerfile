@@ -1,4 +1,4 @@
-FROM rust:1.54-slim
+FROM rust:1.60-slim
 
 RUN rustup component add rustfmt clippy \
   && sh -c "(set -x; cargo --version; rustc --version; cargo fmt --version; cargo clippy --version) > /etc/rust_toolchain_version 2>&1" \
@@ -13,13 +13,17 @@ RUN rustup component add rustfmt clippy \
 USER tester
 
 COPY --chown=tester:tester Cargo.toml Cargo.lock /app/
-COPY --chown=tester:tester gb-cpu/ /app/gb-cpu
+COPY --chown=tester:tester gb-bus/ /app/gb-bus/
+COPY --chown=tester:tester gb-clock/ /app/gb-clock/
+COPY --chown=tester:tester gb-cpu/ /app/gb-cpu/
+COPY --chown=tester:tester gb-dbg/ /app/gb-dbg/
+COPY --chown=tester:tester gb-dma/ /app/gb-dma/
+COPY --chown=tester:tester gb-joypad/ /app/gb-joypad/
 COPY --chown=tester:tester gb-lcd/ /app/gb-lcd/
 COPY --chown=tester:tester gb-ppu/ /app/gb-ppu/
 COPY --chown=tester:tester gb-roms/ /app/gb-roms/
-COPY --chown=tester:tester gb-bus/ /app/gb-bus/
-COPY --chown=tester:tester gb-dbg/ /app/gb-dbg/
 COPY --chown=tester:tester gb-rtc/ /app/gb-rtc/
+COPY --chown=tester:tester gb-timer/ /app/gb-timer/
 COPY --chown=tester:tester src/ /app/src/
 
 WORKDIR /app

@@ -124,10 +124,8 @@ pub enum IORegArea {
     Obp1 = OBP1,
     Wy = WY,
     Wx = WX,
-    #[cfg(feature = "cgb")]
     /// Prepare speed switch
     Key1 = KEY1,
-    #[cfg(feature = "cgb")]
     /// Vram Bank
     Vbk = VBK,
 
@@ -143,26 +141,19 @@ pub enum IORegArea {
     Hdma4 = HDMA4,
     /// New DMA Length/Mode/Start
     Hdma5 = HDMA5,
-    #[cfg(feature = "cgb")]
     /// Infrared communication port
     RP = RP,
-    #[cfg(feature = "cgb")]
     /// Background Color Palette Specification
     Bcps = BCPS,
-    #[cfg(feature = "cgb")]
     /// Background Color Palette Data
     Bcpd = BCPD,
-    #[cfg(feature = "cgb")]
     /// Object Color Palette Specification
     Ocps = OCPS,
-    #[cfg(feature = "cgb")]
     /// Object Color Palette Data
     Ocpd = OCPD,
 
-    #[cfg(feature = "cgb")]
     /// Object priority mode
     Opri = OPRI,
-    #[cfg(feature = "cgb")]
     /// Wram Bank
     Svbk = SVBK,
 }
@@ -235,9 +226,7 @@ impl TryFrom<u16> for IORegArea {
             OBP1 => Self::Obp1,
             WY => Self::Wy,
             WX => Self::Wx,
-            #[cfg(feature = "cgb")]
             KEY1 => Self::Key1,
-            #[cfg(feature = "cgb")]
             VBK => Self::Vbk,
             BOOTROM => Self::BootRom,
             HDMA1 => Self::Hdma1,
@@ -245,19 +234,12 @@ impl TryFrom<u16> for IORegArea {
             HDMA3 => Self::Hdma3,
             HDMA4 => Self::Hdma4,
             HDMA5 => Self::Hdma5,
-            #[cfg(feature = "cgb")]
             RP => Self::RP,
-            #[cfg(feature = "cgb")]
             OPRI => Self::Opri,
-            #[cfg(feature = "cgb")]
             BCPS => Self::Bcps,
-            #[cfg(feature = "cgb")]
             BCPD => Self::Bcpd,
-            #[cfg(feature = "cgb")]
             OCPS => Self::Ocps,
-            #[cfg(feature = "cgb")]
             OCPD => Self::Ocpd,
-            #[cfg(feature = "cgb")]
             SVBK => Self::Svbk,
             _ => {
                 return Err(format!("no register for {:x}", value));

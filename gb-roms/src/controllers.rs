@@ -24,29 +24,29 @@ pub const ROM_BANK_SIZE: usize = 0x4000;
 pub const RAM_BANK_SIZE: usize = 0x2000;
 
 pub trait Controller: SaveState {
-    /// Return the size of the rom and optionnaly the size of the external ram
+    /// Return the size of the rom and optionally the size of the external ram
     fn sizes(&self) -> (usize, Option<usize>);
 
-    /// When data is beeing written to ROM
+    /// When data is being written to ROM
     /// MBC catch these writes to modify their internal register
     fn write_rom(&mut self, v: u8, addr: u16);
 
     /// Indicate that the RAM is readable/writable
     fn ram_enabled(&self) -> bool;
 
-    /// Indicate if the read to the RAM area was overrided
+    /// Indicate if the read to the RAM area was overridden
     fn override_read_ram(&self, addr: u16) -> Option<u8>;
 
-    /// Indicate if the write to the RAM area was overrided
+    /// Indicate if the write to the RAM area was overridden
     /// If the action is catch, it will no modify the ram
     fn override_write_ram(&mut self, v: u8, addr: u16) -> Option<()>;
 
     /// Offset the address when performing an operation on the RAM
-    /// This is usefull when you have to manage BANKS of RAM
+    /// This is useful when you have to manage BANKS of RAM
     fn offset_ram_addr(&self, addr: u16) -> usize;
 
     /// Offset the address when performing an operation on the ROM
-    /// This is usefull when you have to manage BANKS of ROM
+    /// This is useful when you have to manage BANKS of ROM
     fn offset_rom_addr(&self, addr: u16) -> usize;
 
     /// Create a new RAM area
