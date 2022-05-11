@@ -103,7 +103,7 @@ pub const LCD_CONTROL: u16 = 0xff40;
 pub const LCD_STAT: u16 = 0xff41;
 /// Background vertical scroll
 pub const SCY: u16 = 0xff42;
-/// Background horizontal scrool
+/// Background horizontal scroll
 pub const SCX: u16 = 0xff43;
 /// LCD Y coordinate
 pub const LY: u16 = 0xff44;

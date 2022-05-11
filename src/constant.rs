@@ -9,7 +9,7 @@ pub const APP_NAME: &str = "gbmu";
 // pub const SAVE_STATE_EXT: &str = "savepack";
 /// File extension for a file that should contain a `game save` save
 pub const GAME_SAVE_EXT: &str = "gamepack";
-/// List of prefered extensions for ROM file
+/// List of preferred extensions for ROM file
 pub const PREFERED_ROM_EXTS: [&str; 3] = ["rom", "gb", "gbc"];
 // #[cfg(feature = "save_state")]
 // /// List of prefered extensions for `save state` file

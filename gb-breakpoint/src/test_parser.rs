@@ -17,7 +17,7 @@ macro_rules! utils_test_expr {
         let res = nom::combinator::all_consuming($parser)($input);
         assert!(res.is_ok(), "for `{}': res is not ok: {:?}", $input, res);
         let (left, expr) = res.unwrap();
-        assert!(left.is_empty(), "data still need to be proceded: {}", left);
+        assert!(left.is_empty(), "data still need to be proceeded: {}", left);
         assert_eq!(
             expr.to_string(),
             $expected,

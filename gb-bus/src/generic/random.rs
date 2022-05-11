@@ -2,7 +2,7 @@ use crate::{Address, Area, Error, FileOperation, IORegArea, Source};
 use rand::{rngs::SmallRng, Rng, SeedableRng};
 use std::cell::RefCell;
 
-/// A Random Device that yeild random bytes
+/// A Random Device that yield random bytes
 pub struct RandomDevice {
     gen: RefCell<SmallRng>,
 }

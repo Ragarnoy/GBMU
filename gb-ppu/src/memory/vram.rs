@@ -50,7 +50,7 @@ impl TryFrom<u8> for BankSelector {
     }
 }
 
-/// Contains operations to read more easily the differents values of the vram.
+/// Contains operations to read more easily the different values of the vram.
 #[cfg_attr(
     feature = "serialization",
     derive(serde::Deserialize, serde::Serialize)

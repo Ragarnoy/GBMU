@@ -246,7 +246,7 @@ impl From<NaiveSave> for Naive {
 }
 
 #[cfg(test)]
-mod test_contructor {
+mod test_constructor {
     use super::Naive;
     use crate::{constant::DAY, ReadRtcRegisters};
 

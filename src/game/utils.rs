@@ -4,7 +4,7 @@ use gb_roms::{
 };
 use std::fs::File;
 
-/// Return an initalised MBCs with it auto game save if possible
+/// Return an initialised MBCs with it auto game save if possible
 pub(crate) fn mbc_with_save_state(
     romname: &str,
     header: &Header,
@@ -27,7 +27,7 @@ pub(crate) fn mbc_with_save_state(
                 )
             } else {
                 log::info!(
-                    "successfuly load mbc data from {}",
+                    "successfully load mbc data from {}",
                     filename.to_string_lossy()
                 );
             }

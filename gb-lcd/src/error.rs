@@ -12,7 +12,7 @@ impl fmt::Display for Error {
         match self {
             Error::MainSys(msg) => write!(f, "Failed to init global system: {}", msg),
             Error::GBWindowInit(msg) => write!(f, "Failed to init a GB Window: {}", msg),
-            Error::GBWindowFrame(msg) => write!(f, "Error while runing a GB Window frame: {}", msg),
+            Error::GBWindowFrame(msg) => write!(f, "Error while running a GB Window frame: {}", msg),
         }
     }
 }

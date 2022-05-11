@@ -533,7 +533,7 @@ impl Drop for Game {
                     write_named(&mut file, &self.mbc.borrow().save_partial()).map_err(Error::from)
                 }) {
                 Ok(_) => log::info!(
-                    "successfuly save mbc data to {}",
+                    "successfully save mbc data to {}",
                     filename.to_string_lossy()
                 ),
                 Err(e) => {

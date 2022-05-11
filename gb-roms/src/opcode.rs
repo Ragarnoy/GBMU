@@ -120,7 +120,7 @@ where
     fn decode_cb_prefix(&mut self) -> Result<Opcode, Error> {
         use register::Register8Bits;
 
-        let current = self.read_byte().ok_or(Error::InvalideOpcode(0xCB))?;
+        let current = self.read_byte().ok_or(Error::InvalidOpcode(0xCB))?;
 
         match current {
             // swap n
@@ -422,7 +422,7 @@ where
             0x3E => Ok(op!(Ld, register8!(A).into(), self.get_n().into())),
 
             0xF2 => Ok(op!(Ld, register8!(A).into(), Value::IndirectReg8(Reg8::C))),
-            0xE2 => Ok(op!(Ld, Store::IndierectReg8(Reg8::C), register8!(A).into())),
+            0xE2 => Ok(op!(Ld, Store::IndirectReg8(Reg8::C), register8!(A).into())),
 
             0x32 => Ok(op!(LddFrom, register8!(A).into())),
             0x3A => Ok(op!(LddInto, register8!(A).into())),
@@ -617,7 +617,7 @@ where
                 if self.read_byte() == Some(0x00) {
                     Ok(op!(Stop))
                 } else {
-                    Err(Error::InvalideOpcode(0x10))
+                    Err(Error::InvalidOpcode(0x10))
                 }
             }
 
