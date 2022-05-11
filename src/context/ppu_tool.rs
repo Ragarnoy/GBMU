@@ -50,11 +50,31 @@ impl<const WIDTH: u32, const HEIGHT: u32, const MENU_BAR_SIZE: u32>
 {
     pub(crate) fn redraw_window(&mut self, ppu: &Ppu) -> anyhow::Result<()> {
         let window = &mut self.window;
+        let (size, margin) = window.texture_size_and_margin();
 
         let pixels = &mut window.pixels;
         let pixels_context = &mut window.context;
 
-        pixels_context.prepare_egui(&window.window, |_ctx| {});
+        pixels_context.prepare_egui(&window.window, |egui_ctx| {
+            let mut top_frame = egui::Frame::menu(&egui::style::Style::default());
+            top_frame.margin = egui::style::Margin::symmetric(5.0, 0.0);
+            egui::containers::TopBottomPanel::top("Top menu")
+                .frame(top_frame)
+                .show(egui_ctx, |ui| {
+                    egui::menu::bar(ui, |ui| {
+                        ui.set_height(crate::constant::MENU_BAR_SIZE - 1.0);
+                        // TODO ui for each tool here
+                    });
+                });
+            let mut central_frame = egui::Frame::none();
+            central_frame.margin = egui::style::Margin::symmetric(margin.0, margin.1);
+            central_frame.margin.top += 1.0;
+            egui::containers::CentralPanel::default()
+                .frame(central_frame)
+                .show(egui_ctx, |ui| {
+                    ui.image(window.texture_id, size);
+                });
+        });
 
         match self.tool_type {
             ToolType::Tilesheet => {
@@ -76,7 +96,6 @@ impl<const WIDTH: u32, const HEIGHT: u32, const MENU_BAR_SIZE: u32>
 
         pixels
             .render_with(|encoder, render_target, context| {
-                context.scaling_renderer.render(encoder, render_target);
                 pixels_context.render_egui(
                     encoder,
                     render_target,

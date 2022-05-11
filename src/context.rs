@@ -156,7 +156,7 @@ impl Context {
                     let window = {
                         let size = LogicalSize::new(
                             PPU_TILESHEET_WIDTH as f32,
-                            PPU_TILESHEET_HEIGHT as f32,
+                            PPU_TILESHEET_HEIGHT as f32 + MENU_BAR as f32,
                         );
                         WindowBuilder::new()
                             .with_title("GBMU - Tilesheet")
@@ -175,7 +175,10 @@ impl Context {
             WindowType::Tilemap => {
                 if self.tilemap_ctx.is_none() && self.game.is_some() {
                     let window = {
-                        let size = LogicalSize::new(PPU_TILEMAP_DIM as f32, PPU_TILEMAP_DIM as f32);
+                        let size = LogicalSize::new(
+                            PPU_TILEMAP_DIM as f32,
+                            PPU_TILEMAP_DIM as f32 + MENU_BAR as f32,
+                        );
                         WindowBuilder::new()
                             .with_title("GBMU - Tilemap")
                             .with_inner_size(size)
@@ -195,7 +198,7 @@ impl Context {
                     let window = {
                         let size = LogicalSize::new(
                             PPU_SPRITE_RENDER_WIDTH as f32,
-                            PPU_SPRITE_RENDER_HEIGHT as f32,
+                            PPU_SPRITE_RENDER_HEIGHT as f32 + MENU_BAR as f32,
                         );
                         WindowBuilder::new()
                             .with_title("GBMU - Spritesheet")
