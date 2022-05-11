@@ -146,7 +146,7 @@ impl Ticker for Apu {
     }
 
     fn tick(&mut self, _addr_bus: &mut dyn Bus<u8>) {
-        if !self.enabled || !self.stream.is_some() {
+        if !self.enabled || self.stream.is_none() {
             return;
         }
 
