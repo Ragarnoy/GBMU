@@ -42,7 +42,7 @@ impl BreakpointEditor {
                     match bp {
                         Ok(p) => Some(p),
                         Err(e) => {
-                            log::error!("invalide breakpoint expression \"{}\": {}", b, e);
+                            log::error!("invalid breakpoint expression \"{}\": {}", b, e);
                             None
                         }
                     }

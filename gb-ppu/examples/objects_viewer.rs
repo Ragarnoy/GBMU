@@ -1,4 +1,4 @@
-use gb_lcd::render::RenderData;
+use gb_lcd::render::ImageRGB;
 use sdl2::{event::Event, keyboard::Keycode};
 
 use gb_lcd::{render, window::GBWindow};
@@ -167,8 +167,8 @@ fn refresh_display(
     ppu: &Ppu,
     invert_color: bool,
 ) -> (
-    RenderData<SPRITE_RENDER_WIDTH, SPRITE_RENDER_HEIGHT>,
-    RenderData<SPRITE_LIST_RENDER_WIDTH, SPRITE_LIST_RENDER_HEIGHT>,
+    ImageRGB<SPRITE_RENDER_WIDTH, SPRITE_RENDER_HEIGHT>,
+    ImageRGB<SPRITE_LIST_RENDER_WIDTH, SPRITE_LIST_RENDER_HEIGHT>,
 ) {
     (
         ppu.sprites_image(invert_color),

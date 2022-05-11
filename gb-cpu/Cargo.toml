@@ -11,7 +11,6 @@ registers_logs = []
 trace_jump = []
 debug_decoded_opcode = []
 panic_unknow_opcode = []
-cgb = ["gb-bus/cgb"]
 serialization = ["serde", "serde/std", "serde/derive"]
 
 [dependencies]

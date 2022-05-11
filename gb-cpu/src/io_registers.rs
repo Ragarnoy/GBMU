@@ -29,9 +29,7 @@ pub struct IORegisters {
     pub flag: u8,
     pub enable_mask: u8,
 
-    #[cfg(feature = "cgb")]
     pub current_speed: Speed,
-    #[cfg(feature = "cgb")]
     pub prepare_to_switch: bool,
 }
 
@@ -41,9 +39,7 @@ impl Default for IORegisters {
             master_enable: false,
             flag: 0,
             enable_mask: 9,
-            #[cfg(feature = "cgb")]
             current_speed: Speed::Normal,
-            #[cfg(feature = "cgb")]
             prepare_to_switch: false,
         }
     }
@@ -68,20 +64,17 @@ impl IORegisters {
         self.should_handle_interrupt() && self.is_interrupt_ready()
     }
 
-    #[cfg(feature = "cgb")]
     /// Indicate when we need to switch between `normal speed <=> double speed`
     pub fn need_to_change_speed(&self) -> bool {
         self.prepare_to_switch
     }
 
-    #[cfg(feature = "cgb")]
     /// Switch the current speed of the cpu
     pub fn switch_speed(&mut self) {
         self.current_speed = !self.current_speed;
         self.prepare_to_switch = false;
     }
 
-    #[cfg(feature = "cgb")]
     /// Determine if we are in the double mode of the gameboy color
     pub fn fast_mode(&self) -> bool {
         self.current_speed == Speed::Double
@@ -111,7 +104,6 @@ where
     fn read(&self, addr: A, _source: Option<Source>) -> Result<u8, Error> {
         match addr.area_type() {
             IORegArea::IF => Ok(IORegisters::FLAG_MASK | self.flag),
-            #[cfg(feature = "cgb")]
             IORegArea::Key1 => Ok(double_speed_register(
                 self.fast_mode(),
                 self.prepare_to_switch,
@@ -123,7 +115,6 @@ where
     fn write(&mut self, v: u8, addr: A, _source: Option<Source>) -> Result<(), gb_bus::Error> {
         match addr.area_type() {
             IORegArea::IF => self.flag = v & !(IORegisters::FLAG_MASK),
-            #[cfg(feature = "cgb")]
             IORegArea::Key1 => {
                 self.prepare_to_switch = v & 1 == 1;
             }
@@ -134,7 +125,6 @@ where
 }
 
 /// generate the key1 register from to current & desired speed mode
-#[cfg(feature = "cgb")]
 fn double_speed_register(is_double_speed: bool, prepare_to_switch: bool) -> u8 {
     let mut v = 0;
 
@@ -148,7 +138,6 @@ fn double_speed_register(is_double_speed: bool, prepare_to_switch: bool) -> u8 {
     v
 }
 
-#[cfg(feature = "cgb")]
 #[test]
 fn test_double_speed_regs() {
     assert_eq!(double_speed_register(false, false), 0x00);

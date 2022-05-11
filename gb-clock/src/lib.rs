@@ -1,10 +1,10 @@
 #[macro_use]
 mod clock;
-mod debuger;
+mod debugger;
 mod tick;
 mod ticker;
 
 pub use clock::Clock;
-pub use debuger::Debuger;
+pub use debugger::Debugger;
 pub use tick::Tick;
 pub use ticker::{cycle, Ticker};

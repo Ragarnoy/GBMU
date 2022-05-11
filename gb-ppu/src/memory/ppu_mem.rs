@@ -33,7 +33,7 @@ impl PPUMem {
         match self.vram.try_borrow_mut() {
             Ok(mut vram) => {
                 vram.overwrite(data, None);
-                log::info!("overwritting vram");
+                log::info!("overwriting vram");
                 Ok(())
             }
             Err(_) => Err(PPUError::MemoryUnavailable {
@@ -49,7 +49,7 @@ impl PPUMem {
         match self.oam.try_borrow_mut() {
             Ok(mut oam) => {
                 oam.overwrite(data);
-                log::info!("overwritting oam");
+                log::info!("overwriting oam");
                 Ok(())
             }
             Err(_) => Err(PPUError::MemoryUnavailable {

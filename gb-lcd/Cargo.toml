@@ -10,7 +10,12 @@ edition = "2021"
 debug_render = []
 
 [dependencies]
-sdl2 = { version = "0.35.2" }
-egui = "0.16"
-gl = { version = "0.14" }
-egui_sdl2_gl = { git = "https://github.com/FirelightFlagboy/egui_sdl2_gl", default-features = false, rev = "14f97af830a58088c2a1e54ca2b123dbb7caf992" }
+egui = "0.17"
+egui_wgpu_backend = "0.17.0"
+wgpu = "0.12.0"
+egui-winit = "0.17.0"
+winit = "0.26.1"
+pixels = "0.9.0"
+log = { version = "0.4", features = ["std"] }
+pollster = "0.2"
+anyhow = "1.0"

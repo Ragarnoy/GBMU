@@ -103,7 +103,7 @@ pub const LCD_CONTROL: u16 = 0xff40;
 pub const LCD_STAT: u16 = 0xff41;
 /// Background vertical scroll
 pub const SCY: u16 = 0xff42;
-/// Background horizontal scrool
+/// Background horizontal scroll
 pub const SCX: u16 = 0xff43;
 /// LCD Y coordinate
 pub const LY: u16 = 0xff44;
@@ -119,10 +119,8 @@ pub const OBP0: u16 = 0xff48;
 pub const OBP1: u16 = 0xff49;
 pub const WY: u16 = 0xff4a;
 pub const WX: u16 = 0xff4b;
-#[cfg(feature = "cgb")]
 /// Prepare speed switch
 pub const KEY1: u16 = 0xff4d;
-#[cfg(feature = "cgb")]
 /// Vram Bank
 pub const VBK: u16 = 0xff4f;
 
@@ -138,24 +136,17 @@ pub const HDMA3: u16 = 0xff53;
 pub const HDMA4: u16 = 0xff54;
 /// New DMA Length/Mode/Start
 pub const HDMA5: u16 = 0xff55;
-#[cfg(feature = "cgb")]
 /// Infrared communication port
 pub const RP: u16 = 0xff56;
-#[cfg(feature = "cgb")]
 /// Background Color Palette Specification
 pub const BCPS: u16 = 0xff68;
-#[cfg(feature = "cgb")]
 /// Background Color Palette Data
 pub const BCPD: u16 = 0xff69;
-#[cfg(feature = "cgb")]
 /// Object Color Palette Specification
 pub const OCPS: u16 = 0xff6a;
-#[cfg(feature = "cgb")]
 /// Object Color Palette Data
 pub const OCPD: u16 = 0xff6b;
-#[cfg(feature = "cgb")]
 /// Object priority mode
 pub const OPRI: u16 = 0xff6c;
-#[cfg(feature = "cgb")]
 /// Wram Bank
 pub const SVBK: u16 = 0xff70;

@@ -142,7 +142,6 @@ impl IORegBus {
             .with_area(Wx, ppu)
     }
 
-    #[cfg(feature = "cgb")]
     pub fn with_ppu_cgb(&mut self, ppu: IORegNode) -> &mut Self {
         use IORegArea::{Bcpd, Bcps, Ocpd, Ocps, Opri, Vbk};
 

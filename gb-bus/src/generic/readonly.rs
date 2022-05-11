@@ -1,6 +1,6 @@
 use crate::{Address, Area, Error, FileOperation, IORegArea, Source};
 
-/// A Char Device yield current setted byte
+/// A Char Device yield current set byte
 #[derive(Default)]
 pub struct ReadOnly(pub u8);
 

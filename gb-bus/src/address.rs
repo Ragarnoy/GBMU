@@ -28,7 +28,7 @@ impl<A> Addr<A> {
         }
     }
 
-    /// Create an Address from an absolute adress and an offset
+    /// Create an Address from an absolute address and an offset
     ///
     /// ```
     /// # use gb_bus::{address::Addr, Area};
