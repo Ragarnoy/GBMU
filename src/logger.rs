@@ -15,7 +15,7 @@ pub fn init_logger(level: log::LevelFilter) {
         _ => {}
     }
     builder.init();
-    log::info!("successfuly configured global logge with level {level}");
+    log::info!("successfully configured global logger with level {level}");
 }
 
 #[cfg(not(debug_assertions))]

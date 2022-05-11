@@ -1,10 +1,14 @@
 use egui::Ui;
 use winit::event_loop::EventLoopProxy;
 
-use crate::config::{Config, Mode};
+use crate::config::Mode;
 use crate::{custom_event::CustomEvent, windows::WindowType};
 
-pub(crate) fn draw_ui(ui: &mut Ui, event_proxy: &EventLoopProxy<CustomEvent>, config: &mut Config) {
+pub(crate) fn draw_ui(
+    ui: &mut Ui,
+    event_proxy: &EventLoopProxy<CustomEvent>,
+    mode: &mut Option<Mode>,
+) {
     ui.menu_button("Settings", |ui| {
         ui.style_mut().override_text_style = None;
         if ui.button("Input").clicked() {
@@ -14,23 +18,17 @@ pub(crate) fn draw_ui(ui: &mut Ui, event_proxy: &EventLoopProxy<CustomEvent>, co
         }
 
         ui.separator();
-        if ui.radio_value(&mut config.mode, None, "auto").clicked() {
+        if ui.radio_value(mode, None, "auto").clicked() {
             event_proxy
                 .send_event(CustomEvent::ChangedMode(None))
                 .unwrap();
         }
-        if ui
-            .radio_value(&mut config.mode, Some(Mode::Classic), "dmg")
-            .clicked()
-        {
+        if ui.radio_value(mode, Some(Mode::Classic), "dmg").clicked() {
             event_proxy
                 .send_event(CustomEvent::ChangedMode(Some(Mode::Classic)))
                 .unwrap();
         }
-        if ui
-            .radio_value(&mut config.mode, Some(Mode::Color), "cgb")
-            .clicked()
-        {
+        if ui.radio_value(mode, Some(Mode::Color), "cgb").clicked() {
             event_proxy
                 .send_event(CustomEvent::ChangedMode(Some(Mode::Color)))
                 .unwrap();

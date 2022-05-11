@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 egui_memory_editor = { git = "https://github.com/Hirtol/egui_memory_editor/", rev = "caaed40aa12d5409ceb41e171ad4e55e8c4e7787" }
 egui = "0.17"
-anyhow = "1.0.43"
+anyhow = "1.0"
 log = "0.4"
 nom = "7.1.0"
 gb-roms = { path = "../gb-roms" }
@@ -17,4 +17,4 @@ gb-cpu = { path = "../gb-cpu" }
 gb-breakpoint = { path = "../gb-breakpoint" }
 
 [dev-dependencies]
-eframe = "0.16"
+eframe = "0.17"

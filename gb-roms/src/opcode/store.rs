@@ -8,8 +8,8 @@ pub enum Store {
     /// Use the addr to register
     IndirectReg16(Register16Bits),
     /// Use the addr that result of `addr = Reg + 0xff00`
-    IndierectReg8(Register8Bits),
-    /// Addresse in memory (should be!)
+    IndirectReg8(Register8Bits),
+    /// Address in memory (should be!)
     Indirect16(u16),
     /// Use the addr that result of `addr = n + 0xff00`
     Indirect8(u8),
@@ -32,7 +32,7 @@ impl fmt::Display for Store {
         match self {
             Self::Register(reg) => write!(f, "{}", reg),
             Self::IndirectReg16(reg) => write!(f, "({})", reg),
-            Self::IndierectReg8(reg) => write!(f, "(0xff00 + {})", reg),
+            Self::IndirectReg8(reg) => write!(f, "(0xff00 + {})", reg),
             Self::Indirect16(addr) => write!(f, "({:x})", addr),
             Self::Indirect8(addr) => write!(f, "(0xff00 + {:x})", addr),
         }

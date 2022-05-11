@@ -6,6 +6,7 @@ authors = [
   "Florian Bennetot <fbenneto@student.42.fr>",
   "Tiago Lernould <tlernoul@student.42.fr>",
   "Cedric M'Passi <cedricmpassi@gmail.com>",
+  "Pierre Lamusse <plamusse@student.42.fr>",
 ]
 edition = "2021"
 rust-version = "1.60.0"
@@ -35,13 +36,13 @@ winit = "0.26.1"
 pixels = "0.9.0"
 egui = "0.17"
 cpal = "0.13.3"
-winit_input_helper = "0.11.1"
+winit_input_helper = "0.12"
 native-dialog = "0.6"
 log = { version = "0.4", features = ["std"] }
 serde_yaml = "0.8"
-serde = "1.0.133"
-rmp-serde = "1.0.0-beta.2"
-clap = { version = "3.0.1", features = ["derive"] }
+serde = "1.0"
+rmp-serde = "1.1"
+clap = { version = "3.1", features = ["derive"] }
 anyhow = "1.0"
 gb-lcd = { path = "./gb-lcd" }
 gb-ppu = { path = "./gb-ppu" }
@@ -73,9 +74,3 @@ members = [
   "gb-test",
   "gb-breakpoint",
 ]
-
-# Currently this patch doesn't work on macos
-# I'll be using [paths override](https://doc.rust-lang.org/cargo/reference/overriding-dependencies.html#paths-overrides) for my setup
-#
-# [patch.crates-io]
-# sdl2 = { git = "https://github.com/Rust-SDL2/rust-sdl2", rev = "496368d72202b65d365ef64a86c293d20d22ece0" }

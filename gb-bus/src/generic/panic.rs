@@ -1,6 +1,6 @@
 use crate::{Address, Area, Error, FileOperation, IORegArea, Source};
 
-/// A device that always panic when interracting with it
+/// A device that always panic when interacting with it
 #[derive(Default)]
 pub struct PanicDevice;
 

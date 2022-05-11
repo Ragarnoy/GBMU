@@ -38,11 +38,11 @@ pub enum Operator {
     BinaryOr,
     /// Check for inequality of a value between another, `!=`
     NotEq,
-    /// Check if a value is greather than another, `>`
+    /// Check if a value is greater than another, `>`
     Sup,
     /// Check if a value is lower than another, `<`
     Inf,
-    /// Check if a value is greather or equal to another, `>=`
+    /// Check if a value is greater or equal to another, `>=`
     SupEq,
     /// Check if a value is lower or equal to another, `<=`
     InfEq,

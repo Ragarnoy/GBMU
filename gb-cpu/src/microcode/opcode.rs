@@ -486,7 +486,7 @@ pub enum Opcode {
     PopAf = 0xf1,
     /// `LDH A,(C)`: load `(0xFF00 + C)` into `A`. 2m
     LdhAC = 0xf2,
-    /// `DI`: Disable interrups after the end of the next instruction. 1m
+    /// `DI`: Disable interrupts after the end of the next instruction. 1m
     Di = 0xf3,
     /// `PUSH AF`: push `AF` into the stack. 4m
     PushAf = 0xf5,
@@ -500,7 +500,7 @@ pub enum Opcode {
     LdSPHL = 0xf9,
     /// `LD A,(u16)`: load `(u16)` into `A`. 4m
     LdA16 = 0xfa,
-    /// `EI`: Enable interrups after the end of the next instruction. 1m
+    /// `EI`: Enable interrupts after the end of the next instruction. 1m
     Ei = 0xfb,
     /// `CP A, u8`: Compare `A` to `u8`. 2m
     CpA8 = 0xfe,

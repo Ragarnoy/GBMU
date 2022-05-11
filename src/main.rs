@@ -36,7 +36,8 @@ fn main() -> Result<(), Error> {
 
     let (event_loop, main_window) = init::<WIDTH, HEIGHT>(&config)?;
     let event_loop_proxy = event_loop.create_proxy();
-    let mut context = Context::new(main_window, config, event_loop_proxy);
+    let mut context = Context::new(main_window, event_loop_proxy);
+    context.load_config(config);
     let mut render_time = std::time::Instant::now();
 
     event_loop.run(move |event, event_loop, control_flow| match event {

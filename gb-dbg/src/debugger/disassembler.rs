@@ -70,7 +70,7 @@ impl DisassemblyViewer {
         let bytes = row.as_ref().map_or_else(
             |e| match e {
                 Error::InvalidRegisterValue(v)
-                | Error::InvalideOpcode(v)
+                | Error::InvalidOpcode(v)
                 | Error::UnknownOpcode(v) => format!("{:#02X}", v),
             },
             |(_, bytesarray)| {
