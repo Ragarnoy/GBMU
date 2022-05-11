@@ -1,27 +1,26 @@
-use gb_bus::{Address, Bus, Error, FileOperation, IORegArea, Source};
-use gb_clock::{Tick, Ticker};
-use sdl2::audio::AudioQueue;
-use std::{cell::RefCell, rc::Rc};
+use std::sync::{Arc, Mutex};
 
 use crate::{
     channel::sound_channel::SoundChannel, control::frame_sequencer::FrameSequencer, ChannelType,
-    BUFFER_SIZE,
 };
+use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
+use cpal::{Stream, StreamConfig};
+use gb_bus::{Address, Bus, Error, FileOperation, IORegArea, Source};
+use gb_clock::{Tick, Ticker};
 
 pub struct Apu {
     cycle_counter: u16,
     enabled: bool,
-    audio_queue: Rc<RefCell<AudioQueue<f32>>>,
-    buffer: [f32; BUFFER_SIZE],
-    buffer_i: usize,
+    buffer: Arc<Mutex<Vec<f32>>>,
     sound_channels: Vec<SoundChannel>,
     frame_sequencer: FrameSequencer,
     master: u8,
     panning: u8,
+    stream: Option<Stream>,
 }
 
 impl Apu {
-    pub fn new(audio_queue: Rc<RefCell<AudioQueue<f32>>>) -> Apu {
+    pub fn new(input_buffer: Arc<Mutex<Vec<f32>>>, stream: Option<Stream>) -> Apu {
         // Channels order in vector is important !
         let sound_channels = vec![
             SoundChannel::new(ChannelType::SquareWave, true),
@@ -29,41 +28,92 @@ impl Apu {
             SoundChannel::new(ChannelType::WaveForm, false),
             SoundChannel::new(ChannelType::Noise, false),
         ];
+
         Self {
             cycle_counter: 0,
             enabled: false,
-            audio_queue,
-            buffer: [0.0; BUFFER_SIZE],
-            buffer_i: 0,
+            buffer: input_buffer,
             sound_channels,
             frame_sequencer: FrameSequencer::default(),
             master: 0,
             panning: 0,
+            stream,
+        }
+    }
+
+    pub fn init_audio_output(input_buffer: Arc<Mutex<Vec<f32>>>) -> Stream {
+        let host = cpal::default_host();
+        let device = host
+            .default_output_device()
+            .expect("no output device available");
+
+        let mut supported_configs_range = device
+            .supported_output_configs()
+            .expect("error while querying configs");
+        let supported_config = supported_configs_range
+            .next()
+            .expect("no supported config?!")
+            .with_max_sample_rate();
+        let err_fn = |err| eprintln!("an error occurred on the output audio stream: {}", err);
+        let config: StreamConfig = supported_config.into();
+        let channels = config.channels as usize;
+
+        // callback used to get the next sample
+        let mut next_value = move || {
+            let mut buffer = input_buffer.lock().unwrap();
+            if buffer.len() > 0 {
+                buffer.remove(0)
+            } else {
+                0.0
+            }
+        };
+
+        let stream = device
+            .build_output_stream(
+                &config,
+                move |data: &mut [f32], _: &cpal::OutputCallbackInfo| {
+                    dbg!(data.len());
+                    Self::write_data(data, channels, &mut next_value)
+                },
+                err_fn,
+            )
+            .unwrap();
+        stream.play().unwrap();
+        stream
+    }
+
+    fn write_data<T>(output: &mut [T], channels: usize, next_sample: &mut dyn FnMut() -> f32)
+    where
+        T: cpal::Sample,
+    {
+        for frame in output.chunks_mut(channels) {
+            let value: T = cpal::Sample::from::<f32>(&next_sample());
+            for sample in frame.iter_mut() {
+                *sample = value;
+            }
+        }
+    }
+
+    pub fn drop_stream(&mut self) {
+        if let Some(stream) = &self.stream {
+            drop(stream);
+            self.stream = None;
         }
     }
 
     fn add_sample(&mut self) {
-        let (left_sample, right_sample) = self.mix();
-        self.buffer[self.buffer_i] = left_sample;
-        self.buffer[self.buffer_i + 1] = right_sample;
-        self.buffer_i += 2;
+        let sample = self.mix() * 0.3;
+        self.buffer.lock().unwrap().push(sample);
     }
 
-    fn mix(&self) -> (f32, f32) {
+    fn mix(&self) -> f32 {
         let mut sample = 0.0;
 
         for i in 0..self.sound_channels.len() {
             sample += self.sound_channels[i].get_dac_output();
         }
         sample /= self.sound_channels.len() as f32;
-        (sample, sample)
-    }
-
-    fn queue_audio(&self) {
-        self.audio_queue
-            .borrow()
-            .queue_audio(&self.buffer)
-            .expect("failed to queue audio");
+        sample
     }
 
     fn get_power_channels_statuses_byte(&self) -> u8 {
@@ -132,10 +182,6 @@ impl Ticker for Apu {
 
         if self.cycle_counter % 0x5F == 0 {
             self.add_sample();
-        }
-        if self.buffer_i >= BUFFER_SIZE {
-            self.queue_audio();
-            self.buffer_i = 0;
         }
     }
 }

@@ -5,6 +5,7 @@ mod utils;
 use crate::config::Mode;
 
 use crate::path::game_save_path;
+use gb_apu::apu::Apu;
 use gb_bus::{
     generic::{CharDevice, SimpleRW},
     AddressBus, Bus, IORegArea, IORegBus, Source, WorkingRam,
@@ -34,7 +35,14 @@ use utils::mbc_with_save_state;
 
 #[cfg(feature = "registers_logs")]
 use std::io::BufWriter;
-use std::{cell::RefCell, fs::File, ops::DerefMut, path::Path, rc::Rc};
+use std::{
+    cell::RefCell,
+    fs::File,
+    ops::DerefMut,
+    path::Path,
+    rc::Rc,
+    sync::{Arc, Mutex},
+};
 
 pub struct Game {
     pub romname: String,
@@ -81,7 +89,6 @@ impl Game {
         rompath: &P,
         joypad_config: Rc<RefCell<Config>>,
         stopped: bool,
-        #[cfg(feature = "audio")] audio_queue: Rc<RefCell<AudioQueue<f32>>>,
         forced_mode: Option<Mode>,
     ) -> Result<Game, anyhow::Error> {
         use std::io::Seek;
@@ -144,7 +151,11 @@ impl Game {
         let serial = Rc::new(RefCell::new(gb_bus::Serial::new(cgb_mode)));
 
         #[cfg(feature = "audio")]
-        let apu = Rc::new(RefCell::new(Apu::new(audio_queue)));
+        let buffer: Arc<Mutex<Vec<f32>>> = Arc::new(Mutex::new(Vec::new()));
+        #[cfg(feature = "audio")]
+        let stream = Apu::init_audio_output(buffer.clone());
+        #[cfg(feature = "audio")]
+        let apu = Rc::new(RefCell::new(Apu::new(buffer, Some(stream))));
 
         let joypad = Rc::new(RefCell::new(Joypad::from_config(joypad_config)));
 

@@ -34,6 +34,7 @@ save_state = [
 winit = "0.26.1"
 pixels = "0.9.0"
 egui = "0.17"
+cpal = "0.13.3"
 winit_input_helper = "0.11.1"
 native-dialog = "0.6"
 log = { version = "0.4", features = ["std"] }
