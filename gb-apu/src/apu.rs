@@ -96,13 +96,6 @@ impl Apu {
         }
     }
 
-    pub fn drop_stream(&mut self) {
-        if let Some(stream) = &self.stream {
-            drop(stream);
-            self.stream = None;
-        }
-    }
-
     fn add_sample(&mut self) {
         let sample = self.mix() * 0.3;
         self.buffer.lock().unwrap().push(sample);
@@ -151,7 +144,7 @@ impl Ticker for Apu {
     }
 
     fn tick(&mut self, _addr_bus: &mut dyn Bus<u8>) {
-        if !self.enabled {
+        if !self.enabled || self.stream.is_none() {
             return;
         }
 
