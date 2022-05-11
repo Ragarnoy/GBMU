@@ -72,7 +72,6 @@ impl Apu {
             .build_output_stream(
                 &config,
                 move |data: &mut [f32], _: &cpal::OutputCallbackInfo| {
-                    dbg!(data.len());
                     Self::write_data(data, channels, &mut next_value)
                 },
                 err_fn,
