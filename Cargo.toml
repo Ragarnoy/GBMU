@@ -22,6 +22,7 @@ time_frame = []
 time_stat_samples = []
 debug_fps = ["time_stat_samples"]
 bios = []
+audio = ["gb-apu"]
 save_state = [
   "gb-cpu/serialization",
   "gb-bus/serialization",
@@ -34,6 +35,7 @@ save_state = [
 winit = "0.26.1"
 pixels = "0.9.0"
 egui = "0.17"
+cpal = "0.13.3"
 winit_input_helper = "0.12"
 native-dialog = "0.6"
 log = { version = "0.4", features = ["std"] }
@@ -52,10 +54,12 @@ gb-roms = { path = "./gb-roms" }
 gb-clock = { path = "./gb-clock" }
 gb-timer = { path = "./gb-timer" }
 gb-dma = { path = "./gb-dma" }
+gb-apu = { path = "./gb-apu", optional = true }
 env_logger = "0.9.0"
 
 [workspace]
 members = [
+  "gb-apu",
   "gb-dma",
   "gb-clock",
   "gb-roms",

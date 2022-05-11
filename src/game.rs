@@ -5,6 +5,8 @@ mod utils;
 use crate::config::Mode;
 
 use crate::path::game_save_path;
+#[cfg(feature = "audio")]
+use gb_apu::apu::Apu;
 use gb_bus::{
     generic::{CharDevice, SimpleRW},
     AddressBus, Bus, IORegArea, IORegBus, Source, WorkingRam,
@@ -34,6 +36,8 @@ use utils::mbc_with_save_state;
 
 #[cfg(feature = "registers_logs")]
 use std::io::BufWriter;
+#[cfg(feature = "audio")]
+use std::sync::{Arc, Mutex};
 use std::{cell::RefCell, fs::File, ops::DerefMut, path::Path, rc::Rc};
 
 pub struct Game {
@@ -49,6 +53,8 @@ pub struct Game {
     pub hdma: Rc<RefCell<Hdma>>,
     pub dma: Rc<RefCell<Dma>>,
     pub joypad: Rc<RefCell<Joypad>>,
+    #[cfg(feature = "audio")]
+    pub apu: Rc<RefCell<Apu>>,
     pub addr_bus: AddressBus,
     scheduled_stop: Option<ScheduledStop>,
     emulation_stopped: bool,
@@ -140,6 +146,13 @@ impl Game {
         let hdma = Rc::new(RefCell::new(Hdma::default()));
         let serial = Rc::new(RefCell::new(gb_bus::Serial::new(cgb_mode)));
 
+        #[cfg(feature = "audio")]
+        let buffer: Arc<Mutex<Vec<f32>>> = Arc::new(Mutex::new(Vec::new()));
+        #[cfg(feature = "audio")]
+        let stream = Apu::init_audio_output(buffer.clone());
+        #[cfg(feature = "audio")]
+        let apu = Rc::new(RefCell::new(Apu::new(buffer, Some(stream))));
+
         let joypad = Rc::new(RefCell::new(Joypad::from_config(joypad_config)));
 
         let io_bus = {
@@ -151,6 +164,8 @@ impl Game {
                     .with_area(IORegArea::RP, Rc::new(RefCell::new(CharDevice(0))))
                     .with_area(IORegArea::Svbk, wram.clone());
             }
+            #[cfg(feature = "audio")]
+            io_bus.with_sound(apu.clone());
             io_bus
                 .with_area(IORegArea::Joy, joypad.clone())
                 .with_timer(timer.clone())
@@ -159,9 +174,8 @@ impl Game {
                 .with_area(IORegArea::Dma, dma.clone())
                 .with_hdma(hdma.clone())
                 .with_area(IORegArea::BootRom, bios_wrapper.clone())
-                .with_serial(serial)
-                .with_default_sound()
-                .with_default_waveform_ram();
+                .with_serial(serial);
+
             io_bus
         };
         let io_bus = Rc::new(RefCell::new(io_bus));
@@ -201,6 +215,8 @@ impl Game {
             dma,
             hdma,
             joypad,
+            #[cfg(feature = "audio")]
+            apu,
             addr_bus: bus,
             scheduled_stop: None,
             emulation_stopped: stopped,
@@ -225,6 +241,7 @@ impl Game {
                 .borrow_mut()
                 .check_hdma_state(&mut self.cpu, &self.ppu);
 
+            #[cfg(not(feature = "audio"))]
             let frame_not_finished = counted_cycles!(
                 self.clock,
                 &mut self.addr_bus,
@@ -235,6 +252,20 @@ impl Game {
                 &mut self.cpu,
                 self.hdma.borrow_mut().deref_mut()
             );
+
+            #[cfg(feature = "audio")]
+            let frame_not_finished = counted_cycles!(
+                self.clock,
+                &mut self.addr_bus,
+                self.timer.borrow_mut().deref_mut(),
+                &mut self.ppu,
+                self.joypad.borrow_mut().deref_mut(),
+                self.dma.borrow_mut().deref_mut(),
+                &mut self.cpu,
+                self.hdma.borrow_mut().deref_mut(),
+                self.apu.borrow_mut().deref_mut()
+            );
+
             self.check_scheduled_stop(!frame_not_finished);
             if self.cpu.io_regs.borrow().fast_mode() {
                 not_counted_cycles!(
