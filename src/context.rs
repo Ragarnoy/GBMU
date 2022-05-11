@@ -29,14 +29,14 @@ use winit::{
 };
 
 use gb_ppu::{GB_SCREEN_HEIGHT, GB_SCREEN_WIDTH};
-const WIDTH: u32 = GB_SCREEN_WIDTH as u32;
-const HEIGHT: u32 = GB_SCREEN_HEIGHT as u32;
+const GB_WIDTH: u32 = GB_SCREEN_WIDTH as u32;
+const GB_HEIGHT: u32 = GB_SCREEN_HEIGHT as u32;
 
 use crate::constant::MENU_BAR_SIZE;
 const MENU_BAR: u32 = MENU_BAR_SIZE as u32;
 
 pub struct Context {
-    pub main_window: GBPixels<WIDTH, HEIGHT, MENU_BAR>,
+    pub main_window: GBPixels<GB_WIDTH, GB_HEIGHT, MENU_BAR>,
     pub joypad_config: Rc<RefCell<gb_joypad::Config>>,
     pub config: InternalConfig,
     pub event_proxy: EventLoopProxy<CustomEvent>,
@@ -47,9 +47,11 @@ pub struct Context {
     pub main_draw_instant: Instant,
     pub debugger_ctx: Option<debugger::Context>,
     pub keybindings_ctx: Option<keybindings::Context>,
-    pub tilesheet_ctx: Option<ppu_tool::Context>,
-    pub tilemap_ctx: Option<ppu_tool::Context>,
-    pub spritesheet_ctx: Option<ppu_tool::Context>,
+    pub tilesheet_ctx:
+        Option<ppu_tool::Context<PPU_TILESHEET_WIDTH, PPU_TILESHEET_HEIGHT, MENU_BAR>>,
+    pub tilemap_ctx: Option<ppu_tool::Context<PPU_TILEMAP_DIM, PPU_TILEMAP_DIM, MENU_BAR>>,
+    pub spritesheet_ctx:
+        Option<ppu_tool::Context<PPU_SPRITE_RENDER_WIDTH, PPU_SPRITE_RENDER_HEIGHT, MENU_BAR>>,
 }
 
 #[derive(Default)]
@@ -60,7 +62,7 @@ pub struct InternalConfig {
 
 impl Context {
     pub fn new(
-        main_window: GBPixels<WIDTH, HEIGHT, MENU_BAR>,
+        main_window: GBPixels<GB_WIDTH, GB_HEIGHT, MENU_BAR>,
         event_proxy: EventLoopProxy<CustomEvent>,
     ) -> Self {
         Self {
@@ -159,11 +161,12 @@ impl Context {
                         WindowBuilder::new()
                             .with_title("GBMU - Tilesheet")
                             .with_inner_size(size)
+                            .with_min_inner_size(size)
                             .build(event_loop)
                             .expect("cannot build tilesheet window")
                     };
                     self.tilesheet_ctx.replace(ppu_tool::Context::new(
-                        GBPixels::new::<PPU_TILESHEET_WIDTH, PPU_TILESHEET_HEIGHT>(window)?,
+                        GBPixels::new(window)?,
                         self.event_proxy.clone(),
                         ppu_tool::ToolType::Tilesheet,
                     ));
@@ -176,11 +179,12 @@ impl Context {
                         WindowBuilder::new()
                             .with_title("GBMU - Tilemap")
                             .with_inner_size(size)
+                            .with_min_inner_size(size)
                             .build(event_loop)
                             .expect("cannot build tilemap window")
                     };
                     self.tilemap_ctx.replace(ppu_tool::Context::new(
-                        GBPixels::new::<PPU_TILEMAP_DIM, PPU_TILEMAP_DIM>(window)?,
+                        GBPixels::new(window)?,
                         self.event_proxy.clone(),
                         ppu_tool::ToolType::Tilemap,
                     ));
@@ -196,11 +200,12 @@ impl Context {
                         WindowBuilder::new()
                             .with_title("GBMU - Spritesheet")
                             .with_inner_size(size)
+                            .with_min_inner_size(size)
                             .build(event_loop)
                             .expect("cannot build spritesheet window")
                     };
                     self.spritesheet_ctx.replace(ppu_tool::Context::new(
-                        GBPixels::new::<PPU_SPRITE_RENDER_WIDTH, PPU_SPRITE_RENDER_HEIGHT>(window)?,
+                        GBPixels::new(window)?,
                         self.event_proxy.clone(),
                         ppu_tool::ToolType::Spritesheet,
                     ));

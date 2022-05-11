@@ -22,15 +22,17 @@ impl From<ToolType> for WindowType {
     }
 }
 
-pub struct Context {
-    pub window: GBPixels,
+pub struct Context<const WIDTH: u32, const HEIGHT: u32, const MENU_BAR_SIZE: u32> {
+    pub window: GBPixels<WIDTH, HEIGHT, MENU_BAR_SIZE>,
     event_proxy: EventLoopProxy<CustomEvent>,
     tool_type: ToolType,
 }
 
-impl Context {
+impl<const WIDTH: u32, const HEIGHT: u32, const MENU_BAR_SIZE: u32>
+    Context<WIDTH, HEIGHT, MENU_BAR_SIZE>
+{
     pub fn new(
-        window: GBPixels,
+        window: GBPixels<WIDTH, HEIGHT, MENU_BAR_SIZE>,
         event_proxy: EventLoopProxy<CustomEvent>,
         tool_type: ToolType,
     ) -> Self {
@@ -43,7 +45,9 @@ impl Context {
 }
 
 /// Context impl for keybindings window
-impl Context {
+impl<const WIDTH: u32, const HEIGHT: u32, const MENU_BAR_SIZE: u32>
+    Context<WIDTH, HEIGHT, MENU_BAR_SIZE>
+{
     pub(crate) fn redraw_window(&mut self, ppu: &Ppu) -> anyhow::Result<()> {
         let window = &mut self.window;
 
