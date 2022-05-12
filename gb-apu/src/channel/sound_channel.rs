@@ -204,9 +204,9 @@ where
                         WidthMode::Width14Bits => 0,
                     };
                     res |= self.timer.divisor_code & 0x7;
-                    return Ok(res);
+                    Ok(res)
                 } else {
-                    return Ok(self.timer.frequency as u8);
+                    Ok(self.timer.frequency as u8)
                 }
             }
             Nr14 | Nr24 | Nr34 | Nr44 => {
