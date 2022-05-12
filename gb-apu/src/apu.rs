@@ -5,7 +5,7 @@ use crate::{
     channel::sound_channel::SoundChannel, control::frame_sequencer::FrameSequencer, ChannelType,
 };
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
-use cpal::{SampleRate, Stream, StreamConfig};
+use cpal::{SampleFormat, SampleRate, Stream, StreamConfig};
 use gb_bus::{Address, Bus, Error, FileOperation, IORegArea, Source};
 use gb_clock::{Tick, Ticker};
 
@@ -64,6 +64,7 @@ impl Apu {
             .expect("no supported config?!")
             .with_max_sample_rate();
         let err_fn = |err| eprintln!("an error occurred on the output audio stream: {}", err);
+        let sample_format = supported_config.sample_format();
         let config: StreamConfig = supported_config.into();
         let channels = config.channels as usize;
 
@@ -77,15 +78,30 @@ impl Apu {
             }
         };
 
-        let stream = device
-            .build_output_stream(
+        let stream = match sample_format {
+            SampleFormat::F32 => device.build_output_stream(
                 &config,
                 move |data: &mut [f32], _: &cpal::OutputCallbackInfo| {
                     Self::write_data(data, channels, &mut next_value)
                 },
                 err_fn,
-            )
-            .unwrap();
+            ),
+            SampleFormat::I16 => device.build_output_stream(
+                &config,
+                move |data: &mut [i16], _: &cpal::OutputCallbackInfo| {
+                    Self::write_data(data, channels, &mut next_value)
+                },
+                err_fn,
+            ),
+            SampleFormat::U16 => device.build_output_stream(
+                &config,
+                move |data: &mut [u16], _: &cpal::OutputCallbackInfo| {
+                    Self::write_data(data, channels, &mut next_value)
+                },
+                err_fn,
+            ),
+        }
+        .unwrap();
         stream.play().unwrap();
         (stream, config.sample_rate)
     }
