@@ -3,16 +3,15 @@ use std::sync::{Arc, Mutex};
 use crate::{
     channel::sound_channel::SoundChannel, control::frame_sequencer::FrameSequencer, ChannelType,
 };
+use crate::{NB_CYCLES_512_HZ, T_CYCLE_FREQUENCY};
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
-use cpal::{Stream, StreamConfig};
+use cpal::{SampleFormat, SampleRate, Stream, StreamConfig};
 use gb_bus::{Address, Bus, Error, FileOperation, IORegArea, Source};
 use gb_clock::{Tick, Ticker};
 
-const NB_CYCLES_512_HZ: u16 = 0x2000;
-const NB_CYCLES_44_100_HZ: u16 = 0x5F;
-
 pub struct Apu {
-    cycle_counter: u16,
+    cycle_counter: u32,
+    nb_cycles_per_sample: u32,
     enabled: bool,
     buffer: Arc<Mutex<Vec<f32>>>,
     sound_channels: Vec<SoundChannel>,
@@ -23,7 +22,11 @@ pub struct Apu {
 }
 
 impl Apu {
-    pub fn new(input_buffer: Arc<Mutex<Vec<f32>>>, stream: Option<Stream>) -> Apu {
+    pub fn new(
+        input_buffer: Arc<Mutex<Vec<f32>>>,
+        stream: Option<Stream>,
+        sample_rate: SampleRate,
+    ) -> Apu {
         // Channels order in vector is important !
         let sound_channels = vec![
             SoundChannel::new(ChannelType::SquareWave, true),
@@ -34,6 +37,7 @@ impl Apu {
 
         Self {
             cycle_counter: 0,
+            nb_cycles_per_sample: T_CYCLE_FREQUENCY / sample_rate.0,
             enabled: false,
             buffer: input_buffer,
             sound_channels,
@@ -44,12 +48,14 @@ impl Apu {
         }
     }
 
-    pub fn init_audio_output(input_buffer: Arc<Mutex<Vec<f32>>>) -> Stream {
+    pub fn init_audio_output(input_buffer: Arc<Mutex<Vec<f32>>>) -> (Stream, SampleRate) {
         let host = cpal::default_host();
-        let device = host
+        let mut device = host
             .default_output_device()
             .expect("no output device available");
-
+        if device.supported_output_configs().is_err() {
+            device = host.devices().unwrap().next().unwrap();
+        }
         let mut supported_configs_range = device
             .supported_output_configs()
             .expect("error while querying configs");
@@ -58,6 +64,7 @@ impl Apu {
             .expect("no supported config?!")
             .with_max_sample_rate();
         let err_fn = |err| eprintln!("an error occurred on the output audio stream: {}", err);
+        let sample_format = supported_config.sample_format();
         let config: StreamConfig = supported_config.into();
         let channels = config.channels as usize;
 
@@ -71,17 +78,32 @@ impl Apu {
             }
         };
 
-        let stream = device
-            .build_output_stream(
+        let stream = match sample_format {
+            SampleFormat::F32 => device.build_output_stream(
                 &config,
                 move |data: &mut [f32], _: &cpal::OutputCallbackInfo| {
                     Self::write_data(data, channels, &mut next_value)
                 },
                 err_fn,
-            )
-            .unwrap();
+            ),
+            SampleFormat::I16 => device.build_output_stream(
+                &config,
+                move |data: &mut [i16], _: &cpal::OutputCallbackInfo| {
+                    Self::write_data(data, channels, &mut next_value)
+                },
+                err_fn,
+            ),
+            SampleFormat::U16 => device.build_output_stream(
+                &config,
+                move |data: &mut [u16], _: &cpal::OutputCallbackInfo| {
+                    Self::write_data(data, channels, &mut next_value)
+                },
+                err_fn,
+            ),
+        }
+        .unwrap();
         stream.play().unwrap();
-        stream
+        (stream, config.sample_rate)
     }
 
     fn write_data<T>(output: &mut [T], channels: usize, next_sample: &mut dyn FnMut() -> f32)
@@ -169,9 +191,7 @@ impl Ticker for Apu {
             }
         }
 
-        // Sample rate is clocked at 44_100 Hz
-        // 0x400_000 (Tcycle freq.) / 0x5F ~ 44_100 Hz
-        if self.cycle_counter % NB_CYCLES_44_100_HZ == 0 {
+        if self.cycle_counter % self.nb_cycles_per_sample == 0 {
             self.add_sample();
         }
     }
