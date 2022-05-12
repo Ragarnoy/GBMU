@@ -87,7 +87,7 @@ pub fn draw_egui(context: &mut Context, #[cfg(feature = "debug_fps")] fps: f64) 
                 .show(egui_ctx, |ui| {
                     // egui::containers::CentralPanel::default().show(egui_ctx, |ui| {
                     egui::menu::bar(ui, |ui| {
-                        ui.set_height(crate::constant::MENU_BAR_SIZE);
+                        ui.set_height(crate::constant::MENU_BAR_SIZE - 1.0);
                         // ui.style_mut().override_text_style = Some(egui::TextStyle::Heading);
                         file::draw_ui(ui, &context.event_proxy);
                         tools::draw_ui(ui, &context.event_proxy);
@@ -102,6 +102,7 @@ pub fn draw_egui(context: &mut Context, #[cfg(feature = "debug_fps")] fps: f64) 
                 });
             let mut central_frame = egui::Frame::none();
             central_frame.margin = egui::style::Margin::symmetric(margin.0, margin.1);
+            central_frame.margin.top += 1.0;
             egui::containers::CentralPanel::default()
                 .frame(central_frame)
                 .show(egui_ctx, |ui| {
