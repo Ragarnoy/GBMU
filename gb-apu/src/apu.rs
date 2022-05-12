@@ -8,6 +8,9 @@ use cpal::{Stream, StreamConfig};
 use gb_bus::{Address, Bus, Error, FileOperation, IORegArea, Source};
 use gb_clock::{Tick, Ticker};
 
+const NB_CYCLES_512_HZ: u16 = 0x2000;
+const NB_CYCLES_44_100_HZ: u16 = 0x5F;
+
 pub struct Apu {
     cycle_counter: u16,
     enabled: bool,
@@ -155,24 +158,20 @@ impl Ticker for Apu {
             self.sound_channels[i].step();
         }
 
-        if self.cycle_counter >= 0x2000 {
-            self.cycle_counter %= 0x2000;
+        // Frame sequencer is clocked at 512 Hz
+        // 0x400_000 (Tcycle freq.) / 0x2000 = 512 Hz
+        if self.cycle_counter >= NB_CYCLES_512_HZ {
+            self.cycle_counter %= NB_CYCLES_512_HZ;
 
             let step = self.frame_sequencer.step();
             for i in 0..self.sound_channels.len() {
-                if step == 0 || step == 2 || step == 4 || step == 6 {
-                    self.sound_channels[i].length_counter_step();
-                }
-                if step == 2 || step == 6 {
-                    self.sound_channels[i].sweep_step();
-                }
-                if step == 7 {
-                    self.sound_channels[i].volume_envelope_step();
-                }
+                self.sound_channels[i].frame_sequencer(step);
             }
         }
 
-        if self.cycle_counter % 0x5F == 0 {
+        // Sample rate is clocked at 44_100 Hz
+        // 0x400_000 (Tcycle freq.) / 0x5F ~ 44_100 Hz
+        if self.cycle_counter % NB_CYCLES_44_100_HZ == 0 {
             self.add_sample();
         }
     }
