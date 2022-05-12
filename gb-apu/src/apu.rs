@@ -1,16 +1,13 @@
 use std::sync::{Arc, Mutex};
 
-use crate::T_CYCLE_FREQUENCY;
 use crate::{
     channel::sound_channel::SoundChannel, control::frame_sequencer::FrameSequencer, ChannelType,
 };
+use crate::{NB_CYCLES_512_HZ, T_CYCLE_FREQUENCY};
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use cpal::{SampleFormat, SampleRate, Stream, StreamConfig};
 use gb_bus::{Address, Bus, Error, FileOperation, IORegArea, Source};
 use gb_clock::{Tick, Ticker};
-
-const NB_CYCLES_512_HZ: u16 = 0x2000;
-const NB_CYCLES_44_100_HZ: u16 = 0x5F;
 
 pub struct Apu {
     cycle_counter: u32,
