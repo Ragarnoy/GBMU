@@ -234,7 +234,7 @@ impl Context {
         crate::ui::draw_egui(
             self,
             #[cfg(feature = "debug_fps")]
-            self.time_frame.instant_fps(),
+            self.time_frame.fps(),
         );
 
         let main_pixels = &mut self.main_window.pixels;

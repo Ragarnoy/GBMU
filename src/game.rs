@@ -5,7 +5,6 @@ mod utils;
 use crate::{config::Mode, constant::AUDIO_BUFFER_SIZE};
 
 use crate::path::game_save_path;
-#[cfg(feature = "audio")]
 use gb_apu::apu::Apu;
 use gb_bus::{
     generic::{CharDevice, SimpleRW},
@@ -36,7 +35,7 @@ use utils::mbc_with_save_state;
 
 #[cfg(feature = "registers_logs")]
 use std::io::BufWriter;
-#[cfg(feature = "audio")]
+
 use std::sync::{Arc, Mutex};
 use std::{cell::RefCell, fs::File, ops::DerefMut, path::Path, rc::Rc};
 
@@ -53,7 +52,7 @@ pub struct Game {
     pub hdma: Rc<RefCell<Hdma>>,
     pub dma: Rc<RefCell<Dma>>,
     pub joypad: Rc<RefCell<Joypad>>,
-    #[cfg(feature = "audio")]
+
     pub apu: Rc<RefCell<Apu>>,
     pub addr_bus: AddressBus,
     scheduled_stop: Option<ScheduledStop>,
@@ -146,12 +145,11 @@ impl Game {
         let hdma = Rc::new(RefCell::new(Hdma::default()));
         let serial = Rc::new(RefCell::new(gb_bus::Serial::new(cgb_mode)));
 
-        #[cfg(feature = "audio")]
         let buffer: Arc<Mutex<Vec<f32>>> =
             Arc::new(Mutex::new(Vec::with_capacity(AUDIO_BUFFER_SIZE)));
-        #[cfg(feature = "audio")]
+
         let (stream, sample_rate) = Apu::init_audio_output(buffer.clone());
-        #[cfg(feature = "audio")]
+
         let apu = Rc::new(RefCell::new(Apu::new(buffer, Some(stream), sample_rate)));
 
         let joypad = Rc::new(RefCell::new(Joypad::from_config(joypad_config)));
@@ -165,7 +163,7 @@ impl Game {
                     .with_area(IORegArea::RP, Rc::new(RefCell::new(CharDevice(0))))
                     .with_area(IORegArea::Svbk, wram.clone());
             }
-            #[cfg(feature = "audio")]
+
             io_bus.with_sound(apu.clone());
             io_bus
                 .with_area(IORegArea::Joy, joypad.clone())
@@ -216,7 +214,7 @@ impl Game {
             dma,
             hdma,
             joypad,
-            #[cfg(feature = "audio")]
+
             apu,
             addr_bus: bus,
             scheduled_stop: None,
@@ -242,19 +240,6 @@ impl Game {
                 .borrow_mut()
                 .check_hdma_state(&mut self.cpu, &self.ppu);
 
-            #[cfg(not(feature = "audio"))]
-            let frame_not_finished = counted_cycles!(
-                self.clock,
-                &mut self.addr_bus,
-                self.timer.borrow_mut().deref_mut(),
-                &mut self.ppu,
-                self.joypad.borrow_mut().deref_mut(),
-                self.dma.borrow_mut().deref_mut(),
-                &mut self.cpu,
-                self.hdma.borrow_mut().deref_mut()
-            );
-
-            #[cfg(feature = "audio")]
             let frame_not_finished = counted_cycles!(
                 self.clock,
                 &mut self.addr_bus,
@@ -285,7 +270,6 @@ impl Game {
             false
         }
     }
-
     pub fn is_audio_buffer_full(&self) -> bool {
         (*self.apu.borrow()).is_buffer_full()
     }

@@ -22,7 +22,6 @@ time_frame = []
 time_stat_samples = []
 debug_fps = ["time_stat_samples"]
 bios = []
-audio = ["gb-apu"]
 save_state = [
   "gb-cpu/serialization",
   "gb-bus/serialization",
@@ -53,7 +52,7 @@ gb-roms = { path = "./gb-roms" }
 gb-clock = { path = "./gb-clock" }
 gb-timer = { path = "./gb-timer" }
 gb-dma = { path = "./gb-dma" }
-gb-apu = { path = "./gb-apu", optional = true }
+gb-apu = { path = "./gb-apu" }
 env_logger = "0.9.0"
 
 [workspace]

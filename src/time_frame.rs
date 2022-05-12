@@ -16,7 +16,7 @@ pub struct TimeStat {
 
 impl TimeStat {
     #[cfg(feature = "time_stat_samples")]
-    const SAMPLES_MAX_COUNT: usize = 120;
+    const SAMPLES_MAX_COUNT: usize = 10;
 
     pub fn add_sample(&mut self, sample: Duration) {
         let min = self.min.get_or_insert(sample);
@@ -48,14 +48,6 @@ impl TimeStat {
             acc + elt.as_nanos() as f64 / self.samples.len() as f64
         });
         1_000_000_000.0 / mean
-    }
-
-    pub fn instant_fps(&self) -> f64 {
-        if self.last_value != Duration::ZERO {
-            1_000_000_000.0 / self.last_value.as_nanos() as f64
-        } else {
-            f64::NAN
-        }
     }
 }
 
