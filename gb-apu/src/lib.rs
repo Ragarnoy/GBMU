@@ -20,3 +20,5 @@ pub const MASK_UNUSED_BITS_9F: u8 = 0x9F;
 pub const MASK_UNUSED_BITS_BF: u8 = 0xBF;
 pub const MASK_UNUSED_BITS_70: u8 = 0x70;
 pub const MASK_UNUSED_BITS_80: u8 = 0x80;
+pub const T_CYCLE_FREQUENCY: u32 = 0x40_0000;
+pub const NB_CYCLES_512_HZ: u32 = 0x2000;
