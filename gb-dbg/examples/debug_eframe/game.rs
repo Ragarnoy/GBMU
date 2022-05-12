@@ -92,7 +92,6 @@ impl Game {
     }
 }
 
-//TODO Temporary for now it looks like ass
 impl From<&Game> for Vec<RegisterMap<CpuRegs>> {
     fn from(registers: &Game) -> Self {
         vec![

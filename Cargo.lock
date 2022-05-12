@@ -414,7 +414,6 @@ dependencies = [
  "libc",
  "num-integer",
  "num-traits",
- "serde",
  "time",
  "winapi",
 ]
@@ -1357,7 +1356,6 @@ dependencies = [
  "futures",
  "gb-bus",
  "gb-clock",
- "gb-roms",
  "gb-test",
  "log",
  "num_enum",
@@ -1374,7 +1372,6 @@ dependencies = [
  "egui_memory_editor",
  "gb-breakpoint",
  "gb-bus",
- "gb-cpu",
  "gb-roms",
  "log",
  "nom",
@@ -1396,12 +1393,10 @@ dependencies = [
 name = "gb-joypad"
 version = "0.0.0"
 dependencies = [
- "egui",
  "gb-bus",
  "gb-clock",
  "lazy_static",
  "log",
- "modular-bitfield",
  "serde",
  "winit",
 ]
@@ -1428,7 +1423,6 @@ dependencies = [
  "egui",
  "gb-bus",
  "gb-clock",
- "gb-lcd",
  "log",
  "serde",
  "serde-big-array",
@@ -1438,7 +1432,6 @@ dependencies = [
 name = "gb-roms"
 version = "0.1.0"
 dependencies = [
- "chrono",
  "clap 3.1.18",
  "gb-bus",
  "gb-rtc",
@@ -1452,7 +1445,6 @@ dependencies = [
 name = "gb-rtc"
 version = "0.1.0"
 dependencies = [
- "chrono",
  "serde",
 ]
 
@@ -1502,7 +1494,6 @@ dependencies = [
  "serde",
  "serde_yaml",
  "winit",
- "winit_input_helper",
 ]
 
 [[package]]
@@ -3752,15 +3743,6 @@ dependencies = [
  "web-sys",
  "winapi",
  "x11-dl",
-]
-
-[[package]]
-name = "winit_input_helper"
-version = "0.12.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f114b4fe1f38c80027543eb8a0711634fb9136a5cd18e8e990122aaea21f9302"
-dependencies = [
- "winit",
 ]
 
 [[package]]

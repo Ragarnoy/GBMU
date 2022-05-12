@@ -30,10 +30,12 @@ pub fn create_root_config_path() -> std::io::Result<PathBuf> {
 }
 
 /// Create a standardize rom name id
-fn game_id(rom_filename: &str) -> PathBuf {
-    let mut rom_path = PathBuf::from(rom_filename);
-    rom_path.set_extension("");
+fn game_id(rom_filename: &str) -> String {
+    let rom_path = PathBuf::from(rom_filename);
     rom_path
+        .file_stem()
+        .map(|filename| filename.to_string_lossy().into_owned())
+        .unwrap_or_else(|| rom_filename.replace('/', "_"))
 }
 
 /// Return the keybindings config file
@@ -41,4 +43,14 @@ pub fn keybinding_path() -> PathBuf {
     let mut path = root_config_path();
     path.push("keybindings.yaml");
     path
+}
+
+#[test]
+fn test_game_id() {
+    assert_eq!("foo", game_id("foo"));
+    assert_eq!("foo", game_id("foo.bar"));
+    assert_eq!("foo", game_id("bar/foo"));
+    assert_eq!("foo", game_id("bar/foo.fuz"));
+    assert_eq!("foo", game_id("nop/bar/foo"));
+    assert_eq!("foo", game_id("nop/bar/foo.fuz"));
 }
