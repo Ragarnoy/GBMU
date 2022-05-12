@@ -12,6 +12,13 @@ pub enum ChannelType {
 pub const OUTPUT_CHANNELS_NB: usize = 2;
 pub const SAMPLE_RATE: usize = 44100;
 pub const SAMPLES_PER_FRAME: usize = SAMPLE_RATE / 60 * OUTPUT_CHANNELS_NB;
-pub const BUFFER_SIZE: usize = 2048;
+
+pub const MASK_UNUSED_BITS_FF: u8 = 0xFF;
+pub const MASK_UNUSED_BITS_3F: u8 = 0x3F;
+pub const MASK_UNUSED_BITS_7F: u8 = 0x7F;
+pub const MASK_UNUSED_BITS_9F: u8 = 0x9F;
+pub const MASK_UNUSED_BITS_BF: u8 = 0xBF;
+pub const MASK_UNUSED_BITS_70: u8 = 0x70;
+pub const MASK_UNUSED_BITS_80: u8 = 0x80;
 pub const T_CYCLE_FREQUENCY: u32 = 0x40_0000;
 pub const NB_CYCLES_512_HZ: u32 = 0x2000;

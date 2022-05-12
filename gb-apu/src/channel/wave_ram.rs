@@ -1,9 +1,9 @@
 const SAMPLES_NB: usize = 32;
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone)]
 pub struct ProgrammableWave {
     samples: [u8; SAMPLES_NB],
     step: usize,
-    pub volume_shift: u8,
+    pub bits: u8,
 }
 
 impl ProgrammableWave {
@@ -11,8 +11,18 @@ impl ProgrammableWave {
         self.step = (self.step + 1) % SAMPLES_NB;
     }
 
+    fn volume_shift(&self) -> u8 {
+        match (self.bits & 0b0110_0000) >> 5 {
+            0b00 => 4, // mute
+            0b01 => 0, // 100%
+            0b10 => 1, // 50%
+            0b11 => 2, // 25%
+            _ => unreachable!(),
+        }
+    }
+
     pub fn get_dac_input(&self) -> f32 {
-        (self.samples[self.step] >> self.volume_shift) as f32
+        (self.samples[self.step] >> self.volume_shift()) as f32
     }
 
     pub fn get_samples_at_index(&self, i: usize) -> u8 {

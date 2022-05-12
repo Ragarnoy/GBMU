@@ -2,6 +2,7 @@ use std::sync::{Arc, Mutex};
 
 use crate::{
     channel::sound_channel::SoundChannel, control::frame_sequencer::FrameSequencer, ChannelType,
+    MASK_UNUSED_BITS_70,
 };
 use crate::{NB_CYCLES_512_HZ, T_CYCLE_FREQUENCY};
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
@@ -220,7 +221,7 @@ where
             Nr41 | Nr42 | Nr43 | Nr44 => self.sound_channels[3].read(addr, None),
             Nr50 => Ok(self.master),
             Nr51 => Ok(self.panning),
-            Nr52 => Ok(self.get_power_channels_statuses_byte()),
+            Nr52 => Ok(self.get_power_channels_statuses_byte() | MASK_UNUSED_BITS_70),
             _ => Err(Error::SegmentationFault(addr.into())),
         }
     }
@@ -232,25 +233,56 @@ where
             WaveRamC, WaveRamD, WaveRamE, WaveRamF,
         };
         match addr.area_type() {
-            Nr10 | Nr11 | Nr12 | Nr13 | Nr14 => return self.sound_channels[0].write(v, addr, None),
-            Nr21 | Nr22 | Nr23 | Nr24 => return self.sound_channels[1].write(v, addr, None),
-            Nr30 | Nr31 | Nr32 | Nr33 | Nr34 | WaveRam0 | WaveRam1 | WaveRam2 | WaveRam3
-            | WaveRam4 | WaveRam5 | WaveRam6 | WaveRam7 | WaveRam8 | WaveRam9 | WaveRamA
-            | WaveRamB | WaveRamC | WaveRamD | WaveRamE | WaveRamF => {
-                return self.sound_channels[2].write(v, addr, None)
+            Nr10 | Nr11 | Nr12 | Nr13 | Nr14 => {
+                if self.enabled {
+                    return self.sound_channels[0].write(v, addr, None);
+                } else {
+                    return Ok(());
+                }
             }
-            Nr41 | Nr42 | Nr43 | Nr44 => return self.sound_channels[3].write(v, addr, None),
-            Nr50 => self.master = v,
-            Nr51 => self.panning = v,
+            Nr21 | Nr22 | Nr23 | Nr24 => {
+                if self.enabled {
+                    return self.sound_channels[1].write(v, addr, None);
+                } else {
+                    return Ok(());
+                }
+            }
+            Nr30 | Nr31 | Nr32 | Nr33 | Nr34 => {
+                if self.enabled {
+                    return self.sound_channels[2].write(v, addr, None);
+                } else {
+                    return Ok(());
+                }
+            }
+            WaveRam0 | WaveRam1 | WaveRam2 | WaveRam3 | WaveRam4 | WaveRam5 | WaveRam6
+            | WaveRam7 | WaveRam8 | WaveRam9 | WaveRamA | WaveRamB | WaveRamC | WaveRamD
+            | WaveRamE | WaveRamF => return self.sound_channels[2].write(v, addr, None),
+            Nr41 | Nr42 | Nr43 | Nr44 => {
+                if self.enabled {
+                    return self.sound_channels[3].write(v, addr, None);
+                } else {
+                    return Ok(());
+                }
+            }
+            Nr50 => {
+                if self.enabled {
+                    self.master = v;
+                }
+            }
+            Nr51 => {
+                if self.enabled {
+                    self.panning = v;
+                }
+            }
             Nr52 => {
                 let was_enabled = self.enabled;
                 let enabled = v & 0x80 != 0x00;
                 if was_enabled && !enabled {
                     self.sound_channels = vec![
-                        SoundChannel::new(ChannelType::SquareWave, true),
-                        SoundChannel::new(ChannelType::SquareWave, false),
-                        SoundChannel::new(ChannelType::WaveForm, false),
-                        SoundChannel::new(ChannelType::Noise, false),
+                        self.sound_channels[0].reset(),
+                        self.sound_channels[1].reset(),
+                        self.sound_channels[2].reset(),
+                        self.sound_channels[3].reset(),
                     ];
                     self.master = 0;
                     self.panning = 0;
