@@ -5,10 +5,8 @@ edition = "2021"
 
 [dependencies]
 winit = { version = "0.26.1", features = ["serde"] }
-egui = "0.17"
 log = { version = "0.4" }
 serde = { version = "1.0", features = ["derive"] }
-modular-bitfield = { version = "0.11" }
 gb-bus = { path = "../gb-bus" }
 gb-clock = { path = "../gb-clock" }
 lazy_static = "1.4"

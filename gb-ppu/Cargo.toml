@@ -9,7 +9,6 @@ autoexamples = false
 
 [dependencies]
 gb-clock = { path = "../gb-clock" }
-gb-lcd = { path = "../gb-lcd" }
 gb-bus = { path = "../gb-bus" }
 log = { version = "0.4" }
 serde = { version = "1.0", features = ["std", "derive", "rc"], optional = true }
