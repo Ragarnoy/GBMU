@@ -54,7 +54,7 @@ impl Apu {
             .default_output_device()
             .expect("no output device available");
         if device.supported_output_configs().is_err() {
-            device = host.devices().unwrap().nth(0).unwrap();
+            device = host.devices().unwrap().next().unwrap();
         }
         let mut supported_configs_range = device
             .supported_output_configs()
