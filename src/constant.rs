@@ -15,4 +15,4 @@ pub const PREFERED_ROM_EXTS: [&str; 3] = ["rom", "gb", "gbc"];
 
 pub const MENU_BAR_SIZE: f32 = 30.;
 
-pub const AUDIO_BUFFER_SIZE: usize = 1024;
+pub const AUDIO_BUFFER_SIZE: usize = 2048;
