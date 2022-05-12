@@ -7,7 +7,7 @@ use gb_ppu::Ppu;
 
 #[derive(Clone, Copy)]
 pub enum ToolType {
-    Tilesheet,
+    Tilesheet { inverted: bool },
     Tilemap { window: bool },
     Spritesheet { inverted: bool },
 }
@@ -15,7 +15,7 @@ pub enum ToolType {
 impl From<ToolType> for WindowType {
     fn from(tool_type: ToolType) -> WindowType {
         match tool_type {
-            ToolType::Tilesheet => WindowType::Tilesheet,
+            ToolType::Tilesheet { inverted: _ } => WindowType::Tilesheet,
             ToolType::Tilemap { window: _ } => WindowType::Tilemap,
             ToolType::Spritesheet { inverted: _ } => WindowType::Spritesheet,
         }
@@ -64,7 +64,9 @@ impl<const WIDTH: u32, const HEIGHT: u32, const MENU_BAR_SIZE: u32>
                     egui::menu::bar(ui, |ui| {
                         ui.set_height(crate::constant::MENU_BAR_SIZE - 1.0);
                         match &mut self.tool_type {
-                            ToolType::Tilesheet => {}
+                            ToolType::Tilesheet { ref mut inverted } => {
+                                ui.checkbox(inverted, "inverted");
+                            }
                             ToolType::Tilemap { ref mut window } => {
                                 ui.checkbox(window, "window");
                             }
@@ -85,8 +87,8 @@ impl<const WIDTH: u32, const HEIGHT: u32, const MENU_BAR_SIZE: u32>
         });
 
         match self.tool_type {
-            ToolType::Tilesheet => {
-                let image = ppu.tilesheet_image();
+            ToolType::Tilesheet { inverted } => {
+                let image = ppu.tilesheet_image(inverted);
                 let frame = pixels.get_frame();
                 load_image_to_frame(&image, frame);
             }

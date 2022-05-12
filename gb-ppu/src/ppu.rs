@@ -6,7 +6,7 @@ use crate::memory::{BankSelector, Lock, Lockable, Oam, PPUMem, Vram};
 use crate::registers::{LcdReg, PPURegisters, PaletteRef};
 use crate::Sprite;
 use crate::{
-    GB_SCREEN_HEIGHT, GB_SCREEN_WIDTH, SPRITE_LIST_PER_LINE, SPRITE_LIST_RENDER_HEIGHT,
+    Color, GB_SCREEN_HEIGHT, GB_SCREEN_WIDTH, SPRITE_LIST_PER_LINE, SPRITE_LIST_RENDER_HEIGHT,
     SPRITE_LIST_RENDER_WIDTH, SPRITE_RENDER_HEIGHT, SPRITE_RENDER_WIDTH, TILEMAP_DIM,
     TILEMAP_TILE_COUNT, TILEMAP_TILE_DIM_COUNT, TILESHEET_HEIGHT, TILESHEET_TILE_COUNT,
     TILESHEET_WIDTH,
@@ -121,28 +121,56 @@ impl Ppu {
     /// Create an image of the current tilesheet.
     ///
     /// This function is used for debugging purpose.
-    pub fn tilesheet_image(&self) -> ImageRGB<TILESHEET_WIDTH, TILESHEET_HEIGHT> {
+    pub fn tilesheet_image(
+        &self,
+        invert_pixel: bool,
+    ) -> ImageRGB<TILESHEET_WIDTH, TILESHEET_HEIGHT> {
         let mut image = [[[255; 3]; TILESHEET_WIDTH]; TILESHEET_HEIGHT];
         let mut x = 0;
         let mut y = 0;
         let vram = self.vram.borrow();
-        let lcd_reg = self.lcd_reg.borrow();
         for k in 0..TILESHEET_TILE_COUNT {
-            let tile = vram.read_8x8_tile(k, None).unwrap();
+            let tile = vram.read_8x8_tile(k, Some(BankSelector::Bank0)).unwrap();
             for (j, row) in tile.iter().enumerate() {
                 for (i, pixel) in row.iter().rev().enumerate() {
-                    image[y * 8 + j][x * 8 + i] = lcd_reg
-                        .pal_mono
-                        .bg()
-                        .get_color(*pixel)
-                        .unwrap_or_default()
-                        .into();
+                    let color: Color = (*pixel).try_into().unwrap();
+                    let mut rgb: [u8; 3] = color.into();
+                    if invert_pixel {
+                        rgb[0] = 255 - rgb[0];
+                        rgb[1] = 255 - rgb[1];
+                        rgb[2] = 255 - rgb[2];
+                    }
+                    image[y * 8 + j][x * 8 + i] = rgb;
                 }
             }
             x += 1;
-            if x * 8 >= TILESHEET_WIDTH {
+            if x * 8 >= TILESHEET_WIDTH / 2 {
                 x = 0;
                 y += 1;
+            }
+        }
+        if self.cgb_enabled {
+            x = 0;
+            y = 0;
+            for k in 0..TILESHEET_TILE_COUNT {
+                let tile = vram.read_8x8_tile(k, Some(BankSelector::Bank1)).unwrap();
+                for (j, row) in tile.iter().enumerate() {
+                    for (i, pixel) in row.iter().rev().enumerate() {
+                        let color: Color = (*pixel).try_into().unwrap();
+                        let mut rgb: [u8; 3] = color.into();
+                        if invert_pixel {
+                            rgb[0] = 255 - rgb[0];
+                            rgb[1] = 255 - rgb[1];
+                            rgb[2] = 255 - rgb[2];
+                        }
+                        image[y * 8 + j][x * 8 + i + TILESHEET_WIDTH / 2] = rgb;
+                    }
+                }
+                x += 1;
+                if x * 8 >= TILESHEET_WIDTH / 2 {
+                    x = 0;
+                    y += 1;
+                }
             }
         }
         image

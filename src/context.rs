@@ -168,7 +168,7 @@ impl Context {
                     self.tilesheet_ctx.replace(ppu_tool::Context::new(
                         GBPixels::new(window)?,
                         self.event_proxy.clone(),
-                        ppu_tool::ToolType::Tilesheet,
+                        ppu_tool::ToolType::Tilesheet { inverted: false },
                     ));
                 }
             }
