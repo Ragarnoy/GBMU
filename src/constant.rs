@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 /// Name of the application
 pub const APP_NAME: &str = "gbmu";
 /// Name of the organization
@@ -16,7 +14,5 @@ pub const PREFERED_ROM_EXTS: [&str; 3] = ["rom", "gb", "gbc"];
 // pub const PREFERED_SAVE_STATE_EXT: [&str; 1] = [SAVE_STATE_EXT];
 
 pub const MENU_BAR_SIZE: f32 = 30.;
-// /// FPS we want to have
-// // pub const TARGET_FPS_X10: u64 = 597;    // the true value
-pub const TARGET_FPS_X10: u64 = 600;
-pub const TARGET_FRAME_DURATION: Duration = Duration::from_nanos(10_000_000_000 / TARGET_FPS_X10);
+
+pub const AUDIO_BUFFER_SIZE: usize = 1024;

@@ -66,7 +66,9 @@ impl Apu {
             .with_max_sample_rate();
         let err_fn = |err| eprintln!("an error occurred on the output audio stream: {}", err);
         let sample_format = supported_config.sample_format();
-        let config: StreamConfig = supported_config.into();
+        let mut config: StreamConfig = supported_config.into();
+        config.buffer_size =
+            cpal::BufferSize::Fixed(input_buffer.lock().unwrap().capacity() as u32);
         let channels = config.channels as usize;
 
         // callback used to get the next sample
@@ -117,6 +119,11 @@ impl Apu {
                 *sample = value;
             }
         }
+    }
+
+    pub fn is_buffer_full(&self) -> bool {
+        let buffer = self.buffer.lock().unwrap();
+        buffer.len() == buffer.capacity()
     }
 
     fn add_sample(&mut self) {

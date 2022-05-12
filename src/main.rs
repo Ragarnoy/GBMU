@@ -40,12 +40,8 @@ fn main() -> Result<(), Error> {
     let event_loop_proxy = event_loop.create_proxy();
     let mut context = Context::new(main_window, event_loop_proxy);
     context.load_config(config);
-    let mut render_time = std::time::Instant::now();
 
     event_loop.run(move |event, event_loop, control_flow| match event {
-        Event::NewEvents(_) => {
-            render_time = std::time::Instant::now();
-        }
         Event::WindowEvent { window_id, event } => {
             context.process_window_event(window_id, event);
         }
@@ -67,7 +63,11 @@ fn main() -> Result<(), Error> {
         }
         Event::MainEventsCleared => {
             if let Some(ref mut game) = context.game {
-                while game.cycle() {
+                let mut processing_frame = true;
+                while processing_frame {
+                    if !game.is_audio_buffer_full() {
+                        processing_frame = game.cycle();
+                    }
                     if let Some(status) = context
                         .debugger_ctx
                         .as_mut()
@@ -88,20 +88,12 @@ fn main() -> Result<(), Error> {
                 keybindings.window.request_redraw();
             }
         }
-        Event::RedrawEventsCleared => {
-            let elapsed = render_time.elapsed();
-            if control_flow != &ControlFlow::Exit {
-                if elapsed < constant::TARGET_FRAME_DURATION {
-                    let time_to_sleep = constant::TARGET_FRAME_DURATION - elapsed;
-                    *control_flow =
-                        ControlFlow::WaitUntil(std::time::Instant::now() + time_to_sleep);
-                    std::thread::sleep(time_to_sleep);
-                } else {
-                    *control_flow = ControlFlow::Poll;
-                }
-            }
-        }
-        Event::Resumed | Event::Suspended | Event::DeviceEvent { .. } => {
+
+        Event::Resumed
+        | Event::Suspended
+        | Event::RedrawEventsCleared
+        | Event::DeviceEvent { .. }
+        | Event::NewEvents(_) => {
             // log::debug!("ignore event {event:?}");
         }
     })

@@ -2,7 +2,7 @@
 mod save_state;
 mod utils;
 
-use crate::config::Mode;
+use crate::{config::Mode, constant::AUDIO_BUFFER_SIZE};
 
 use crate::path::game_save_path;
 #[cfg(feature = "audio")]
@@ -147,7 +147,8 @@ impl Game {
         let serial = Rc::new(RefCell::new(gb_bus::Serial::new(cgb_mode)));
 
         #[cfg(feature = "audio")]
-        let buffer: Arc<Mutex<Vec<f32>>> = Arc::new(Mutex::new(Vec::new()));
+        let buffer: Arc<Mutex<Vec<f32>>> =
+            Arc::new(Mutex::new(Vec::with_capacity(AUDIO_BUFFER_SIZE)));
         #[cfg(feature = "audio")]
         let (stream, sample_rate) = Apu::init_audio_output(buffer.clone());
         #[cfg(feature = "audio")]
@@ -283,6 +284,10 @@ impl Game {
         } else {
             false
         }
+    }
+
+    pub fn is_audio_buffer_full(&self) -> bool {
+        (*self.apu.borrow()).is_buffer_full()
     }
 
     fn check_scheduled_stop(&mut self, frame_ended: bool) {
