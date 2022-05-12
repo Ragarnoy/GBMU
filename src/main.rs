@@ -89,17 +89,17 @@ fn main() -> Result<(), Error> {
             }
         }
         Event::RedrawEventsCleared => {
-            // let elapsed = render_time.elapsed();
-            // if control_flow != &ControlFlow::Exit {
-            //     if elapsed < constant::TARGET_FRAME_DURATION {
-            //         let time_to_sleep = constant::TARGET_FRAME_DURATION - elapsed;
-            //         *control_flow =
-            //             ControlFlow::WaitUntil(std::time::Instant::now() + time_to_sleep);
-            //         std::thread::sleep(time_to_sleep);
-            //     } else {
-            //         *control_flow = ControlFlow::Poll;
-            //     }
-            // }
+            let elapsed = render_time.elapsed();
+            if control_flow != &ControlFlow::Exit {
+                if elapsed < constant::TARGET_FRAME_DURATION {
+                    let time_to_sleep = constant::TARGET_FRAME_DURATION - elapsed;
+                    *control_flow =
+                        ControlFlow::WaitUntil(std::time::Instant::now() + time_to_sleep);
+                    std::thread::sleep(time_to_sleep);
+                } else {
+                    *control_flow = ControlFlow::Poll;
+                }
+            }
         }
         Event::Resumed | Event::Suspended | Event::DeviceEvent { .. } => {
             // log::debug!("ignore event {event:?}");
