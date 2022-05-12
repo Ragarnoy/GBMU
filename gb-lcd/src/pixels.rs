@@ -1,4 +1,4 @@
-use pixels::{Error, Pixels, SurfaceTexture};
+use pixels::{Error, Pixels, PixelsBuilder, SurfaceTexture};
 use winit::{dpi::PhysicalSize, event::WindowEvent, window::Window};
 
 use crate::{
@@ -24,7 +24,9 @@ impl<const WIDTH: u32, const HEIGHT: u32, const MENU_BAR_SIZE: u32>
 
         let pixels = {
             let surface_texture = SurfaceTexture::new(size.width, size.height, &window);
-            Pixels::new(WIDTH, HEIGHT, surface_texture)?
+            PixelsBuilder::new(WIDTH, HEIGHT, surface_texture)
+                .enable_vsync(false)
+                .build()?
         };
 
         let mut context = Context::new(
