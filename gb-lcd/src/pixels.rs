@@ -5,17 +5,20 @@ use crate::{
     context::Context, state::State, EventProcessing, PseudoPixels, PseudoWindow, RenderContext,
 };
 
-pub struct GBPixels {
+pub struct GBPixels<const WIDTH: u32, const HEIGHT: u32, const MENU_BAR_SIZE: u32> {
     pub window: Window,
     pub pixels: Pixels,
+    pub texture_id: egui::TextureId,
 
     pub context: Context,
 
     pub(crate) state: State,
 }
 
-impl GBPixels {
-    pub fn new<const WIDTH: u32, const HEIGHT: u32>(window: Window) -> Result<Self, Error> {
+impl<const WIDTH: u32, const HEIGHT: u32, const MENU_BAR_SIZE: u32>
+    GBPixels<WIDTH, HEIGHT, MENU_BAR_SIZE>
+{
+    pub fn new(window: Window) -> Result<Self, Error> {
         let size = window.inner_size();
         let scale_factor = window.scale_factor();
 
@@ -24,7 +27,7 @@ impl GBPixels {
             Pixels::new(WIDTH, HEIGHT, surface_texture)?
         };
 
-        let context = Context::new(
+        let mut context = Context::new(
             pixels.device(),
             pixels.render_texture_format(),
             scale_factor as f32,
@@ -33,9 +36,18 @@ impl GBPixels {
 
         let state = State::default();
 
+        let texture_id = context.rpass.egui_texture_from_wgpu_texture(
+            pixels.device(),
+            &pixels.texture().create_view(&wgpu::TextureViewDescriptor {
+                ..Default::default()
+            }),
+            wgpu::FilterMode::Nearest,
+        );
+
         Ok(Self {
             window,
             pixels,
+            texture_id,
 
             context,
 
@@ -47,9 +59,33 @@ impl GBPixels {
     pub fn closed(&self) -> bool {
         self.state.closed
     }
+
+    pub fn texture_size_and_margin(&self) -> ((f32, f32), (f32, f32)) {
+        let screen_ratio = WIDTH as f32 / HEIGHT as f32;
+        let scale_factor = self.window.scale_factor() as f32;
+
+        let actual_dim: (f32, f32) = self.window.inner_size().into();
+        let actual_width = actual_dim.0 / scale_factor;
+        let actual_height = actual_dim.1 / scale_factor - MENU_BAR_SIZE as f32;
+        let actual_ratio = actual_width / actual_height;
+
+        let mut margin = (0.0, 0.0);
+        let target_dim = if screen_ratio > actual_ratio {
+            let new_height = actual_width / screen_ratio;
+            margin.1 = ((actual_height - new_height) / 2.0).round();
+            (actual_width, new_height)
+        } else {
+            let new_width = actual_height * screen_ratio;
+            margin.0 = ((actual_width - new_width) / 2.0).round();
+            (new_width, actual_height)
+        };
+        (target_dim, margin)
+    }
 }
 
-impl PseudoWindow for GBPixels {
+impl<const WIDTH: u32, const HEIGHT: u32, const MENU_BAR_SIZE: u32> PseudoWindow
+    for GBPixels<WIDTH, HEIGHT, MENU_BAR_SIZE>
+{
     fn scale_factor(&self) -> f64 {
         self.window.scale_factor()
     }
@@ -67,7 +103,9 @@ impl PseudoWindow for GBPixels {
     }
 }
 
-impl PseudoPixels for GBPixels {
+impl<const WIDTH: u32, const HEIGHT: u32, const MENU_BAR_SIZE: u32> PseudoPixels
+    for GBPixels<WIDTH, HEIGHT, MENU_BAR_SIZE>
+{
     fn resize(&mut self, size: PhysicalSize<u32>) {
         self.context.resize(size);
         self.pixels.resize_surface(size.width, size.height)
@@ -90,7 +128,9 @@ impl PseudoPixels for GBPixels {
     }
 }
 
-impl EventProcessing for GBPixels {
+impl<const WIDTH: u32, const HEIGHT: u32, const MENU_BAR_SIZE: u32> EventProcessing
+    for GBPixels<WIDTH, HEIGHT, MENU_BAR_SIZE>
+{
     fn process_window_event(&mut self, event: WindowEvent) {
         match event {
             WindowEvent::CloseRequested => self.state.closed = true,

@@ -209,7 +209,6 @@ pub enum AudioRegs {
     Af4,
     Ctl4,
 
-    AudOutMap,
     AudMap,
     AudChanCtl,
     AudWave,
@@ -236,7 +235,6 @@ impl Display for AudioRegs {
             AudioRegs::Vol4 => "Audio 4 Vol",
             AudioRegs::Af4 => "Audio 4 Freq",
             AudioRegs::Ctl4 => "Audio 4 Ctl",
-            AudioRegs::AudOutMap => "Audio Output Mapping",
             AudioRegs::AudMap => "Audio Mapping",
             AudioRegs::AudChanCtl => "Audio Channel Ctl",
             AudioRegs::AudWave => "Audio Wave",
