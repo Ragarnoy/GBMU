@@ -149,9 +149,9 @@ impl Game {
         #[cfg(feature = "audio")]
         let buffer: Arc<Mutex<Vec<f32>>> = Arc::new(Mutex::new(Vec::new()));
         #[cfg(feature = "audio")]
-        let stream = Apu::init_audio_output(buffer.clone());
+        let (stream, sample_rate) = Apu::init_audio_output(buffer.clone());
         #[cfg(feature = "audio")]
-        let apu = Rc::new(RefCell::new(Apu::new(buffer, Some(stream))));
+        let apu = Rc::new(RefCell::new(Apu::new(buffer, Some(stream), sample_rate)));
 
         let joypad = Rc::new(RefCell::new(Joypad::from_config(joypad_config)));
 

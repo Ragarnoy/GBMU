@@ -1,15 +1,17 @@
 use std::sync::{Arc, Mutex};
 
+use crate::T_CYCLE_FREQUENCY;
 use crate::{
     channel::sound_channel::SoundChannel, control::frame_sequencer::FrameSequencer, ChannelType,
 };
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
-use cpal::{Stream, StreamConfig};
+use cpal::{SampleRate, Stream, StreamConfig};
 use gb_bus::{Address, Bus, Error, FileOperation, IORegArea, Source};
 use gb_clock::{Tick, Ticker};
 
 pub struct Apu {
-    cycle_counter: u16,
+    cycle_counter: u32,
+    nb_cycles_per_sample: u32,
     enabled: bool,
     buffer: Arc<Mutex<Vec<f32>>>,
     sound_channels: Vec<SoundChannel>,
@@ -20,7 +22,11 @@ pub struct Apu {
 }
 
 impl Apu {
-    pub fn new(input_buffer: Arc<Mutex<Vec<f32>>>, stream: Option<Stream>) -> Apu {
+    pub fn new(
+        input_buffer: Arc<Mutex<Vec<f32>>>,
+        stream: Option<Stream>,
+        sample_rate: SampleRate,
+    ) -> Apu {
         // Channels order in vector is important !
         let sound_channels = vec![
             SoundChannel::new(ChannelType::SquareWave, true),
@@ -31,6 +37,7 @@ impl Apu {
 
         Self {
             cycle_counter: 0,
+            nb_cycles_per_sample: T_CYCLE_FREQUENCY / sample_rate.0,
             enabled: false,
             buffer: input_buffer,
             sound_channels,
@@ -41,7 +48,7 @@ impl Apu {
         }
     }
 
-    pub fn init_audio_output(input_buffer: Arc<Mutex<Vec<f32>>>) -> Stream {
+    pub fn init_audio_output(input_buffer: Arc<Mutex<Vec<f32>>>) -> (Stream, SampleRate) {
         let host = cpal::default_host();
         let mut device = host
             .default_output_device()
@@ -80,7 +87,7 @@ impl Apu {
             )
             .unwrap();
         stream.play().unwrap();
-        stream
+        (stream, config.sample_rate)
     }
 
     fn write_data<T>(output: &mut [T], channels: usize, next_sample: &mut dyn FnMut() -> f32)
@@ -174,7 +181,7 @@ impl Ticker for Apu {
             }
         }
 
-        if self.cycle_counter % 0x5F == 0 {
+        if self.cycle_counter % self.nb_cycles_per_sample == 0 {
             self.add_sample();
         }
     }

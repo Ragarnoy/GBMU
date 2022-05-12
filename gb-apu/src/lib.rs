@@ -10,3 +10,4 @@ pub enum ChannelType {
 }
 
 pub const BUFFER_SIZE: usize = 2048;
+pub const T_CYCLE_FREQUENCY: u32 = 0x400_000;
