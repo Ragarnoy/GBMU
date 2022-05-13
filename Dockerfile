@@ -11,6 +11,7 @@ RUN rustup component add rustfmt clippy \
   curl \
   clang \
   dbus-x11 \
+  libasound2-dev \
   && useradd tester -d /app -m
 
 USER tester
