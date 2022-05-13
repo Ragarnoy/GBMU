@@ -73,7 +73,7 @@ package:
 	@echo "Build on windows not supported (yet ?)"
 else ifeq ($(UNAME_S),Linux)
 package: package-linux
-else ifeq($(UNAME_S),Darwin)
+else ifeq ($(UNAME_S),Darwin)
 package: package-mac
 endif
 
