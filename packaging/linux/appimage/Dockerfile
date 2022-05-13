@@ -30,7 +30,7 @@ RUN chmod +x /opt/appimagetool \
   && /opt/appimagetool --appimage-extract \
   && mv -v squashfs-root appimage-tool.AppDir \
   && ln -s /opt/appimage-tool.AppDir/AppRun /usr/bin/appimagetool \
-  && pip3 install appimage-builder
+  && pip3 install appimage-builder==0.9.2
 
 RUN useradd tester -d /home/tester -m
 USER tester
