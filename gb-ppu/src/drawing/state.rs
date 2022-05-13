@@ -16,6 +16,7 @@ pub struct State {
     step: u16,
     pixel_drawn: u8,
 }
+
 impl Default for State {
     fn default() -> Self {
         Self::new(false)
@@ -84,7 +85,7 @@ impl State {
         };
         self.step = (self.step + 1) % Self::STEP_COUNT;
         if self.step == 0 {
-            self.line = (self.line + 1) % (Self::LINE_COUNT);
+            self.line = (self.line + 1) % Self::LINE_COUNT;
             self.pixel_drawn = 0;
         }
         if let Some(lcd) = lcd_reg {
