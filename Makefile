@@ -29,6 +29,10 @@ ROMS_ZIP := $(ASSETS_DIR)/roms.zip
 ROMS_DIR := $(ASSETS_DIR)/roms
 BIOS_DIR := $(ASSETS_DIR)/bios
 
+ifneq ($(OS),Windows_NT)
+UNAME_S := $(shell uname -s)
+endif
+
 requirement: roms bios
 
 bios: $(BIOS)
@@ -60,25 +64,17 @@ package-linux-appimage: docker
 	mkdir -p build
 	docker run --rm -t -v $$(pwd)/build:/build --entrypoint=/bin/sh gbmu-appimage:latest -c "set -x && appimage-builder --skip-tests && zip -r GBMU.AppDir.zip GBMU.AppDir && cp -vR GBMU-latest-x86_64.AppImage GBMU.AppDir.zip /build/"
 
-ifneq ($(OS),Windows_NT)
-	UNAME_S := $(shell uname -s)
-	ifeq ($(UNAME_S),Darwin)
 package-mac:
 	cargo build --release
 	./packaging/mac/package.sh target/release/gbmu GBMU
-endif
 
 ifeq ($(OS),Windows_NT)
 package:
 	@echo "Build on windows not supported (yet ?)"
-else
-    UNAME_S := $(shell uname -s)
-    ifeq ($(UNAME_S),Linux)
+else ifeq ($(UNAME_S),Linux)
 package: package-linux
-    endif
-    ifeq ($(UNAME_S),Darwin)
+else ifeq($(UNAME_S),Darwin)
 package: package-mac
-    endif
 endif
 
 clean:
