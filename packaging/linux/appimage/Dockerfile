@@ -32,7 +32,7 @@ RUN chmod +x /opt/appimagetool \
   && ln -s /opt/appimage-tool.AppDir/AppRun /usr/bin/appimagetool \
   && pip3 install appimage-builder
 
-RUN useradd tester -d /home/tester -m
+RUN rm /etc/shadow.lock && useradd tester -d /home/tester -m
 USER tester
 WORKDIR /home/tester
 
