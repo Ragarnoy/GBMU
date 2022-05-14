@@ -385,7 +385,7 @@ impl Game {
             );
         } else {
             log::info!(
-                "successfuly save the current game state of {}",
+                "successfully save the current game state of {}",
                 self.romname
             );
         }
@@ -592,7 +592,7 @@ macro_rules! read_bus_reg {
 
     ($bus:expr, $addr:expr) => {
         $bus.read(u16::from($addr), Some(Source::Debugger))
-            .unwrap_or(0xffu8)
+            .unwrap_or(0xff_u8)
             .into()
     };
 }

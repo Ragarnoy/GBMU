@@ -12,7 +12,7 @@ pub(crate) fn draw_ui(ui: &mut Ui, event_proxy: &EventLoopProxy<CustomEvent>) {
                 .set_location(
                     &std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("/")),
                 )
-                .add_filter("rom", &crate::constant::PREFERED_ROM_EXTS)
+                .add_filter("rom", &crate::constant::PREFERRED_ROM_EXTS)
                 .show_open_single_file();
             log::debug!("picked rom file {file:?}");
             if let Ok(Some(path)) = file {
