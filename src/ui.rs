@@ -1,5 +1,5 @@
 mod file;
-#[cfg(feature = "debug_fps")]
+#[cfg(feature = "fps")]
 mod fps;
 mod settings;
 mod tools;
@@ -85,7 +85,7 @@ pub fn draw_egui(context: &mut Context) {
                         settings::draw_ui(ui, &context.event_proxy, &mut context.config.mode);
                         // ui_debug!(ui, context);
                         // ui.style_mut().override_text_style = None;
-                        #[cfg(feature = "debug_fps")]
+                        #[cfg(feature = "fps")]
                         if ui.available_width() >= fps::FPS_WIDTH {
                             fps::draw_ui(ui, &context.time_frame);
                         }

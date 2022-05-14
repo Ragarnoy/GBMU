@@ -73,7 +73,7 @@ You can customize the build by activating certain feature by using the `--featur
 
 | Name                         | Description                                           | Require                                                       |
 | ---------------------------- | ----------------------------------------------------- | ------------------------------------------------------------- |
-| debug_fps                    | show fps of previous frames in the debugger           |                                                               |
+| fps                          | show fps of previous frames in the debugger           |                                                               |
 | gb-lcd/debug_render          | allow the lcd's part to be debugged such as VRAM, OAM |                                                               |
 | debug_render                 | change the UI to be able to lauch lcd's debug tools   | `gb-lcd/debug_render`                                         |
 | gb-cpu/registers_logs        | at each opcode log the state of the cpu register      |                                                               |
