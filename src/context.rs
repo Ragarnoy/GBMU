@@ -353,11 +353,7 @@ impl Context {
             load_image_to_frame(image, frame);
         }
 
-        crate::ui::draw_egui(
-            self,
-            #[cfg(feature = "debug_fps")]
-            self.time_frame.instant_fps(),
-        );
+        crate::ui::draw_egui(self);
 
         let main_pixels = &mut self.main_window.pixels;
         let main_context = &mut self.main_window.context;
