@@ -14,6 +14,7 @@ impl<const SAMPLE_SIZE: usize> TimeStat<SAMPLE_SIZE> {
         self.sample.iter()
     }
 
+    #[cfg(feature = "fps_stat")]
     pub fn last(&self) -> Duration {
         *self.sample.last()
     }
@@ -44,6 +45,7 @@ impl<T, const SIZE: usize> CyclicBuffer<T, SIZE> {
         self.index = (self.index.wrapping_add(1)) % SIZE;
     }
 
+    #[cfg(feature = "fps_stat")]
     pub fn last(&self) -> &T {
         &self.buffer[self.index.wrapping_sub(1) % SIZE]
     }
