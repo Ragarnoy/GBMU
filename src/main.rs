@@ -68,13 +68,15 @@ fn main() -> Result<(), Error> {
                 while processing_frame {
                     if !game.is_audio_buffer_full() {
                         processing_frame = game.cycle();
-                    }
-                    if let Some(status) = context
-                        .debugger_ctx
-                        .as_mut()
-                        .and_then(|ctx| ctx.debugger.updated_flow_status(game))
-                    {
-                        game.update_scheduled_stop(status);
+                        if let Some(status) = context
+                            .debugger_ctx
+                            .as_mut()
+                            .and_then(|ctx| ctx.debugger.updated_flow_status(game))
+                        {
+                            game.update_scheduled_stop(status);
+                        }
+                    } else {
+                        log::debug!("audio buffer is full");
                     }
                 }
                 if let Some(ref mut ctx) = context.debugger_ctx {
