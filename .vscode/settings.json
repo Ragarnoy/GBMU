@@ -3,8 +3,12 @@
         "egui",
         "gameboy",
         "gbmu",
+        "joypad",
         "noninteractive",
+        "Regs",
         "simplelog",
-        "unmultiplied"
+        "Tima",
+        "unmultiplied",
+        "winit"
     ]
 }
