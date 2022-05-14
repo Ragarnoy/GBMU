@@ -4,6 +4,7 @@
         "gameboy",
         "gbmu",
         "joypad",
+        "mbcs",
         "noninteractive",
         "Regs",
         "simplelog",
