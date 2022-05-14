@@ -1,82 +1,54 @@
-#[cfg(feature = "time_stat_samples")]
-use std::collections::VecDeque;
-use std::fmt::Display;
 use std::time::Duration;
 
 #[derive(Default, Debug)]
-pub struct TimeStat {
-    min: Option<Duration>,
-    max: Option<Duration>,
-    last_value: Duration,
-    sum: Duration,
-    sample_count: u32,
-    #[cfg(feature = "time_stat_samples")]
-    samples: VecDeque<Duration>,
+pub struct TimeStat<const SAMPLE_SIZE: usize = 60> {
+    sample: CyclicBuffer<Duration, SAMPLE_SIZE>,
 }
 
-impl TimeStat {
-    #[cfg(feature = "time_stat_samples")]
-    const SAMPLES_MAX_COUNT: usize = 120;
-
+impl<const SAMPLE_SIZE: usize> TimeStat<SAMPLE_SIZE> {
     pub fn add_sample(&mut self, sample: Duration) {
-        let min = self.min.get_or_insert(sample);
-        *min = (*min).min(sample);
-
-        let max = self.max.get_or_insert(sample);
-        *max = (*max).max(sample);
-
-        self.last_value = sample;
-
-        self.sum += sample;
-        self.sample_count += 1;
-        #[cfg(feature = "time_stat_samples")]
-        {
-            self.samples.push_front(sample);
-            if self.samples.len() > Self::SAMPLES_MAX_COUNT {
-                self.samples.pop_back();
-            }
-        }
+        self.sample.push(sample);
     }
 
-    pub fn mean(&self) -> Duration {
-        self.sum / self.sample_count
+    pub fn iter(&self) -> std::slice::Iter<Duration> {
+        self.sample.iter()
     }
 
-    #[cfg(feature = "time_stat_samples")]
-    pub fn fps(&self) -> f64 {
-        let mean = self.samples.iter().fold(0.0, |acc, elt| {
-            acc + elt.as_nanos() as f64 / self.samples.len() as f64
-        });
-        1_000_000_000.0 / mean
+    pub fn last(&self) -> Duration {
+        *self.sample.last()
     }
+}
 
-    pub fn instant_fps(&self) -> f64 {
-        if self.last_value != Duration::ZERO {
-            1_000_000_000.0 / self.last_value.as_nanos() as f64
-        } else {
-            f64::NAN
+#[derive(Debug)]
+struct CyclicBuffer<T, const SIZE: usize> {
+    buffer: [T; SIZE],
+    index: usize,
+}
+
+impl<T, const SIZE: usize> Default for CyclicBuffer<T, SIZE>
+where
+    T: Default + Copy,
+{
+    fn default() -> Self {
+        assert!(SIZE > 0, "SIZE should be greater than 0");
+        Self {
+            buffer: [T::default(); SIZE],
+            index: 0,
         }
     }
 }
 
-impl Display for TimeStat {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        #[cfg(not(feature = "time_stat_samples"))]
-        return write!(
-            f,
-            "{{ min: {}ms, mean: {}ms, max: {}ms}}",
-            self.min.unwrap_or_default().as_millis(),
-            self.mean().as_millis(),
-            self.max.unwrap_or_default().as_millis()
-        );
-        #[cfg(feature = "time_stat_samples")]
-        return write!(
-            f,
-            "{{ min: {}ms, mean: {}ms, max: {}ms, fps: {:>7.2}}}",
-            self.min.unwrap_or_default().as_millis(),
-            self.mean().as_millis(),
-            self.max.unwrap_or_default().as_millis(),
-            self.fps()
-        );
+impl<T, const SIZE: usize> CyclicBuffer<T, SIZE> {
+    pub fn push(&mut self, value: T) {
+        self.buffer[self.index] = value;
+        self.index = (self.index.wrapping_add(1)) % SIZE;
+    }
+
+    pub fn last(&self) -> &T {
+        &self.buffer[self.index.wrapping_sub(1) % SIZE]
+    }
+
+    pub fn iter(&self) -> std::slice::Iter<T> {
+        self.buffer.as_slice().iter()
     }
 }
