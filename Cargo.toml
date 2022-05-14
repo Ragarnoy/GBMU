@@ -18,8 +18,11 @@ description = "A gameboy emulator"
 default = ["bios"]
 debug_render = ["gb-lcd/debug_render"]
 registers_logs = ["gb-cpu/registers_logs"]
+# Show a FPS counter, the FPS is the mean of the last N frame (see time_frame.rs -> SAMPLE_SIZE)
 fps = []
+# Extend the FPS counter with min / mean / max / current
 fps_stat = ["fps"]
+# Extend the FPS counter by using raw time in Millisecond instead of Frame Per Second
 fps_expert = ["fps"]
 bios = []
 audio = ["gb-apu"]
