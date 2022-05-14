@@ -91,6 +91,25 @@ impl Apu {
         config.buffer_size = cpal::BufferSize::Fixed(required_buffer_size as u32);
         log::debug!("configured config: {:?}", config);
 
+        let stream =
+            Apu::build_output_stream(device, sample_format, &config, input_buffer, err_fn).unwrap();
+        stream.play().unwrap();
+        (stream, config.sample_rate)
+    }
+
+    fn build_output_stream<E>(
+        device: Device,
+        sample_format: SampleFormat,
+        config: &StreamConfig,
+        input_buffer: Arc<Mutex<Vec<f32>>>,
+        error_callback: E,
+    ) -> Result<Stream, BuildStreamError>
+    where
+        E: FnMut(StreamError),
+        E: Send + 'static,
+    {
+        let channels = config.channels as usize;
+
         // callback used to get the next sample
         let mut next_value = move || {
             let mut buffer = input_buffer.lock().unwrap();
@@ -100,22 +119,6 @@ impl Apu {
                 0.0
             }
         };
-
-        let stream = Apu::build_output_stream(device, sample_format, &config, err_fn).unwrap();
-        stream.play().unwrap();
-        (stream, config.sample_rate)
-    }
-
-    fn build_output_stream<E>(
-        device: Device,
-        sample_format: SampleFormat,
-        config: &StreamConfig,
-        error_callback: E,
-    ) -> Result<Stream, BuildStreamError>
-    where
-        E: FnMut(StreamError) + Send + 'static,
-    {
-        let channels = config.channels as usize;
 
         match sample_format {
             SampleFormat::F32 => device.build_output_stream(
@@ -142,12 +145,15 @@ impl Apu {
         }
     }
 
-    fn write_data<T>(output: &mut [T], channels: usize, next_sample: &mut dyn FnMut() -> f32)
+    fn write_data<T, N>(output: &mut [T], channels: usize, next_value: &mut N)
     where
         T: cpal::Sample,
+        N: FnMut() -> f32,
+        N: Send + 'static,
     {
         for frame in output.chunks_mut(channels) {
-            let value: T = cpal::Sample::from::<f32>(&next_sample());
+            let value = next_value();
+            let value: T = cpal::Sample::from::<f32>(&value);
             for sample in frame.iter_mut() {
                 *sample = value;
             }
