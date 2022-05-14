@@ -6,7 +6,7 @@ use crate::{
 };
 use crate::{NB_CYCLES_512_HZ, T_CYCLE_FREQUENCY};
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
-use cpal::{SampleFormat, SampleRate, Stream, StreamConfig};
+use cpal::{SampleFormat, SampleRate, Stream, StreamConfig, SupportedBufferSize};
 use gb_bus::{Address, Bus, Error, FileOperation, IORegArea, Source};
 use gb_clock::{Tick, Ticker};
 
@@ -50,6 +50,8 @@ impl Apu {
     }
 
     pub fn init_audio_output(input_buffer: Arc<Mutex<Vec<f32>>>) -> (Stream, SampleRate) {
+        let required_buffer_size = input_buffer.lock().unwrap().capacity();
+
         let host = cpal::default_host();
         let mut device = host
             .default_output_device()
@@ -57,6 +59,8 @@ impl Apu {
         if device.supported_output_configs().is_err() {
             device = host.devices().unwrap().next().unwrap();
         }
+        log::debug!("selected device: {:?}", device.name());
+
         let mut supported_configs_range = device
             .supported_output_configs()
             .expect("error while querying configs");
@@ -64,12 +68,26 @@ impl Apu {
             .next()
             .expect("no supported config?!")
             .with_max_sample_rate();
+        log::debug!("selected config: {:?}", supported_config);
+
+        if let SupportedBufferSize::Range { min, max } = supported_config.buffer_size() {
+            assert!(
+                *min < required_buffer_size as u32,
+                "required_buffer_size is smaller than the minimum supported buffer range"
+            );
+            assert!(
+                (required_buffer_size as u32) < *max,
+                "required_buffer_size is greater than the maximum supported buffer range"
+            );
+        } else {
+            log::warn!("cannot check the supported buffer size");
+        }
         let err_fn = |err| eprintln!("an error occurred on the output audio stream: {}", err);
         let sample_format = supported_config.sample_format();
         let mut config: StreamConfig = supported_config.into();
-        config.buffer_size =
-            cpal::BufferSize::Fixed(input_buffer.lock().unwrap().capacity() as u32);
+        config.buffer_size = cpal::BufferSize::Fixed(required_buffer_size as u32);
         let channels = config.channels as usize;
+        log::debug!("configured config: {:?}", config);
 
         // callback used to get the next sample
         let mut next_value = move || {
@@ -189,7 +207,7 @@ impl Ticker for Apu {
         }
 
         // Frame sequencer is clocked at 512 Hz
-        // 0x400_000 (Tcycle freq.) / 0x2000 = 512 Hz
+        // 0x400_000 (TCycle freq.) / 0x2000 = 512 Hz
         if self.cycle_counter >= NB_CYCLES_512_HZ {
             self.cycle_counter %= NB_CYCLES_512_HZ;
 
