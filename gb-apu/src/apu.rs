@@ -6,7 +6,10 @@ use crate::{
 };
 use crate::{NB_CYCLES_512_HZ, T_CYCLE_FREQUENCY};
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
-use cpal::{SampleFormat, SampleRate, Stream, StreamConfig, SupportedBufferSize};
+use cpal::{
+    BuildStreamError, Device, SampleFormat, SampleRate, Stream, StreamConfig, StreamError,
+    SupportedBufferSize,
+};
 use gb_bus::{Address, Bus, Error, FileOperation, IORegArea, Source};
 use gb_clock::{Tick, Ticker};
 
@@ -82,11 +85,10 @@ impl Apu {
         } else {
             log::warn!("cannot check the supported buffer size");
         }
-        let err_fn = |err| eprintln!("an error occurred on the output audio stream: {}", err);
+        let err_fn = |err| log::error!("an error occurred on the output audio stream: {}", err);
         let sample_format = supported_config.sample_format();
         let mut config: StreamConfig = supported_config.into();
         config.buffer_size = cpal::BufferSize::Fixed(required_buffer_size as u32);
-        let channels = config.channels as usize;
         log::debug!("configured config: {:?}", config);
 
         // callback used to get the next sample
@@ -99,32 +101,45 @@ impl Apu {
             }
         };
 
-        let stream = match sample_format {
+        let stream = Apu::build_output_stream(device, sample_format, &config, err_fn).unwrap();
+        stream.play().unwrap();
+        (stream, config.sample_rate)
+    }
+
+    fn build_output_stream<E>(
+        device: Device,
+        sample_format: SampleFormat,
+        config: &StreamConfig,
+        error_callback: E,
+    ) -> Result<Stream, BuildStreamError>
+    where
+        E: FnMut(StreamError) + Send + 'static,
+    {
+        let channels = config.channels as usize;
+
+        match sample_format {
             SampleFormat::F32 => device.build_output_stream(
-                &config,
+                config,
                 move |data: &mut [f32], _: &cpal::OutputCallbackInfo| {
                     Self::write_data(data, channels, &mut next_value)
                 },
-                err_fn,
+                error_callback,
             ),
             SampleFormat::I16 => device.build_output_stream(
-                &config,
+                config,
                 move |data: &mut [i16], _: &cpal::OutputCallbackInfo| {
                     Self::write_data(data, channels, &mut next_value)
                 },
-                err_fn,
+                error_callback,
             ),
             SampleFormat::U16 => device.build_output_stream(
-                &config,
+                config,
                 move |data: &mut [u16], _: &cpal::OutputCallbackInfo| {
                     Self::write_data(data, channels, &mut next_value)
                 },
-                err_fn,
+                error_callback,
             ),
         }
-        .unwrap();
-        stream.play().unwrap();
-        (stream, config.sample_rate)
     }
 
     fn write_data<T>(output: &mut [T], channels: usize, next_sample: &mut dyn FnMut() -> f32)
