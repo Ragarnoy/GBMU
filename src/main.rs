@@ -6,7 +6,7 @@ mod game;
 mod image;
 mod logger;
 mod path;
-#[cfg(any(feature = "time_frame", feature = "debug_fps"))]
+#[cfg(feature = "fps")]
 mod time_frame;
 mod ui;
 mod windows;
