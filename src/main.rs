@@ -31,12 +31,13 @@ use winit::{
 const WIDTH: u32 = GB_SCREEN_WIDTH as u32;
 const HEIGHT: u32 = GB_SCREEN_HEIGHT as u32;
 const MENU_BAR: u32 = MENU_BAR_SIZE as u32;
+const MAIN_WINDOW_SCALE_FACTOR: u32 = 4;
 
 fn main() -> Result<(), Error> {
     let config: Config = Config::parse();
     init_logger(config.log_level);
 
-    let (event_loop, main_window) = init::<WIDTH, HEIGHT, MENU_BAR>(&config)?;
+    let (event_loop, main_window) = init::<WIDTH, HEIGHT, MENU_BAR, MAIN_WINDOW_SCALE_FACTOR>()?;
     let event_loop_proxy = event_loop.create_proxy();
     let mut context = Context::new(main_window, event_loop_proxy);
     context.load_config(config);
@@ -116,8 +117,7 @@ fn main() -> Result<(), Error> {
     })
 }
 
-fn init<const WIDTH: u32, const HEIGHT: u32, const MENU_BAR_SIZE: u32>(
-    _config: &Config,
+fn init<const WIDTH: u32, const HEIGHT: u32, const MENU_BAR_SIZE: u32, const SCALE_FACTOR: u32>(
 ) -> Result<
     (
         EventLoop<CustomEvent>,
@@ -127,7 +127,10 @@ fn init<const WIDTH: u32, const HEIGHT: u32, const MENU_BAR_SIZE: u32>(
 > {
     let event_loop = EventLoop::with_user_event();
     let main_window = {
-        let size = LogicalSize::new(WIDTH as f64, HEIGHT as f64 + MENU_BAR_SIZE as f64);
+        let size = LogicalSize::new(
+            (WIDTH * SCALE_FACTOR) as f64,
+            (HEIGHT * SCALE_FACTOR) as f64 + MENU_BAR_SIZE as f64,
+        );
         WindowBuilder::new()
             .with_title(constant::APP_NAME)
             .with_inner_size(size)
