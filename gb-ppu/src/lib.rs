@@ -19,7 +19,7 @@ use sprite::Sprite;
 pub const GB_SCREEN_WIDTH: usize = 160;
 pub const GB_SCREEN_HEIGHT: usize = 144;
 
-pub const TILESHEET_WIDTH: usize = 128;
+pub const TILESHEET_WIDTH: usize = 128 * 2;
 pub const TILESHEET_HEIGHT: usize = 192;
 pub const TILESHEET_TILE_COUNT: usize = 16 * 24;
 
