@@ -104,7 +104,7 @@ impl Apu {
                     let buffer_size = config.buffer_size();
                     match buffer_size {
                         SupportedBufferSize::Range { min, max } => {
-                            min < &required_buffer_size && &required_buffer_size < max
+                            min <= &required_buffer_size && &required_buffer_size <= max
                         }
                         SupportedBufferSize::Unknown => true,
                     }
@@ -118,8 +118,8 @@ impl Apu {
                         config,
                         SAMPLE_RATE
                     );
-                    if min_sample_rate < required_sample_rate
-                        && required_sample_rate < max_sample_rate
+                    if min_sample_rate <= required_sample_rate
+                        && required_sample_rate <= max_sample_rate
                     {
                         Some(config.with_sample_rate(required_sample_rate))
                     } else {
