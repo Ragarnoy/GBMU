@@ -2,7 +2,7 @@ mod debugger;
 mod keybindings;
 mod ppu_tool;
 
-#[cfg(any(feature = "time_frame", feature = "debug_fps"))]
+#[cfg(feature = "debug_fps")]
 use crate::time_frame::TimeStat;
 use crate::{
     config::Config, custom_event::CustomEvent, game::Game, image::load_image_to_frame,
@@ -18,7 +18,7 @@ const PPU_TILEMAP_DIM: u32 = TILEMAP_DIM as u32;
 const PPU_SPRITE_RENDER_WIDTH: u32 = SPRITE_RENDER_WIDTH as u32;
 const PPU_SPRITE_RENDER_HEIGHT: u32 = SPRITE_RENDER_HEIGHT as u32;
 
-#[cfg(any(feature = "time_frame", feature = "debug_fps"))]
+#[cfg(feature = "debug_fps")]
 use std::time::Instant;
 use std::{cell::RefCell, path::PathBuf, rc::Rc};
 use winit::{
@@ -41,9 +41,9 @@ pub struct Context {
     pub config: InternalConfig,
     pub event_proxy: EventLoopProxy<CustomEvent>,
     pub game: Option<Game>,
-    #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
+    #[cfg(feature = "debug_fps")]
     pub time_frame: TimeStat,
-    #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
+    #[cfg(feature = "debug_fps")]
     pub main_draw_instant: Instant,
     pub debugger_ctx: Option<debugger::Context>,
     pub keybindings_ctx: Option<keybindings::Context>,
@@ -71,9 +71,9 @@ impl Context {
             config: InternalConfig::default(),
             event_proxy,
             game: None,
-            #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
+            #[cfg(feature = "debug_fps")]
             time_frame: TimeStat::default(),
-            #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
+            #[cfg(feature = "debug_fps")]
             main_draw_instant: Instant::now(),
             debugger_ctx: None,
             keybindings_ctx: None,
@@ -368,7 +368,7 @@ impl Context {
             Ok(())
         })?;
 
-        #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
+        #[cfg(feature = "debug_fps")]
         {
             self.time_frame.add_sample(self.main_draw_instant.elapsed());
             self.main_draw_instant = std::time::Instant::now();

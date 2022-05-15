@@ -18,7 +18,6 @@ description = "A gameboy emulator"
 default = ["bios"]
 debug_render = ["gb-lcd/debug_render"]
 registers_logs = ["gb-cpu/registers_logs"]
-time_frame = []
 time_stat_samples = []
 debug_fps = ["time_stat_samples"]
 bios = []
