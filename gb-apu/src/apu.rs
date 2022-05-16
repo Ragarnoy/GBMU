@@ -91,7 +91,7 @@ impl Apu {
         });
 
         for (device, configs) in devices {
-            let device_name = device.name().unwrap_or("NoName".to_string());
+            let device_name = device.name().unwrap_or_else(|_| "NoName".to_string());
             log::debug!("trying device {}", device_name);
 
             let mut configs = configs
