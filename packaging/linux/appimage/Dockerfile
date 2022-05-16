@@ -3,7 +3,7 @@ FROM gbmu:latest as BUILDER
 RUN cargo build --release
 
 # FROM appimagecrafters/appimage-builder:latest
-FROM ubuntu:21.10
+FROM ubuntu:22.04
 
 # Issue AppImage in docker: https://appimage-builder.readthedocs.io/en/latest/intro/install.html#install-appimagetool
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
@@ -25,12 +25,12 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
   zip
 
 WORKDIR /opt
-ADD https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage /opt/appimagetool
+ADD https://github.com/AppImage/AppImageKit/releases/download/13/appimagetool-x86_64.AppImage /opt/appimagetool
 RUN chmod +x /opt/appimagetool \
   && /opt/appimagetool --appimage-extract \
   && mv -v squashfs-root appimage-tool.AppDir \
   && ln -s /opt/appimage-tool.AppDir/AppRun /usr/bin/appimagetool \
-  && pip3 install appimage-builder
+  && pip3 install appimage-builder==0.9.2
 
 RUN useradd tester -d /home/tester -m
 USER tester

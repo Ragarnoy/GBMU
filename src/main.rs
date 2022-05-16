@@ -85,6 +85,15 @@ fn main() -> Result<(), Error> {
                         game.update_scheduled_stop(status);
                     }
                 }
+                if let Some(ref mut ctx) = context.tilesheet_ctx {
+                    ctx.window.request_redraw();
+                }
+                if let Some(ref mut ctx) = context.tilemap_ctx {
+                    ctx.window.request_redraw();
+                }
+                if let Some(ref mut ctx) = context.spritesheet_ctx {
+                    ctx.window.request_redraw();
+                }
             }
             context.main_window.window.request_redraw();
             if let Some(ref keybindings) = context.keybindings_ctx {
@@ -138,7 +147,9 @@ fn handle_custom_event(
     match event {
         CustomEvent::Quit => *control_flow = ControlFlow::Exit,
         CustomEvent::LoadFile(file) => context.load(file),
-        CustomEvent::OpenWindow(window_type) => context.open_window(window_type, event_loop),
+        CustomEvent::OpenWindow(window_type) => context
+            .open_window(window_type, event_loop)
+            .unwrap_or_else(|ref err| log::error!("Failed to open new window: {:?}", err)),
         CustomEvent::CloseWindow(window_type) => context.close_window(window_type),
         CustomEvent::ChangedMode(mode) => context.reset_game(mode),
         CustomEvent::ResetGame => context.reset_game(None),

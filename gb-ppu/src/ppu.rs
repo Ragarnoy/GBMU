@@ -1,14 +1,15 @@
 #[cfg(feature = "serialization")]
 pub mod de_ser;
 
-use crate::drawing::{FetchMode, Mode, Pixel, PixelFIFO, PixelFetcher, State};
-use crate::memory::{Lock, Lockable, Oam, PPUMem, Vram};
-use crate::registers::{LcdReg, PPURegisters};
+use crate::drawing::{BGTileAttributes, FetchMode, Mode, Pixel, PixelFIFO, PixelFetcher, State};
+use crate::memory::{BankSelector, Lock, Lockable, Oam, PPUMem, Vram};
+use crate::registers::{LcdReg, PPURegisters, PaletteRef};
 use crate::Sprite;
 use crate::{
-    GB_SCREEN_HEIGHT, GB_SCREEN_WIDTH, SPRITE_LIST_PER_LINE, SPRITE_LIST_RENDER_HEIGHT,
+    Color, GB_SCREEN_HEIGHT, GB_SCREEN_WIDTH, SPRITE_LIST_PER_LINE, SPRITE_LIST_RENDER_HEIGHT,
     SPRITE_LIST_RENDER_WIDTH, SPRITE_RENDER_HEIGHT, SPRITE_RENDER_WIDTH, TILEMAP_DIM,
-    TILEMAP_TILE_COUNT, TILESHEET_HEIGHT, TILESHEET_TILE_COUNT, TILESHEET_WIDTH,
+    TILEMAP_TILE_COUNT, TILEMAP_TILE_DIM_COUNT, TILESHEET_HEIGHT, TILESHEET_TILE_COUNT,
+    TILESHEET_WIDTH,
 };
 use gb_bus::Bus;
 use gb_clock::{Tick, Ticker};
@@ -120,28 +121,56 @@ impl Ppu {
     /// Create an image of the current tilesheet.
     ///
     /// This function is used for debugging purpose.
-    pub fn tilesheet_image(&self) -> ImageRGB<TILESHEET_WIDTH, TILESHEET_HEIGHT> {
+    pub fn tilesheet_image(
+        &self,
+        invert_pixel: bool,
+    ) -> ImageRGB<TILESHEET_WIDTH, TILESHEET_HEIGHT> {
         let mut image = [[[255; 3]; TILESHEET_WIDTH]; TILESHEET_HEIGHT];
         let mut x = 0;
         let mut y = 0;
         let vram = self.vram.borrow();
-        let lcd_reg = self.lcd_reg.borrow();
         for k in 0..TILESHEET_TILE_COUNT {
-            let tile = vram.read_8x8_tile(k, None).unwrap();
+            let tile = vram.read_8x8_tile(k, Some(BankSelector::Bank0)).unwrap();
             for (j, row) in tile.iter().enumerate() {
                 for (i, pixel) in row.iter().rev().enumerate() {
-                    image[y * 8 + j][x * 8 + i] = lcd_reg
-                        .pal_mono
-                        .bg()
-                        .get_color(*pixel)
-                        .unwrap_or_default()
-                        .into();
+                    let color: Color = (*pixel).try_into().unwrap();
+                    let mut rgb: [u8; 3] = color.into();
+                    if invert_pixel {
+                        rgb[0] = 255 - rgb[0];
+                        rgb[1] = 255 - rgb[1];
+                        rgb[2] = 255 - rgb[2];
+                    }
+                    image[y * 8 + j][x * 8 + i] = rgb;
                 }
             }
             x += 1;
-            if x * 8 >= TILESHEET_WIDTH {
+            if x * 8 >= TILESHEET_WIDTH / 2 {
                 x = 0;
                 y += 1;
+            }
+        }
+        if self.cgb_enabled {
+            x = 0;
+            y = 0;
+            for k in 0..TILESHEET_TILE_COUNT {
+                let tile = vram.read_8x8_tile(k, Some(BankSelector::Bank1)).unwrap();
+                for (j, row) in tile.iter().enumerate() {
+                    for (i, pixel) in row.iter().rev().enumerate() {
+                        let color: Color = (*pixel).try_into().unwrap();
+                        let mut rgb: [u8; 3] = color.into();
+                        if invert_pixel {
+                            rgb[0] = 255 - rgb[0];
+                            rgb[1] = 255 - rgb[1];
+                            rgb[2] = 255 - rgb[2];
+                        }
+                        image[y * 8 + j][x * 8 + i + TILESHEET_WIDTH / 2] = rgb;
+                    }
+                }
+                x += 1;
+                if x * 8 >= TILESHEET_WIDTH / 2 {
+                    x = 0;
+                    y += 1;
+                }
             }
         }
         image
@@ -152,18 +181,18 @@ impl Ppu {
     /// This function is used for debugging purpose.
     pub fn tilemap_image(&self, window: bool) -> ImageRGB<TILEMAP_DIM, TILEMAP_DIM> {
         let mut image = [[[255; 3]; TILEMAP_DIM]; TILEMAP_DIM];
-        let mut x = 0;
-        let mut y = 0;
         let vram = self.vram.borrow();
         let lcd_reg = self.lcd_reg.borrow();
         let scx = lcd_reg.scrolling.scx as usize;
         let scx_bot = (scx + 160) & 0xff;
         let scy = lcd_reg.scrolling.scy as usize;
         let scy_bot = (scy + 144) & 0xff;
-        for k in 0..TILEMAP_TILE_COUNT {
-            let index = vram
+        for tile_pos_in_vram in 0..TILEMAP_TILE_COUNT {
+            let x = tile_pos_in_vram % TILEMAP_TILE_DIM_COUNT;
+            let y = tile_pos_in_vram / TILEMAP_TILE_DIM_COUNT;
+            let tile = vram
                 .get_map_tile_index(
-                    k,
+                    tile_pos_in_vram,
                     if !window {
                         lcd_reg.control.bg_tilemap_area()
                     } else {
@@ -173,38 +202,80 @@ impl Ppu {
                     None,
                 )
                 .unwrap();
-            let tile = vram.read_8x8_tile(index, None).unwrap();
-            for (j, row) in tile.iter().enumerate() {
-                for (i, pixel) in row.iter().rev().enumerate() {
-                    let pix_y = y * 8 + j;
-                    let pix_x = x * 8 + i;
-                    let pixel_y = PixelBorder {
-                        pos: pix_y,
-                        sc: scy,
-                        sc_bot: scy_bot,
-                    };
-                    let pixel_x = PixelBorder {
-                        pos: pix_x,
-                        sc: scx,
-                        sc_bot: scx_bot,
-                    };
-                    image[pix_y][pix_x] = lcd_reg
-                        .pal_mono
-                        .bg()
-                        .get_color(*pixel)
-                        .unwrap_or_default()
-                        .into();
-                    if !window && (view_border!(pixel_y, pixel_x) || view_border!(pixel_x, pixel_y))
-                    {
-                        let neg_pixel = image[pix_y][pix_x];
-                        image[pix_y][pix_x] = [!neg_pixel[0], !neg_pixel[1], !neg_pixel[2]];
+            let tile_attributes: Option<BGTileAttributes> = if self.cgb_enabled {
+                vram.get_map_tile_index(
+                    tile_pos_in_vram,
+                    if !window {
+                        lcd_reg.control.bg_tilemap_area()
+                    } else {
+                        lcd_reg.control.win_tilemap_area()
+                    },
+                    lcd_reg.control.bg_win_tiledata_area(),
+                    Some(BankSelector::Bank1),
+                )
+                .map(|byte| byte.into())
+                .map_err(|err| {
+                    log::error!("Failed to get background tile attibutes: {}", err);
+                    err
+                })
+                .ok()
+            } else {
+                None
+            };
+            let (tile_bank, v_flip, h_flip, palette_ref, bg_priority) =
+                if let Some(attributes) = tile_attributes {
+                    (
+                        Some(attributes.bank_nb()),
+                        attributes.v_flip(),
+                        attributes.h_flip(),
+                        attributes.palette_ref(),
+                        attributes.bg_priority(),
+                    )
+                } else {
+                    (None, false, false, PaletteRef::MonoBgWin, false)
+                };
+            for line in 0..8 {
+                let tile_line = if v_flip { 7 - line } else { line };
+                match vram.read_tile_line(tile, tile_line, tile_bank) {
+                    Ok(pixel_row) => {
+                        let pixel_iter: Vec<u8> = if h_flip {
+                            pixel_row.into_iter().collect()
+                        } else {
+                            pixel_row.into_iter().rev().collect()
+                        };
+                        for (column, color_id) in pixel_iter.iter().enumerate() {
+                            let pix_y = y * 8 + line;
+                            let pix_x = x * 8 + column;
+                            let pixel_y = PixelBorder {
+                                pos: pix_y,
+                                sc: scy,
+                                sc_bot: scy_bot,
+                            };
+                            let pixel_x = PixelBorder {
+                                pos: pix_x,
+                                sc: scx,
+                                sc_bot: scx_bot,
+                            };
+                            let mut color: [u8; 3] =
+                                Pixel::new_cgb(*color_id, Some(palette_ref), bg_priority, None)
+                                    .into_color(&lcd_reg)
+                                    .into();
+
+                            if !window
+                                && (view_border!(pixel_y, pixel_x)
+                                    || view_border!(pixel_x, pixel_y))
+                            {
+                                color[0] = !color[0];
+                                color[1] = !color[1];
+                                color[2] = !color[2];
+                            }
+                            image[pix_y][pix_x] = color;
+                        }
+                    }
+                    Err(err) => {
+                        log::error!("Failed to fetch background/window row of pixel: {}", err)
                     }
                 }
-            }
-            x += 1;
-            if x * 8 >= TILEMAP_DIM {
-                x = 0;
-                y += 1;
             }
         }
         image

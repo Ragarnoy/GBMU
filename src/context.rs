@@ -1,5 +1,6 @@
 mod debugger;
 mod keybindings;
+mod ppu_tool;
 
 #[cfg(feature = "fps")]
 use crate::time_frame::TimeStat;
@@ -8,6 +9,15 @@ use crate::{
     windows::WindowType,
 };
 use gb_lcd::{DrawEgui, GBPixels, GBWindow, PseudoPixels, PseudoWindow};
+use gb_ppu::{
+    SPRITE_RENDER_HEIGHT, SPRITE_RENDER_WIDTH, TILEMAP_DIM, TILESHEET_HEIGHT, TILESHEET_WIDTH,
+};
+const PPU_TILESHEET_WIDTH: u32 = TILESHEET_WIDTH as u32;
+const PPU_TILESHEET_HEIGHT: u32 = TILESHEET_HEIGHT as u32;
+const PPU_TILEMAP_DIM: u32 = TILEMAP_DIM as u32;
+const PPU_SPRITE_RENDER_WIDTH: u32 = SPRITE_RENDER_WIDTH as u32;
+const PPU_SPRITE_RENDER_HEIGHT: u32 = SPRITE_RENDER_HEIGHT as u32;
+
 #[cfg(feature = "fps")]
 use std::time::Instant;
 use std::{cell::RefCell, path::PathBuf, rc::Rc};
@@ -19,14 +29,14 @@ use winit::{
 };
 
 use gb_ppu::{GB_SCREEN_HEIGHT, GB_SCREEN_WIDTH};
-const WIDTH: u32 = GB_SCREEN_WIDTH as u32;
-const HEIGHT: u32 = GB_SCREEN_HEIGHT as u32;
+const GB_WIDTH: u32 = GB_SCREEN_WIDTH as u32;
+const GB_HEIGHT: u32 = GB_SCREEN_HEIGHT as u32;
 
 use crate::constant::MENU_BAR_SIZE;
 const MENU_BAR: u32 = MENU_BAR_SIZE as u32;
 
 pub struct Context {
-    pub main_window: GBPixels<WIDTH, HEIGHT, MENU_BAR>,
+    pub main_window: GBPixels<GB_WIDTH, GB_HEIGHT, MENU_BAR>,
     pub joypad_config: Rc<RefCell<gb_joypad::Config>>,
     pub config: InternalConfig,
     pub event_proxy: EventLoopProxy<CustomEvent>,
@@ -37,6 +47,11 @@ pub struct Context {
     pub main_draw_instant: Instant,
     pub debugger_ctx: Option<debugger::Context>,
     pub keybindings_ctx: Option<keybindings::Context>,
+    pub tilesheet_ctx:
+        Option<ppu_tool::Context<PPU_TILESHEET_WIDTH, PPU_TILESHEET_HEIGHT, MENU_BAR>>,
+    pub tilemap_ctx: Option<ppu_tool::Context<PPU_TILEMAP_DIM, PPU_TILEMAP_DIM, MENU_BAR>>,
+    pub spritesheet_ctx:
+        Option<ppu_tool::Context<PPU_SPRITE_RENDER_WIDTH, PPU_SPRITE_RENDER_HEIGHT, MENU_BAR>>,
 }
 
 #[derive(Default)]
@@ -47,7 +62,7 @@ pub struct InternalConfig {
 
 impl Context {
     pub fn new(
-        main_window: GBPixels<WIDTH, HEIGHT, MENU_BAR>,
+        main_window: GBPixels<GB_WIDTH, GB_HEIGHT, MENU_BAR>,
         event_proxy: EventLoopProxy<CustomEvent>,
     ) -> Self {
         Self {
@@ -62,6 +77,9 @@ impl Context {
             main_draw_instant: Instant::now(),
             debugger_ctx: None,
             keybindings_ctx: None,
+            tilesheet_ctx: None,
+            tilemap_ctx: None,
+            spritesheet_ctx: None,
         }
     }
 
@@ -95,7 +113,7 @@ impl Context {
         &mut self,
         window_type: WindowType,
         event_loop: &EventLoopWindowTarget<CustomEvent>,
-    ) {
+    ) -> anyhow::Result<()> {
         match window_type {
             WindowType::Debugger(breakpoints) => {
                 if self.debugger_ctx.is_none() && self.game.is_some() {
@@ -119,7 +137,7 @@ impl Context {
             WindowType::Keybindings => {
                 if self.keybindings_ctx.is_none() {
                     let window = {
-                        let size = LogicalSize::new(250.0, 250.0);
+                        let size = LogicalSize::new(250.0_f32, 250.0_f32);
                         WindowBuilder::new()
                             .with_title("GBMU - Keybindings")
                             .with_inner_size(size)
@@ -133,18 +151,80 @@ impl Context {
                     ));
                 }
             }
-        }
+            WindowType::Tilesheet => {
+                if self.tilesheet_ctx.is_none() && self.game.is_some() {
+                    let window = {
+                        let size = LogicalSize::new(
+                            PPU_TILESHEET_WIDTH as f32,
+                            PPU_TILESHEET_HEIGHT as f32 + MENU_BAR as f32,
+                        );
+                        WindowBuilder::new()
+                            .with_title("GBMU - Tilesheet")
+                            .with_inner_size(size)
+                            .with_min_inner_size(size)
+                            .build(event_loop)
+                            .expect("cannot build tilesheet window")
+                    };
+                    self.tilesheet_ctx.replace(ppu_tool::Context::new(
+                        GBPixels::new(window)?,
+                        self.event_proxy.clone(),
+                        ppu_tool::ToolType::Tilesheet { inverted: false },
+                    ));
+                }
+            }
+            WindowType::Tilemap => {
+                if self.tilemap_ctx.is_none() && self.game.is_some() {
+                    let window = {
+                        let size = LogicalSize::new(
+                            PPU_TILEMAP_DIM as f32,
+                            PPU_TILEMAP_DIM as f32 + MENU_BAR as f32,
+                        );
+                        WindowBuilder::new()
+                            .with_title("GBMU - Tilemap")
+                            .with_inner_size(size)
+                            .with_min_inner_size(size)
+                            .build(event_loop)
+                            .expect("cannot build tilemap window")
+                    };
+                    self.tilemap_ctx.replace(ppu_tool::Context::new(
+                        GBPixels::new(window)?,
+                        self.event_proxy.clone(),
+                        ppu_tool::ToolType::Tilemap { window: false },
+                    ));
+                }
+            }
+            WindowType::Spritesheet => {
+                if self.spritesheet_ctx.is_none() && self.game.is_some() {
+                    let window = {
+                        let size = LogicalSize::new(
+                            PPU_SPRITE_RENDER_WIDTH as f32,
+                            PPU_SPRITE_RENDER_HEIGHT as f32 + MENU_BAR as f32,
+                        );
+                        WindowBuilder::new()
+                            .with_title("GBMU - Spritesheet")
+                            .with_inner_size(size)
+                            .with_min_inner_size(size)
+                            .build(event_loop)
+                            .expect("cannot build spritesheet window")
+                    };
+                    self.spritesheet_ctx.replace(ppu_tool::Context::new(
+                        GBPixels::new(window)?,
+                        self.event_proxy.clone(),
+                        ppu_tool::ToolType::Spritesheet { inverted: false },
+                    ));
+                }
+            }
+        };
+        Ok(())
     }
 
     pub fn close_window(&mut self, window_type: WindowType) {
         match window_type {
-            WindowType::Debugger(_) => {
-                self.debugger_ctx = None;
-                self.debugger_ctx = None;
-            }
-            WindowType::Keybindings => {
-                self.keybindings_ctx = None;
-            }
+            WindowType::Debugger(_) => self.debugger_ctx = None,
+            WindowType::Keybindings => self.keybindings_ctx = None,
+            WindowType::Tilesheet => self.tilesheet_ctx = None,
+            WindowType::Tilemap => self.tilemap_ctx = None,
+            WindowType::Spritesheet => self.spritesheet_ctx = None,
         }
     }
 
@@ -160,6 +240,33 @@ impl Context {
             }
         } else if Some(window_id) == self.keybindings_ctx.as_ref().map(|ctx| ctx.window.id()) {
             self.keybindings_ctx.as_mut().unwrap().redraw_window()
+        } else if Some(window_id) == self.tilesheet_ctx.as_ref().map(|ctx| ctx.window.id()) {
+            if let Some(game) = self.game.as_mut() {
+                self.tilesheet_ctx
+                    .as_mut()
+                    .unwrap()
+                    .redraw_window(&game.ppu)
+            } else {
+                log::warn!("Tilesheet need a ppu");
+                Ok(())
+            }
+        } else if Some(window_id) == self.tilemap_ctx.as_ref().map(|ctx| ctx.window.id()) {
+            if let Some(game) = self.game.as_mut() {
+                self.tilemap_ctx.as_mut().unwrap().redraw_window(&game.ppu)
+            } else {
+                log::warn!("Tilemap need a ppu");
+                Ok(())
+            }
+        } else if Some(window_id) == self.spritesheet_ctx.as_ref().map(|ctx| ctx.window.id()) {
+            if let Some(game) = self.game.as_mut() {
+                self.spritesheet_ctx
+                    .as_mut()
+                    .unwrap()
+                    .redraw_window(&game.ppu)
+            } else {
+                log::warn!("Spritesheet need a ppu");
+                Ok(())
+            }
         } else {
             panic!("unexpected window id {window_id:?}")
         }
@@ -175,6 +282,21 @@ impl Context {
                 .process_window_event(event)
         } else if Some(window_id) == self.keybindings_ctx.as_ref().map(|ctx| ctx.window.id()) {
             self.keybindings_ctx
+                .as_mut()
+                .unwrap()
+                .process_window_event(event)
+        } else if Some(window_id) == self.tilesheet_ctx.as_ref().map(|ctx| ctx.window.id()) {
+            self.tilesheet_ctx
+                .as_mut()
+                .unwrap()
+                .process_window_event(event)
+        } else if Some(window_id) == self.tilemap_ctx.as_ref().map(|ctx| ctx.window.id()) {
+            self.tilemap_ctx
+                .as_mut()
+                .unwrap()
+                .process_window_event(event)
+        } else if Some(window_id) == self.spritesheet_ctx.as_ref().map(|ctx| ctx.window.id()) {
+            self.spritesheet_ctx
                 .as_mut()
                 .unwrap()
                 .process_window_event(event)
