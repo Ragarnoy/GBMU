@@ -117,15 +117,15 @@ impl RegisterDebugOperations for Game {
     }
 
     fn ppu_get(&self, _key: PpuRegs) -> RegisterValue {
-        0xffu8.into()
+        0xff_u8.into()
     }
 
     fn io_get(&self, _key: IORegs) -> RegisterValue {
-        0xffu8.into()
+        0xff_u8.into()
     }
 
     fn audio_get(&self, _key: AudioRegs) -> RegisterValue {
-        0xffu8.into()
+        0xff_u8.into()
     }
 
     fn cpu_registers(&self) -> Vec<RegisterMap<CpuRegs>> {
@@ -184,7 +184,6 @@ impl RegisterDebugOperations for Game {
             RegisterMap(AudioRegs::Vol4, RegisterValue::from(8654u16)),
             RegisterMap(AudioRegs::Af4, RegisterValue::from(69u16)),
             RegisterMap(AudioRegs::Ctl4, RegisterValue::from(6u16)),
-            RegisterMap(AudioRegs::AudOutMap, RegisterValue::from(15042u16)),
             RegisterMap(AudioRegs::AudMap, RegisterValue::from(5555u16)),
             RegisterMap(AudioRegs::AudChanCtl, RegisterValue::from(251u8)),
             RegisterMap(AudioRegs::AudWave, RegisterValue::from(12u8)),

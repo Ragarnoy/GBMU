@@ -1,7 +1,7 @@
 use simplelog::{ColorChoice, Config, LevelFilter, TermLogger, TerminalMode};
 
 use gb_bus::{Bus, Source};
-use gb_clock::{cycles, Clock, Tick, Ticker};
+use gb_clock::{counted_cycles, Clock, Tick, Ticker};
 
 use std::cell::RefCell;
 use std::ops::DerefMut;
@@ -71,7 +71,7 @@ fn main() {
     log::info!("start 5s count example");
     let mut frames = 0;
     for l in 0..5 {
-        let mut curr_frames = 0;
+        let mut current_frames = 0;
         let mut cycle = 0;
         let t_stop = Instant::now() + one_sec;
         let mut tmp_cpu = cpu.borrow_mut();
@@ -80,8 +80,8 @@ fn main() {
         let mut tmp_timer = timer.borrow_mut();
         let ref_timer = tmp_timer.deref_mut();
         while Instant::now() < t_stop {
-            if !cycles!(clock, &mut bus, ref_cpu, ref_ppu, ref_timer) {
-                curr_frames += 1;
+            if !counted_cycles!(clock, &mut bus, ref_cpu, ref_ppu, ref_timer) {
+                current_frames += 1;
             }
             cycle += 1;
         }
@@ -89,9 +89,9 @@ fn main() {
             "Sec {}:\t\t{} cycles,\t\t\t{} frames",
             l,
             cycle,
-            curr_frames
+            current_frames
         );
-        frames += curr_frames;
+        frames += current_frames;
     }
     log::info!(
         "Total:\t\t{} cpu ticks,\t\t{} ppu ticks",
