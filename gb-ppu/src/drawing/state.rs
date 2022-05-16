@@ -10,7 +10,6 @@ use std::cell::RefMut;
 )]
 #[derive(Clone)]
 pub struct State {
-    cgb_enabled: bool,
     mode: Mode,
     line: u8,
     step: u16,
@@ -19,7 +18,7 @@ pub struct State {
 
 impl Default for State {
     fn default() -> Self {
-        Self::new(false)
+        Self::new()
     }
 }
 
@@ -39,9 +38,8 @@ impl State {
     const STEP_COUNT: u16 = 456;
     pub const LAST_STEP: u16 = Self::STEP_COUNT - 1;
 
-    pub fn new(cgb_enabled: bool) -> Self {
+    pub fn new() -> Self {
         State {
-            cgb_enabled,
             mode: Mode::HBlank,
             line: 0,
             step: 0,
@@ -223,7 +221,7 @@ impl State {
         line_updated: bool,
     ) {
         if line_updated {
-            lcd_reg.scrolling.ly = if !self.cgb_enabled && self.line == Self::LAST_LINE {
+            lcd_reg.scrolling.ly = if self.line == Self::LAST_LINE {
                 0
             } else {
                 self.line
