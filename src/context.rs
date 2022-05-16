@@ -1,14 +1,14 @@
 mod debugger;
 mod keybindings;
 
-#[cfg(any(feature = "time_frame", feature = "debug_fps"))]
+#[cfg(feature = "fps")]
 use crate::time_frame::TimeStat;
 use crate::{
     config::Config, custom_event::CustomEvent, game::Game, image::load_image_to_frame,
     windows::WindowType,
 };
 use gb_lcd::{DrawEgui, GBPixels, GBWindow, PseudoPixels, PseudoWindow};
-#[cfg(any(feature = "time_frame", feature = "debug_fps"))]
+#[cfg(feature = "fps")]
 use std::time::Instant;
 use std::{cell::RefCell, path::PathBuf, rc::Rc};
 use winit::{
@@ -31,9 +31,9 @@ pub struct Context {
     pub config: InternalConfig,
     pub event_proxy: EventLoopProxy<CustomEvent>,
     pub game: Option<Game>,
-    #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
+    #[cfg(feature = "fps")]
     pub time_frame: TimeStat,
-    #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
+    #[cfg(feature = "fps")]
     pub main_draw_instant: Instant,
     pub debugger_ctx: Option<debugger::Context>,
     pub keybindings_ctx: Option<keybindings::Context>,
@@ -56,9 +56,9 @@ impl Context {
             config: InternalConfig::default(),
             event_proxy,
             game: None,
-            #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
+            #[cfg(feature = "fps")]
             time_frame: TimeStat::default(),
-            #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
+            #[cfg(feature = "fps")]
             main_draw_instant: Instant::now(),
             debugger_ctx: None,
             keybindings_ctx: None,
@@ -231,11 +231,7 @@ impl Context {
             load_image_to_frame(image, frame);
         }
 
-        crate::ui::draw_egui(
-            self,
-            #[cfg(feature = "debug_fps")]
-            self.time_frame.fps(),
-        );
+        crate::ui::draw_egui(self);
 
         let main_pixels = &mut self.main_window.pixels;
         let main_context = &mut self.main_window.context;
@@ -250,7 +246,7 @@ impl Context {
             Ok(())
         })?;
 
-        #[cfg(any(feature = "time_frame", feature = "debug_fps"))]
+        #[cfg(feature = "fps")]
         {
             self.time_frame.add_sample(self.main_draw_instant.elapsed());
             self.main_draw_instant = std::time::Instant::now();

@@ -1,4 +1,6 @@
 mod file;
+#[cfg(feature = "fps")]
+mod fps;
 mod settings;
 mod tools;
 
@@ -9,18 +11,7 @@ use gb_lcd::DrawEgui;
 #[cfg(feature = "debug_render")]
 use native_dialog::FileDialog;
 
-#[cfg(feature = "debug_fps")]
-const FPS_WIDTH: f32 = 50.0;
-
-#[cfg(feature = "debug_fps")]
-macro_rules! ui_fps {
-    ($ui:expr, $context:expr, $fps:expr) => {
-        $ui.add_space($ui.available_size().x - FPS_WIDTH);
-        $ui.label((format!("{:>7.2}", $fps)));
-    };
-}
-
-pub fn draw_egui(context: &mut Context, #[cfg(feature = "debug_fps")] fps: f64) {
+pub fn draw_egui(context: &mut Context) {
     let (size, margin) = context.main_window.texture_size_and_margin();
     context
         .main_window
@@ -94,9 +85,9 @@ pub fn draw_egui(context: &mut Context, #[cfg(feature = "debug_fps")] fps: f64) 
                         settings::draw_ui(ui, &context.event_proxy, &mut context.config.mode);
                         // ui_debug!(ui, context);
                         // ui.style_mut().override_text_style = None;
-                        #[cfg(feature = "debug_fps")]
-                        if ui.available_width() >= FPS_WIDTH {
-                            ui_fps!(ui, context, fps);
+                        #[cfg(feature = "fps")]
+                        if ui.available_width() >= fps::FPS_WIDTH {
+                            fps::draw_ui(ui, &context.time_frame);
                         }
                     });
                 });

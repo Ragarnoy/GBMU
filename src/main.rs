@@ -6,7 +6,7 @@ mod game;
 mod image;
 mod logger;
 mod path;
-#[cfg(any(feature = "time_frame", feature = "debug_fps"))]
+#[cfg(feature = "fps")]
 mod time_frame;
 mod ui;
 mod windows;
@@ -31,12 +31,13 @@ use winit::{
 const WIDTH: u32 = GB_SCREEN_WIDTH as u32;
 const HEIGHT: u32 = GB_SCREEN_HEIGHT as u32;
 const MENU_BAR: u32 = MENU_BAR_SIZE as u32;
+const MAIN_WINDOW_SCALE_FACTOR: u32 = 4;
 
 fn main() -> Result<(), Error> {
     let config: Config = Config::parse();
     init_logger(config.log_level);
 
-    let (event_loop, main_window) = init::<WIDTH, HEIGHT, MENU_BAR>(&config)?;
+    let (event_loop, main_window) = init::<WIDTH, HEIGHT, MENU_BAR, MAIN_WINDOW_SCALE_FACTOR>()?;
     let event_loop_proxy = event_loop.create_proxy();
     let mut context = Context::new(main_window, event_loop_proxy);
     context.load_config(config);
@@ -67,13 +68,15 @@ fn main() -> Result<(), Error> {
                 while processing_frame {
                     if !game.is_audio_buffer_full() {
                         processing_frame = game.cycle();
-                    }
-                    if let Some(status) = context
-                        .debugger_ctx
-                        .as_mut()
-                        .and_then(|ctx| ctx.debugger.updated_flow_status(game))
-                    {
-                        game.update_scheduled_stop(status);
+                        if let Some(status) = context
+                            .debugger_ctx
+                            .as_mut()
+                            .and_then(|ctx| ctx.debugger.updated_flow_status(game))
+                        {
+                            game.update_scheduled_stop(status);
+                        }
+                    } else {
+                        log::debug!("audio buffer is full");
                     }
                 }
                 if let Some(ref mut ctx) = context.debugger_ctx {
@@ -99,8 +102,7 @@ fn main() -> Result<(), Error> {
     })
 }
 
-fn init<const WIDTH: u32, const HEIGHT: u32, const MENU_BAR_SIZE: u32>(
-    _config: &Config,
+fn init<const WIDTH: u32, const HEIGHT: u32, const MENU_BAR_SIZE: u32, const SCALE_FACTOR: u32>(
 ) -> Result<
     (
         EventLoop<CustomEvent>,
@@ -110,7 +112,10 @@ fn init<const WIDTH: u32, const HEIGHT: u32, const MENU_BAR_SIZE: u32>(
 > {
     let event_loop = EventLoop::with_user_event();
     let main_window = {
-        let size = LogicalSize::new(WIDTH as f64, HEIGHT as f64 + MENU_BAR_SIZE as f64);
+        let size = LogicalSize::new(
+            (WIDTH * SCALE_FACTOR) as f64,
+            (HEIGHT * SCALE_FACTOR) as f64 + MENU_BAR_SIZE as f64,
+        );
         WindowBuilder::new()
             .with_title(constant::APP_NAME)
             .with_inner_size(size)

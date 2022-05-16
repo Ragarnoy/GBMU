@@ -4,9 +4,12 @@ use crate::{
     channel::sound_channel::SoundChannel, control::frame_sequencer::FrameSequencer, ChannelType,
     MASK_UNUSED_BITS_70,
 };
-use crate::{NB_CYCLES_512_HZ, T_CYCLE_FREQUENCY};
+use crate::{NB_CYCLES_512_HZ, SAMPLE_RATE, T_CYCLE_FREQUENCY};
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
-use cpal::{SampleFormat, SampleRate, Stream, StreamConfig};
+use cpal::{
+    BuildStreamError, Device, SampleFormat, SampleRate, Stream, StreamConfig, StreamError,
+    SupportedBufferSize, SupportedStreamConfig,
+};
 use gb_bus::{Address, Bus, Error, FileOperation, IORegArea, Source};
 use gb_clock::{Tick, Ticker};
 
@@ -50,25 +53,106 @@ impl Apu {
     }
 
     pub fn init_audio_output(input_buffer: Arc<Mutex<Vec<f32>>>) -> (Stream, SampleRate) {
+        let required_buffer_size = input_buffer.lock().unwrap().capacity();
+
         let host = cpal::default_host();
-        let mut device = host
-            .default_output_device()
-            .expect("no output device available");
-        if device.supported_output_configs().is_err() {
-            device = host.devices().unwrap().next().unwrap();
-        }
-        let mut supported_configs_range = device
-            .supported_output_configs()
-            .expect("error while querying configs");
-        let supported_config = supported_configs_range
-            .next()
-            .expect("no supported config?!")
-            .with_max_sample_rate();
-        let err_fn = |err| eprintln!("an error occurred on the output audio stream: {}", err);
+        let (device, supported_config) =
+            Apu::get_supported_device(host, required_buffer_size as u32, SAMPLE_RATE as u32)
+                .expect("cannot get a valid device / config");
+
+        let err_fn = |err| log::error!("an error occurred on the output audio stream: {}", err);
         let sample_format = supported_config.sample_format();
         let mut config: StreamConfig = supported_config.into();
-        config.buffer_size =
-            cpal::BufferSize::Fixed(input_buffer.lock().unwrap().capacity() as u32);
+        config.buffer_size = cpal::BufferSize::Fixed(required_buffer_size as u32);
+        log::debug!("configured config: {:?}", config);
+
+        let stream =
+            Apu::build_output_stream(device, sample_format, &config, input_buffer, err_fn).unwrap();
+        stream.play().unwrap();
+        (stream, config.sample_rate)
+    }
+
+    fn get_supported_device(
+        host: cpal::Host,
+        required_buffer_size: u32,
+        required_sample_rate: u32,
+    ) -> Result<(Device, SupportedStreamConfig), String> {
+        let required_sample_rate = SampleRate(required_sample_rate);
+
+        let devices = host
+            .output_devices()
+            .expect("cannot retrieve any output device");
+        let devices = devices.filter_map(|device| {
+            let supported_output_configs = device.supported_output_configs();
+            match supported_output_configs {
+                Ok(configs) => Some((device, configs)),
+                Err(_) => None,
+            }
+        });
+
+        for (device, configs) in devices {
+            let device_name = device.name().unwrap_or("NoName".to_string());
+            log::debug!("trying device {}", device_name);
+
+            let mut configs = configs
+                .filter(|config| {
+                    log::debug!(
+                        "checking buffer size for config {:?} (looking for {})",
+                        config,
+                        required_buffer_size
+                    );
+                    let buffer_size = config.buffer_size();
+                    match buffer_size {
+                        SupportedBufferSize::Range { min, max } => {
+                            min <= &required_buffer_size && &required_buffer_size <= max
+                        }
+                        SupportedBufferSize::Unknown => true,
+                    }
+                })
+                .filter_map(|config| {
+                    let min_sample_rate = config.min_sample_rate();
+                    let max_sample_rate = config.max_sample_rate();
+
+                    log::debug!(
+                        "checking sample rate for config {:?} (looking for {}Hz)",
+                        config,
+                        SAMPLE_RATE
+                    );
+                    if min_sample_rate <= required_sample_rate
+                        && required_sample_rate <= max_sample_rate
+                    {
+                        Some(config.with_sample_rate(required_sample_rate))
+                    } else {
+                        None
+                    }
+                });
+
+            if let Some(selected_config) = configs.next() {
+                log::debug!(
+                    "found valid config for device {}, config: {:?}",
+                    device_name,
+                    selected_config
+                );
+                return Ok((device, selected_config));
+            } else {
+                log::debug!("no valid config from device {}", device_name);
+            }
+        }
+
+        Err("couldn't find valid device or stream".to_string())
+    }
+
+    fn build_output_stream<E>(
+        device: Device,
+        sample_format: SampleFormat,
+        config: &StreamConfig,
+        input_buffer: Arc<Mutex<Vec<f32>>>,
+        error_callback: E,
+    ) -> Result<Stream, BuildStreamError>
+    where
+        E: FnMut(StreamError),
+        E: Send + 'static,
+    {
         let channels = config.channels as usize;
 
         // callback used to get the next sample
@@ -81,40 +165,40 @@ impl Apu {
             }
         };
 
-        let stream = match sample_format {
+        match sample_format {
             SampleFormat::F32 => device.build_output_stream(
-                &config,
+                config,
                 move |data: &mut [f32], _: &cpal::OutputCallbackInfo| {
                     Self::write_data(data, channels, &mut next_value)
                 },
-                err_fn,
+                error_callback,
             ),
             SampleFormat::I16 => device.build_output_stream(
-                &config,
+                config,
                 move |data: &mut [i16], _: &cpal::OutputCallbackInfo| {
                     Self::write_data(data, channels, &mut next_value)
                 },
-                err_fn,
+                error_callback,
             ),
             SampleFormat::U16 => device.build_output_stream(
-                &config,
+                config,
                 move |data: &mut [u16], _: &cpal::OutputCallbackInfo| {
                     Self::write_data(data, channels, &mut next_value)
                 },
-                err_fn,
+                error_callback,
             ),
         }
-        .unwrap();
-        stream.play().unwrap();
-        (stream, config.sample_rate)
     }
 
-    fn write_data<T>(output: &mut [T], channels: usize, next_sample: &mut dyn FnMut() -> f32)
+    fn write_data<T, N>(output: &mut [T], channels: usize, next_value: &mut N)
     where
         T: cpal::Sample,
+        N: FnMut() -> f32,
+        N: Send + 'static,
     {
         for frame in output.chunks_mut(channels) {
-            let value: T = cpal::Sample::from::<f32>(&next_sample());
+            let value = next_value();
+            let value: T = cpal::Sample::from::<f32>(&value);
             for sample in frame.iter_mut() {
                 *sample = value;
             }
@@ -189,7 +273,7 @@ impl Ticker for Apu {
         }
 
         // Frame sequencer is clocked at 512 Hz
-        // 0x400_000 (Tcycle freq.) / 0x2000 = 512 Hz
+        // 0x400_000 (TCycle freq.) / 0x2000 = 512 Hz
         if self.cycle_counter >= NB_CYCLES_512_HZ {
             self.cycle_counter %= NB_CYCLES_512_HZ;
 
