@@ -15,6 +15,7 @@ use super::wave_ram::ProgrammableWave;
 #[derive(Debug)]
 pub struct SoundChannel {
     pub enabled: bool,
+    dac_enabled: bool,
     pub channel_type: ChannelType,
     sweep: Option<Sweep>,
     duty: Option<Duty>,
@@ -29,6 +30,7 @@ impl SoundChannel {
     pub fn new(channel_type: ChannelType, handles_sweep: bool) -> Self {
         SoundChannel {
             enabled: false,
+            dac_enabled: false,
             sweep: if handles_sweep && channel_type == ChannelType::SquareWave {
                 Some(Sweep::default())
             } else {
@@ -68,6 +70,7 @@ impl SoundChannel {
         }
         SoundChannel {
             enabled: false,
+            dac_enabled: false,
             sweep: if self.sweep.is_some() && self.channel_type == ChannelType::SquareWave {
                 Some(Sweep::default())
             } else {
@@ -151,7 +154,7 @@ impl SoundChannel {
     }
 
     pub fn get_dac_output(&self) -> f32 {
-        if !self.enabled {
+        if !self.dac_enabled || !self.enabled {
             return 0.0;
         }
         let dac_input = if let Some(volume_envelope) = &self.volume_envelope {
@@ -286,7 +289,7 @@ where
                     (*sweep).shift_nb = v & 0x7;
                 }
                 if self.channel_type == ChannelType::WaveForm {
-                    self.enabled = v & 0x80 != 0;
+                    self.dac_enabled = v & 0x80 != 0;
                 }
             }
             Nr11 | Nr21 | Nr31 | Nr41 => {
@@ -305,6 +308,7 @@ where
                     self.length_counter.counter = 0x100 - v as u16;
                 }
             }
+
             Nr12 | Nr22 | Nr32 | Nr42 => {
                 if let Some(ref mut ve) = self.volume_envelope {
                     (*ve).initial_volume = v >> 4;
@@ -314,7 +318,7 @@ where
                         Direction::Dec
                     };
                     (*ve).period = v & 0x7;
-                    self.enabled =
+                    self.dac_enabled =
                         (*ve).initial_volume > 0 || (*ve).envelope_direction == Direction::Inc;
                 }
                 if let Some(ref mut pw) = self.programmable_wave {
@@ -336,7 +340,7 @@ where
                 }
             }
             Nr14 | Nr24 | Nr34 | Nr44 => {
-                self.enabled = v & 0x80 != 0;
+                let trigger_channel = v & 0x80 != 0;
                 self.length_counter.enabled = v & 0x40 != 0;
 
                 if self.channel_type == ChannelType::SquareWave
@@ -346,7 +350,7 @@ where
                     self.timer.frequency = (v as u16 & 0x07) << 8 | low_byte as u16;
                 }
 
-                if self.enabled {
+                if trigger_channel {
                     self.length_counter.reload();
                     if let Some(ref mut ve) = self.volume_envelope {
                         (*ve).reload();
@@ -357,8 +361,12 @@ where
                     if let Some(ref mut lfsr) = self.lfsr {
                         (*lfsr).reload();
                     }
+                    if self.dac_enabled {
+                        self.enabled = true;
+                    }
                 }
             }
+
             WaveRam0 | WaveRam1 | WaveRam2 | WaveRam3 | WaveRam4 | WaveRam5 | WaveRam6
             | WaveRam7 | WaveRam8 | WaveRam9 | WaveRamA | WaveRamB | WaveRamC | WaveRamD
             | WaveRamE | WaveRamF => {
