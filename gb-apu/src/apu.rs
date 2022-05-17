@@ -24,6 +24,7 @@ pub struct Apu {
     master_volume: u8,
     panning_bits: u8,
     stream: Option<Stream>,
+    output_volume: f32,
 }
 
 impl Apu {
@@ -51,7 +52,12 @@ impl Apu {
             master_volume: 0,
             panning_bits: 0,
             stream,
+            output_volume: 0.7,
         }
+    }
+
+    pub fn output_volume(&mut self) -> &mut f32 {
+        &mut self.output_volume
     }
 
     pub fn init_audio_output(input_buffer: Arc<Mutex<Vec<f32>>>) -> (Stream, SampleRate) {
@@ -214,7 +220,7 @@ impl Apu {
 
     fn add_sample(&mut self) {
         let sample = if self.enabled {
-            self.mix() * 0.3 * (self.master_volume as f32)
+            self.mix() * 0.3 * (self.master_volume as f32) * self.output_volume
         } else {
             0.0
         };

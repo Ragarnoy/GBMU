@@ -82,7 +82,12 @@ pub fn draw_egui(context: &mut Context) {
                         // ui.style_mut().override_text_style = Some(egui::TextStyle::Heading);
                         file::draw_ui(ui, &context.event_proxy);
                         tools::draw_ui(ui, &context.event_proxy);
-                        settings::draw_ui(ui, &context.event_proxy, &mut context.config.mode);
+                        settings::draw_ui(
+                            ui,
+                            &context.event_proxy,
+                            &mut context.config.mode,
+                            &mut context.game,
+                        );
                         // ui_debug!(ui, context);
                         // ui.style_mut().override_text_style = None;
                         #[cfg(feature = "fps")]
