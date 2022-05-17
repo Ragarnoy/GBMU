@@ -15,7 +15,7 @@ use super::wave_ram::ProgrammableWave;
 #[derive(Debug)]
 pub struct SoundChannel {
     pub enabled: bool,
-    dac_enabled: bool,
+    pub dac_enabled: bool,
     trigger: bool,
     pub channel_type: ChannelType,
     sweep: Option<Sweep>,
