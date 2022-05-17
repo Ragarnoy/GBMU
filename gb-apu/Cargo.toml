@@ -9,3 +9,4 @@ edition = "2021"
 cpal = { version = "0.13.3" }
 gb-bus = { path = "../gb-bus" }
 gb-clock = { path = "../gb-clock" }
+log = "0.4.17"
