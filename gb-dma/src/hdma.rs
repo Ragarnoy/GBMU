@@ -7,7 +7,7 @@ use gb_ppu::{Mode, Ppu};
     feature = "serialization",
     derive(serde::Serialize, serde::Deserialize)
 )]
-#[derive(PartialEq, Clone, Copy)]
+#[derive(PartialEq, Clone, Copy, Debug)]
 pub enum HdmaMode {
     Gdma,
     Hdma,
@@ -132,7 +132,7 @@ where
                 }
                 self.active = true;
                 self.remaining_data_chunks = v & Self::MAX_DATA_CHUNKS_LEN;
-                self.remaining_in_current_chunk = Self::DATA_CHUNK_SIZE;
+                self.remaining_in_current_chunk = 0;
                 self.mode = match v & Self::HDMA_MODE_BIT {
                     0 => Some(HdmaMode::Gdma),
                     _ => Some(HdmaMode::Hdma),
