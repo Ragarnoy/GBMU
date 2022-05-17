@@ -211,7 +211,7 @@ impl Apu {
     }
 
     fn add_sample(&mut self) {
-        let sample = self.mix() * 0.3;
+        let sample = if self.enabled { self.mix() * 0.3 } else { 0.0 };
         self.buffer.lock().unwrap().push(sample);
     }
 
@@ -228,11 +228,6 @@ impl Apu {
     fn get_power_channels_statuses_byte(&self) -> u8 {
         let mut res = 0;
         res |= if self.enabled { 0x80 } else { 0 };
-        res |= if self.sound_channels[3].enabled {
-            0x8
-        } else {
-            0
-        };
         res |= if self.sound_channels[3].enabled {
             0x8
         } else {
@@ -263,23 +258,21 @@ impl Ticker for Apu {
     }
 
     fn tick(&mut self, _addr_bus: &mut dyn Bus<u8>) {
-        if !self.enabled || self.stream.is_none() {
-            return;
-        }
-
         self.cycle_counter += 1;
-        for i in 0..self.sound_channels.len() {
-            self.sound_channels[i].step();
-        }
-
-        // Frame sequencer is clocked at 512 Hz
-        // 0x400_000 (TCycle freq.) / 0x2000 = 512 Hz
-        if self.cycle_counter >= NB_CYCLES_512_HZ {
-            self.cycle_counter %= NB_CYCLES_512_HZ;
-
-            let step = self.frame_sequencer.step();
+        if self.enabled && self.stream.is_some() {
             for i in 0..self.sound_channels.len() {
-                self.sound_channels[i].frame_sequencer(step);
+                self.sound_channels[i].step();
+            }
+
+            // Frame sequencer is clocked at 512 Hz
+            // 0x400_000 (TCycle freq.) / 0x2000 = 512 Hz
+            if self.cycle_counter >= NB_CYCLES_512_HZ {
+                self.cycle_counter %= NB_CYCLES_512_HZ;
+
+                let step = self.frame_sequencer.step();
+                for i in 0..self.sound_channels.len() {
+                    self.sound_channels[i].frame_sequencer(step);
+                }
             }
         }
 
