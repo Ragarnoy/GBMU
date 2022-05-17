@@ -152,7 +152,7 @@ fn handle_custom_event(
 ) {
     match event {
         CustomEvent::Quit => *control_flow = ControlFlow::Exit,
-        CustomEvent::LoadFile(file) => context.load(file),
+        CustomEvent::LoadFile(file) => context.load(file, context.debugger_ctx.is_some()),
         CustomEvent::OpenWindow(window_type) => context
             .open_window(window_type, event_loop)
             .unwrap_or_else(|ref err| log::error!("Failed to open new window: {:?}", err)),

@@ -92,7 +92,7 @@ impl Context {
         if reload_mode || reload_file {
             self.config.mode = config.mode;
             if let Some(file) = config_file.or_else(|| self.config.rom_file.clone()) {
-                self.load(file)
+                self.load(file, open_debugger);
             } else {
                 log::warn!("Oh, I was expecting a file or something");
             }
@@ -307,8 +307,8 @@ impl Context {
 }
 
 impl Context {
-    pub fn load(&mut self, file: PathBuf) {
-        match Game::new(&file, self.joypad_config.clone(), false, self.config.mode) {
+    pub fn load(&mut self, file: PathBuf, stopped: bool) {
+        match Game::new(&file, self.joypad_config.clone(), stopped, self.config.mode) {
             Ok(game) => {
                 self.game.replace(game);
                 self.config.rom_file.replace(file);
