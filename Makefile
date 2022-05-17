@@ -62,7 +62,18 @@ package-linux: package-linux-appimage
 
 package-linux-appimage: docker
 	mkdir -p build
-	docker run --rm -t -v $$(pwd)/build:/build --entrypoint=/bin/sh gbmu-appimage:latest -c "set -x && appimage-builder --skip-tests && zip -r GBMU.AppDir.zip GBMU.AppDir && cp -vR GBMU-latest-x86_64.AppImage GBMU.AppDir.zip /build/"
+
+	docker run --name=build-gbmu -t -v $$(pwd)/build:/build --entrypoint=/bin/sh gbmu-appimage:latest -c "set -x && appimage-builder --skip-tests && zip -r GBMU.AppDir.zip GBMU.AppDir"
+	docker commit build-gbmu build-gbmu-img
+	docker container rm build-gbmu
+
+	docker run --name build-gbmu-pkg --entrypoint=sleep -d build-gbmu-img 3600
+	docker cp build-gbmu-pkg:/home/tester/GBMU-latest-x86_64.AppImage ./build/GBMU-latest-x86_64.AppImage
+	docker cp build-gbmu-pkg:/home/tester/GBMU.AppDir.zip ./build/GBMU.AppDir.zip
+
+	docker kill build-gbmu-pkg
+	docker container rm build-gbmu-pkg
+
 
 package-mac:
 	cargo build --release
