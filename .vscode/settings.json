@@ -1,24 +1,15 @@
 {
-  "cSpell.words": [
-    "egui",
-    "eram",
-    "gameboy",
-    "gamepack",
-    "gbmu",
-    "Hdma",
-    "hram",
-    "joypad",
-    "mbcs",
-    "noninteractive",
-    "Regs",
-    "romname",
-    "rompath",
-    "savepack",
-    "simplelog",
-    "Svbk",
-    "Tima",
-    "unmultiplied",
-    "winit",
-    "wram"
-  ]
+    "cSpell.words": [
+        "egui",
+        "gameboy",
+        "gbmu",
+        "joypad",
+        "mbcs",
+        "noninteractive",
+        "Regs",
+        "simplelog",
+        "Tima",
+        "unmultiplied",
+        "winit"
+    ]
 }
