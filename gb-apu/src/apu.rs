@@ -20,8 +20,9 @@ pub struct Apu {
     buffer: Arc<Mutex<Vec<f32>>>,
     sound_channels: Vec<SoundChannel>,
     frame_sequencer: FrameSequencer,
-    master: u8,
-    panning: u8,
+    master_bits: u8,
+    master_volume: u8,
+    panning_bits: u8,
     stream: Option<Stream>,
 }
 
@@ -46,8 +47,9 @@ impl Apu {
             buffer: input_buffer,
             sound_channels,
             frame_sequencer: FrameSequencer::default(),
-            master: 0,
-            panning: 0,
+            master_bits: 0,
+            master_volume: 0,
+            panning_bits: 0,
             stream,
         }
     }
@@ -211,7 +213,11 @@ impl Apu {
     }
 
     fn add_sample(&mut self) {
-        let sample = if self.enabled { self.mix() * 0.3 } else { 0.0 };
+        let sample = if self.enabled {
+            self.mix() * 0.3 * (self.master_volume as f32)
+        } else {
+            0.0
+        };
         self.buffer.lock().unwrap().push(sample);
     }
 
@@ -303,8 +309,8 @@ where
                 self.sound_channels[2].read(addr, None)
             }
             Nr41 | Nr42 | Nr43 | Nr44 => self.sound_channels[3].read(addr, None),
-            Nr50 => Ok(self.master),
-            Nr51 => Ok(self.panning),
+            Nr50 => Ok(self.master_bits),
+            Nr51 => Ok(self.panning_bits),
             Nr52 => Ok(self.get_power_channels_statuses_byte() | MASK_UNUSED_BITS_70),
             _ => Err(Error::SegmentationFault(addr.into())),
         }
@@ -350,12 +356,21 @@ where
             }
             Nr50 => {
                 if self.enabled {
-                    self.master = v;
+                    let master_left = ((v >> 4) & 0b111) / 0b111;
+                    let master_right = (v & 0b111) / 0b111;
+                    self.master_volume = master_left.max(master_right);
+
+                    self.master_bits = v;
                 }
             }
             Nr51 => {
                 if self.enabled {
-                    self.panning = v;
+                    self.sound_channels[0].dac_enabled = v & 0b1_0000 != 0 || v & 0b1 != 0;
+                    self.sound_channels[1].dac_enabled = v & 0b10_0000 != 0 || v & 0b10 != 0;
+                    self.sound_channels[2].dac_enabled = v & 0b100_0000 != 0 || v & 0b100 != 0;
+                    self.sound_channels[3].dac_enabled = v & 0b1000_0000 != 0 || v & 0b1000 != 0;
+
+                    self.panning_bits = v;
                 }
             }
             Nr52 => {
@@ -368,8 +383,8 @@ where
                         self.sound_channels[2].reset(),
                         self.sound_channels[3].reset(),
                     ];
-                    self.master = 0;
-                    self.panning = 0;
+                    self.master_bits = 0;
+                    self.panning_bits = 0;
                 }
                 self.enabled = enabled;
             }
