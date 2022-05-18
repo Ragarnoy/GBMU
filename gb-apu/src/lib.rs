@@ -1,3 +1,5 @@
+use cpal::SampleRate;
+
 pub mod apu;
 pub mod channel;
 pub mod control;
@@ -9,9 +11,7 @@ pub enum ChannelType {
     Noise,
 }
 
-pub const OUTPUT_CHANNELS_NB: usize = 2;
-pub const SAMPLE_RATE: usize = 44100;
-pub const SAMPLES_PER_FRAME: usize = SAMPLE_RATE / 60 * OUTPUT_CHANNELS_NB;
+pub const SAMPLE_RATES: [SampleRate; 2] = [SampleRate(44100), SampleRate(48000)];
 
 pub const MASK_UNUSED_BITS_FF: u8 = 0xFF;
 pub const MASK_UNUSED_BITS_3F: u8 = 0x3F;
