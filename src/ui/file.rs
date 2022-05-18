@@ -21,6 +21,7 @@ pub(crate) fn draw_ui(ui: &mut Ui, event_proxy: &EventLoopProxy<CustomEvent>) {
                     .expect("cannot send load file event");
             }
         }
+        #[cfg(feature = "save_state")]
         {
             ui.separator();
             if ui.button("Save As").clicked() {
