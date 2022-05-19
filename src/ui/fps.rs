@@ -49,7 +49,5 @@ pub fn draw_ui(ui: &mut Ui, time_stat: &TimeStat) {
         fps
     };
 
-    ui.with_layout(Layout::right_to_left(), |ui| {
-        ui.label(RichText::new(fps).monospace().size(8_f32))
-    });
+    ui.label(RichText::new(fps).monospace().size(12_f32));
 }
