@@ -308,6 +308,7 @@ impl Context {
 
 impl Context {
     pub fn load(&mut self, file: PathBuf, stopped: bool) {
+        drop(self.game.take());
         match Game::new(&file, self.joypad_config.clone(), stopped, self.config.mode) {
             Ok(game) => {
                 self.game.replace(game);
@@ -328,6 +329,7 @@ impl Context {
         if let Some(ref rom_file) = self.config.rom_file {
             let selected_mode = wanted_mode.or(self.config.mode);
 
+            drop(self.game.take());
             match Game::new(rom_file, self.joypad_config.clone(), false, selected_mode) {
                 Ok(game) => {
                     self.game.replace(game);
