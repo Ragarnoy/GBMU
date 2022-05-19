@@ -23,6 +23,7 @@
       <sourceFolder url="file://$MODULE_DIR$/gb-timer/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/gb-breakpoint/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/gb-apu/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/gb-apu/examples" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />

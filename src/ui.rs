@@ -3,10 +3,12 @@ mod file;
 mod fps;
 mod settings;
 mod tools;
+mod volume;
 
 use crate::Context;
 #[cfg(feature = "debug_render")]
 use crate::Game;
+use egui::Layout;
 use gb_lcd::DrawEgui;
 #[cfg(feature = "debug_render")]
 use native_dialog::FileDialog;
@@ -83,12 +85,16 @@ pub fn draw_egui(context: &mut Context) {
                         file::draw_ui(ui, &context.event_proxy);
                         tools::draw_ui(ui, &context.event_proxy);
                         settings::draw_ui(ui, &context.event_proxy, &mut context.config.mode);
+                        // ui.with_layout(egui::Layout::right_to_left(),  |ui| { ui.add(egui::Slider::new::<f64>(&mut 0.0, 0.0..=1.0)) });
                         // ui_debug!(ui, context);
                         // ui.style_mut().override_text_style = None;
-                        #[cfg(feature = "fps")]
-                        if ui.available_width() >= fps::FPS_WIDTH {
-                            fps::draw_ui(ui, &context.time_frame);
-                        }
+                        ui.with_layout(Layout::right_to_left(), |ui| {
+                            volume::draw_ui(ui, &mut context.game);
+                            #[cfg(feature = "fps")]
+                            if ui.available_width() >= fps::FPS_WIDTH {
+                                fps::draw_ui(ui, &context.time_frame);
+                            }
+                        });
                     });
                 });
             let mut central_frame = egui::Frame::none();
