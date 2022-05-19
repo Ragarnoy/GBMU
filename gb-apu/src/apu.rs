@@ -127,7 +127,8 @@ impl Apu {
                         .iter()
                         .find(|sample_rate| {
                             &min_sample_rate <= *sample_rate && *sample_rate <= &max_sample_rate
-                        }).map(|sample_rate| config.with_sample_rate(*sample_rate))
+                        })
+                        .map(|sample_rate| config.with_sample_rate(*sample_rate))
                 });
 
             if let Some(selected_config) = configs.next() {
