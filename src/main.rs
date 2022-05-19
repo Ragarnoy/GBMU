@@ -105,9 +105,7 @@ fn main() -> Result<(), Error> {
         | Event::Suspended
         | Event::RedrawEventsCleared
         | Event::DeviceEvent { .. }
-        | Event::NewEvents(_) => {
-            // log::debug!("ignore event {event:?}");
-        }
+        | Event::NewEvents(_) => {}
     })
 }
 

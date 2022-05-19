@@ -17,7 +17,6 @@ pub fn draw_egui(context: &mut Context) {
         .main_window
         .context
         .prepare_egui(&context.main_window.window, |egui_ctx| {
-
             let mut top_frame = egui::Frame::menu(&egui::style::Style::default());
             top_frame.margin = egui::style::Margin::symmetric(5.0, 0.0);
             egui::containers::TopBottomPanel::top("Top menu")
