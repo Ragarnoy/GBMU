@@ -32,3 +32,5 @@ registers.log
 # perf file
 perf.data*
 perf.script
+
+gbmu.zip
