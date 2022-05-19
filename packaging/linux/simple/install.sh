@@ -10,7 +10,7 @@ DESKTOP_FILE=$DESKTOP_FILENAME
 
 
 DESKTOP_INSTALL_DIR=$HOME/.local/share/applications
-INSTALL_DIR=$HOME/.gbmu
+INSTALL_DIR=$HOME/.config/gbmu
 
 if [ ! -f $GBMU_FILE ]; then
   echo "Missing executable to be installed" >&2
