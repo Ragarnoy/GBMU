@@ -4,7 +4,7 @@ use crate::{
     channel::sound_channel::SoundChannel, control::frame_sequencer::FrameSequencer, ChannelType,
     MASK_UNUSED_BITS_70,
 };
-use crate::{NB_CYCLES_512_HZ, SAMPLE_RATE, T_CYCLE_FREQUENCY};
+use crate::{NB_CYCLES_512_HZ, SAMPLE_RATES, T_CYCLE_FREQUENCY};
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use cpal::{
     BuildStreamError, Device, SampleFormat, SampleRate, Stream, StreamConfig, StreamError,
@@ -65,7 +65,7 @@ impl Apu {
 
         let host = cpal::default_host();
         let (device, supported_config) =
-            Apu::get_supported_device(host, required_buffer_size as u32, SAMPLE_RATE as u32)
+            Apu::get_supported_device(host, required_buffer_size as u32, SAMPLE_RATES)
                 .expect("cannot get a valid device / config");
 
         let err_fn = |err| log::error!("an error occurred on the output audio stream: {}", err);
@@ -83,10 +83,8 @@ impl Apu {
     fn get_supported_device(
         host: cpal::Host,
         required_buffer_size: u32,
-        required_sample_rate: u32,
+        required_sample_rates: [SampleRate; 2],
     ) -> Result<(Device, SupportedStreamConfig), String> {
-        let required_sample_rate = SampleRate(required_sample_rate);
-
         let devices = host
             .output_devices()
             .expect("cannot retrieve any output device");
@@ -118,18 +116,14 @@ impl Apu {
                     }
                 })
                 .filter_map(|config| {
-                    let min_sample_rate = config.min_sample_rate();
-                    let max_sample_rate = config.max_sample_rate();
-
+                    let sample_rate = config.clone().with_max_sample_rate().sample_rate();
                     log::debug!(
-                        "checking sample rate for config {:?} (looking for {}Hz)",
+                        "checking sample rate for config {:?}. Looking for {:?}",
                         config,
-                        SAMPLE_RATE
+                        required_sample_rates
                     );
-                    if min_sample_rate <= required_sample_rate
-                        && required_sample_rate <= max_sample_rate
-                    {
-                        Some(config.with_sample_rate(required_sample_rate))
+                    if required_sample_rates.contains(&sample_rate) {
+                        Some(config.with_sample_rate(sample_rate))
                     } else {
                         None
                     }
