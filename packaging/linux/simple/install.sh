@@ -36,8 +36,8 @@ echo "Copying files to $INSTALL_DIR"
 cp -v $GBMU_FILE $ICON_FILE $INSTALL_DIR/
 
 sed -i.back \
-  -e "s;^Exec=*;Exec=$INSTALL_DIR/$GBMU_FILE;" \
-  -e "s;^Icon=*;Icon=$INSTALL_DIR/$ICON_FILE;" \
+  -e "s;^Exec=.*$;Exec=$INSTALL_DIR/$GBMU_FILENAME;" \
+  -e "s;^Icon=.*$;Icon=$INSTALL_DIR/$ICON_FILENAME;" \
   $DESKTOP_FILE
 
 desktop-file-install --dir=$DESKTOP_INSTALL_DIR $DESKTOP_FILE
