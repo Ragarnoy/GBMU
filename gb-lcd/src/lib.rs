@@ -17,7 +17,6 @@ use winit::{
     window::{Window, WindowId},
 };
 
-
 pub trait PseudoWindow {
     /// Returns the scale factor that can be used to map logical pixels to physical pixels, and vice versa.
     ///
