@@ -116,17 +116,19 @@ impl Apu {
                     }
                 })
                 .filter_map(|config| {
-                    let sample_rate = config.clone().with_max_sample_rate().sample_rate();
+                    let max_sample_rate = config.max_sample_rate();
+                    let min_sample_rate = config.min_sample_rate();
                     log::debug!(
                         "checking sample rate for config {:?}. Looking for {:?}",
                         config,
                         required_sample_rates
                     );
-                    if required_sample_rates.contains(&sample_rate) {
-                        Some(config.with_sample_rate(sample_rate))
-                    } else {
-                        None
-                    }
+                    required_sample_rates
+                        .iter()
+                        .find(|sample_rate| {
+                            &min_sample_rate <= *sample_rate && *sample_rate <= &max_sample_rate
+                        })
+                        .map(|sample_rate| config.with_sample_rate(*sample_rate))
                 });
 
             if let Some(selected_config) = configs.next() {

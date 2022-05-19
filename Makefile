@@ -99,4 +99,4 @@ endif
 clean:
 	rm -rf build/
 
-.PHONY: requirement roms docker run-container package package-linux package-linux-appimage package-mac clean
+.PHONY: requirement roms docker run-container package package-linux package-linux-appimage package-mac clean $(TARGET_DIR)/release/gbmu
