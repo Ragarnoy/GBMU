@@ -1470,7 +1470,7 @@ dependencies = [
 
 [[package]]
 name = "gbmu"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "clap 3.1.18",
