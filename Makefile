@@ -24,6 +24,7 @@ BIOS := \
 		assets/bios/dmg_boot.bin \
 		assets/bios/cgb_boot.bin \
 
+TARGET_DIR ?= target
 ASSETS_DIR := assets
 ROMS_ZIP := $(ASSETS_DIR)/roms.zip
 ROMS_DIR := $(ASSETS_DIR)/roms
@@ -74,6 +75,13 @@ package-linux-appimage: docker
 	docker kill build-gbmu-pkg
 	docker container rm build-gbmu-pkg
 
+package-linux-simple: gbmu.zip
+
+gbmu.zip: $(ASSETS_DIR)/gbmu-512x512.png packaging/linux/simple/gbmu.desktop packaging/linux/simple/install.sh $(TARGET_DIR)/release/gbmu
+	zip -j $@ $^
+
+$(TARGET_DIR)/release/gbmu:
+	cargo build --release
 
 package-mac:
 	cargo build --release
