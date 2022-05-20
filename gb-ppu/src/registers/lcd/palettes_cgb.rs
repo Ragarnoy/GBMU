@@ -46,6 +46,14 @@ impl PalettesCGB {
     const SPEC_AUTO_INCR: u8 = 0b1000_0000;
     const SPEC_DATA_INDEX: u8 = !Self::SPEC_AUTO_INCR;
 
+    pub fn lock(&mut self) {
+        self.locked = true;
+    }
+
+    pub fn unlock(&mut self) {
+        self.locked = false;
+    }
+
     pub fn get_bcps(&self) -> u8 {
         self.bcps
     }

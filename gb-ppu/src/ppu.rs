@@ -409,6 +409,9 @@ impl Ppu {
         } else {
             log::error!("Vram borrow failed for ppu to unlock");
         }
+        if let Ok(mut lcd_reg) = self.lcd_reg.try_borrow_mut() {
+            lcd_reg.pal_cgb.unlock();
+        }
     }
 
     fn oam_fetch(&mut self) {
@@ -469,7 +472,7 @@ impl Ppu {
     }
 
     fn pixel_drawing(&mut self) {
-        if let Ok(lcd_reg) = self.lcd_reg.try_borrow() {
+        if let Ok(mut lcd_reg) = self.lcd_reg.try_borrow_mut() {
             let mut lock: Option<Lock>;
             let mut x: u8;
             let y: u8;
@@ -481,6 +484,7 @@ impl Ppu {
                     // init mode 3
                     vram.lock(Lock::Ppu);
                     lock = Some(Lock::Ppu);
+                    lcd_reg.pal_cgb.lock();
                     self.pixel_fetcher.reset();
                     self.pixel_fifo.clear();
                     self.state.clear_pixel_count();
