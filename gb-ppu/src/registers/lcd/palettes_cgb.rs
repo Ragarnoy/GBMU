@@ -18,6 +18,7 @@ pub struct PalettesCGB {
     ocpd: u8,
     #[cfg_attr(feature = "serialization", serde(with = "PaletteDataSize"))]
     oc_values: [u8; Self::PALETTES_RAW_SIZE],
+    locked: bool,
 }
 
 impl Default for PalettesCGB {
@@ -29,6 +30,7 @@ impl Default for PalettesCGB {
             ocps: 0,
             ocpd: 0,
             oc_values: [0; Self::PALETTES_RAW_SIZE],
+            locked: false,
         }
     }
 }
@@ -49,17 +51,25 @@ impl PalettesCGB {
     }
 
     pub fn set_bcps(&mut self, value: u8) {
-        self.bcps = value;
+        if !self.locked {
+            self.bcps = value;
+        }
     }
 
     pub fn get_bcpd(&self) -> u8 {
-        self.bcpd
+        if !self.locked {
+            self.bcpd
+        } else {
+            0xff
+        }
     }
 
     pub fn set_bcpd(&mut self, value: u8) {
-        self.bcpd = value;
-        let index = (self.bcps & (Self::PALETTES_RAW_SIZE as u8 - 1)) as usize;
-        self.bc_values[index] = value;
+        if !self.locked {
+            self.bcpd = value;
+            let index = (self.bcps & (Self::PALETTES_RAW_SIZE as u8 - 1)) as usize;
+            self.bc_values[index] = value;
+        }
 
         if self.bcps & Self::SPEC_AUTO_INCR != 0 {
             if self.bcps == Self::SPEC_AUTO_INCR | Self::SPEC_DATA_INDEX {
@@ -75,17 +85,25 @@ impl PalettesCGB {
     }
 
     pub fn set_ocps(&mut self, value: u8) {
-        self.ocps = value;
+        if !self.locked {
+            self.ocps = value;
+        }
     }
 
     pub fn get_ocpd(&self) -> u8 {
-        self.ocpd
+        if !self.locked {
+            self.ocpd
+        } else {
+            0xff
+        }
     }
 
     pub fn set_ocpd(&mut self, value: u8) {
-        self.ocpd = value;
-        let index = (self.ocps & (Self::PALETTES_RAW_SIZE as u8 - 1)) as usize;
-        self.oc_values[index] = value;
+        if !self.locked {
+            self.ocpd = value;
+            let index = (self.ocps & (Self::PALETTES_RAW_SIZE as u8 - 1)) as usize;
+            self.oc_values[index] = value;
+        }
 
         if self.ocps & Self::SPEC_AUTO_INCR != 0 {
             if self.ocps == Self::SPEC_AUTO_INCR | Self::SPEC_DATA_INDEX {
@@ -130,6 +148,7 @@ impl From<[u8; 4]> for PalettesCGB {
             ocps: bytes[2],
             ocpd: bytes[3],
             oc_values: [0; Self::PALETTES_RAW_SIZE],
+            locked: false,
         }
     }
 }
