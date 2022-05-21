@@ -411,6 +411,8 @@ impl Ppu {
         }
         if let Ok(mut lcd_reg) = self.lcd_reg.try_borrow_mut() {
             lcd_reg.pal_cgb.unlock();
+        } else {
+            log::error!("lcd reg borrow failed for ppu to unlock");
         }
     }
 
