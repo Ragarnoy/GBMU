@@ -5,13 +5,14 @@ mod ppu_tool;
 #[cfg(feature = "fps")]
 use crate::time_frame::TimeStat;
 use crate::{
-    config::Config, custom_event::CustomEvent, game::Game, image::load_image_to_frame,
-    windows::WindowType,
+    bios_configuration::BiosConfiguration, config::Config, custom_event::CustomEvent, game::Game,
+    image::load_image_to_frame, windows::WindowType,
 };
 use gb_lcd::{DrawEgui, GBPixels, GBWindow, PseudoPixels, PseudoWindow};
 use gb_ppu::{
     SPRITE_RENDER_HEIGHT, SPRITE_RENDER_WIDTH, TILEMAP_DIM, TILESHEET_HEIGHT, TILESHEET_WIDTH,
 };
+
 const PPU_TILESHEET_WIDTH: u32 = TILESHEET_WIDTH as u32;
 const PPU_TILESHEET_HEIGHT: u32 = TILESHEET_HEIGHT as u32;
 const PPU_TILEMAP_DIM: u32 = TILEMAP_DIM as u32;
@@ -29,6 +30,7 @@ use winit::{
 };
 
 use gb_ppu::{GB_SCREEN_HEIGHT, GB_SCREEN_WIDTH};
+
 const GB_WIDTH: u32 = GB_SCREEN_WIDTH as u32;
 const GB_HEIGHT: u32 = GB_SCREEN_HEIGHT as u32;
 
@@ -52,6 +54,7 @@ pub struct Context {
     pub tilemap_ctx: Option<ppu_tool::Context<PPU_TILEMAP_DIM, PPU_TILEMAP_DIM, MENU_BAR>>,
     pub spritesheet_ctx:
         Option<ppu_tool::Context<PPU_SPRITE_RENDER_WIDTH, PPU_SPRITE_RENDER_HEIGHT, MENU_BAR>>,
+    pub bios_configuration: BiosConfiguration,
 }
 
 #[derive(Default)]
@@ -80,6 +83,7 @@ impl Context {
             tilesheet_ctx: None,
             tilemap_ctx: None,
             spritesheet_ctx: None,
+            bios_configuration: BiosConfiguration::default(),
         }
     }
 
@@ -373,7 +377,7 @@ impl Context {
         #[cfg(feature = "fps")]
         {
             self.time_frame.add_sample(self.main_draw_instant.elapsed());
-            self.main_draw_instant = std::time::Instant::now();
+            self.main_draw_instant = Instant::now();
         }
 
         Ok(())

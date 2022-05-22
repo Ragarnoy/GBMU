@@ -1,12 +1,16 @@
 use egui::Ui;
 use winit::event_loop::EventLoopProxy;
 
-use crate::config::Mode;
-use crate::{custom_event::CustomEvent, windows::WindowType};
+use crate::{
+    bios_configuration::BiosConfiguration,
+    config::Mode,
+    {custom_event::CustomEvent, windows::WindowType},
+};
 
 pub(crate) fn draw_ui(
     ui: &mut Ui,
     event_proxy: &EventLoopProxy<CustomEvent>,
+    bios_config: &mut BiosConfiguration,
     mode: &mut Option<Mode>,
 ) {
     ui.menu_button("Settings", |ui| {
@@ -18,34 +22,32 @@ pub(crate) fn draw_ui(
         }
 
         ui.separator();
-        bios_configuration(ui);
+        bios_configuration(bios_config, ui);
 
         ui.separator();
         mode_settings(event_proxy, mode, ui);
     });
 }
 
-fn bios_configuration(ui: &mut Ui) {
-    let mut dmg_bios = false;
-    let mut cgb_bios = false;
-    if ui.checkbox(&mut dmg_bios, "enable dmg bios").clicked() {
-        if dmg_bios {
+fn bios_configuration(bios_config: &mut BiosConfiguration, ui: &mut Ui) {
+    if ui.checkbox(&mut bios_config.enable_dmg, "enable dmg bios").clicked() {
+        if bios_config.enable_dmg{
             todo!("select a dmg bios file");
         } else {
             todo!("remove the dmg bios file");
         }
     }
-    if dmg_bios && ui.button("change dmg bios").clicked() {
+    if bios_config.enable_dmg && ui.button("change dmg bios").clicked() {
         todo!("change the dmg bios file");
     }
-    if ui.checkbox(&mut cgb_bios, "enable cgb bios").clicked() {
-        if cgb_bios {
+    if ui.checkbox(&mut bios_config.enable_cbg, "enable cgb bios").clicked() {
+        if bios_config.enable_cbg {
             todo!("select a cgb bios file");
         } else {
             todo!("remove the cgb bios file");
         }
     }
-    if cgb_bios && ui.button("change cgb bios").clicked() {
+    if bios_config.enable_cbg && ui.button("change cgb bios").clicked() {
         todo!("change the cgb bios file");
     }
 }
