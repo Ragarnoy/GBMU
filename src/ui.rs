@@ -84,7 +84,12 @@ pub fn draw_egui(context: &mut Context) {
                         // ui.style_mut().override_text_style = Some(egui::TextStyle::Heading);
                         file::draw_ui(ui, &context.event_proxy);
                         tools::draw_ui(ui, &context.event_proxy);
-                        settings::draw_ui(ui, &context.event_proxy, &mut context.bios_configuration, &mut context.config.mode);
+                        settings::draw_ui(
+                            ui,
+                            &context.event_proxy,
+                            &mut context.bios_configuration,
+                            &mut context.config.mode,
+                        );
                         // ui.with_layout(egui::Layout::right_to_left(),  |ui| { ui.add(egui::Slider::new::<f64>(&mut 0.0, 0.0..=1.0)) });
                         // ui_debug!(ui, context);
                         // ui.style_mut().override_text_style = None;
