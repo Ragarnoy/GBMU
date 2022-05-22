@@ -1,10 +1,13 @@
+use std::path::PathBuf;
+
 use egui::Ui;
+use native_dialog::FileDialog;
 use winit::event_loop::EventLoopProxy;
 
 use crate::{
+    {custom_event::CustomEvent, windows::WindowType},
     bios_configuration::BiosConfiguration,
     config::Mode,
-    {custom_event::CustomEvent, windows::WindowType},
 };
 
 pub(crate) fn draw_ui(
@@ -29,26 +32,51 @@ pub(crate) fn draw_ui(
     });
 }
 
+const PREFERRED_BIOS_EXTS: [&str; 2] = ["bios", "bin"];
+
 fn bios_configuration(bios_config: &mut BiosConfiguration, ui: &mut Ui) {
-    if ui.checkbox(&mut bios_config.enable_dmg, "enable dmg bios").clicked() {
-        if bios_config.enable_dmg{
-            todo!("select a dmg bios file");
-        } else {
-            todo!("remove the dmg bios file");
+    if ui
+        .checkbox(&mut bios_config.enable_dmg, "enable dmg bios")
+        .clicked()
+    {
+        if bios_config.enable_dmg && bios_config.dmg_bios_file.is_none() {
+            select_bios_file(&mut bios_config.dmg_bios_file);
         }
     }
     if bios_config.enable_dmg && ui.button("change dmg bios").clicked() {
-        todo!("change the dmg bios file");
+        select_bios_file(&mut bios_config.dmg_bios_file);
     }
-    if ui.checkbox(&mut bios_config.enable_cbg, "enable cgb bios").clicked() {
-        if bios_config.enable_cbg {
-            todo!("select a cgb bios file");
-        } else {
-            todo!("remove the cgb bios file");
+    if let Some(ref path) = bios_config.dmg_bios_file {
+        ui.label(format!("dmg bios: {}", path.to_string_lossy()));
+        ui.label(path.to_string_lossy().to_string());
+    }
+    if ui
+        .checkbox(&mut bios_config.enable_cbg, "enable cgb bios")
+        .clicked()
+    {
+        if bios_config.enable_cbg && bios_config.cgb_bios_file.is_none() {
+            select_bios_file(&mut bios_config.cgb_bios_file);
         }
     }
     if bios_config.enable_cbg && ui.button("change cgb bios").clicked() {
-        todo!("change the cgb bios file");
+        select_bios_file(&mut bios_config.cgb_bios_file);
+    }
+    if let Some(ref path) = bios_config.cgb_bios_file {
+        ui.label(format!("cgb bios: {}", path.to_string_lossy()));
+        ui.label(path.to_string_lossy().to_string());
+    }
+}
+
+fn select_bios_file(value: &mut Option<PathBuf>)
+{
+    let file = FileDialog::new()
+        .set_location(&std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("/")))
+        .add_filter("bios", &PREFERRED_BIOS_EXTS)
+        .show_open_single_file();
+
+    log::debug!("picked bios file {file:?}");
+    if let Ok(Some(path)) = file {
+        value.replace(path);
     }
 }
 
