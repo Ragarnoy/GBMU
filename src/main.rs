@@ -1,3 +1,4 @@
+mod bios_configuration;
 mod config;
 mod constant;
 mod context;
