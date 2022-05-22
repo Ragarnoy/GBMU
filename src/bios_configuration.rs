@@ -1,7 +1,9 @@
-#[derive(Default)]
+use std::path::PathBuf;
+
+#[derive(Default, serde::Deserialize, serde::Serialize)]
 pub struct BiosConfiguration {
     pub enable_dmg: bool,
-    pub dmg_bios_file: Option<String>,
+    pub dmg_bios_file: Option<PathBuf>,
     pub enable_cbg: bool,
-    pub cgb_bios_file: Option<String>,
+    pub cgb_bios_file: Option<PathBuf>,
 }
