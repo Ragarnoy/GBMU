@@ -1,10 +1,8 @@
-#[cfg(feature = "save_state")]
-mod save_state;
-mod utils;
+#[cfg(feature = "registers_logs")]
+use std::io::BufWriter;
+use std::sync::{Arc, Mutex};
+use std::{cell::RefCell, fs::File, ops::DerefMut, path::Path, rc::Rc};
 
-use crate::{config::Mode, constant::AUDIO_BUFFER_SIZE};
-
-use crate::path::game_save_path;
 use gb_apu::apu::Apu;
 use gb_bus::{
     generic::{CharDevice, SimpleRW},
@@ -33,11 +31,12 @@ use gb_timer::Timer;
 use save_state::SaveState;
 use utils::mbc_with_save_state;
 
-#[cfg(feature = "registers_logs")]
-use std::io::BufWriter;
+use crate::path::game_save_path;
+use crate::{config::Mode, constant::AUDIO_BUFFER_SIZE};
 
-use std::sync::{Arc, Mutex};
-use std::{cell::RefCell, fs::File, ops::DerefMut, path::Path, rc::Rc};
+#[cfg(feature = "save_state")]
+mod save_state;
+mod utils;
 
 pub struct Game {
     pub romname: String,
