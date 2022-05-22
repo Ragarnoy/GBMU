@@ -1,5 +1,14 @@
+use gb_bus::WorkingRam;
+use gb_dma::dma::Dma;
+use gb_dma::hdma::Hdma;
+use gb_ppu::Ppu;
+use gb_roms::controllers::{Full, GenericState};
+use gb_timer::Timer;
+
+use crate::game::Game;
+
 #[derive(serde::Serialize, serde::Deserialize)]
-struct SaveState {
+pub(super) struct SaveState {
     pub romname: String,
     pub cpu_regs: gb_cpu::registers::Registers,
     pub cpu_io_regs: gb_cpu::io_registers::IORegisters,
