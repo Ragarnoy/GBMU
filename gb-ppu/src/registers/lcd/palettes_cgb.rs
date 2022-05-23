@@ -18,6 +18,7 @@ pub struct PalettesCGB {
     ocpd: u8,
     #[cfg_attr(feature = "serialization", serde(with = "PaletteDataSize"))]
     oc_values: [u8; Self::PALETTES_RAW_SIZE],
+    locked: bool,
 }
 
 impl Default for PalettesCGB {
@@ -29,6 +30,7 @@ impl Default for PalettesCGB {
             ocps: 0,
             ocpd: 0,
             oc_values: [0; Self::PALETTES_RAW_SIZE],
+            locked: false,
         }
     }
 }
@@ -44,6 +46,14 @@ impl PalettesCGB {
     const SPEC_AUTO_INCR: u8 = 0b1000_0000;
     const SPEC_DATA_INDEX: u8 = !Self::SPEC_AUTO_INCR;
 
+    pub fn lock(&mut self) {
+        self.locked = true;
+    }
+
+    pub fn unlock(&mut self) {
+        self.locked = false;
+    }
+
     pub fn get_bcps(&self) -> u8 {
         self.bcps
     }
@@ -53,13 +63,22 @@ impl PalettesCGB {
     }
 
     pub fn get_bcpd(&self) -> u8 {
-        self.bcpd
+        if !self.locked {
+            self.bcpd
+        } else {
+            log::warn!("trying to read from bcpd palette during mode 3");
+            0xff
+        }
     }
 
     pub fn set_bcpd(&mut self, value: u8) {
-        self.bcpd = value;
-        let index = (self.bcps & (Self::PALETTES_RAW_SIZE as u8 - 1)) as usize;
-        self.bc_values[index] = value;
+        if !self.locked {
+            self.bcpd = value;
+            let index = (self.bcps & (Self::PALETTES_RAW_SIZE as u8 - 1)) as usize;
+            self.bc_values[index] = value;
+        } else {
+            log::warn!("trying to write to bcpd palette during mode 3");
+        }
 
         if self.bcps & Self::SPEC_AUTO_INCR != 0 {
             if self.bcps == Self::SPEC_AUTO_INCR | Self::SPEC_DATA_INDEX {
@@ -79,13 +98,22 @@ impl PalettesCGB {
     }
 
     pub fn get_ocpd(&self) -> u8 {
-        self.ocpd
+        if !self.locked {
+            self.ocpd
+        } else {
+            log::warn!("trying to read from ocpd palette during mode 3");
+            0xff
+        }
     }
 
     pub fn set_ocpd(&mut self, value: u8) {
-        self.ocpd = value;
-        let index = (self.ocps & (Self::PALETTES_RAW_SIZE as u8 - 1)) as usize;
-        self.oc_values[index] = value;
+        if !self.locked {
+            self.ocpd = value;
+            let index = (self.ocps & (Self::PALETTES_RAW_SIZE as u8 - 1)) as usize;
+            self.oc_values[index] = value;
+        } else {
+            log::warn!("trying to write to ocpd palette during mode 3");
+        }
 
         if self.ocps & Self::SPEC_AUTO_INCR != 0 {
             if self.ocps == Self::SPEC_AUTO_INCR | Self::SPEC_DATA_INDEX {
@@ -130,6 +158,7 @@ impl From<[u8; 4]> for PalettesCGB {
             ocps: bytes[2],
             ocpd: bytes[3],
             oc_values: [0; Self::PALETTES_RAW_SIZE],
+            locked: false,
         }
     }
 }
