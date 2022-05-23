@@ -1,0 +1,21 @@
+[package]
+name = "gb-lcd"
+version = "0.1.0"
+authors = ["Guilhem Smith <gsmith@student.42.fr>"]
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+debug_render = []
+
+[dependencies]
+egui = "0.17"
+egui_wgpu_backend = "0.17.0"
+wgpu = "0.12.0"
+egui-winit = "0.17.0"
+winit = "0.26.1"
+pixels = "0.9.0"
+log = { version = "0.4", features = ["std"] }
+pollster = "0.2"
+anyhow = "1.0"

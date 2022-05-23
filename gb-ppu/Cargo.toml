@@ -1,0 +1,27 @@
+[package]
+name = "gb-ppu"
+version = "0.1.0"
+authors = ["Guilhem Smith <gsmith@student.42.fr>"]
+edition = "2021"
+autoexamples = false
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+gb-clock = { path = "../gb-clock" }
+gb-bus = { path = "../gb-bus" }
+log = { version = "0.4" }
+serde = { version = "1.0", features = ["std", "derive", "rc"], optional = true }
+serde-big-array = { version = "0.3", optional = true }
+
+[dev-dependencies]
+egui = "0.17"
+
+[features]
+serialization = [
+  "serde",
+  "serde/std",
+  "serde/derive",
+  "serde/rc",
+  "serde-big-array",
+]

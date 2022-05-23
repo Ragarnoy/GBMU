@@ -1,0 +1,23 @@
+[package]
+name = "gb-roms"
+version = "0.1.0"
+authors = ["firelight.flagboy <firelight.flagboy@gmail.com>"]
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dev-dependencies]
+clap = { version = "3.1", features = [ "derive" ] }
+
+[build-dependencies]
+zip = { version = "0.5" }
+
+[dependencies]
+modular-bitfield = "0.11.2"
+gb-bus = { path = "../gb-bus" }
+gb-rtc = { path = "../gb-rtc" }
+serde = { version = "1.0" , features = [ "derive" ] }
+log = "0.4"
+
+[features]
+debug_mbcs_register = []

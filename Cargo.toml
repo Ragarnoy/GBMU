@@ -1,0 +1,77 @@
+[package]
+name = "gbmu"
+version = "1.0.0"
+authors = [
+  "Guilhem Smith <gsmith@student.42.fr>",
+  "Florian Bennetot <fbenneto@student.42.fr>",
+  "Tiago Lernould <tlernoul@student.42.fr>",
+  "Cedric M'Passi <cedricmpassi@gmail.com>",
+  "Pierre Lamusse <plamusse@student.42.fr>",
+]
+edition = "2021"
+rust-version = "1.60.0"
+description = "A gameboy emulator"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+default = ["bios"]
+debug_render = ["gb-lcd/debug_render"]
+registers_logs = ["gb-cpu/registers_logs"]
+# Show a FPS counter, the FPS is the mean of the last N frame (see time_frame.rs -> SAMPLE_SIZE)
+fps = []
+# Extend the FPS counter with min / mean / max / current
+fps_stat = ["fps"]
+# Extend the FPS counter by using raw time in Millisecond instead of Frame Per Second
+fps_expert = ["fps"]
+bios = []
+save_state = [
+  "gb-cpu/serialization",
+  "gb-bus/serialization",
+  "gb-timer/serialization",
+  "gb-ppu/serialization",
+  "gb-dma/serialization",
+]
+
+[dependencies]
+winit = "0.26.1"
+pixels = "0.9.0"
+egui = "0.17"
+cpal = "0.13.3"
+native-dialog = "0.6"
+log = { version = "0.4", features = ["std"] }
+serde_yaml = "0.8"
+serde = "1.0"
+rmp-serde = "1.1"
+clap = { version = "3.1", features = ["derive"] }
+anyhow = "1.0"
+gb-lcd = { path = "./gb-lcd" }
+gb-ppu = { path = "./gb-ppu" }
+gb-dbg = { path = "./gb-dbg" }
+gb-joypad = { path = "./gb-joypad" }
+gb-bus = { path = "./gb-bus" }
+gb-cpu = { path = "./gb-cpu" }
+gb-roms = { path = "./gb-roms" }
+gb-clock = { path = "./gb-clock" }
+gb-timer = { path = "./gb-timer" }
+gb-dma = { path = "./gb-dma" }
+gb-apu = { path = "./gb-apu" }
+env_logger = "0.9.0"
+
+[workspace]
+members = [
+  "gb-apu",
+  "gb-dma",
+  "gb-clock",
+  "gb-roms",
+  "gb-ppu",
+  "gb-lcd",
+  "gb-cpu",
+  "gb-dbg",
+  "gb-bus",
+  "gb-rtc",
+  "gb-joypad",
+  "gb-timer",
+  "gb-test",
+  "gb-breakpoint",
+]

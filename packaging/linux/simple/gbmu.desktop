@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Gbmu Emulator
+GenericName=Gbmu
+Comment=A GameBoy emulator
+Exec=target/release/gbmu
+Icon=assets/gbmu-512x512.png
+Terminal=true
+Categories=Game;X-Emulation
+MimeType=application/x-gbrom

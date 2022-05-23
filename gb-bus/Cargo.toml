@@ -1,0 +1,20 @@
+[package]
+name = "gb-bus"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rand = { version = "0.8", features = ["small_rng"] }
+serde = { version = "1.0", optional = true }
+log = "0.4"
+
+[features]
+trace_bus_full = ["trace_bus_write", "trace_bus_read"]
+trace_bus_write = []
+trace_bus_read = []
+trace_simple_rw_full = ["trace_simple_rw_read", "trace_simple_rw_write"]
+trace_simple_rw_read = []
+trace_simple_rw_write = []
+serialization = ["serde", "serde/std", "serde/derive"]

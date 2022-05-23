@@ -1,0 +1,11 @@
+[package]
+name = "gb-clock"
+version = "0.0.0"
+edition = "2021"
+
+[dependencies]
+gb-bus = { path = "../gb-bus" }
+log = { version = "0.4" }
+
+[dev-dependencies]
+simplelog = { version = "0.10" }

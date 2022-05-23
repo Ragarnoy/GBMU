@@ -1,0 +1,80 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug GBMU",
+      "cargo": {
+        "args": [
+          "build",
+        ],
+        "filter": {
+          "name": "gbmu",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'gb-roms'",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--lib",
+          "--package=gb-roms"
+        ],
+        "filter": {
+          "name": "gb-roms",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug example 'show_header'",
+      "cargo": {
+        "args": [
+          "build",
+          "--example=show_header",
+          "--package=gb-roms"
+        ],
+        "filter": {
+          "name": "show_header",
+          "kind": "example"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in example 'show_header'",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--example=show_header",
+          "--package=gb-roms"
+        ],
+        "filter": {
+          "name": "show_header",
+          "kind": "example"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}

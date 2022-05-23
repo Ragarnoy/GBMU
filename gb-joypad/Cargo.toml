@@ -1,0 +1,16 @@
+[package]
+name = "gb-joypad"
+version = "0.0.0"
+edition = "2021"
+
+[dependencies]
+winit = { version = "0.26.1", features = ["serde"] }
+log = { version = "0.4" }
+serde = { version = "1.0", features = ["derive"] }
+gb-bus = { path = "../gb-bus" }
+gb-clock = { path = "../gb-clock" }
+lazy_static = "1.4"
+
+[features]
+debug_state = []
+toggle_joypad = []

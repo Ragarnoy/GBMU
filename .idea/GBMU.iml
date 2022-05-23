@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="CPP_MODULE" version="4">
+  <component name="NewModuleRootManager">
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/gb-dbg/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/gb-lcd/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/gb-ppu/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/gb-roms/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/gb-roms/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/gb-cpu/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/gb-dbg/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/gb-ppu/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/gb-bus/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/gb-clock/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/gb-clock/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/gb-joypad/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/gb-rtc/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/gb-cpu/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/gb-cpu/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/gb-dma/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/gb-test/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/gb-timer/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/gb-breakpoint/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/gb-apu/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/gb-apu/examples" isTestSource="false" />
+      <excludeFolder url="file://$MODULE_DIR$/target" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>

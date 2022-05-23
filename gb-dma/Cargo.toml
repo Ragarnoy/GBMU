@@ -1,0 +1,18 @@
+[package]
+name = "gb-dma"
+version = "0.1.0"
+authors = ["Guilhem Smith <gsmith@student.42.fr>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+gb-clock = { path = "../gb-clock" }
+gb-bus = { path = "../gb-bus" }
+gb-cpu = { path = "../gb-cpu" }
+gb-ppu = { path = "../gb-ppu" }
+log = "0.4"
+serde = { version = "1.0", optional = true }
+
+[features]
+serialization = ["serde", "serde/std", "serde/derive"]
