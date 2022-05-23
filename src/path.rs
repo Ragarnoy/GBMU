@@ -45,6 +45,13 @@ pub fn keybinding_path() -> PathBuf {
     path
 }
 
+/// Return the main config file for the application
+pub fn main_config_file() -> PathBuf {
+    let mut path = root_config_path();
+    path.push("gbmu.yaml");
+    path
+}
+
 #[test]
 fn test_game_id() {
     assert_eq!("foo", game_id("foo"));
