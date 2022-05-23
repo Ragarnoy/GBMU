@@ -1,27 +1,7 @@
-mod debugger;
-mod keybindings;
-mod ppu_tool;
-
-#[cfg(feature = "fps")]
-use crate::time_frame::TimeStat;
-use crate::{
-    bios_configuration::BiosConfiguration, config::Config, custom_event::CustomEvent, game::Game,
-    image::load_image_to_frame, windows::WindowType,
-};
-use gb_lcd::{DrawEgui, GBPixels, GBWindow, PseudoPixels, PseudoWindow};
-use gb_ppu::{
-    SPRITE_RENDER_HEIGHT, SPRITE_RENDER_WIDTH, TILEMAP_DIM, TILESHEET_HEIGHT, TILESHEET_WIDTH,
-};
-
-const PPU_TILESHEET_WIDTH: u32 = TILESHEET_WIDTH as u32;
-const PPU_TILESHEET_HEIGHT: u32 = TILESHEET_HEIGHT as u32;
-const PPU_TILEMAP_DIM: u32 = TILEMAP_DIM as u32;
-const PPU_SPRITE_RENDER_WIDTH: u32 = SPRITE_RENDER_WIDTH as u32;
-const PPU_SPRITE_RENDER_HEIGHT: u32 = SPRITE_RENDER_HEIGHT as u32;
-
+use std::{cell::RefCell, path::PathBuf, rc::Rc};
 #[cfg(feature = "fps")]
 use std::time::Instant;
-use std::{cell::RefCell, path::PathBuf, rc::Rc};
+
 use winit::{
     dpi::LogicalSize,
     event::{ElementState, WindowEvent},
@@ -29,12 +9,33 @@ use winit::{
     window::{WindowBuilder, WindowId},
 };
 
+use gb_lcd::{DrawEgui, GBPixels, GBWindow, PseudoPixels, PseudoWindow};
+use gb_ppu::{
+    SPRITE_RENDER_HEIGHT, SPRITE_RENDER_WIDTH, TILEMAP_DIM, TILESHEET_HEIGHT, TILESHEET_WIDTH,
+};
 use gb_ppu::{GB_SCREEN_HEIGHT, GB_SCREEN_WIDTH};
+
+use crate::{
+    bios_configuration::BiosConfiguration, config::Config, custom_event::CustomEvent, game::Game,
+    image::load_image_to_frame, windows::WindowType,
+};
+use crate::constant::MENU_BAR_SIZE;
+#[cfg(feature = "fps")]
+use crate::time_frame::TimeStat;
+
+mod debugger;
+mod keybindings;
+mod ppu_tool;
+
+const PPU_TILESHEET_WIDTH: u32 = TILESHEET_WIDTH as u32;
+const PPU_TILESHEET_HEIGHT: u32 = TILESHEET_HEIGHT as u32;
+const PPU_TILEMAP_DIM: u32 = TILEMAP_DIM as u32;
+const PPU_SPRITE_RENDER_WIDTH: u32 = SPRITE_RENDER_WIDTH as u32;
+const PPU_SPRITE_RENDER_HEIGHT: u32 = SPRITE_RENDER_HEIGHT as u32;
 
 const GB_WIDTH: u32 = GB_SCREEN_WIDTH as u32;
 const GB_HEIGHT: u32 = GB_SCREEN_HEIGHT as u32;
 
-use crate::constant::MENU_BAR_SIZE;
 const MENU_BAR: u32 = MENU_BAR_SIZE as u32;
 
 pub struct Context {
@@ -50,10 +51,10 @@ pub struct Context {
     pub debugger_ctx: Option<debugger::Context>,
     pub keybindings_ctx: Option<keybindings::Context>,
     pub tilesheet_ctx:
-        Option<ppu_tool::Context<PPU_TILESHEET_WIDTH, PPU_TILESHEET_HEIGHT, MENU_BAR>>,
+    Option<ppu_tool::Context<PPU_TILESHEET_WIDTH, PPU_TILESHEET_HEIGHT, MENU_BAR>>,
     pub tilemap_ctx: Option<ppu_tool::Context<PPU_TILEMAP_DIM, PPU_TILEMAP_DIM, MENU_BAR>>,
     pub spritesheet_ctx:
-        Option<ppu_tool::Context<PPU_SPRITE_RENDER_WIDTH, PPU_SPRITE_RENDER_HEIGHT, MENU_BAR>>,
+    Option<ppu_tool::Context<PPU_SPRITE_RENDER_WIDTH, PPU_SPRITE_RENDER_HEIGHT, MENU_BAR>>,
     pub bios_configuration: BiosConfiguration,
 }
 
@@ -418,5 +419,28 @@ impl Context {
             }
             _ => {}
         }
+    }
+}
+
+impl Drop for Context {
+    fn drop(&mut self) {
+        crate::path::create_root_config_path().expect("failed to create config directory");
+        let settings_path = crate::path::main_config_file();
+
+        log::info!("saving gbmu config to {}", settings_path.to_string_lossy());
+        let config_file = std::fs::File::create(settings_path).expect("cannot create configuration file");
+
+        #[derive(serde::Serialize, serde::Deserialize)]
+        struct Configuration {
+            bios: BiosConfiguration,
+            input: gb_joypad::Config,
+        }
+
+        let config = Configuration {
+            bios: self.bios_configuration.clone(),
+            input: self.joypad_config.borrow().clone(),
+        };
+
+        serde_yaml::to_writer(config_file, &config).expect("cannot save configuration to file");
     }
 }
