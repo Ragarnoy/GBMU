@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-#[derive(Default, serde::Deserialize, serde::Serialize)]
+#[derive(Default, Clone, serde::Deserialize, serde::Serialize)]
 pub struct BiosConfiguration {
     pub enable_dmg: bool,
     pub dmg_bios_file: Option<PathBuf>,
