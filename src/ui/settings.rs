@@ -5,9 +5,9 @@ use native_dialog::FileDialog;
 use winit::event_loop::EventLoopProxy;
 
 use crate::{
+    {custom_event::CustomEvent, windows::WindowType},
     bios_configuration::BiosConfiguration,
     config::Mode,
-    {custom_event::CustomEvent, windows::WindowType},
 };
 
 pub(crate) fn draw_ui(
@@ -37,11 +37,8 @@ const PREFERRED_BIOS_EXTS: [&str; 2] = ["bios", "bin"];
 fn bios_configuration(bios_config: &mut BiosConfiguration, ui: &mut Ui) {
     if ui
         .checkbox(&mut bios_config.enable_dmg, "enable dmg bios")
-        .clicked()
-    {
-        if bios_config.enable_dmg && bios_config.dmg_bios_file.is_none() {
-            select_bios_file(&mut bios_config.dmg_bios_file);
-        }
+        .clicked() && bios_config.enable_dmg && bios_config.dmg_bios_file.is_none() {
+        select_bios_file(&mut bios_config.dmg_bios_file);
     }
     if bios_config.enable_dmg && ui.button("change dmg bios").clicked() {
         select_bios_file(&mut bios_config.dmg_bios_file);
@@ -52,11 +49,8 @@ fn bios_configuration(bios_config: &mut BiosConfiguration, ui: &mut Ui) {
     }
     if ui
         .checkbox(&mut bios_config.enable_cbg, "enable cgb bios")
-        .clicked()
-    {
-        if bios_config.enable_cbg && bios_config.cgb_bios_file.is_none() {
-            select_bios_file(&mut bios_config.cgb_bios_file);
-        }
+        .clicked() && bios_config.enable_cbg && bios_config.cgb_bios_file.is_none() {
+        select_bios_file(&mut bios_config.cgb_bios_file);
     }
     if bios_config.enable_cbg && ui.button("change cgb bios").clicked() {
         select_bios_file(&mut bios_config.cgb_bios_file);
