@@ -1,4 +1,4 @@
-use std::{cell::RefCell, path::PathBuf, rc::Rc};
+use std::{cell::RefCell, path::{Path, PathBuf}, rc::Rc};
 #[cfg(feature = "fps")]
 use std::time::Instant;
 
@@ -40,8 +40,7 @@ const MENU_BAR: u32 = MENU_BAR_SIZE as u32;
 
 pub struct Context {
     pub main_window: GBPixels<GB_WIDTH, GB_HEIGHT, MENU_BAR>,
-    pub joypad_config: Rc<RefCell<gb_joypad::Config>>,
-    pub config: InternalConfig,
+    pub internal_config: InternalConfig,
     pub event_proxy: EventLoopProxy<CustomEvent>,
     pub game: Option<Game>,
     #[cfg(feature = "fps")]
@@ -55,7 +54,50 @@ pub struct Context {
     pub tilemap_ctx: Option<ppu_tool::Context<PPU_TILEMAP_DIM, PPU_TILEMAP_DIM, MENU_BAR>>,
     pub spritesheet_ctx:
     Option<ppu_tool::Context<PPU_SPRITE_RENDER_WIDTH, PPU_SPRITE_RENDER_HEIGHT, MENU_BAR>>,
-    pub bios_configuration: BiosConfiguration,
+    pub config: Configuration,
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Default)]
+pub struct Configuration {
+    pub bios: BiosConfiguration,
+    #[serde(serialize_with = "serialize_joypad_config", deserialize_with = "deserialize_joypad_config")]
+    pub input: Rc<RefCell<gb_joypad::Config>>,
+}
+
+fn serialize_joypad_config<S>(config: &Rc<RefCell<gb_joypad::Config>>, serializer: S) -> Result<S::Ok, S::Error> where S: serde::Serializer {
+    use serde::Serialize;
+
+    let config = config.borrow().clone();
+
+    config.serialize(serializer)
+}
+
+fn deserialize_joypad_config<'de, D>(deserializer: D) -> Result<Rc<RefCell<gb_joypad::Config>>, D::Error> where D: serde::Deserializer<'de> {
+    use serde::Deserialize;
+
+    let config = gb_joypad::Config::deserialize(deserializer)?;
+
+    Ok(Rc::new(RefCell::new(config)))
+}
+
+impl Configuration {
+    pub fn load_from_default_config_file() -> Self {
+        Self::load_form_config_file(crate::path::main_config_file())
+    }
+    pub fn load_form_config_file<P>(path: P) -> Self where P: AsRef<Path> {
+        match std::fs::File::open(path) {
+            Ok(file) => {
+                serde_yaml::from_reader(file).unwrap_or_else(|e| {
+                    log::error!("failed to parse main config file: {e}");
+                    Configuration::default()
+                })
+            }
+            Err(err) => {
+                log::error!("cannot open main config file: {err}");
+                Configuration::default()
+            }
+        }
+    }
 }
 
 #[derive(Default)]
@@ -69,10 +111,11 @@ impl Context {
         main_window: GBPixels<GB_WIDTH, GB_HEIGHT, MENU_BAR>,
         event_proxy: EventLoopProxy<CustomEvent>,
     ) -> Self {
+        let config = Configuration::load_from_default_config_file();
+
         Self {
             main_window,
-            joypad_config: Rc::new(RefCell::new(keybindings::load_config())),
-            config: InternalConfig::default(),
+            internal_config: InternalConfig::default(),
             event_proxy,
             game: None,
             #[cfg(feature = "fps")]
@@ -84,19 +127,19 @@ impl Context {
             tilesheet_ctx: None,
             tilemap_ctx: None,
             spritesheet_ctx: None,
-            bios_configuration: BiosConfiguration::default(),
+            config,
         }
     }
 
     pub fn load_config(&mut self, config: Config) {
         let config_file = config.rom.map(PathBuf::from);
-        let reload_mode = self.config.mode != config.mode;
-        let reload_file = self.config.rom_file != config_file;
+        let reload_mode = self.internal_config.mode != config.mode;
+        let reload_file = self.internal_config.rom_file != config_file;
         let open_debugger = config.debug;
 
         if reload_mode || reload_file {
-            self.config.mode = config.mode;
-            if let Some(file) = config_file.or_else(|| self.config.rom_file.clone()) {
+            self.internal_config.mode = config.mode;
+            if let Some(file) = config_file.or_else(|| self.internal_config.rom_file.clone()) {
                 self.load(file, open_debugger);
             } else {
                 log::warn!("Oh, I was expecting a file or something");
@@ -151,7 +194,7 @@ impl Context {
                     };
                     self.keybindings_ctx.replace(keybindings::Context::new(
                         GBWindow::new(window),
-                        self.joypad_config.clone(),
+                        self.config.input.clone(),
                         self.event_proxy.clone(),
                     ));
                 }
@@ -314,10 +357,10 @@ impl Context {
 impl Context {
     pub fn load(&mut self, file: PathBuf, stopped: bool) {
         drop(self.game.take());
-        match Game::new(&file, self.joypad_config.clone(), stopped, self.config.mode) {
+        match Game::new(&file, self.config.input.clone(), stopped, self.internal_config.mode) {
             Ok(game) => {
                 self.game.replace(game);
-                self.config.rom_file.replace(file);
+                self.internal_config.rom_file.replace(file);
             }
             Err(err) => {
                 log::error!(
@@ -331,11 +374,11 @@ impl Context {
 
     /// Reset the game context allowing the restart a game
     pub fn reset_game(&mut self, wanted_mode: Option<crate::config::Mode>) {
-        if let Some(ref rom_file) = self.config.rom_file {
-            let selected_mode = wanted_mode.or(self.config.mode);
+        if let Some(ref rom_file) = self.internal_config.rom_file {
+            let selected_mode = wanted_mode.or(self.internal_config.mode);
 
             drop(self.game.take());
-            match Game::new(rom_file, self.joypad_config.clone(), false, selected_mode) {
+            match Game::new(rom_file, self.config.input.clone(), false, selected_mode) {
                 Ok(game) => {
                     self.game.replace(game);
                 }
@@ -430,17 +473,6 @@ impl Drop for Context {
         log::info!("saving gbmu config to {}", settings_path.to_string_lossy());
         let config_file = std::fs::File::create(settings_path).expect("cannot create configuration file");
 
-        #[derive(serde::Serialize, serde::Deserialize)]
-        struct Configuration {
-            bios: BiosConfiguration,
-            input: gb_joypad::Config,
-        }
-
-        let config = Configuration {
-            bios: self.bios_configuration.clone(),
-            input: self.joypad_config.borrow().clone(),
-        };
-
-        serde_yaml::to_writer(config_file, &config).expect("cannot save configuration to file");
+        serde_yaml::to_writer(config_file, &self.config).expect("cannot save configuration to file");
     }
 }
