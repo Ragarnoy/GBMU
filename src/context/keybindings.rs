@@ -1,10 +1,11 @@
-use std::ops::Deref;
 use std::{cell::RefCell, rc::Rc};
+use std::ops::Deref;
 
 use egui::{Direction, Layout, Separator, Ui};
-use gb_joypad::{input::INPUT_LIST, Config, InputType, KeyEntry};
-use gb_lcd::{DrawEgui, GBWindow, PseudoPixels};
 use winit::{event::WindowEvent, event_loop::EventLoopProxy};
+
+use gb_joypad::{Config, input::INPUT_LIST, InputType, KeyEntry};
+use gb_lcd::{DrawEgui, GBWindow, PseudoPixels};
 
 use crate::{custom_event::CustomEvent, windows::WindowType};
 
@@ -167,25 +168,5 @@ impl Drop for Context {
 
         serde_yaml::to_writer(keybindings_config_file, self.config.borrow().deref())
             .expect("cannot save keybindings config file");
-    }
-}
-
-pub fn load_config() -> Config {
-    use std::fs::File;
-
-    let keybindings_config_path = crate::path::keybinding_path();
-    match File::open(&keybindings_config_path)
-        .map_err(anyhow::Error::from)
-        .and_then(|file| serde_yaml::from_reader::<File, Config>(file).map_err(anyhow::Error::from))
-    {
-        Ok(config) => config,
-        Err(e) => {
-            log::error!(
-                "cannot load keybindings configuration file at {}: {}",
-                keybindings_config_path.to_string_lossy(),
-                e
-            );
-            Config::default()
-        }
     }
 }
