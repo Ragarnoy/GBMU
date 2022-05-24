@@ -1,6 +1,10 @@
-use std::{cell::RefCell, path::{Path, PathBuf}, rc::Rc};
 #[cfg(feature = "fps")]
 use std::time::Instant;
+use std::{
+    cell::RefCell,
+    path::{Path, PathBuf},
+    rc::Rc,
+};
 
 use winit::{
     dpi::LogicalSize,
@@ -15,13 +19,13 @@ use gb_ppu::{
     SPRITE_RENDER_HEIGHT, SPRITE_RENDER_WIDTH, TILEMAP_DIM, TILESHEET_HEIGHT, TILESHEET_WIDTH,
 };
 
+use crate::constant::MENU_BAR_SIZE;
+#[cfg(feature = "fps")]
+use crate::time_frame::TimeStat;
 use crate::{
     bios_configuration::BiosConfiguration, config::Config, custom_event::CustomEvent, game::Game,
     image::load_image_to_frame, windows::WindowType,
 };
-use crate::constant::MENU_BAR_SIZE;
-#[cfg(feature = "fps")]
-use crate::time_frame::TimeStat;
 
 mod debugger;
 mod keybindings;
