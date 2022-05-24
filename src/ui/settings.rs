@@ -5,9 +5,9 @@ use native_dialog::FileDialog;
 use winit::event_loop::EventLoopProxy;
 
 use crate::{
-    {custom_event::CustomEvent, windows::WindowType},
     bios_configuration::BiosConfiguration,
     config::Mode,
+    {custom_event::CustomEvent, windows::WindowType},
 };
 
 pub(crate) fn draw_ui(
@@ -67,8 +67,7 @@ fn bios_configuration(bios_config: &mut BiosConfiguration, ui: &mut Ui) {
     }
 }
 
-fn select_bios_file(value: &mut Option<PathBuf>)
-{
+fn select_bios_file(value: &mut Option<PathBuf>) {
     let file = FileDialog::new()
         .set_location(&std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("/")))
         .add_filter("bios", &PREFERRED_BIOS_EXTS)

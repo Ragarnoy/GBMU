@@ -10,10 +10,10 @@ use winit::{
 };
 
 use gb_lcd::{DrawEgui, GBPixels, GBWindow, PseudoPixels, PseudoWindow};
+use gb_ppu::{GB_SCREEN_HEIGHT, GB_SCREEN_WIDTH};
 use gb_ppu::{
     SPRITE_RENDER_HEIGHT, SPRITE_RENDER_WIDTH, TILEMAP_DIM, TILESHEET_HEIGHT, TILESHEET_WIDTH,
 };
-use gb_ppu::{GB_SCREEN_HEIGHT, GB_SCREEN_WIDTH};
 
 use crate::{
     bios_configuration::BiosConfiguration, config::Config, custom_event::CustomEvent, game::Game,
@@ -50,21 +50,30 @@ pub struct Context {
     pub debugger_ctx: Option<debugger::Context>,
     pub keybindings_ctx: Option<keybindings::Context>,
     pub tilesheet_ctx:
-    Option<ppu_tool::Context<PPU_TILESHEET_WIDTH, PPU_TILESHEET_HEIGHT, MENU_BAR>>,
+        Option<ppu_tool::Context<PPU_TILESHEET_WIDTH, PPU_TILESHEET_HEIGHT, MENU_BAR>>,
     pub tilemap_ctx: Option<ppu_tool::Context<PPU_TILEMAP_DIM, PPU_TILEMAP_DIM, MENU_BAR>>,
     pub spritesheet_ctx:
-    Option<ppu_tool::Context<PPU_SPRITE_RENDER_WIDTH, PPU_SPRITE_RENDER_HEIGHT, MENU_BAR>>,
+        Option<ppu_tool::Context<PPU_SPRITE_RENDER_WIDTH, PPU_SPRITE_RENDER_HEIGHT, MENU_BAR>>,
     pub config: Configuration,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Default)]
 pub struct Configuration {
     pub bios: BiosConfiguration,
-    #[serde(serialize_with = "serialize_joypad_config", deserialize_with = "deserialize_joypad_config")]
+    #[serde(
+        serialize_with = "serialize_joypad_config",
+        deserialize_with = "deserialize_joypad_config"
+    )]
     pub input: Rc<RefCell<gb_joypad::Config>>,
 }
 
-fn serialize_joypad_config<S>(config: &Rc<RefCell<gb_joypad::Config>>, serializer: S) -> Result<S::Ok, S::Error> where S: serde::Serializer {
+fn serialize_joypad_config<S>(
+    config: &Rc<RefCell<gb_joypad::Config>>,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
     use serde::Serialize;
 
     let config = config.borrow().clone();
@@ -72,7 +81,12 @@ fn serialize_joypad_config<S>(config: &Rc<RefCell<gb_joypad::Config>>, serialize
     config.serialize(serializer)
 }
 
-fn deserialize_joypad_config<'de, D>(deserializer: D) -> Result<Rc<RefCell<gb_joypad::Config>>, D::Error> where D: serde::Deserializer<'de> {
+fn deserialize_joypad_config<'de, D>(
+    deserializer: D,
+) -> Result<Rc<RefCell<gb_joypad::Config>>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
     use serde::Deserialize;
 
     let config = gb_joypad::Config::deserialize(deserializer)?;
@@ -84,14 +98,15 @@ impl Configuration {
     pub fn load_from_default_config_file() -> Self {
         Self::load_form_config_file(crate::path::main_config_file())
     }
-    pub fn load_form_config_file<P>(path: P) -> Self where P: AsRef<Path> {
+    pub fn load_form_config_file<P>(path: P) -> Self
+    where
+        P: AsRef<Path>,
+    {
         match std::fs::File::open(path) {
-            Ok(file) => {
-                serde_yaml::from_reader(file).unwrap_or_else(|e| {
-                    log::error!("failed to parse main config file: {e}");
-                    Configuration::default()
-                })
-            }
+            Ok(file) => serde_yaml::from_reader(file).unwrap_or_else(|e| {
+                log::error!("failed to parse main config file: {e}");
+                Configuration::default()
+            }),
             Err(err) => {
                 log::error!("cannot open main config file: {err}");
                 Configuration::default()
@@ -357,7 +372,12 @@ impl Context {
 impl Context {
     pub fn load(&mut self, file: PathBuf, stopped: bool) {
         drop(self.game.take());
-        match Game::new(&file, self.config.input.clone(), stopped, self.internal_config.mode) {
+        match Game::new(
+            &file,
+            self.config.input.clone(),
+            stopped,
+            self.internal_config.mode,
+        ) {
             Ok(game) => {
                 self.game.replace(game);
                 self.internal_config.rom_file.replace(file);
@@ -471,8 +491,10 @@ impl Drop for Context {
         let settings_path = crate::path::main_config_file();
 
         log::info!("saving gbmu config to {}", settings_path.to_string_lossy());
-        let config_file = std::fs::File::create(settings_path).expect("cannot create configuration file");
+        let config_file =
+            std::fs::File::create(settings_path).expect("cannot create configuration file");
 
-        serde_yaml::to_writer(config_file, &self.config).expect("cannot save configuration to file");
+        serde_yaml::to_writer(config_file, &self.config)
+            .expect("cannot save configuration to file");
     }
 }

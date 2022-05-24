@@ -1,10 +1,10 @@
-use std::{cell::RefCell, rc::Rc};
 use std::ops::Deref;
+use std::{cell::RefCell, rc::Rc};
 
 use egui::{Direction, Layout, Separator, Ui};
 use winit::{event::WindowEvent, event_loop::EventLoopProxy};
 
-use gb_joypad::{Config, input::INPUT_LIST, InputType, KeyEntry};
+use gb_joypad::{input::INPUT_LIST, Config, InputType, KeyEntry};
 use gb_lcd::{DrawEgui, GBWindow, PseudoPixels};
 
 use crate::{custom_event::CustomEvent, windows::WindowType};
