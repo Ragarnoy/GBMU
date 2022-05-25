@@ -80,15 +80,15 @@ enum ScheduledStop {
 
 impl Game {
     pub fn new<P: AsRef<Path>>(
-        rompath: &P,
+        rom_path: &P,
         joypad_config: Rc<RefCell<Config>>,
         stopped: bool,
         forced_mode: Option<Mode>,
     ) -> Result<Game, anyhow::Error> {
         use std::io::Seek;
 
-        let romname = rompath.as_ref().to_string_lossy().to_string();
-        let mut file = File::open(rompath)?;
+        let romname = rom_path.as_ref().to_string_lossy().to_string();
+        let mut file = File::open(rom_path)?;
         let header = Header::from_file(&mut file)?;
 
         let cgb_mode = if let Some(forced_mode) = forced_mode {
@@ -454,7 +454,7 @@ impl Game {
     #[cfg(feature = "save_state")]
     fn load_cpu_state(
         &mut self,
-        registers: gb_cpu::registers::Registers,
+        registers: Registers,
         io_regs: gb_cpu::io_registers::IORegisters,
     ) -> anyhow::Result<()> {
         let cpu_io = Rc::new(RefCell::new(io_regs));
