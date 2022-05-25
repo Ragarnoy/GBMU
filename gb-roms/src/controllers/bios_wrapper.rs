@@ -18,7 +18,7 @@ where
     u16: From<A>,
     A: Address<Area>,
 {
-    fn new(
+    pub fn new(
         bios: Rc<RefCell<Bios>>,
         mbc: Rc<RefCell<dyn FileOperation<A, Area>>>,
         cgb_mode: bool,
