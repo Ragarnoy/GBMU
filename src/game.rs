@@ -108,6 +108,7 @@ impl Game {
         let ppu = Ppu::new(cgb_mode);
         let ppu_mem = Rc::new(RefCell::new(ppu.memory()));
         let ppu_reg = Rc::new(RefCell::new(ppu.registers()));
+
         if !cfg!(feature = "bios") {
             ppu_reg.borrow_mut().overwrite_lcd_control(0x91_u8);
         }
@@ -122,7 +123,6 @@ impl Game {
             });
             (cpu, cpu_io_reg)
         };
-        let wram = Rc::new(RefCell::new(WorkingRam::new(cgb_mode)));
         let timer = if !cfg!(feature = "bios") {
             let mut timer = Timer::default();
             timer.system_clock = 0xAC00;
@@ -130,7 +130,6 @@ impl Game {
         } else {
             Timer::default()
         };
-        let timer = Rc::new(RefCell::new(timer));
         let bios_wrapper = {
             let mut bios = if cgb_mode {
                 cgb_bios(mbc.clone())
@@ -142,6 +141,9 @@ impl Game {
             };
             Rc::new(RefCell::new(bios))
         };
+
+        let wram = Rc::new(RefCell::new(WorkingRam::new(cgb_mode)));
+        let timer = Rc::new(RefCell::new(timer));
         let dma = Rc::new(RefCell::new(Dma::new(ppu.memory())));
         let hdma = Rc::new(RefCell::new(Hdma::default()));
         let serial = Rc::new(RefCell::new(gb_bus::Serial::new(cgb_mode)));
