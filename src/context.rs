@@ -1,11 +1,8 @@
+use std::path::PathBuf;
 #[cfg(feature = "fps")]
 use std::time::Instant;
-use std::{
-    cell::RefCell,
-    path::{Path, PathBuf},
-    rc::Rc,
-};
 
+use configuration::Configuration;
 use winit::{
     dpi::LogicalSize,
     event::{ElementState, WindowEvent},
@@ -23,10 +20,11 @@ use crate::constant::MENU_BAR_SIZE;
 #[cfg(feature = "fps")]
 use crate::time_frame::TimeStat;
 use crate::{
-    bios_configuration::BiosConfiguration, config::Config, custom_event::CustomEvent, game::Game,
-    image::load_image_to_frame, windows::WindowType,
+    config::Config, custom_event::CustomEvent, game::Game, image::load_image_to_frame,
+    windows::WindowType,
 };
 
+mod configuration;
 mod debugger;
 mod keybindings;
 mod ppu_tool;
@@ -59,64 +57,6 @@ pub struct Context {
     pub spritesheet_ctx:
         Option<ppu_tool::Context<PPU_SPRITE_RENDER_WIDTH, PPU_SPRITE_RENDER_HEIGHT, MENU_BAR>>,
     pub config: Configuration,
-}
-
-#[derive(serde::Serialize, serde::Deserialize, Default)]
-pub struct Configuration {
-    pub bios: BiosConfiguration,
-    #[serde(
-        serialize_with = "serialize_joypad_config",
-        deserialize_with = "deserialize_joypad_config"
-    )]
-    pub input: Rc<RefCell<gb_joypad::Config>>,
-}
-
-fn serialize_joypad_config<S>(
-    config: &Rc<RefCell<gb_joypad::Config>>,
-    serializer: S,
-) -> Result<S::Ok, S::Error>
-where
-    S: serde::Serializer,
-{
-    use serde::Serialize;
-
-    let config = config.borrow().clone();
-
-    config.serialize(serializer)
-}
-
-fn deserialize_joypad_config<'de, D>(
-    deserializer: D,
-) -> Result<Rc<RefCell<gb_joypad::Config>>, D::Error>
-where
-    D: serde::Deserializer<'de>,
-{
-    use serde::Deserialize;
-
-    let config = gb_joypad::Config::deserialize(deserializer)?;
-
-    Ok(Rc::new(RefCell::new(config)))
-}
-
-impl Configuration {
-    pub fn load_from_default_config_file() -> Self {
-        Self::load_form_config_file(crate::path::main_config_file())
-    }
-    pub fn load_form_config_file<P>(path: P) -> Self
-    where
-        P: AsRef<Path>,
-    {
-        match std::fs::File::open(path) {
-            Ok(file) => serde_yaml::from_reader(file).unwrap_or_else(|e| {
-                log::error!("failed to parse main config file: {e}");
-                Configuration::default()
-            }),
-            Err(err) => {
-                log::error!("cannot open main config file: {err}");
-                Configuration::default()
-            }
-        }
-    }
 }
 
 #[derive(Default)]
