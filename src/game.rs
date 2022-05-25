@@ -16,7 +16,7 @@ use gb_dbg::dbg_interfaces::{
 };
 use gb_dbg::until::Until;
 use gb_dma::{dma::Dma, hdma::Hdma};
-use gb_joypad::{Config, Joypad};
+use gb_joypad::Joypad;
 use gb_ppu::Ppu;
 use gb_roms::controllers::cgb_bios;
 #[cfg(feature = "save_state")]
@@ -31,8 +31,10 @@ use gb_timer::Timer;
 use save_state::SaveState;
 use utils::mbc_with_save_state;
 
-use crate::path::game_save_path;
-use crate::{config::Mode, constant::AUDIO_BUFFER_SIZE};
+use crate::{
+    config::Mode, constant::AUDIO_BUFFER_SIZE, context::configuration::Configuration,
+    path::game_save_path,
+};
 
 #[cfg(feature = "save_state")]
 mod save_state;
@@ -81,9 +83,9 @@ enum ScheduledStop {
 impl Game {
     pub fn new<P: AsRef<Path>>(
         rom_path: &P,
-        joypad_config: Rc<RefCell<Config>>,
         stopped: bool,
         forced_mode: Option<Mode>,
+        configuration: &Configuration,
     ) -> Result<Game, anyhow::Error> {
         use std::io::Seek;
 
@@ -151,7 +153,9 @@ impl Game {
 
         let apu = Rc::new(RefCell::new(Apu::new(buffer, Some(stream), sample_rate)));
 
-        let joypad = Rc::new(RefCell::new(Joypad::from_config(joypad_config)));
+        let joypad = Rc::new(RefCell::new(Joypad::from_config(
+            configuration.input.clone(),
+        )));
 
         let io_bus = {
             let mut io_bus = IORegBus::default();

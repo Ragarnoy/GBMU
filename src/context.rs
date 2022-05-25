@@ -24,7 +24,7 @@ use crate::{
     windows::WindowType,
 };
 
-mod configuration;
+pub mod configuration;
 mod debugger;
 mod keybindings;
 mod ppu_tool;
@@ -316,12 +316,7 @@ impl Context {
 impl Context {
     pub fn load(&mut self, file: PathBuf, stopped: bool) {
         drop(self.game.take());
-        match Game::new(
-            &file,
-            self.config.input.clone(),
-            stopped,
-            self.internal_config.mode,
-        ) {
+        match Game::new(&file, stopped, self.internal_config.mode, &self.config) {
             Ok(game) => {
                 self.game.replace(game);
                 self.internal_config.rom_file.replace(file);
@@ -342,7 +337,7 @@ impl Context {
             let selected_mode = wanted_mode.or(self.internal_config.mode);
 
             drop(self.game.take());
-            match Game::new(rom_file, self.config.input.clone(), false, selected_mode) {
+            match Game::new(rom_file, false, selected_mode, &self.config) {
                 Ok(game) => {
                     self.game.replace(game);
                 }
