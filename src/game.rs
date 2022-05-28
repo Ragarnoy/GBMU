@@ -18,9 +18,10 @@ use gb_dbg::until::Until;
 use gb_dma::{dma::Dma, hdma::Hdma};
 use gb_joypad::Joypad;
 use gb_ppu::Ppu;
-use gb_roms::controllers::cgb_bios;
+use gb_roms::controllers::bios::BiosType;
 #[cfg(feature = "save_state")]
 use gb_roms::controllers::Full;
+use gb_roms::controllers::{cgb_bios, Bios};
 use gb_roms::{
     controllers::{dmg_bios, Generic},
     header::AutoSave,
@@ -109,10 +110,53 @@ impl Game {
         let ppu_mem = Rc::new(RefCell::new(ppu.memory()));
         let ppu_reg = Rc::new(RefCell::new(ppu.registers()));
 
-        if !cfg!(feature = "bios") {
+        let bios: Option<Bios> = {
+            use gb_roms::controllers::bios::{CGB_BIOS_SIZE, DMG_BIOS_SIZE};
+            use std::io::Read;
+
+            if cgb_mode && configuration.bios.enable_cbg {
+                configuration.bios.cgb_bios_file.as_ref().and_then(|path| {
+                    File::open(path)
+                        .map_err(|e| {
+                            log::error!("cannot open bios file: {e}");
+                        })
+                        .and_then(|mut reader| {
+                            let mut buf = Box::new([0; CGB_BIOS_SIZE]);
+                            if let Err(e) = reader.read_exact(buf.as_mut()) {
+                                log::error!("cannot read bios file: {e}");
+                                Err(())
+                            } else {
+                                Ok(Bios::from_bytes(BiosType::Cgb, buf.as_ref()))
+                            }
+                        })
+                        .ok()
+                })
+            } else if !cgb_mode && configuration.bios.enable_dmg {
+                configuration.bios.dmg_bios_file.as_ref().and_then(|path| {
+                    File::open(path)
+                        .map_err(|e| {
+                            log::error!("cannot open bios file: {e}");
+                        })
+                        .and_then(|mut reader| {
+                            let mut buf = [0; DMG_BIOS_SIZE];
+                            if let Err(e) = reader.read_exact(&mut buf) {
+                                log::error!("cannot read bios file: {e}");
+                                Err(())
+                            } else {
+                                Ok(Bios::from_bytes(BiosType::Dmg, &buf))
+                            }
+                        })
+                        .ok()
+                })
+            } else {
+                None
+            }
+        };
+
+        if bios.is_none() {
             ppu_reg.borrow_mut().overwrite_lcd_control(0x91_u8);
         }
-        let (cpu, cpu_io_reg) = if cfg!(feature = "bios") {
+        let (cpu, cpu_io_reg) = if bios.is_some() {
             new_cpu(cgb_mode)
         } else {
             let (mut cpu, cpu_io_reg) = new_cpu(cgb_mode);
@@ -123,23 +167,31 @@ impl Game {
             });
             (cpu, cpu_io_reg)
         };
-        let timer = if !cfg!(feature = "bios") {
+        let timer = if bios.is_none() {
             let mut timer = Timer::default();
             timer.system_clock = 0xAC00;
             timer
         } else {
             Timer::default()
         };
+        let mut io_bus = IORegBus::default();
         let bios_wrapper = {
-            let mut bios = if cgb_mode {
-                cgb_bios(mbc.clone())
+            if let Some(bios) = bios {
+                let wrapper = gb_roms::controllers::BiosWrapper::new(
+                    Rc::new(RefCell::new(bios)),
+                    mbc.clone(),
+                    cgb_mode,
+                );
+                let wrapper = Rc::new(RefCell::new(wrapper));
+                io_bus.with_area(IORegArea::BootRom, wrapper.clone());
+                wrapper
             } else {
-                dmg_bios(mbc.clone())
-            };
-            if cfg!(not(feature = "bios")) {
-                bios.bios_enabling_reg = 0xa;
-            };
-            Rc::new(RefCell::new(bios))
+                io_bus.with_area(
+                    IORegArea::BootRom,
+                    Rc::new(RefCell::new(gb_bus::generic::PanicDevice::default())),
+                );
+                mbc.clone()
+            }
         };
 
         let wram = Rc::new(RefCell::new(WorkingRam::new(cgb_mode)));
@@ -159,29 +211,24 @@ impl Game {
             configuration.input.clone(),
         )));
 
-        let io_bus = {
-            let mut io_bus = IORegBus::default();
-            if cgb_mode {
-                io_bus
-                    .with_ppu_cgb(ppu_reg.clone())
-                    .with_area(IORegArea::Key1, cpu_io_reg.clone())
-                    .with_area(IORegArea::RP, Rc::new(RefCell::new(CharDevice(0))))
-                    .with_area(IORegArea::Svbk, wram.clone());
-            }
-
-            io_bus.with_sound(apu.clone());
+        if cgb_mode {
             io_bus
-                .with_area(IORegArea::Joy, joypad.clone())
-                .with_timer(timer.clone())
-                .with_ppu(ppu_reg)
-                .with_area(IORegArea::IF, cpu_io_reg.clone())
-                .with_area(IORegArea::Dma, dma.clone())
-                .with_hdma(hdma.clone())
-                .with_area(IORegArea::BootRom, bios_wrapper.clone())
-                .with_serial(serial);
+                .with_ppu_cgb(ppu_reg.clone())
+                .with_area(IORegArea::Key1, cpu_io_reg.clone())
+                .with_area(IORegArea::RP, Rc::new(RefCell::new(CharDevice(0))))
+                .with_area(IORegArea::Svbk, wram.clone());
+        }
 
-            io_bus
-        };
+        io_bus.with_sound(apu.clone());
+        io_bus
+            .with_area(IORegArea::Joy, joypad.clone())
+            .with_timer(timer.clone())
+            .with_ppu(ppu_reg)
+            .with_area(IORegArea::IF, cpu_io_reg.clone())
+            .with_area(IORegArea::Dma, dma.clone())
+            .with_hdma(hdma.clone())
+            .with_serial(serial);
+
         let io_bus = Rc::new(RefCell::new(io_bus));
         let hram = Rc::new(RefCell::new(SimpleRW::<0x80>::default()));
 
