@@ -1,4 +1,4 @@
-use egui::{Layout, RichText, Ui};
+use egui::{RichText, Ui};
 use std::time::Duration;
 
 use crate::time_frame::TimeStat;
