@@ -19,14 +19,10 @@ use gb_dma::{dma::Dma, hdma::Hdma};
 use gb_joypad::Joypad;
 use gb_ppu::Ppu;
 use gb_roms::controllers::bios::BiosType;
+use gb_roms::controllers::Bios;
 #[cfg(feature = "save_state")]
 use gb_roms::controllers::Full;
-use gb_roms::controllers::{cgb_bios, Bios};
-use gb_roms::{
-    controllers::{dmg_bios, Generic},
-    header::AutoSave,
-    Header,
-};
+use gb_roms::{controllers::Generic, header::AutoSave, Header};
 use gb_timer::Timer;
 #[cfg(feature = "save_state")]
 use save_state::SaveState;
@@ -40,6 +36,12 @@ use crate::{
 #[cfg(feature = "save_state")]
 mod save_state;
 mod utils;
+
+macro_rules! cell {
+    ($e:expr) => {
+        Rc::new(RefCell::new($e))
+    };
+}
 
 pub struct Game {
     pub romname: String,
@@ -103,12 +105,6 @@ impl Game {
         log::debug!("header: {:?}", header);
 
         file.rewind()?;
-        let mbc = mbc_with_save_state(&romname, &header, file)?;
-        let mbc = Rc::new(RefCell::new(mbc));
-
-        let ppu = Ppu::new(cgb_mode);
-        let ppu_mem = Rc::new(RefCell::new(ppu.memory()));
-        let ppu_reg = Rc::new(RefCell::new(ppu.registers()));
 
         let bios: Option<Bios> = {
             use gb_roms::controllers::bios::{CGB_BIOS_SIZE, DMG_BIOS_SIZE};
@@ -153,9 +149,24 @@ impl Game {
             }
         };
 
+        let mut io_bus = IORegBus::default();
+        let mut bus = AddressBus::default();
+
+        let mbc = mbc_with_save_state(&romname, &header, file)?;
+        let mbc = cell!(mbc);
+        bus.with_ext_ram(mbc.clone());
+
+        let ppu = Ppu::new(cgb_mode);
+        let ppu_mem = cell!(ppu.memory());
+        bus.with_vram(ppu_mem.clone());
+        bus.with_oam(ppu_mem);
+
+        let ppu_reg = cell!(ppu.registers());
         if bios.is_none() {
             ppu_reg.borrow_mut().overwrite_lcd_control(0x91_u8);
         }
+        io_bus.with_ppu(ppu_reg.clone());
+
         let (cpu, cpu_io_reg) = if bios.is_some() {
             new_cpu(cgb_mode)
         } else {
@@ -167,6 +178,9 @@ impl Game {
             });
             (cpu, cpu_io_reg)
         };
+        io_bus.with_area(IORegArea::IF, cpu_io_reg.clone());
+        bus.with_ie_reg(cpu_io_reg.clone());
+
         let timer = if bios.is_none() {
             let mut timer = Timer::default();
             timer.system_clock = 0xAC00;
@@ -174,82 +188,58 @@ impl Game {
         } else {
             Timer::default()
         };
-        let mut io_bus = IORegBus::default();
-        let bios_wrapper = {
-            if let Some(bios) = bios {
-                let wrapper = gb_roms::controllers::BiosWrapper::new(
-                    Rc::new(RefCell::new(bios)),
-                    mbc.clone(),
-                    cgb_mode,
-                );
-                let wrapper = Rc::new(RefCell::new(wrapper));
-                io_bus.with_area(IORegArea::BootRom, wrapper.clone());
-                wrapper
-            } else {
-                io_bus.with_area(
-                    IORegArea::BootRom,
-                    Rc::new(RefCell::new(gb_bus::generic::PanicDevice::default())),
-                );
-                mbc.clone()
-            }
-        };
+        let timer = cell!(timer);
+        io_bus.with_timer(timer.clone());
 
-        let wram = Rc::new(RefCell::new(WorkingRam::new(cgb_mode)));
-        let timer = Rc::new(RefCell::new(timer));
-        let dma = Rc::new(RefCell::new(Dma::new(ppu.memory())));
-        let hdma = Rc::new(RefCell::new(Hdma::default()));
-        let serial = Rc::new(RefCell::new(gb_bus::Serial::new(cgb_mode)));
+        if let Some(bios) = bios {
+            let wrapper =
+                gb_roms::controllers::BiosWrapper::new(cell!(bios), mbc.clone(), cgb_mode);
+            let wrapper = cell!(wrapper);
+            io_bus.with_area(IORegArea::BootRom, wrapper.clone());
+            bus.with_rom(wrapper);
+        } else {
+            io_bus.with_area(
+                IORegArea::BootRom,
+                cell!(gb_bus::generic::PanicDevice::default()),
+            );
+            bus.with_rom(mbc.clone());
+        }
+
+        let dma = cell!(Dma::new(ppu.memory()));
+        io_bus.with_area(IORegArea::Dma, dma.clone());
+
+        let hdma = cell!(Hdma::default());
+        io_bus.with_hdma(hdma.clone());
+
+        let serial = cell!(gb_bus::Serial::new(cgb_mode));
+        io_bus.with_serial(serial);
 
         let buffer: Arc<Mutex<Vec<f32>>> =
             Arc::new(Mutex::new(Vec::with_capacity(AUDIO_BUFFER_SIZE)));
-
         let (stream, sample_rate) = Apu::init_audio_output(buffer.clone());
+        let apu = cell!(Apu::new(buffer, Some(stream), sample_rate));
+        io_bus.with_sound(apu.clone());
 
-        let apu = Rc::new(RefCell::new(Apu::new(buffer, Some(stream), sample_rate)));
+        let joypad = cell!(Joypad::from_config(configuration.input.clone(),));
+        io_bus.with_area(IORegArea::Joy, joypad.clone());
 
-        let joypad = Rc::new(RefCell::new(Joypad::from_config(
-            configuration.input.clone(),
-        )));
+        let wram = cell!(WorkingRam::new(cgb_mode));
+        bus.with_ram(wram.clone());
 
         if cgb_mode {
             io_bus
-                .with_ppu_cgb(ppu_reg.clone())
-                .with_area(IORegArea::Key1, cpu_io_reg.clone())
-                .with_area(IORegArea::RP, Rc::new(RefCell::new(CharDevice(0))))
-                .with_area(IORegArea::Svbk, wram.clone());
+                .with_ppu_cgb(ppu_reg)
+                .with_area(IORegArea::Key1, cpu_io_reg)
+                .with_area(IORegArea::RP, cell!(CharDevice(0)))
+                .with_area(IORegArea::Svbk, wram);
         }
 
-        io_bus.with_sound(apu.clone());
-        io_bus
-            .with_area(IORegArea::Joy, joypad.clone())
-            .with_timer(timer.clone())
-            .with_ppu(ppu_reg)
-            .with_area(IORegArea::IF, cpu_io_reg.clone())
-            .with_area(IORegArea::Dma, dma.clone())
-            .with_hdma(hdma.clone())
-            .with_serial(serial);
+        let hram = cell!(SimpleRW::<0x80>::default());
+        bus.with_hram(hram);
 
-        let io_bus = Rc::new(RefCell::new(io_bus));
-        let hram = Rc::new(RefCell::new(SimpleRW::<0x80>::default()));
+        let io_bus = cell!(io_bus);
+        bus.with_io_reg(io_bus.clone());
 
-        let bus = AddressBus {
-            rom: bios_wrapper,
-            vram: ppu_mem.clone(),
-            ext_ram: mbc.clone(),
-            ram: wram.clone(),
-            #[cfg(feature = "save_state")]
-            eram: wram.clone(),
-            #[cfg(not(feature = "save_state"))]
-            eram: wram,
-            oam: ppu_mem,
-            io_reg: io_bus.clone(),
-            #[cfg(feature = "save_state")]
-            hram: hram.clone(),
-            #[cfg(not(feature = "save_state"))]
-            hram,
-
-            ie_reg: cpu_io_reg,
-        };
         #[cfg(feature = "registers_logs")]
         let logs_file = Game::create_new_file().unwrap();
 
