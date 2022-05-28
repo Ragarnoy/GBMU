@@ -83,6 +83,72 @@ pub struct AddressBus {
     pub ie_reg: Rc<RefCell<dyn FileOperation<Addr<Area>, Area>>>,
 }
 
+impl Default for AddressBus {
+    fn default() -> Self {
+        let cell = Rc::new(RefCell::new(crate::generic::PanicDevice));
+        Self {
+            rom: cell.clone(),
+            vram: cell.clone(),
+            ext_ram: cell.clone(),
+            ram: cell.clone(),
+            eram: cell.clone(),
+            oam: cell.clone(),
+            io_reg: cell.clone(),
+            hram: cell.clone(),
+            ie_reg: cell.clone(),
+        }
+    }
+}
+
+impl AddressBus {
+    pub fn with_rom(mut self, rom: Rc<RefCell<dyn FileOperation<Addr<Area>, Area>>>) -> Self {
+        self.rom = rom;
+        self
+    }
+
+    pub fn with_vram(mut self, vram: Rc<RefCell<dyn FileOperation<Addr<Area>, Area>>>) -> Self {
+        self.vram = vram;
+        self
+    }
+
+    pub fn with_ext_ram(
+        mut self,
+        ext_ram: Rc<RefCell<dyn FileOperation<Addr<Area>, Area>>>,
+    ) -> Self {
+        self.ext_ram = ext_ram;
+        self
+    }
+
+    pub fn with_ram(mut self, ram: Rc<RefCell<dyn FileOperation<Addr<Area>, Area>>>) -> Self {
+        self.ram = ram;
+        self
+    }
+
+    pub fn with_eram(mut self, eram: Rc<RefCell<dyn FileOperation<Addr<Area>, Area>>>) -> Self {
+        self.eram = eram;
+        self
+    }
+    pub fn with_oam(mut self, oam: Rc<RefCell<dyn FileOperation<Addr<Area>, Area>>>) -> Self {
+        self.oam = oam;
+        self
+    }
+
+    pub fn with_io_reg(mut self, io_reg: Rc<RefCell<dyn FileOperation<Addr<Area>, Area>>>) -> Self {
+        self.io_reg = io_reg;
+        self
+    }
+
+    pub fn with_hram(mut self, hram: Rc<RefCell<dyn FileOperation<Addr<Area>, Area>>>) -> Self {
+        self.hram = hram;
+        self
+    }
+
+    pub fn with_ie_reg(mut self, ie_reg: Rc<RefCell<dyn FileOperation<Addr<Area>, Area>>>) -> Self {
+        self.ie_reg = ie_reg;
+        self
+    }
+}
+
 impl AddressBus {
     pub fn write_byte(&mut self, addr: u16, v: u8, source: Option<Source>) -> Result<(), Error> {
         match_area!(write_area, self, addr, v, source)
