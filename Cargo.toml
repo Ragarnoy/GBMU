@@ -15,7 +15,6 @@ description = "A gameboy emulator"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-default = ["bios"]
 debug_render = ["gb-lcd/debug_render"]
 registers_logs = ["gb-cpu/registers_logs"]
 # Show a FPS counter, the FPS is the mean of the last N frame (see time_frame.rs -> SAMPLE_SIZE)
@@ -24,7 +23,6 @@ fps = []
 fps_stat = ["fps"]
 # Extend the FPS counter by using raw time in Millisecond instead of Frame Per Second
 fps_expert = ["fps"]
-bios = []
 save_state = [
   "gb-cpu/serialization",
   "gb-bus/serialization",
