@@ -1,26 +1,8 @@
-mod debugger;
-mod keybindings;
-mod ppu_tool;
-
-#[cfg(feature = "fps")]
-use crate::time_frame::TimeStat;
-use crate::{
-    config::Config, custom_event::CustomEvent, game::Game, image::load_image_to_frame,
-    windows::WindowType,
-};
-use gb_lcd::{DrawEgui, GBPixels, GBWindow, PseudoPixels, PseudoWindow};
-use gb_ppu::{
-    SPRITE_RENDER_HEIGHT, SPRITE_RENDER_WIDTH, TILEMAP_DIM, TILESHEET_HEIGHT, TILESHEET_WIDTH,
-};
-const PPU_TILESHEET_WIDTH: u32 = TILESHEET_WIDTH as u32;
-const PPU_TILESHEET_HEIGHT: u32 = TILESHEET_HEIGHT as u32;
-const PPU_TILEMAP_DIM: u32 = TILEMAP_DIM as u32;
-const PPU_SPRITE_RENDER_WIDTH: u32 = SPRITE_RENDER_WIDTH as u32;
-const PPU_SPRITE_RENDER_HEIGHT: u32 = SPRITE_RENDER_HEIGHT as u32;
-
+use std::path::PathBuf;
 #[cfg(feature = "fps")]
 use std::time::Instant;
-use std::{cell::RefCell, path::PathBuf, rc::Rc};
+
+use configuration::Configuration;
 use winit::{
     dpi::LogicalSize,
     event::{ElementState, WindowEvent},
@@ -28,17 +10,39 @@ use winit::{
     window::{WindowBuilder, WindowId},
 };
 
+use gb_lcd::{DrawEgui, GBPixels, GBWindow, PseudoPixels, PseudoWindow};
 use gb_ppu::{GB_SCREEN_HEIGHT, GB_SCREEN_WIDTH};
+use gb_ppu::{
+    SPRITE_RENDER_HEIGHT, SPRITE_RENDER_WIDTH, TILEMAP_DIM, TILESHEET_HEIGHT, TILESHEET_WIDTH,
+};
+
+use crate::constant::MENU_BAR_SIZE;
+#[cfg(feature = "fps")]
+use crate::time_frame::TimeStat;
+use crate::{
+    config::Config, custom_event::CustomEvent, game::Game, image::load_image_to_frame,
+    windows::WindowType,
+};
+
+pub mod configuration;
+mod debugger;
+mod keybindings;
+mod ppu_tool;
+
+const PPU_TILESHEET_WIDTH: u32 = TILESHEET_WIDTH as u32;
+const PPU_TILESHEET_HEIGHT: u32 = TILESHEET_HEIGHT as u32;
+const PPU_TILEMAP_DIM: u32 = TILEMAP_DIM as u32;
+const PPU_SPRITE_RENDER_WIDTH: u32 = SPRITE_RENDER_WIDTH as u32;
+const PPU_SPRITE_RENDER_HEIGHT: u32 = SPRITE_RENDER_HEIGHT as u32;
+
 const GB_WIDTH: u32 = GB_SCREEN_WIDTH as u32;
 const GB_HEIGHT: u32 = GB_SCREEN_HEIGHT as u32;
 
-use crate::constant::MENU_BAR_SIZE;
 const MENU_BAR: u32 = MENU_BAR_SIZE as u32;
 
 pub struct Context {
     pub main_window: GBPixels<GB_WIDTH, GB_HEIGHT, MENU_BAR>,
-    pub joypad_config: Rc<RefCell<gb_joypad::Config>>,
-    pub config: InternalConfig,
+    pub internal_config: InternalConfig,
     pub event_proxy: EventLoopProxy<CustomEvent>,
     pub game: Option<Game>,
     #[cfg(feature = "fps")]
@@ -52,6 +56,7 @@ pub struct Context {
     pub tilemap_ctx: Option<ppu_tool::Context<PPU_TILEMAP_DIM, PPU_TILEMAP_DIM, MENU_BAR>>,
     pub spritesheet_ctx:
         Option<ppu_tool::Context<PPU_SPRITE_RENDER_WIDTH, PPU_SPRITE_RENDER_HEIGHT, MENU_BAR>>,
+    pub config: Configuration,
 }
 
 #[derive(Default)]
@@ -65,10 +70,11 @@ impl Context {
         main_window: GBPixels<GB_WIDTH, GB_HEIGHT, MENU_BAR>,
         event_proxy: EventLoopProxy<CustomEvent>,
     ) -> Self {
+        let config = Configuration::load_from_default_config_file();
+
         Self {
             main_window,
-            joypad_config: Rc::new(RefCell::new(keybindings::load_config())),
-            config: InternalConfig::default(),
+            internal_config: InternalConfig::default(),
             event_proxy,
             game: None,
             #[cfg(feature = "fps")]
@@ -80,18 +86,19 @@ impl Context {
             tilesheet_ctx: None,
             tilemap_ctx: None,
             spritesheet_ctx: None,
+            config,
         }
     }
 
     pub fn load_config(&mut self, config: Config) {
         let config_file = config.rom.map(PathBuf::from);
-        let reload_mode = self.config.mode != config.mode;
-        let reload_file = self.config.rom_file != config_file;
+        let reload_mode = self.internal_config.mode != config.mode;
+        let reload_file = self.internal_config.rom_file != config_file;
         let open_debugger = config.debug;
 
         if reload_mode || reload_file {
-            self.config.mode = config.mode;
-            if let Some(file) = config_file.or_else(|| self.config.rom_file.clone()) {
+            self.internal_config.mode = config.mode;
+            if let Some(file) = config_file.or_else(|| self.internal_config.rom_file.clone()) {
                 self.load(file, open_debugger);
             } else {
                 log::warn!("Oh, I was expecting a file or something");
@@ -146,7 +153,7 @@ impl Context {
                     };
                     self.keybindings_ctx.replace(keybindings::Context::new(
                         GBWindow::new(window),
-                        self.joypad_config.clone(),
+                        self.config.input.clone(),
                         self.event_proxy.clone(),
                     ));
                 }
@@ -309,10 +316,10 @@ impl Context {
 impl Context {
     pub fn load(&mut self, file: PathBuf, stopped: bool) {
         drop(self.game.take());
-        match Game::new(&file, self.joypad_config.clone(), stopped, self.config.mode) {
+        match Game::new(&file, stopped, self.internal_config.mode, &self.config) {
             Ok(game) => {
                 self.game.replace(game);
-                self.config.rom_file.replace(file);
+                self.internal_config.rom_file.replace(file);
             }
             Err(err) => {
                 log::error!(
@@ -326,11 +333,11 @@ impl Context {
 
     /// Reset the game context allowing the restart a game
     pub fn reset_game(&mut self, wanted_mode: Option<crate::config::Mode>) {
-        if let Some(ref rom_file) = self.config.rom_file {
-            let selected_mode = wanted_mode.or(self.config.mode);
+        if let Some(ref rom_file) = self.internal_config.rom_file {
+            let selected_mode = wanted_mode.or(self.internal_config.mode);
 
             drop(self.game.take());
-            match Game::new(rom_file, self.joypad_config.clone(), false, selected_mode) {
+            match Game::new(rom_file, false, selected_mode, &self.config) {
                 Ok(game) => {
                     self.game.replace(game);
                 }
@@ -373,7 +380,7 @@ impl Context {
         #[cfg(feature = "fps")]
         {
             self.time_frame.add_sample(self.main_draw_instant.elapsed());
-            self.main_draw_instant = std::time::Instant::now();
+            self.main_draw_instant = Instant::now();
         }
 
         Ok(())
@@ -414,5 +421,19 @@ impl Context {
             }
             _ => {}
         }
+    }
+}
+
+impl Drop for Context {
+    fn drop(&mut self) {
+        crate::path::create_root_config_path().expect("failed to create config directory");
+        let settings_path = crate::path::main_config_file();
+
+        log::info!("saving gbmu config to {}", settings_path.to_string_lossy());
+        let config_file =
+            std::fs::File::create(settings_path).expect("cannot create configuration file");
+
+        serde_yaml::to_writer(config_file, &self.config)
+            .expect("cannot save configuration to file");
     }
 }

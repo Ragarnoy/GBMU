@@ -2,7 +2,13 @@ use crate::{Address, Area, Error, FileOperation, IORegArea, Source};
 
 /// A device that always panic when interacting with it
 #[derive(Default)]
-pub struct PanicDevice;
+pub struct PanicDevice(pub Option<&'static str>);
+
+impl PanicDevice {
+    pub fn named(name: &'static str) -> Self {
+        Self(Some(name))
+    }
+}
 
 impl<A> FileOperation<A, Area> for PanicDevice
 where
@@ -11,14 +17,19 @@ where
 {
     fn write(&mut self, v: u8, addr: A, _source: Option<Source>) -> Result<(), Error> {
         panic!(
-            "writing to a panic device, v={:x}, addr={:?}",
+            "writing to a panic device ({}), v={:x}, addr={:?}",
+            self.0.unwrap_or("no_name"),
             v,
             u16::from(addr)
         );
     }
 
     fn read(&self, addr: A, _source: Option<Source>) -> Result<u8, Error> {
-        panic!("reading to a panic device, addr={:?}", u16::from(addr));
+        panic!(
+            "reading to a panic device ({}), addr={:?}",
+            self.0.unwrap_or("no_name"),
+            u16::from(addr)
+        );
     }
 }
 
@@ -29,14 +40,19 @@ where
 {
     fn write(&mut self, v: u8, addr: A, _source: Option<Source>) -> Result<(), Error> {
         panic!(
-            "writing to a panic device, v={:x}, addr={:?}",
+            "writing to a panic device ({}), v={:x}, addr={:?}",
+            self.0.unwrap_or("no_name"),
             v,
             u16::from(addr)
         );
     }
 
     fn read(&self, addr: A, _source: Option<Source>) -> Result<u8, Error> {
-        panic!("reading to a panic device, addr={:?}", u16::from(addr));
+        panic!(
+            "reading to a panic device ({}), addr={:?}",
+            self.0.unwrap_or("no_name"),
+            u16::from(addr)
+        );
     }
 }
 
@@ -46,7 +62,7 @@ fn test_reading_panic_device() {
     use crate::address::Addr;
     use crate::Area;
 
-    let dev = PanicDevice;
+    let dev = PanicDevice::default();
     let op: Box<dyn FileOperation<Addr<Area>, Area>> = Box::new(dev);
 
     assert_eq!(op.read(Addr::from_offset(Area::Rom, 35, 24), None), Ok(42));
@@ -58,7 +74,7 @@ fn test_writing_panic_device() {
     use crate::address::Addr;
     use crate::Area;
 
-    let dev = PanicDevice;
+    let dev = PanicDevice::default();
     let mut op: Box<dyn FileOperation<Addr<Area>, Area>> = Box::new(dev);
 
     assert_eq!(

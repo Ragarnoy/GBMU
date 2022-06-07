@@ -1,17 +1,19 @@
+use egui::Layout;
+#[cfg(feature = "debug_render")]
+use native_dialog::FileDialog;
+
+use gb_lcd::DrawEgui;
+
+use crate::Context;
+#[cfg(feature = "debug_render")]
+use crate::Game;
+
 mod file;
 #[cfg(feature = "fps")]
 mod fps;
 mod settings;
 mod tools;
 mod volume;
-
-use crate::Context;
-#[cfg(feature = "debug_render")]
-use crate::Game;
-use egui::Layout;
-use gb_lcd::DrawEgui;
-#[cfg(feature = "debug_render")]
-use native_dialog::FileDialog;
 
 pub fn draw_egui(context: &mut Context) {
     let (size, margin) = context.main_window.texture_size_and_margin();
@@ -84,7 +86,12 @@ pub fn draw_egui(context: &mut Context) {
                         // ui.style_mut().override_text_style = Some(egui::TextStyle::Heading);
                         file::draw_ui(ui, &context.event_proxy);
                         tools::draw_ui(ui, &context.event_proxy);
-                        settings::draw_ui(ui, &context.event_proxy, &mut context.config.mode);
+                        settings::draw_ui(
+                            ui,
+                            &context.event_proxy,
+                            &mut context.config.bios,
+                            &mut context.internal_config.mode,
+                        );
                         // ui.with_layout(egui::Layout::right_to_left(),  |ui| { ui.add(egui::Slider::new::<f64>(&mut 0.0, 0.0..=1.0)) });
                         // ui_debug!(ui, context);
                         // ui.style_mut().override_text_style = None;

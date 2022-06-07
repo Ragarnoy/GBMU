@@ -1,5 +1,8 @@
 use gb_bus::{Address, Area, Error, FileOperation, Source};
 
+pub const DMG_BIOS_SIZE: usize = 256;
+pub const CGB_BIOS_SIZE: usize = 2304;
+
 pub enum BiosType {
     Dmg,
     Cgb,

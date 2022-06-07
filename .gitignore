@@ -34,3 +34,6 @@ perf.data*
 perf.script
 
 gbmu.zip
+
+# Intellij
+/.idea/

@@ -11,6 +11,7 @@ use crate::{
     Addr, Area, Error, FileOperation, Source,
 };
 
+use crate::generic::PanicDevice;
 use std::{cell::RefCell, rc::Rc};
 
 macro_rules! match_area {
@@ -81,6 +82,80 @@ pub struct AddressBus {
     pub hram: Rc<RefCell<dyn FileOperation<Addr<Area>, Area>>>,
     /// register to enable/disable all interrupts
     pub ie_reg: Rc<RefCell<dyn FileOperation<Addr<Area>, Area>>>,
+}
+
+impl Default for AddressBus {
+    fn default() -> Self {
+        Self {
+            rom: Rc::new(RefCell::new(PanicDevice::named("rom"))),
+            vram: Rc::new(RefCell::new(PanicDevice::named("vram"))),
+            ext_ram: Rc::new(RefCell::new(PanicDevice::named("ext_ram"))),
+            ram: Rc::new(RefCell::new(PanicDevice::named("ram"))),
+            eram: Rc::new(RefCell::new(PanicDevice::named("eram"))),
+            oam: Rc::new(RefCell::new(PanicDevice::named("oam"))),
+            io_reg: Rc::new(RefCell::new(PanicDevice::named("io_reg"))),
+            hram: Rc::new(RefCell::new(PanicDevice::named("hram"))),
+            ie_reg: Rc::new(RefCell::new(PanicDevice::named("ie_reg"))),
+        }
+    }
+}
+
+impl AddressBus {
+    pub fn with_rom(&mut self, rom: Rc<RefCell<dyn FileOperation<Addr<Area>, Area>>>) -> &mut Self {
+        self.rom = rom;
+        self
+    }
+
+    pub fn with_vram(
+        &mut self,
+        vram: Rc<RefCell<dyn FileOperation<Addr<Area>, Area>>>,
+    ) -> &mut Self {
+        self.vram = vram;
+        self
+    }
+
+    pub fn with_ext_ram(
+        &mut self,
+        ext_ram: Rc<RefCell<dyn FileOperation<Addr<Area>, Area>>>,
+    ) -> &mut Self {
+        self.ext_ram = ext_ram;
+        self
+    }
+
+    pub fn with_ram(&mut self, ram: Rc<RefCell<dyn FileOperation<Addr<Area>, Area>>>) -> &mut Self {
+        self.ram = ram.clone();
+        self.eram = ram;
+        self
+    }
+
+    pub fn with_oam(&mut self, oam: Rc<RefCell<dyn FileOperation<Addr<Area>, Area>>>) -> &mut Self {
+        self.oam = oam;
+        self
+    }
+
+    pub fn with_io_reg(
+        &mut self,
+        io_reg: Rc<RefCell<dyn FileOperation<Addr<Area>, Area>>>,
+    ) -> &mut Self {
+        self.io_reg = io_reg;
+        self
+    }
+
+    pub fn with_hram(
+        &mut self,
+        hram: Rc<RefCell<dyn FileOperation<Addr<Area>, Area>>>,
+    ) -> &mut Self {
+        self.hram = hram;
+        self
+    }
+
+    pub fn with_ie_reg(
+        &mut self,
+        ie_reg: Rc<RefCell<dyn FileOperation<Addr<Area>, Area>>>,
+    ) -> &mut Self {
+        self.ie_reg = ie_reg;
+        self
+    }
 }
 
 impl AddressBus {

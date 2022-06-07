@@ -1,10 +1,8 @@
-#[cfg(feature = "save_state")]
-mod save_state;
-mod utils;
+#[cfg(feature = "registers_logs")]
+use std::io::BufWriter;
+use std::sync::{Arc, Mutex};
+use std::{cell::RefCell, fs::File, ops::DerefMut, path::Path, rc::Rc};
 
-use crate::{config::Mode, constant::AUDIO_BUFFER_SIZE};
-
-use crate::path::game_save_path;
 use gb_apu::apu::Apu;
 use gb_bus::{
     generic::{CharDevice, SimpleRW},
@@ -18,26 +16,32 @@ use gb_dbg::dbg_interfaces::{
 };
 use gb_dbg::until::Until;
 use gb_dma::{dma::Dma, hdma::Hdma};
-use gb_joypad::{Config, Joypad};
+use gb_joypad::Joypad;
 use gb_ppu::Ppu;
-use gb_roms::controllers::cgb_bios;
+use gb_roms::controllers::bios::BiosType;
+use gb_roms::controllers::Bios;
 #[cfg(feature = "save_state")]
 use gb_roms::controllers::Full;
-use gb_roms::{
-    controllers::{dmg_bios, Generic},
-    header::AutoSave,
-    Header,
-};
+use gb_roms::{controllers::Generic, header::AutoSave, Header};
 use gb_timer::Timer;
 #[cfg(feature = "save_state")]
 use save_state::SaveState;
 use utils::mbc_with_save_state;
 
-#[cfg(feature = "registers_logs")]
-use std::io::BufWriter;
+use crate::{
+    config::Mode, constant::AUDIO_BUFFER_SIZE, context::configuration::Configuration,
+    path::game_save_path,
+};
 
-use std::sync::{Arc, Mutex};
-use std::{cell::RefCell, fs::File, ops::DerefMut, path::Path, rc::Rc};
+#[cfg(feature = "save_state")]
+mod save_state;
+mod utils;
+
+macro_rules! cell {
+    ($e:expr) => {
+        Rc::new(RefCell::new($e))
+    };
+}
 
 pub struct Game {
     pub romname: String,
@@ -81,15 +85,15 @@ enum ScheduledStop {
 
 impl Game {
     pub fn new<P: AsRef<Path>>(
-        rompath: &P,
-        joypad_config: Rc<RefCell<Config>>,
+        rom_path: &P,
         stopped: bool,
         forced_mode: Option<Mode>,
+        configuration: &Configuration,
     ) -> Result<Game, anyhow::Error> {
         use std::io::Seek;
 
-        let romname = rompath.as_ref().to_string_lossy().to_string();
-        let mut file = File::open(rompath)?;
+        let romname = rom_path.as_ref().to_string_lossy().to_string();
+        let mut file = File::open(rom_path)?;
         let header = Header::from_file(&mut file)?;
 
         let cgb_mode = if let Some(forced_mode) = forced_mode {
@@ -101,16 +105,69 @@ impl Game {
         log::debug!("header: {:?}", header);
 
         file.rewind()?;
+
+        let bios: Option<Bios> = {
+            use gb_roms::controllers::bios::{CGB_BIOS_SIZE, DMG_BIOS_SIZE};
+            use std::io::Read;
+
+            if cgb_mode && configuration.bios.enable_cbg {
+                configuration.bios.cgb_bios_file.as_ref().and_then(|path| {
+                    File::open(path)
+                        .map_err(|e| {
+                            log::error!("cannot open bios file: {e}");
+                        })
+                        .and_then(|mut reader| {
+                            let mut buf = Box::new([0; CGB_BIOS_SIZE]);
+                            if let Err(e) = reader.read_exact(buf.as_mut()) {
+                                log::error!("cannot read bios file: {e}");
+                                Err(())
+                            } else {
+                                Ok(Bios::from_bytes(BiosType::Cgb, buf.as_ref()))
+                            }
+                        })
+                        .ok()
+                })
+            } else if !cgb_mode && configuration.bios.enable_dmg {
+                configuration.bios.dmg_bios_file.as_ref().and_then(|path| {
+                    File::open(path)
+                        .map_err(|e| {
+                            log::error!("cannot open bios file: {e}");
+                        })
+                        .and_then(|mut reader| {
+                            let mut buf = [0; DMG_BIOS_SIZE];
+                            if let Err(e) = reader.read_exact(&mut buf) {
+                                log::error!("cannot read bios file: {e}");
+                                Err(())
+                            } else {
+                                Ok(Bios::from_bytes(BiosType::Dmg, &buf))
+                            }
+                        })
+                        .ok()
+                })
+            } else {
+                None
+            }
+        };
+
+        let mut io_bus = IORegBus::default();
+        let mut bus = AddressBus::default();
+
         let mbc = mbc_with_save_state(&romname, &header, file)?;
-        let mbc = Rc::new(RefCell::new(mbc));
+        let mbc = cell!(mbc);
+        bus.with_ext_ram(mbc.clone());
 
         let ppu = Ppu::new(cgb_mode);
-        let ppu_mem = Rc::new(RefCell::new(ppu.memory()));
-        let ppu_reg = Rc::new(RefCell::new(ppu.registers()));
-        if !cfg!(feature = "bios") {
+        let ppu_mem = cell!(ppu.memory());
+        bus.with_vram(ppu_mem.clone());
+        bus.with_oam(ppu_mem);
+
+        let ppu_reg = cell!(ppu.registers());
+        if bios.is_none() {
             ppu_reg.borrow_mut().overwrite_lcd_control(0x91_u8);
         }
-        let (cpu, cpu_io_reg) = if cfg!(feature = "bios") {
+        io_bus.with_ppu(ppu_reg.clone());
+
+        let (cpu, cpu_io_reg) = if bios.is_some() {
             new_cpu(cgb_mode)
         } else {
             let (mut cpu, cpu_io_reg) = new_cpu(cgb_mode);
@@ -121,83 +178,68 @@ impl Game {
             });
             (cpu, cpu_io_reg)
         };
-        let wram = Rc::new(RefCell::new(WorkingRam::new(cgb_mode)));
-        let timer = if !cfg!(feature = "bios") {
+        io_bus.with_area(IORegArea::IF, cpu_io_reg.clone());
+        bus.with_ie_reg(cpu_io_reg.clone());
+
+        let timer = if bios.is_none() {
             let mut timer = Timer::default();
             timer.system_clock = 0xAC00;
             timer
         } else {
             Timer::default()
         };
-        let timer = Rc::new(RefCell::new(timer));
-        let bios_wrapper = {
-            let mut bios = if cgb_mode {
-                cgb_bios(mbc.clone())
-            } else {
-                dmg_bios(mbc.clone())
-            };
-            if cfg!(not(feature = "bios")) {
-                bios.bios_enabling_reg = 0xa;
-            };
-            Rc::new(RefCell::new(bios))
-        };
-        let dma = Rc::new(RefCell::new(Dma::new(ppu.memory())));
-        let hdma = Rc::new(RefCell::new(Hdma::default()));
-        let serial = Rc::new(RefCell::new(gb_bus::Serial::new(cgb_mode)));
+        let timer = cell!(timer);
+        io_bus.with_timer(timer.clone());
+
+        if let Some(bios) = bios {
+            let wrapper =
+                gb_roms::controllers::BiosWrapper::new(cell!(bios), mbc.clone(), cgb_mode);
+            let wrapper = cell!(wrapper);
+            io_bus.with_area(IORegArea::BootRom, wrapper.clone());
+            bus.with_rom(wrapper);
+        } else {
+            io_bus.with_area(
+                IORegArea::BootRom,
+                cell!(gb_bus::generic::PanicDevice::default()),
+            );
+            bus.with_rom(mbc.clone());
+        }
+
+        let dma = cell!(Dma::new(ppu.memory()));
+        io_bus.with_area(IORegArea::Dma, dma.clone());
+
+        let hdma = cell!(Hdma::default());
+        io_bus.with_hdma(hdma.clone());
+
+        let serial = cell!(gb_bus::Serial::new(cgb_mode));
+        io_bus.with_serial(serial);
 
         let buffer: Arc<Mutex<Vec<f32>>> =
             Arc::new(Mutex::new(Vec::with_capacity(AUDIO_BUFFER_SIZE)));
-
         let (stream, sample_rate) = Apu::init_audio_output(buffer.clone());
+        let apu = cell!(Apu::new(buffer, Some(stream), sample_rate));
+        io_bus.with_sound(apu.clone());
 
-        let apu = Rc::new(RefCell::new(Apu::new(buffer, Some(stream), sample_rate)));
+        let joypad = cell!(Joypad::from_config(configuration.input.clone(),));
+        io_bus.with_area(IORegArea::Joy, joypad.clone());
 
-        let joypad = Rc::new(RefCell::new(Joypad::from_config(joypad_config)));
+        let wram = cell!(WorkingRam::new(cgb_mode));
+        bus.with_ram(wram.clone());
 
-        let io_bus = {
-            let mut io_bus = IORegBus::default();
-            if cgb_mode {
-                io_bus
-                    .with_ppu_cgb(ppu_reg.clone())
-                    .with_area(IORegArea::Key1, cpu_io_reg.clone())
-                    .with_area(IORegArea::RP, Rc::new(RefCell::new(CharDevice(0))))
-                    .with_area(IORegArea::Svbk, wram.clone());
-            }
-
-            io_bus.with_sound(apu.clone());
+        if cgb_mode {
             io_bus
-                .with_area(IORegArea::Joy, joypad.clone())
-                .with_timer(timer.clone())
-                .with_ppu(ppu_reg)
-                .with_area(IORegArea::IF, cpu_io_reg.clone())
-                .with_area(IORegArea::Dma, dma.clone())
-                .with_hdma(hdma.clone())
-                .with_area(IORegArea::BootRom, bios_wrapper.clone())
-                .with_serial(serial);
+                .with_ppu_cgb(ppu_reg)
+                .with_area(IORegArea::Key1, cpu_io_reg)
+                .with_area(IORegArea::RP, cell!(CharDevice(0)))
+                .with_area(IORegArea::Svbk, wram);
+        }
 
-            io_bus
-        };
-        let io_bus = Rc::new(RefCell::new(io_bus));
-        let hram = Rc::new(RefCell::new(SimpleRW::<0x80>::default()));
+        let hram = cell!(SimpleRW::<0x80>::default());
+        bus.with_hram(hram);
 
-        let bus = AddressBus {
-            rom: bios_wrapper,
-            vram: ppu_mem.clone(),
-            ext_ram: mbc.clone(),
-            ram: wram.clone(),
-            #[cfg(feature = "save_state")]
-            eram: wram.clone(),
-            #[cfg(not(feature = "save_state"))]
-            eram: wram,
-            oam: ppu_mem,
-            io_reg: io_bus.clone(),
-            #[cfg(feature = "save_state")]
-            hram: hram.clone(),
-            #[cfg(not(feature = "save_state"))]
-            hram,
+        let io_bus = cell!(io_bus);
+        bus.with_io_reg(io_bus.clone());
 
-            ie_reg: cpu_io_reg,
-        };
         #[cfg(feature = "registers_logs")]
         let logs_file = Game::create_new_file().unwrap();
 
@@ -455,7 +497,7 @@ impl Game {
     #[cfg(feature = "save_state")]
     fn load_cpu_state(
         &mut self,
-        registers: gb_cpu::registers::Registers,
+        registers: Registers,
         io_regs: gb_cpu::io_registers::IORegisters,
     ) -> anyhow::Result<()> {
         let cpu_io = Rc::new(RefCell::new(io_regs));
